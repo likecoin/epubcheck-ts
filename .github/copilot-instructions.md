@@ -206,13 +206,13 @@ npm run build      # Must succeed
 - ESLint: 9.17.0
 - Biome: 1.9.4
 
-**Java EPUBCheck Reference:** Code being ported is at `/Users/william/epubcheck` (not in this repo)
+**Java EPUBCheck Reference:** The Java source being ported may be available locally (see AGENTS.md for reference). If unavailable, refer to the official repository at https://github.com/w3c/epubcheck
 
 ## Getting Help
 
 - Check existing documentation: `README.md`, `CONTRIBUTING.md`, `AGENTS.md`, `PROJECT_STATUS.md`
 - Search for similar code patterns in `src/`
 - Look at test files for usage examples
-- Review Java EPUBCheck source for validation logic reference
+- Review Java EPUBCheck source for validation logic reference (https://github.com/w3c/epubcheck)
 
-**Trust these instructions.** Only search/explore if information here is incomplete or incorrect.
+**Prefer using these instructions over exploration when the information is sufficient for your task.** Only search/explore if information here is incomplete or incorrect.
