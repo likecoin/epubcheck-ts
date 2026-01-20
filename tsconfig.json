@@ -7,7 +7,6 @@
     "moduleResolution": "NodeNext",
     "lib": ["ES2022"],
     "outDir": "dist",
-    "rootDir": "src",
 
     // Declaration files
     "declaration": true,
@@ -37,6 +36,6 @@
     // Let tsup handle emission
     "noEmit": true
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "test/**/*"],
   "exclude": ["node_modules", "dist"]
 }

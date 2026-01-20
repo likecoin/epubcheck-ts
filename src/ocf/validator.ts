@@ -72,8 +72,8 @@ export class OCFValidator {
     }
 
     // Check if mimetype is first file
-    const paths = zip.paths;
-    if (paths.length > 0 && paths[0] !== 'mimetype') {
+    const originalOrder = zip.originalOrder;
+    if (originalOrder.length > 0 && originalOrder[0] !== 'mimetype') {
       messages.push({
         id: 'PKG-005',
         severity: 'error',

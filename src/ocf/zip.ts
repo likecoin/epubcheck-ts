@@ -1,4 +1,4 @@
-import { unzipSync, strFromU8 } from 'fflate';
+import { strFromU8, unzipSync } from 'fflate';
 
 /**
  * A simple ZIP reader for EPUB files using fflate
@@ -6,9 +6,11 @@ import { unzipSync, strFromU8 } from 'fflate';
 export class ZipReader {
   private files: Record<string, Uint8Array>;
   private _paths: string[];
+  private _originalOrder: string[];
 
-  private constructor(files: Record<string, Uint8Array>) {
+  private constructor(files: Record<string, Uint8Array>, originalOrder: string[]) {
     this.files = files;
+    this._originalOrder = originalOrder;
     this._paths = Object.keys(files).sort();
   }
 
@@ -17,14 +19,24 @@ export class ZipReader {
    */
   static open(data: Uint8Array): ZipReader {
     const files = unzipSync(data);
-    return new ZipReader(files);
+    // Capture original order from Object.keys before sorting
+    // Note: fflate preserves insertion order which typically matches ZIP order
+    const originalOrder = Object.keys(files);
+    return new ZipReader(files, originalOrder);
   }
 
   /**
-   * Get all file paths in the ZIP
+   * Get all file paths in the ZIP (sorted alphabetically)
    */
   get paths(): string[] {
     return this._paths;
+  }
+
+  /**
+   * Get file paths in original ZIP order
+   */
+  get originalOrder(): string[] {
+    return this._originalOrder;
   }
 
   /**
