@@ -1,47 +1,32 @@
 import type { ValidationMessage } from '../types.js';
+import { getSchema } from './schemas.generated.js';
 import { BaseSchemaValidator } from './validator.js';
 
 /**
- * Helper functions for loading schemas (static to avoid `this` issues)
+ * Load schema content by filename
+ *
+ * First tries to load from bundled schemas (works in all environments),
+ * then falls back to fetch for custom schemas provided by URL.
  */
-
-async function loadBundledSchema(schemaPath: string): Promise<string> {
+async function loadSchema(schemaPath: string): Promise<string> {
   const filename = schemaPath.split('/').pop() ?? schemaPath;
 
-  try {
-    const { readFileSync } = await import('fs');
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    const { resolve } = await import('path');
-    const { fileURLToPath } = await import('url');
-
-    const currentDir = fileURLToPath(new URL('.', import.meta.url));
-    const schemaFilePath = resolve(currentDir, '..', '..', 'schemas', filename);
-
-    const content = readFileSync(schemaFilePath, 'utf-8');
-    return content;
-  } catch {
-    throw new Error(`Could not load bundled schema "${filename}": Failed to fetch schema`);
+  // Try bundled schemas first (works in all environments)
+  const bundled = getSchema(filename);
+  if (bundled) {
+    return bundled;
   }
-}
 
-async function loadSchemaFromUrl(url: string): Promise<string> {
-  try {
-    const response = await fetch(url);
+  // If it's a URL, try to fetch it
+  if (schemaPath.startsWith('http://') || schemaPath.startsWith('https://')) {
+    const response = await fetch(schemaPath);
     if (!response.ok) {
       throw new Error(`Failed to load schema: ${response.statusText}`);
     }
     return await response.text();
-  } catch {
-    throw new Error(`Could not load schema from URL "${url}": Failed to fetch schema`);
-  }
-}
-
-async function loadSchema(schemaPath: string): Promise<string> {
-  if (!schemaPath.startsWith('http://') && !schemaPath.startsWith('https://')) {
-    return loadBundledSchema(schemaPath);
   }
 
-  return loadSchemaFromUrl(schemaPath);
+  throw new Error(`Schema not found: "${filename}"`);
 }
 
 /**

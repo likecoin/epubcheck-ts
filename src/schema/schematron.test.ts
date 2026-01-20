@@ -50,7 +50,7 @@ describe('SchematronValidator', () => {
 
       expect(messages.length).toBeGreaterThan(0);
       expect(messages[0]?.severity).toBe('error');
-      expect(messages[0]?.message).toContain('Could not load schema');
+      expect(messages[0]?.message).toContain('Schema not found');
     });
   });
 });

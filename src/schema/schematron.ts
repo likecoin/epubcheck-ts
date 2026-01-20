@@ -10,6 +10,7 @@ import { evaluateXPathToBoolean, evaluateXPathToNodes } from 'fontoxpath';
 import type { Document, Element } from 'slimdom';
 import { sync as parseXmlDocument } from 'slimdom-sax-parser';
 import type { ValidationMessage } from '../types.js';
+import { getSchema } from './schemas.generated.js';
 
 /**
  * Schematron rule interface
@@ -107,30 +108,22 @@ export class SchematronValidator {
   private async loadSchema(schemaPath: string): Promise<string> {
     const filename = schemaPath.split('/').pop() ?? schemaPath;
 
-    // Try Node.js fs first
-    try {
-      const fs = await import('fs');
-      const pathModule = await import('path');
-      const url = await import('url');
-
-      const currentDir = url.fileURLToPath(new URL('.', import.meta.url));
-      const schemaFilePath = pathModule.resolve(currentDir, '..', '..', 'schemas', filename);
-
-      return fs.readFileSync(schemaFilePath, 'utf-8');
-    } catch {
-      // Fall back to fetch for browser environment
-      try {
-        const response = await fetch(`/schemas/${filename}`);
-        if (!response.ok) {
-          throw new Error(`HTTP ${String(response.status)}: ${response.statusText}`);
-        }
-        return await response.text();
-      } catch (fetchError) {
-        throw new Error(
-          `Could not load schema "${filename}": ${fetchError instanceof Error ? fetchError.message : 'Unknown error'}`,
-        );
-      }
+    // Try bundled schemas first (works in all environments)
+    const bundled = getSchema(filename);
+    if (bundled) {
+      return bundled;
     }
+
+    // If it's a URL, try to fetch it
+    if (schemaPath.startsWith('http://') || schemaPath.startsWith('https://')) {
+      const response = await fetch(schemaPath);
+      if (!response.ok) {
+        throw new Error(`HTTP ${String(response.status)}: ${response.statusText}`);
+      }
+      return await response.text();
+    }
+
+    throw new Error(`Schema not found: "${filename}"`);
   }
 
   /**

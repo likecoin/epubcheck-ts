@@ -276,6 +276,9 @@ npm install          # Install dependencies
 npm run dev          # Build in watch mode
 npm test             # Run tests in watch mode
 
+# Schema generation
+npm run generate:schemas  # Regenerate schemas.generated.ts from schemas/ directory
+
 # Quality
 npm run lint         # ESLint
 npm run lint:fix     # ESLint with auto-fix
@@ -310,9 +313,10 @@ npm run clean        # Clean dist/
 
 ## Known Issues / TODOs
 
-1. **Schema bundling for browser** - Schemas in `schemas/` directory can't be loaded in browser environments (fetch fails). Need to implement proper bundling solution (inline schemas or virtual filesystem).
-2. **Valid EPUB integration tests skipped** - 2 integration tests are skipped because schema validation produces RSC-001 errors in test environment due to schema loading issues.
-3. **Schematron XSLT 2.0 limitations** - Some XSLT 2.0 functions (`matches`, `tokenize`) aren't fully supported by fontoxpath. May need workarounds for certain Schematron rules.
+1. **RelaxNG Compact (.rnc) format not supported** - libxml2-wasm can only parse XML-based RelaxNG (.rng) schemas, not the compact (.rnc) syntax used by EPUB 3.x schemas. Need to either convert .rnc to .rng at build time, or use a different validator.
+2. **EPUB 2.0 schema includes missing** - The `opf.rng` schema has includes (`opf20.rng`, `opf12.rng`) that aren't bundled. Need to resolve and inline these includes.
+3. **Valid EPUB integration tests skipped** - 2 integration tests are skipped due to the schema format issues above.
+4. **Schematron XSLT 2.0 limitations** - Some XSLT 2.0 functions (`matches`, `tokenize`) aren't fully supported by fontoxpath. May need workarounds for certain Schematron rules.
 
 ## Questions?
 
