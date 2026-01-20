@@ -26,7 +26,7 @@ npm install  # Takes ~5s, installs 245 packages. MUST run before any other comma
 # Run ALL checks before committing (matches CI):
 npm run lint       # ESLint - strict TypeScript rules (takes ~2s)
 npm run typecheck  # tsc --noEmit (takes ~3s)
-npm test -- --run  # Vitest with 83 tests (takes ~1s)
+npm test -- --run  # Vitest - 82 tests pass, 1 skipped (takes ~1s)
 npm run build      # tsup builds ESM + CJS + DTS (takes ~2s)
 
 # Or run format + typecheck together:
@@ -113,7 +113,7 @@ src/
   - `src/checker.ts` - main validation logic (see TODOs at lines 94, 97)
 
 - **Testing:**
-  - Tests co-located with source: `*.test.ts` (6 test files, 83 tests)
+  - Tests co-located with source: `*.test.ts` (6 test files, 82 passing + 1 skipped)
   - No integration tests or fixtures yet
   - Run specific test: `npm test -- src/ocf/validator.test.ts`
 
@@ -177,9 +177,9 @@ describe('ComponentName', () => {
 
 **Before committing:**
 ```bash
-npm run lint       # Must pass
+npm run lint       # Must pass (1 warning is acceptable)
 npm run typecheck  # Must pass
-npm test -- --run  # All 83 tests must pass
+npm test -- --run  # Must pass (currently 82 pass, 1 skipped)
 npm run build      # Must succeed
 ```
 
