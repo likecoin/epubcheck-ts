@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EPUBCheck-TS - Online EPUB Validator</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>EPUBCheck-TS</h1>
+      <p class="subtitle">Online EPUB Validator</p>
+    </header>
+
+    <main>
+      <section class="upload-section">
+        <div class="drop-zone" id="dropZone">
+          <div class="drop-zone-content">
+            <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <p>Drag and drop an EPUB file here</p>
+            <p class="or">or</p>
+            <label class="file-input-label">
+              <input type="file" id="fileInput" accept=".epub" hidden>
+              <span class="btn btn-primary">Choose File</span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section class="results-section" id="resultsSection" hidden>
+        <div class="results-header">
+          <h2>Validation Results</h2>
+          <div class="results-summary" id="resultsSummary"></div>
+        </div>
+
+        <div class="results-stats" id="resultsStats"></div>
+
+        <div class="messages-container" id="messagesContainer">
+          <div class="messages-filters">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="fatal">Fatal</button>
+            <button class="filter-btn" data-filter="error">Errors</button>
+            <button class="filter-btn" data-filter="warning">Warnings</button>
+            <button class="filter-btn" data-filter="info">Info</button>
+          </div>
+          <div class="messages-list" id="messagesList"></div>
+        </div>
+      </section>
+
+      <section class="loading-section" id="loadingSection" hidden>
+        <div class="spinner"></div>
+        <p>Validating EPUB...</p>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        Powered by <a href="https://github.com/nickhsine/epubcheck-ts" target="_blank">epubcheck-ts</a>
+        - A TypeScript port of EPUBCheck
+      </p>
+    </footer>
+  </div>
+
+  <script type="module" src="/main.js"></script>
+</body>
+</html>

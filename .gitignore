@@ -5,6 +5,10 @@ node_modules/
 dist/
 *.tsbuildinfo
 
+# Examples build output
+examples/*/dist/
+examples/*/node_modules/
+
 # Test coverage
 coverage/
 
