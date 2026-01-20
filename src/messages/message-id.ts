@@ -54,6 +54,7 @@ export enum MessageId {
   OPF_012 = 'OPF-012', // Missing dc:identifier
   OPF_013 = 'OPF-013', // Remote resource not allowed
   OPF_014 = 'OPF-014', // Invalid manifest item media-type
+  OPF_097 = 'OPF-097', // Resource not referenced
   OPF_015 = 'OPF-015', // Invalid guide reference
 
   // Resource errors (RSC-001 to RSC-999)
@@ -64,11 +65,11 @@ export enum MessageId {
   RSC_005 = 'RSC-005', // Schema validation error
   RSC_006 = 'RSC-006', // Remote resource referenced
   RSC_007 = 'RSC-007', // Referenced resource not in manifest
-  RSC_008 = 'RSC-008', // Invalid fragment identifier
+  RSC_008 = 'RSC-008', // Undeclared resource
   RSC_009 = 'RSC-009', // Resource in spine not content document
-  RSC_010 = 'RSC-010', // Invalid resource reference
-  RSC_011 = 'RSC-011', // Referenced resource not found
-  RSC_012 = 'RSC-012', // Fragment not defined
+  RSC_010 = 'RSC-010', // Non-content hyperlink
+  RSC_011 = 'RSC-011', // Hyperlink to non-spine
+  RSC_012 = 'RSC-012', // Fragment identifier not found
   RSC_013 = 'RSC-013', // Invalid language tag
   RSC_014 = 'RSC-014', // Invalid link relation
   RSC_015 = 'RSC-015', // Resource not reachable
@@ -76,7 +77,12 @@ export enum MessageId {
   RSC_017 = 'RSC-017', // Warning for resource
   RSC_018 = 'RSC-018', // Unused resource in package
   RSC_019 = 'RSC-019', // Fallback cycle detected
-  RSC_020 = 'RSC-020', // Invalid image
+  RSC_020 = 'RSC-020', // Malformed URL
+  RSC_026 = 'RSC-026', // File URL not allowed
+  RSC_027 = 'RSC-027', // Absolute path not allowed
+  RSC_028 = 'RSC-028', // Parent directory reference
+  RSC_029 = 'RSC-029', // Data URL not allowed (EPUB 3)
+  RSC_031 = 'RSC-031', // HTTPS required for remote
 
   // HTML/XHTML errors (HTM-001 to HTM-999)
   HTM_001 = 'HTM-001', // Invalid XHTML
