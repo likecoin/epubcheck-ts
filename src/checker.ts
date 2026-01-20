@@ -1,3 +1,4 @@
+import { ContentValidator } from './content/index.js';
 import { buildReport } from './core/report.js';
 import { OCFValidator } from './ocf/index.js';
 import { OPFValidator } from './opf/index.js';
@@ -85,8 +86,9 @@ export class EpubCheck {
       const opfValidator = new OPFValidator();
       opfValidator.validate(context);
 
-      // Step 3: Validate content documents
-      // TODO: Implement content validation
+      // Step 3: Validate content documents (XHTML)
+      const contentValidator = new ContentValidator();
+      contentValidator.validate(context);
 
       // Step 4: Validate navigation
       // TODO: Implement navigation validation
