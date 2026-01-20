@@ -5,6 +5,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    target: 'esnext', // Use esnext to support top-level await in libxml2-wasm
   },
   optimizeDeps: {
     exclude: ['epubcheck-ts'],
