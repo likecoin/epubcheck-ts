@@ -14,7 +14,10 @@
     },
     "./package.json": "./package.json"
   },
-  "files": ["dist", "schemas"],
+  "files": [
+    "dist",
+    "schemas"
+  ],
   "sideEffects": false,
   "engines": {
     "node": ">=18"
@@ -38,7 +41,9 @@
     "css-tree": "^3.0.1",
     "fflate": "^0.8.2",
     "fontoxpath": "^3.33.1",
-    "libxml2-wasm": "^0.6.0"
+    "libxml2-wasm": "^0.6.0",
+    "slimdom": "^4.3.5",
+    "slimdom-sax-parser": "^1.5.3"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
@@ -52,7 +57,15 @@
     "typescript-eslint": "^8.18.1",
     "vitest": "^2.1.8"
   },
-  "keywords": ["epub", "epubcheck", "validation", "ebook", "w3c", "accessibility", "a11y"],
+  "keywords": [
+    "epub",
+    "epubcheck",
+    "validation",
+    "ebook",
+    "w3c",
+    "accessibility",
+    "a11y"
+  ],
   "author": "",
   "license": "GPL-3.0-only",
   "repository": {
