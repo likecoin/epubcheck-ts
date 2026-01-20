@@ -23,39 +23,48 @@ src/
 ├── checker.ts         # Main EpubCheck class
 ├── types.ts           # Shared TypeScript types
 ├── core/              # Validation orchestration
-│   ├── report.ts      # Report generation
-│   └── context.ts     # ValidationContext management
+│   ├── index.ts       # Module exports
+│   └── report.ts      # Report generation
 ├── ocf/               # OCF Container validation (ZIP)
+│   ├── index.ts       # Module exports
 │   ├── validator.ts   # Main OCF validator
-│   ├── zip.ts         # ZIP reading via fflate
-│   ├── mimetype.ts    # mimetype file validation
-│   └── container.ts   # container.xml parsing
+│   └── zip.ts         # ZIP reading via fflate (with originalOrder)
 ├── opf/               # Package Document (OPF) validation
+│   ├── index.ts       # Module exports
+│   ├── parser.ts      # OPF XML parsing
 │   ├── validator.ts   # Main OPF validator
-│   ├── metadata.ts    # Dublin Core, etc.
-│   ├── manifest.ts    # Manifest validation
-│   └── spine.ts       # Spine validation
+│   └── types.ts       # OPF-specific types
 ├── content/           # Content Document validation
-│   ├── xhtml.ts       # XHTML validation
-│   └── svg.ts         # SVG validation
+│   ├── index.ts       # Module exports
+│   ├── parser.ts      # XHTML/SVG parsing
+│   └── validator.ts   # Content validation
 ├── css/               # CSS validation
+│   ├── index.ts       # Module exports
 │   └── validator.ts   # CSS validation via css-tree
-├── nav/               # Navigation validation
-│   ├── toc.ts         # EPUB 3 nav document
-│   └── ncx.ts         # EPUB 2 NCX
+├── nav/               # EPUB 3 Navigation validation
+│   ├── index.ts       # Module exports
+│   └── validator.ts   # Nav document validation
+├── ncx/               # EPUB 2 NCX validation
+│   └── validator.ts   # NCX validation
 ├── schema/            # Schema validation infrastructure
+│   ├── index.ts       # Module exports
+│   ├── validator.ts   # Schema validation entry point
+│   ├── orchestrator.ts # Coordinates schema validation
 │   ├── relaxng.ts     # RelaxNG via libxml2-wasm
 │   ├── xsd.ts         # XSD via libxml2-wasm
-│   ├── schematron.ts  # Schematron via fontoxpath
-│   └── loader.ts      # Schema loading/caching
+│   └── schematron.ts  # Schematron via fontoxpath + slimdom
+├── references/        # Cross-reference validation
+│   ├── index.ts       # Module exports
+│   ├── validator.ts   # Reference validation
+│   ├── registry.ts    # ID/href registry
+│   ├── url.ts         # URL parsing utilities
+│   └── types.ts       # Reference types
 ├── messages/          # Error messages
-│   ├── message-id.ts  # Message ID enum
-│   └── locales/       # i18n message bundles
-│       └── en.ts
-└── util/              # Utilities
-    ├── xml.ts         # XML helpers
-    ├── path.ts        # Path utilities
-    └── mime.ts        # MIME type detection
+│   ├── index.ts       # Module exports
+│   └── message-id.ts  # Message ID enum
+└── test/              # Test infrastructure
+    ├── fixtures/      # Test EPUB files
+    └── integration/   # Integration tests
 ```
 
 ### Key Dependencies
@@ -66,6 +75,8 @@ src/
 | `fflate` | ZIP handling | Fast, small, tree-shakable |
 | `css-tree` | CSS parsing/validation | Full CSS parser |
 | `fontoxpath` | XPath 3.1 evaluation | For Schematron rules |
+| `slimdom` | DOM implementation | For Schematron XML processing |
+| `slimdom-sax-parser` | SAX parser for slimdom | Parses XML into slimdom DOMs |
 
 ### Reference Implementation
 
@@ -296,6 +307,12 @@ npm run clean        # Clean dist/
 1. **RelaxNG deprecation** - libxml2 plans to remove RelaxNG support in future versions
 2. **Schematron** - custom implementation may have edge cases vs Saxon
 3. **Large EPUBs** - memory usage for very large files (>100MB)
+
+## Known Issues / TODOs
+
+1. **Schema bundling for browser** - Schemas in `schemas/` directory can't be loaded in browser environments (fetch fails). Need to implement proper bundling solution (inline schemas or virtual filesystem).
+2. **Valid EPUB integration tests skipped** - 2 integration tests are skipped because schema validation produces RSC-001 errors in test environment due to schema loading issues.
+3. **Schematron XSLT 2.0 limitations** - Some XSLT 2.0 functions (`matches`, `tokenize`) aren't fully supported by fontoxpath. May need workarounds for certain Schematron rules.
 
 ## Questions?
 

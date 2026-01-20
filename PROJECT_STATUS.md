@@ -6,17 +6,17 @@ This document tracks the implementation progress compared to the original Java E
 
 | Category | Java EPUBCheck | TypeScript Port | Status |
 |----------|---------------|-----------------|--------|
-| OCF Validation | 100% | ~30% | 🟡 Partial |
-| OPF Validation | 100% | ~35% | 🟡 Partial |
-| Content (XHTML/SVG) | 100% | ~15% | 🔴 Basic |
-| CSS Validation | 100% | 0% | ❌ Not Started |
-| Navigation (nav/NCX) | 100% | ~5% | 🔴 Minimal |
-| Schema Validation | 100% | 0% | ❌ Stub Only |
+| OCF Validation | 100% | ~40% | 🟡 Partial |
+| OPF Validation | 100% | ~40% | 🟡 Partial |
+| Content (XHTML/SVG) | 100% | ~25% | 🟡 Partial |
+| CSS Validation | 100% | ~5% | 🔴 Basic |
+| Navigation (nav/NCX) | 100% | ~30% | 🟡 Partial |
+| Schema Validation | 100% | ~50% | 🟡 Partial |
 | Media Overlays | 100% | 0% | ❌ Not Started |
 | Accessibility | 100% | 0% | ❌ Not Started |
-| Cross-reference | 100% | 0% | ❌ Not Started |
+| Cross-reference | 100% | ~15% | 🔴 Basic |
 
-**Overall Completion: ~20%**
+**Overall Completion: ~35%**
 
 ---
 
@@ -27,19 +27,19 @@ This document tracks the implementation progress compared to the original Java E
 | Feature | Java | TS | Message IDs | Notes |
 |---------|:----:|:--:|------------|-------|
 | ZIP file opening | ✅ | ✅ | PKG-001 | Basic validation |
-| Mimetype first entry | ✅ | ✅ | PKG-005 | Implemented |
+| Mimetype first entry | ✅ | ✅ | PKG-005 | Implemented (uses original ZIP order) |
 | Mimetype uncompressed | ✅ | ❌ | PKG-006 | Not implemented |
 | Mimetype content | ✅ | ✅ | PKG-007 | Implemented |
 | container.xml exists | ✅ | ✅ | PKG-003 | Implemented |
 | container.xml parsing | ✅ | ✅ | PKG-004 | Basic parsing |
-| container.xml schema | ✅ | ❌ | - | RNC/Schematron |
+| container.xml schema | ✅ | 🟡 | RSC-005 | RelaxNG validation available |
 | Filename validation | ✅ | ❌ | PKG-009-012 | Special chars, Unicode |
 | encryption.xml | ✅ | ❌ | - | Font obfuscation |
 | signatures.xml | ✅ | ❌ | - | Digital signatures |
 | metadata.xml | ✅ | ❌ | - | Multiple renditions |
 | Empty directories | ✅ | ❌ | PKG-014 | - |
 
-**Status: ~30% complete**
+**Status: ~40% complete**
 
 ---
 
@@ -47,7 +47,7 @@ This document tracks the implementation progress compared to the original Java E
 
 | Feature | Java | TS | Message IDs | Notes |
 |---------|:----:|:--:|------------|-------|
-| Package schema | ✅ | ❌ | - | RNG/Schematron |
+| Package schema | ✅ | 🟡 | RSC-005 | RelaxNG + Schematron available |
 | unique-identifier | ✅ | ✅ | OPF-030, OPF-048 | Implemented |
 | Package version | ✅ | ❌ | OPF-001 | Not validated |
 | dc:identifier required | ✅ | ✅ | OPF-015 | Implemented |
@@ -79,7 +79,7 @@ This document tracks the implementation progress compared to the original Java E
 | Guide validation | ✅ | ✅ | OPF-031 | EPUB 2 |
 | Collections | ✅ | ❌ | OPF-071-084 | Dict, Index, Preview |
 
-**Status: ~35% complete**
+**Status: ~40% complete**
 
 ---
 
@@ -87,9 +87,9 @@ This document tracks the implementation progress compared to the original Java E
 
 | Feature | Java | TS | Message IDs | Notes |
 |---------|:----:|:--:|------------|-------|
-| NVDL/RNC schema | ✅ | ❌ | - | Full HTML5 subset |
-| Schematron rules | ✅ | ❌ | - | EPUB-specific |
-| XML well-formedness | ✅ | 🟡 | HTM-004 | Regex-based only |
+| NVDL/RNC schema | ✅ | 🟡 | RSC-005 | RelaxNG available |
+| Schematron rules | ✅ | 🟡 | SCH-* | Schematron validator implemented |
+| XML well-formedness | ✅ | ✅ | HTM-004 | DOM-based parsing |
 | XHTML namespace | ✅ | ✅ | HTM-001 | Implemented |
 | head/title/body | ✅ | ✅ | HTM-002, HTM-003 | Implemented |
 | Unescaped ampersands | ✅ | ✅ | HTM-012 | Implemented |
@@ -105,7 +105,7 @@ This document tracks the implementation progress compared to the original Java E
 | MathML alt text | ✅ | ❌ | ACC-009 | - |
 | Discouraged elements | ✅ | ❌ | HTM-055 | base, embed |
 
-**Status: ~15% complete**
+**Status: ~25% complete**
 
 ---
 
@@ -113,7 +113,7 @@ This document tracks the implementation progress compared to the original Java E
 
 | Feature | Java | TS | Message IDs | Notes |
 |---------|:----:|:--:|------------|-------|
-| CSS syntax parsing | ✅ | ❌ | CSS-008 | css-tree available |
+| CSS syntax parsing | ✅ | 🟡 | CSS-008 | css-tree integrated |
 | @font-face validation | ✅ | ❌ | CSS-007, CSS-019 | Font MIME types |
 | position: fixed | ✅ | ❌ | CSS-006 | Discouraged |
 | Remote fonts | ✅ | ❌ | - | Property requirement |
@@ -122,7 +122,7 @@ This document tracks the implementation progress compared to the original Java E
 | @import validation | ✅ | ❌ | - | - |
 | Media overlay classes | ✅ | ❌ | CSS-029, CSS-030 | - |
 
-**Status: 0% complete** (parser available, validation not implemented)
+**Status: ~5% complete** (parser available, validation minimal)
 
 ---
 
@@ -130,20 +130,21 @@ This document tracks the implementation progress compared to the original Java E
 
 | Feature | Java | TS | Message IDs | Notes |
 |---------|:----:|:--:|------------|-------|
-| Nav doc schema | ✅ | ❌ | - | RNC/Schematron |
+| Nav doc schema | ✅ | 🟡 | RSC-005 | RelaxNG available |
 | epub:type="toc" | ✅ | ✅ | NAV-001 | Implemented |
 | ol element | ✅ | ✅ | NAV-002 | Implemented |
 | TOC link targets | ✅ | ❌ | NAV-010 | RSC-007 equivalent |
 | Reading order | ✅ | ❌ | NAV-011 | - |
 | Page-list validation | ✅ | ❌ | NAV-010 | - |
 | Landmarks validation | ✅ | ❌ | NAV-010 | - |
-| NCX schema | ✅ | ❌ | - | EPUB 2 |
-| NCX uid match | ✅ | ❌ | - | Package UID |
+| NCX schema | ✅ | 🟡 | RSC-005 | RelaxNG available |
+| NCX uid match | ✅ | ✅ | NCX-001 | Implemented |
+| NCX navMap required | ✅ | ✅ | NCX-002 | Implemented |
 | NCX content src | ✅ | ❌ | NCX-006 | - |
 | EDUPub sections | ✅ | ❌ | NAV-004 | - |
 | EDUPub LOA/LOI/LOT/LOV | ✅ | ❌ | NAV-005-008 | - |
 
-**Status: ~5% complete**
+**Status: ~30% complete**
 
 ---
 
@@ -151,13 +152,14 @@ This document tracks the implementation progress compared to the original Java E
 
 | Feature | Java | TS | Message IDs | Notes |
 |---------|:----:|:--:|------------|-------|
-| RelaxNG (RNC/RNG) | ✅ | ❌ | RSC-005 | Stub only |
-| XSD | ✅ | ❌ | RSC-005 | Stub only |
-| Schematron | ✅ | ❌ | - | Not started |
+| RelaxNG (RNC/RNG) | ✅ | ✅ | RSC-005 | libxml2-wasm |
+| XSD | ✅ | ✅ | RSC-005 | libxml2-wasm |
+| Schematron | ✅ | ✅ | SCH-* | fontoxpath + slimdom |
 | NVDL | ✅ | ❌ | - | Multi-namespace |
 | XML Catalog | ✅ | ❌ | - | Schema resolution |
+| Schema bundling | ✅ | 🟡 | - | Node.js only, browser pending |
 
-**Status: 0% complete** (infrastructure only, no validation)
+**Status: ~50% complete** (RelaxNG, XSD, Schematron implemented)
 
 ---
 

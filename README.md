@@ -9,7 +9,7 @@ A TypeScript port of [EPUBCheck](https://github.com/w3c/epubcheck) - the officia
 ## Features
 
 - **Cross-platform**: Works in Node.js (18+) and modern browsers
-- **Partial EPUB validation**: Currently ~20% of EPUBCheck feature parity
+- **Partial EPUB validation**: Currently ~35% of EPUBCheck feature parity
 - **Zero native dependencies**: Pure JavaScript/WebAssembly, no compilation required
 - **TypeScript first**: Full type definitions included
 - **Tree-shakable**: ESM with proper exports for optimal bundling
@@ -208,25 +208,25 @@ This library is a TypeScript port of the Java-based [EPUBCheck](https://github.c
 - **XML Processing**: Uses [libxml2-wasm](https://github.com/nicklasb/libxml2-wasm) for XML parsing and schema validation (RelaxNG, XSD) via WebAssembly
 - **ZIP Handling**: Uses [fflate](https://github.com/101arrowz/fflate) for fast, lightweight EPUB container processing
 - **CSS Validation**: Uses [css-tree](https://github.com/nicklasb/css-tree) for CSS parsing and validation
-- **Schematron**: Custom implementation using [fontoxpath](https://github.com/FontoXML/fontoxpath) for XPath 3.1 evaluation
+- **Schematron**: Uses [fontoxpath](https://github.com/FontoXML/fontoxpath) with [slimdom](https://github.com/bwrrp/slimdom.js) for XPath 3.1 evaluation
 
 ## Validation Coverage
 
 | Component | Status | Completeness | Notes |
 |-----------|--------|--------------|-------|
-| OCF Container | 🟡 Partial | ~30% | ZIP structure, mimetype, container.xml |
-| Package Document (OPF) | 🟡 Partial | ~35% | Metadata, manifest, spine, fallback chains |
-| Content Documents | 🔴 Basic | ~15% | XML well-formedness, XHTML structure |
-| Navigation Document | 🔴 Minimal | ~5% | Basic nav structure checks |
-| CSS | ❌ Not Started | 0% | Parser available, validation not implemented |
+| OCF Container | 🟡 Partial | ~40% | ZIP structure, mimetype, container.xml |
+| Package Document (OPF) | 🟡 Partial | ~40% | Metadata, manifest, spine, fallback chains |
+| Content Documents | 🟡 Partial | ~25% | XML well-formedness, XHTML structure |
+| Navigation Document | 🟡 Partial | ~30% | Nav structure, NCX validation |
+| Schema Validation | 🟡 Partial | ~50% | RelaxNG, XSD, Schematron infrastructure |
+| CSS | 🔴 Basic | ~5% | Parser available, validation minimal |
 | Media Overlays | ❌ Not Started | 0% | Planned |
-| Schema Validation | ❌ Not Started | 0% | Infrastructure only |
-| Cross-reference Validation | ❌ Not Started | 0% | Link target validation |
+| Cross-reference Validation | 🔴 Basic | ~15% | Basic reference tracking |
 | Accessibility Checks | ❌ Not Started | 0% | Alt text, etc. |
 
 Legend: 🟢 Complete | 🟡 Partial | 🔴 Basic | ❌ Not Started
 
-**Overall Progress: ~20% of Java EPUBCheck features**
+**Overall Progress: ~35% of Java EPUBCheck features**
 
 See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for detailed comparison.
 
@@ -281,27 +281,38 @@ epubcheck-ts/
 │   ├── ocf/               # OCF container validation ✅
 │   ├── opf/               # Package document validation ✅
 │   ├── content/           # Content document validation ✅
-│   ├── schema/            # Schema validation infrastructure 🔴
+│   ├── nav/               # Navigation validation ✅
+│   ├── ncx/               # NCX validation (EPUB 2) ✅
+│   ├── references/        # Cross-reference validation ✅
+│   ├── schema/            # Schema validation ✅
+│   │   ├── relaxng.ts     # RelaxNG validation
+│   │   ├── xsd.ts         # XSD validation
+│   │   ├── schematron.ts  # Schematron validation
+│   │   └── orchestrator.ts # Schema orchestration
 │   └── messages/          # Error messages
+├── schemas/               # Schema files (RNG, RNC, SCH)
+├── test/
+│   ├── fixtures/          # Test EPUB files
+│   └── integration/       # Integration tests
 ├── examples/
 │   └── web/               # Web demo ✅
 └── dist/                  # Build output
 ```
 
-Legend: ✅ Implemented | 🔴 Not Started / Infrastructure Only
+Legend: ✅ Implemented
 
 ## Comparison with Java EPUBCheck
 
 | Aspect | epubcheck-ts | EPUBCheck (Java) |
 |--------|--------------|------------------|
 | Runtime | Node.js / Browser | JVM |
-| Feature Parity | ~20% | 100% |
-| Bundle Size | ~45KB JS + ~1.5MB WASM | ~15MB |
+| Feature Parity | ~35% | 100% |
+| Bundle Size | ~55KB JS + ~1.5MB WASM | ~15MB |
 | Installation | `npm install` | Download JAR |
 | Integration | Native JS/TS | CLI or Java API |
 | Performance | Comparable | Baseline |
 
-**Note:** epubcheck-ts is currently in early development. See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for detailed feature comparison.
+**Note:** epubcheck-ts is currently in active development. See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for detailed feature comparison.
 
 ## Contributing
 
