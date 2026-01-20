@@ -26,7 +26,7 @@ npm install  # Takes ~5s, installs 245 packages. MUST run before any other comma
 # Run ALL checks before committing (matches CI):
 npm run lint       # ESLint - strict TypeScript rules (takes ~2s)
 npm run typecheck  # tsc --noEmit (takes ~3s)
-npm test -- --run  # Vitest - 82 tests pass, 1 skipped (takes ~1s)
+npm test -- --run  # Vitest - all tests pass (currently 82 pass, 1 skipped)
 npm run build      # tsup builds ESM + CJS + DTS (takes ~2s)
 
 # Or run format + typecheck together:
@@ -113,7 +113,7 @@ src/
   - `src/checker.ts` - main validation logic (see TODOs at lines 94, 97)
 
 - **Testing:**
-  - Tests co-located with source: `*.test.ts` (6 test files, 82 passing + 1 skipped)
+  - Tests co-located with source: `*.test.ts` (6 test files)
   - No integration tests or fixtures yet
   - Run specific test: `npm test -- src/ocf/validator.test.ts`
 
@@ -177,9 +177,9 @@ describe('ComponentName', () => {
 
 **Before committing:**
 ```bash
-npm run lint       # Must pass (1 warning is acceptable)
+npm run lint       # Must pass (1 warning currently acceptable)
 npm run typecheck  # Must pass
-npm test -- --run  # Must pass (currently 82 pass, 1 skipped)
+npm test -- --run  # All tests must pass (some skipped tests are acceptable)
 npm run build      # Must succeed
 ```
 
@@ -206,7 +206,7 @@ npm run build      # Must succeed
 - ESLint: 9.17.0
 - Biome: 1.9.4
 
-**Java EPUBCheck Reference:** The Java source being ported may be available locally (see AGENTS.md for reference). If unavailable, refer to the official repository at https://github.com/w3c/epubcheck
+**Java EPUBCheck Reference:** The Java source being ported is described in AGENTS.md. The official Java implementation is at https://github.com/w3c/epubcheck
 
 ## Getting Help
 
