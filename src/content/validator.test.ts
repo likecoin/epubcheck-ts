@@ -270,12 +270,12 @@ describe('ContentValidator', () => {
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <title>Test</title>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
   </head>
   <body>
-    <img src="image.png" alt="test">
-    <br>
-    <input type="text">
+    <img src="image.png" alt="test" />
+    <br />
+    <input type="text" />
   </body>
 </html>`;
       const files = new Map([['OEBPS/chapter1.xhtml', toBytes(goodXHTML)]]);
