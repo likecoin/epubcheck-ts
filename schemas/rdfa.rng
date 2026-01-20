@@ -1,0 +1,552 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0" xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+  <define name="nonRDFaLite">
+    <empty/>
+  </define>
+  <!-- ##################################################################### -->
+  <!-- ##################################################################### -->
+  <define name="common.data.rdfa.safecurie">
+    <a:documentation> RELAX NG Schema for HTML 5: RDFa 1.1 and RDFa Lite 1.1            #</a:documentation>
+    <!-- ##################################################################### -->
+    <!-- ##################################################################### -->
+    <a:documentation> RDFa Datatypes                                                    #</a:documentation>
+    <data type="string">
+      <param name="pattern">\[(([\i-[:]][\c-[:]]*)?:?)[^\s]*\]</param>
+      <param name="minLength">2</param>
+    </data>
+  </define>
+  <define name="common.data.rdfa.curie">
+    <data type="string">
+      <param name="pattern">(([\i-[:]][\c-[:]]*)?:)[^\s]*</param>
+      <param name="minLength">1</param>
+    </data>
+  </define>
+  <define name="common.data.rdfa.term">
+    <data type="string">
+      <param name="pattern">[\i-[:]][/\c-[:]]*</param>
+    </data>
+  </define>
+  <!-- ##################################################################### -->
+  <!-- ##################################################################### -->
+  <define name="common.attrs.rdfa" combine="interleave">
+    <a:documentation> RDFa Attributes                                                   #</a:documentation>
+    <interleave>
+      <optional>
+        <ref name="common.attrs.rdfa.about"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.prefix"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.property"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.typeof"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.vocab"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.content"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.datatype"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.rel"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.resource"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.rev"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.inlist"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.rdfa.prefix">
+    <attribute name="prefix">
+      <choice>
+        <data type="string">
+          <param name="pattern">\s*([\i-[:]][\c-[:]]*: [^ ]+)(\s+[\i-[:]][\c-[:]]*: [^ ]+)*\s*</param>
+        </data>
+        <value type="string" datatypeLibrary=""/>
+      </choice>
+    </attribute>
+  </define>
+  <define name="common.attrs.rdfa.property">
+    <attribute name="property">
+      <choice>
+        <list>
+          <oneOrMore>
+            <choice>
+              <ref name="common.data.rdfa.term"/>
+              <ref name="common.data.rdfa.curie"/>
+              <ref name="common.data.uri.absolute"/>
+            </choice>
+          </oneOrMore>
+        </list>
+        <value type="string" datatypeLibrary=""/>
+      </choice>
+    </attribute>
+  </define>
+  <define name="common.attrs.rdfa.resource">
+    <attribute name="resource">
+      <choice>
+        <ref name="common.data.rdfa.safecurie"/>
+        <ref name="common.data.rdfa.curie"/>
+        <ref name="common.data.uri"/>
+      </choice>
+    </attribute>
+  </define>
+  <define name="common.attrs.rdfa.typeof">
+    <attribute name="typeof">
+      <choice>
+        <list>
+          <oneOrMore>
+            <choice>
+              <ref name="common.data.rdfa.term"/>
+              <ref name="common.data.rdfa.curie"/>
+              <ref name="common.data.uri.absolute"/>
+            </choice>
+          </oneOrMore>
+        </list>
+        <value type="string" datatypeLibrary=""/>
+      </choice>
+    </attribute>
+  </define>
+  <define name="common.attrs.rdfa.vocab">
+    <attribute name="vocab">
+      <choice>
+        <ref name="common.data.uri.absolute"/>
+        <value type="string" datatypeLibrary=""/>
+      </choice>
+    </attribute>
+  </define>
+  <define name="common.attrs.rdfa.about">
+    <interleave>
+      <attribute name="about">
+        <choice>
+          <ref name="common.data.rdfa.safecurie"/>
+          <ref name="common.data.rdfa.curie"/>
+          <ref name="common.data.uri"/>
+        </choice>
+      </attribute>
+      <ref name="nonRDFaLite"/>
+    </interleave>
+  </define>
+  <define name="common.attrs.rdfa.content">
+    <interleave>
+      <attribute name="content">
+        <data type="string" datatypeLibrary=""/>
+      </attribute>
+      <ref name="nonRDFaLite"/>
+    </interleave>
+  </define>
+  <define name="common.attrs.rdfa.datatype">
+    <interleave>
+      <attribute name="datatype">
+        <choice>
+          <ref name="common.data.rdfa.term"/>
+          <ref name="common.data.rdfa.curie"/>
+          <ref name="common.data.uri.absolute"/>
+          <value type="string" datatypeLibrary=""/>
+        </choice>
+      </attribute>
+      <ref name="nonRDFaLite"/>
+    </interleave>
+  </define>
+  <define name="common.attrs.rdfa.rel">
+    <interleave>
+      <attribute name="rel">
+        <choice>
+          <list>
+            <oneOrMore>
+              <choice>
+                <ref name="common.data.rdfa.term"/>
+                <ref name="common.data.rdfa.curie"/>
+                <ref name="common.data.uri.absolute"/>
+              </choice>
+            </oneOrMore>
+          </list>
+          <value type="string" datatypeLibrary=""/>
+        </choice>
+      </attribute>
+      <ref name="nonRDFaLite"/>
+    </interleave>
+  </define>
+  <define name="common.attrs.rdfa.rev">
+    <interleave>
+      <attribute name="rev">
+        <choice>
+          <list>
+            <oneOrMore>
+              <choice>
+                <ref name="common.data.rdfa.term"/>
+                <ref name="common.data.rdfa.curie"/>
+                <ref name="common.data.uri.absolute"/>
+              </choice>
+            </oneOrMore>
+          </list>
+          <value type="string" datatypeLibrary=""/>
+        </choice>
+      </attribute>
+      <ref name="nonRDFaLite"/>
+    </interleave>
+  </define>
+  <define name="common.attrs.rdfa.inlist">
+    <interleave>
+      <attribute name="inlist">
+        <data type="string" datatypeLibrary=""/>
+      </attribute>
+      <ref name="nonRDFaLite"/>
+    </interleave>
+  </define>
+  <define name="common.attrs.rdfa.no-rel" combine="interleave">
+    <interleave>
+      <optional>
+        <ref name="common.attrs.rdfa.about"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.prefix"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.property"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.typeof"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.vocab"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.content"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.datatype"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.resource"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.rev"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.inlist"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.rdfa.no-rel-rev" combine="interleave">
+    <interleave>
+      <optional>
+        <ref name="common.attrs.rdfa.about"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.prefix"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.property"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.typeof"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.vocab"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.content"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.datatype"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.resource"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.inlist"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.rdfa.no-content-noproperty" combine="interleave">
+    <interleave>
+      <optional>
+        <ref name="common.attrs.rdfa.about"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.prefix"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.typeof"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.vocab"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.datatype"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.resource"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.inlist"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs" combine="interleave">
+    <ref name="common.attrs.rdfa"/>
+  </define>
+  <define name="a.attrs" combine="interleave">
+    <ref name="common.attrs.rdfa.no-rel-rev"/>
+  </define>
+  <define name="area.attrs" combine="interleave">
+    <ref name="common.attrs.rdfa.no-rel"/>
+  </define>
+  <define name="base.attrs" combine="interleave">
+    <ref name="common.attrs.rdfa.no-rel"/>
+  </define>
+  <define name="link.rdfa.elem.metadata">
+    <element name="link">
+      <interleave>
+        <ref name="link.inner"/>
+        <ref name="link.rdfa.attrs.metadata"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="link.rdfa.elem.phrasing">
+    <element name="link">
+      <interleave>
+        <ref name="link.inner"/>
+        <ref name="link.rdfa.attrs.phrasing"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="link.rdfa.attrs.metadata">
+    <interleave>
+      <ref name="common.attrs.basic"/>
+      <ref name="common.attrs.i18n"/>
+      <ref name="common.attrs.present"/>
+      <ref name="common.attrs.other"/>
+      <choice>
+        <interleave>
+          <ref name="common.attrs.rdfa.property"/>
+          <optional>
+            <ref name="link.attrs.rel"/>
+          </optional>
+        </interleave>
+        <interleave>
+          <optional>
+            <ref name="common.attrs.rdfa.property"/>
+          </optional>
+          <ref name="link.attrs.rel"/>
+        </interleave>
+      </choice>
+      <optional>
+        <ref name="common.attrs.rdfa.about"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.prefix"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.typeof"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.vocab"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.content"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.datatype"/>
+      </optional>
+      <choice>
+        <interleave>
+          <ref name="common.attrs.rdfa.resource"/>
+          <optional>
+            <ref name="link.attrs.href"/>
+          </optional>
+        </interleave>
+        <interleave>
+          <optional>
+            <ref name="common.attrs.rdfa.resource"/>
+          </optional>
+          <ref name="link.attrs.href"/>
+        </interleave>
+      </choice>
+      <optional>
+        <ref name="common.attrs.rdfa.rev"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.inlist"/>
+      </optional>
+      <optional>
+        <ref name="shared-hyperlink.attrs.hreflang"/>
+      </optional>
+      <optional>
+        <ref name="shared-hyperlink.attrs.media"/>
+      </optional>
+      <optional>
+        <ref name="shared-hyperlink.attrs.type"/>
+      </optional>
+      <optional>
+        <ref name="link.attrs.sizes"/>
+      </optional>
+      <optional>
+        <ref name="link.attrs.as"/>
+      </optional>
+      <optional>
+        <!-- 	link.attrs.title included in common.attrs -->
+        <ref name="embedded.content.attrs.crossorigin"/>
+      </optional>
+      <optional>
+        <choice>
+          <ref name="common.attrs.aria.role.link"/>
+          <ref name="common.attrs.aria.role.presentation"/>
+          <ref name="common.attrs.aria.role.menuitem"/>
+        </choice>
+      </optional>
+    </interleave>
+  </define>
+  <define name="link.rdfa.attrs.phrasing">
+    <interleave>
+      <ref name="common.attrs.basic"/>
+      <ref name="common.attrs.i18n"/>
+      <ref name="common.attrs.present"/>
+      <ref name="common.attrs.other"/>
+      <ref name="common.attrs.rdfa.property"/>
+      <optional>
+        <ref name="link.attrs.rel"/>
+      </optional>
+      <choice>
+        <interleave>
+          <ref name="common.attrs.rdfa.resource"/>
+          <optional>
+            <ref name="link.attrs.href"/>
+          </optional>
+        </interleave>
+        <interleave>
+          <optional>
+            <ref name="common.attrs.rdfa.resource"/>
+          </optional>
+          <ref name="link.attrs.href"/>
+        </interleave>
+      </choice>
+      <optional>
+        <ref name="common.attrs.rdfa.about"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.prefix"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.typeof"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.vocab"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.content"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.datatype"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.rev"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.rdfa.inlist"/>
+      </optional>
+      <optional>
+        <ref name="shared-hyperlink.attrs.hreflang"/>
+      </optional>
+      <optional>
+        <ref name="shared-hyperlink.attrs.media"/>
+      </optional>
+      <optional>
+        <ref name="shared-hyperlink.attrs.type"/>
+      </optional>
+      <optional>
+        <ref name="link.attrs.sizes"/>
+      </optional>
+      <optional>
+        <!-- 	link.attrs.title included in common.attrs -->
+        <ref name="embedded.content.attrs.crossorigin"/>
+      </optional>
+      <optional>
+        <choice>
+          <ref name="common.attrs.aria.role.link"/>
+          <ref name="common.attrs.aria.role.presentation"/>
+          <ref name="common.attrs.aria.role.menuitem"/>
+        </choice>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.elem.metadata" combine="choice">
+    <ref name="link.rdfa.elem.metadata"/>
+  </define>
+  <define name="common.elem.phrasing" combine="choice">
+    <ref name="link.rdfa.elem.phrasing"/>
+  </define>
+  <define name="meta.property.elem">
+    <a:documentation>&lt;meta property=foo content=bar&gt; in head ("name" attribute optional)</a:documentation>
+    <element name="meta">
+      <interleave>
+        <ref name="meta.inner"/>
+        <ref name="meta.property.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="meta.property.attrs">
+    <interleave>
+      <ref name="common.attrs.basic"/>
+      <ref name="common.attrs.i18n"/>
+      <ref name="common.attrs.present"/>
+      <ref name="common.attrs.other"/>
+      <optional>
+        <ref name="meta.name.attrs.name"/>
+      </optional>
+      <ref name="common.attrs.rdfa.property"/>
+      <ref name="meta.name.attrs.content"/>
+    </interleave>
+  </define>
+  <define name="common.elem.metadata" combine="choice">
+    <ref name="meta.property.elem"/>
+  </define>
+  <define name="meta.property-no-name.elem">
+    <a:documentation>&lt;meta property=foo content=bar&gt; in body ("name" attribute disallowed)</a:documentation>
+    <element name="meta">
+      <interleave>
+        <ref name="meta.inner"/>
+        <ref name="meta.property-no-name.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="meta.property-no-name.attrs">
+    <interleave>
+      <ref name="common.attrs.basic"/>
+      <ref name="common.attrs.i18n"/>
+      <ref name="common.attrs.present"/>
+      <ref name="common.attrs.other"/>
+      <ref name="common.attrs.rdfa.property"/>
+      <ref name="meta.name.attrs.content"/>
+      <optional>
+        <choice>
+          <ref name="common.attrs.aria.role.presentation"/>
+          <ref name="common.attrs.aria.role.menuitem"/>
+        </choice>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.elem.phrasing" combine="choice">
+    <ref name="meta.property-no-name.elem"/>
+  </define>
+  <define name="meta.property.attrs" combine="interleave">
+    <ref name="common.attrs.rdfa.no-content-noproperty"/>
+  </define>
+  <define name="meta.property-no-name.attrs" combine="interleave">
+    <ref name="common.attrs.rdfa.no-content-noproperty"/>
+  </define>
+  <define name="meta.name.attrs" combine="interleave">
+    <ref name="common.attrs.rdfa.no-content-noproperty"/>
+  </define>
+</grammar>

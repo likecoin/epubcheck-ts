@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0" xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="">
+  <!-- ##################################################################### -->
+  <!-- ##################################################################### -->
+  <define name="common.attrs.microdata">
+    <a:documentation> RELAX NG Schema for HTML 5: Microdata                             #</a:documentation>
+    <interleave>
+      <optional>
+        <ref name="common.attrs.microdata.itemref"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.microdata.itemprop"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.microdata.itemscope"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.microdata.itemtype"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.microdata.itemid"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.microdata.itemref">
+    <attribute name="itemref">
+      <ref name="common.data.idrefs"/>
+    </attribute>
+  </define>
+  <define name="common.attrs.microdata.itemprop">
+    <attribute name="itemprop">
+      <ref name="common.data.microdata-properties"/>
+    </attribute>
+  </define>
+  <define name="common.attrs.microdata.itemscope">
+    <attribute name="itemscope">
+      <choice>
+        <value>itemscope</value>
+        <value/>
+      </choice>
+    </attribute>
+  </define>
+  <define name="common.attrs.microdata.itemtype">
+    <attribute name="itemtype">
+      <list>
+        <oneOrMore>
+          <ref name="common.data.uri.absolute"/>
+        </oneOrMore>
+      </list>
+    </attribute>
+  </define>
+  <define name="common.attrs.microdata.itemid">
+    <attribute name="itemid">
+      <ref name="common.data.uri"/>
+    </attribute>
+  </define>
+  <define name="common.attrs" combine="interleave">
+    <ref name="common.attrs.microdata"/>
+  </define>
+  <define name="a.attrs" combine="interleave">
+    <ref name="common.attrs.microdata"/>
+  </define>
+  <define name="area.attrs" combine="interleave">
+    <ref name="common.attrs.microdata"/>
+  </define>
+  <define name="base.attrs" combine="interleave">
+    <ref name="common.attrs.microdata"/>
+  </define>
+  <define name="link.elem.phrasing">
+    <a:documentation>URL-valued Property Metadata: &lt;link itemprop&gt;</a:documentation>
+    <element name="link">
+      <interleave>
+        <ref name="link.inner"/>
+        <ref name="link.phrasing.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="link.phrasing.attrs">
+    <interleave>
+      <ref name="common.attrs.basic"/>
+      <ref name="common.attrs.i18n"/>
+      <ref name="common.attrs.present"/>
+      <ref name="common.attrs.other"/>
+      <ref name="common.attrs.microdata.itemprop"/>
+      <optional>
+        <ref name="common.attrs.microdata.itemref"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.microdata.itemscope"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.microdata.itemtype"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.microdata.itemid"/>
+      </optional>
+      <ref name="shared-hyperlink.attrs.href"/>
+      <optional>
+        <ref name="shared-hyperlink.attrs.hreflang"/>
+      </optional>
+      <optional>
+        <ref name="shared-hyperlink.attrs.media"/>
+      </optional>
+      <optional>
+        <ref name="shared-hyperlink.attrs.type"/>
+      </optional>
+      <optional>
+        <ref name="link.attrs.sizes"/>
+      </optional>
+      <optional>
+        <!-- 	link.attrs.title included in common.attrs -->
+        <ref name="embedded.content.attrs.crossorigin"/>
+      </optional>
+      <optional>
+        <choice>
+          <ref name="common.attrs.aria.role.link"/>
+          <ref name="common.attrs.aria.role.presentation"/>
+          <ref name="common.attrs.aria.role.menuitem"/>
+        </choice>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.elem.phrasing" combine="choice">
+    <ref name="link.elem.phrasing"/>
+  </define>
+  <define name="link.attrs.rel" combine="choice">
+    <a:documentation>&lt;link&gt; element in head, extensions</a:documentation>
+    <ref name="common.attrs.microdata.itemprop"/>
+  </define>
+  <define name="link.attrs" combine="interleave">
+    <optional>
+      <ref name="common.attrs.microdata.itemref"/>
+    </optional>
+  </define>
+  <define name="link.attrs" combine="interleave">
+    <optional>
+      <ref name="common.attrs.microdata.itemscope"/>
+    </optional>
+  </define>
+  <define name="link.attrs" combine="interleave">
+    <optional>
+      <ref name="common.attrs.microdata.itemtype"/>
+    </optional>
+  </define>
+  <define name="link.attrs" combine="interleave">
+    <optional>
+      <ref name="common.attrs.microdata.itemid"/>
+    </optional>
+  </define>
+  <define name="meta.itemprop.elem">
+    <a:documentation>Property Metadata: &lt;meta itemprop&gt;</a:documentation>
+    <element name="meta">
+      <interleave>
+        <ref name="meta.inner"/>
+        <ref name="meta.itemprop.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="meta.itemprop.attrs">
+    <interleave>
+      <ref name="common.attrs.basic"/>
+      <ref name="common.attrs.i18n"/>
+      <ref name="common.attrs.present"/>
+      <ref name="common.attrs.other"/>
+      <ref name="common.attrs.microdata.itemprop"/>
+      <optional>
+        <ref name="common.attrs.microdata.itemref"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.microdata.itemscope"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.microdata.itemtype"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.microdata.itemid"/>
+      </optional>
+      <ref name="meta.itemprop.attrs.content"/>
+    </interleave>
+  </define>
+  <define name="meta.itemprop.attrs.content">
+    <attribute name="content">
+      <data type="string"/>
+    </attribute>
+  </define>
+  <define name="common.elem.metadata" combine="choice">
+    <ref name="meta.itemprop.elem"/>
+  </define>
+  <define name="common.elem.phrasing" combine="choice">
+    <ref name="meta.itemprop.elem"/>
+  </define>
+</grammar>

@@ -313,10 +313,13 @@ npm run clean        # Clean dist/
 
 ## Known Issues / TODOs
 
-1. **RelaxNG Compact (.rnc) format not supported** - libxml2-wasm can only parse XML-based RelaxNG (.rng) schemas, not the compact (.rnc) syntax used by EPUB 3.x schemas. Need to either convert .rnc to .rng at build time, or use a different validator.
-2. **EPUB 2.0 schema includes missing** - The `opf.rng` schema has includes (`opf20.rng`, `opf12.rng`) that aren't bundled. Need to resolve and inline these includes.
-3. **Valid EPUB integration tests skipped** - 2 integration tests are skipped due to the schema format issues above.
-4. **Schematron XSLT 2.0 limitations** - Some XSLT 2.0 functions (`matches`, `tokenize`) aren't fully supported by fontoxpath. May need workarounds for certain Schematron rules.
+1. **Schematron XSLT 2.0 limitations** - Some XSLT 2.0 functions (`matches`, `tokenize`) aren't fully supported by fontoxpath. May need workarounds for certain Schematron rules.
+
+## Recently Resolved
+
+- ✅ **RelaxNG Compact (.rnc) format** - Converted EPUB 3.x schemas from RNC to RNG format using jing-trang, then inlined all `<include>` elements for bundling
+- ✅ **EPUB 2.0 schema includes** - Added opf20.rng from Java source with proper `<start>` element
+- ✅ **Integration tests** - All EPUB 2.0 and 3.0 integration tests now passing
 
 ## Questions?
 

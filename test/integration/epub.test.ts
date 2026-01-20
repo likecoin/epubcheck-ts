@@ -7,11 +7,7 @@ import { EpubCheck } from '../../src/index.js';
 
 describe('Integration Tests - Real EPUB Files', () => {
   describe('Valid EPUB Files', () => {
-    // TODO: These tests are skipped because:
-    // 1. EPUB 3.0: libxml2-wasm cannot parse .rnc (RelaxNG Compact) - needs conversion to .rng
-    // 2. EPUB 2.0: opf.rng has includes (opf20.rng, opf12.rng) that aren't bundled
-    // The schema bundling fix works - content loads - but schema format needs work
-    it.skip('should validate a valid EPUB 3.0 minimal file', async () => {
+    it('should validate a valid EPUB 3.0 minimal file', async () => {
       const epubData = await loadEpub('valid/minimal.epub');
       const result = await EpubCheck.validate(epubData);
 
@@ -19,7 +15,7 @@ describe('Integration Tests - Real EPUB Files', () => {
       expect(result.errorCount).toBe(0);
     });
 
-    it.skip('should validate a valid EPUB 2.0 file', async () => {
+    it('should validate a valid EPUB 2.0 file', async () => {
       const epubData = await loadEpub('valid/ocf-minimal-valid.epub');
       const result = await EpubCheck.validate(epubData, { version: '2.0' });
 

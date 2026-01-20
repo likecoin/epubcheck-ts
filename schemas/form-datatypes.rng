@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0" xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="">
+  <!-- ##################################################################### -->
+  <define name="form.data.mimetypelist">
+    <a:documentation> RELAX NG Schema for HTML 5: Datatypes related to forms            #</a:documentation>
+    <!-- ##################################################################### -->
+    <a:documentation>MIME types</a:documentation>
+    <ref name="datatype.html5.forms.mimetypelist"/>
+  </define>
+  <define name="form.data.pattern">
+    <a:documentation>ECMAScript Regular Expression</a:documentation>
+    <data type="string"/>
+  </define>
+  <define name="form.data.datetime-local">
+    <a:documentation>Temporal</a:documentation>
+    <ref name="datatype.html5.datetime.local"/>
+  </define>
+  <define name="form.data.date">
+    <ref name="datatype.html5.date"/>
+  </define>
+  <define name="form.data.month">
+    <ref name="datatype.html5.month"/>
+  </define>
+  <define name="form.data.week">
+    <ref name="datatype.html5.week"/>
+  </define>
+  <define name="form.data.time">
+    <ref name="datatype.html5.time"/>
+  </define>
+  <define name="form.data.emailaddress">
+    <a:documentation>Email</a:documentation>
+    <ref name="datatype.html5.emailaddress"/>
+  </define>
+  <define name="form.data.emailaddresslist">
+    <ref name="datatype.html5.emailaddresslist"/>
+  </define>
+  <define name="form.data.color">
+    <a:documentation>Color</a:documentation>
+    <ref name="datatype.html5.color"/>
+  </define>
+  <!--
+    		xsd:string {
+    			pattern = "#[a-fA-F0-9]{6}"
+    		}
+  -->
+  <define name="form.data.stringwithoutlinebreaks">
+    <a:documentation>Text without line breaks</a:documentation>
+    <ref name="datatype.html5.forms.string.nolinebreaks"/>
+  </define>
+  <define name="form.data.nonemptystring">
+    <a:documentation>Non-empty string</a:documentation>
+    <ref name="datatype.string.nonempty"/>
+  </define>
+</grammar>

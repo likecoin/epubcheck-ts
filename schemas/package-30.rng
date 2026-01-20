@@ -1,0 +1,1106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes" ns="http://www.idpf.org/2007/opf" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns="http://relaxng.org/ns/structure/1.0" xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0" xmlns:epub="http://www.idpf.org/2007/ops">
+  
+<!-- Inlined from datatypes.rng -->
+
+  <div xml:id="datatypes-common">
+    <define name="datatype.ID">
+      <ref name="datatype.ID.lexical"/>
+    </define>
+    <define name="datatype.IDREF">
+      <ref name="datatype.IDREF.lexical"/>
+    </define>
+    <define name="datatype.IDREFS">
+      <ref name="datatype.IDREFS.lexical"/>
+    </define>
+    <define name="datatype.languagecode">
+      <ref name="datatype.BCP47"/>
+    </define>
+    <!-- http://www.w3.org/TR/xmlschema11-2/#language -->
+    <define name="datatype.BCP47">
+      <data type="language"/>
+    </define>
+    <!-- http://www.w3.org/TR/xmlschema11-2/#ID  -->
+    <define name="datatype.ID.xsd">
+      <data type="ID"/>
+    </define>
+    <!-- http://www.w3.org/TR/xmlschema11-2/#NCName -->
+    <define name="datatype.IDREF.lexical">
+      <data type="NCName"/>
+    </define>
+    <define name="datatype.IDREFS.lexical">
+      <list>
+        <oneOrMore>
+          <ref name="datatype.IDREF.lexical"/>
+        </oneOrMore>
+      </list>
+    </define>
+    <define name="datatype.ID.lexical">
+      <data type="NCName"/>
+    </define>
+    <!-- http://www.w3.org/TR/xmlschema11-2/#IDREF -->
+    <define name="datatype.IDREF.xsd">
+      <data type="IDREF"/>
+    </define>
+    <!-- http://www.w3.org/TR/xmlschema11-2/#IDREFS -->
+    <define name="datatype.IDREFS.xsd">
+      <data type="IDREFS"/>
+    </define>
+    <!-- http://www.w3.org/TR/xmlschema11-2/#NMTOKEN -->
+    <define name="datatype.NMTOKEN">
+      <data type="NMTOKEN"/>
+    </define>
+    <!-- http://www.w3.org/TR/xmlschema11-2/#NMTOKENS  -->
+    <define name="datatype.NMTOKENS">
+      <data type="NMTOKENS"/>
+    </define>
+    <!-- http://www.w3.org/TR/xmlschema11-2/#string -->
+    <define name="datatype.string">
+      <data type="string"/>
+    </define>
+    <define name="datatype.string.nonempty">
+      <data type="token">
+        <param name="minLength">1</param>
+      </data>
+    </define>
+    <define name="datatype.text">
+      <text/>
+    </define>
+    <!-- http://www.w3.org/TR/xmlschema11-2/#nt-dateRep -->
+    <define name="datatype.date">
+      <data type="date"/>
+    </define>
+    <!-- http://www.w3.org/TR/xmlschema11-2/#nt-dateTimeRep -->
+    <define name="datatype.dateTime">
+      <data type="dateTime"/>
+    </define>
+    <!-- http://www.w3.org/TR/xmlschema11-2/#nt-timeRep -->
+    <define name="datatype.date.or.dateTime">
+      <choice>
+        <ref name="datatype.date"/>
+        <ref name="datatype.dateTime"/>
+      </choice>
+    </define>
+    <define name="datatype.LEIRI">
+      <data type="anyURI"/>
+    </define>
+    <!--
+      http://www.w3.org/TR/xmlschema11-2/#anyURI
+      http://tools.ietf.org/html/rfc3986#appendix-B
+      http://www.w3.org/TR/html5/urls.html#valid-url-potentially-surrounded-by-spaces  
+    -->
+    <define name="datatype.URI">
+      <data type="anyURI"/>
+    </define>
+    <define name="datatype.URI.absolute">
+      <data type="anyURI"/>
+    </define>
+    <define name="datatype.IRI">
+      <ref name="datatype.URI"/>
+    </define>
+    <define name="datatype.character.encoding">
+      <ref name="datatype.iana.charset"/>
+    </define>
+    <define name="datatype.iana.charset">
+      <data type="NMTOKEN"/>
+    </define>
+    <!--
+      http://www.w3.org/TR/html5/infrastructure.html#valid-mime-type
+      http://tools.ietf.org/html/rfc4288#section-4.2
+      http://tools.ietf.org/html/rfc2616#section-3.7
+    -->
+    <define name="datatype.mimetype">
+      <data type="string">
+        <param name="pattern">[a-zA-Z0-9!#$&amp;+\-\^_]+/[a-zA-Z0-9!#$&amp;+\-\^_]+.*</param>
+      </data>
+    </define>
+    <define name="datatype.mimetype.nocharset">
+      <ref name="datatype.mimetype"/>
+    </define>
+    <!--
+      http://www.w3.org/TR/xmlschema11-2/#nonNegativeInteger
+      http://www.w3.org/TR/html5/common-microsyntaxes.html#non-negative-integers
+    -->
+    <define name="datatype.non-negative.integer">
+      <data type="nonNegativeInteger"/>
+    </define>
+    <!-- http://www.w3.org/TR/xmlschema11-2/#positiveInteger -->
+    <define name="datatype.positive.integer">
+      <data type="positiveInteger"/>
+    </define>
+    <!-- http://www.w3.org/TR/xmlschema11-2/#integer  -->
+    <define name="datatype.integer">
+      <data type="integer"/>
+    </define>
+    <!--
+      http://www.w3.org/TR/xmlschema11-2/#nt-floatRep
+      http://www.w3.org/TR/html5/common-microsyntaxes.html#real-numbers
+    -->
+    <define name="datatype.float">
+      <data type="float"/>
+    </define>
+    <define name="datatype.float.positive">
+      <data type="float">
+        <param name="minExclusive">0</param>
+      </data>
+    </define>
+    <define name="datatype.float.non-negative">
+      <data type="float">
+        <param name="minInclusive">0</param>
+      </data>
+    </define>
+    <define name="datatype.token">
+      <data type="string">
+        <param name="pattern">[^\s]+</param>
+      </data>
+    </define>
+    <define name="datatype.space.separated.tokens">
+      <list>
+        <zeroOrMore>
+          <ref name="datatype.token"/>
+        </zeroOrMore>
+      </list>
+    </define>
+  </div>
+  <div xml:id="datatypes-smil">
+    <!--
+      http://www.w3.org/TR/smil/smil-timing.html#TimingSyntax-Full-clock-value
+      http://www.w3.org/TR/smil/smil-timing.html#TimingSyntax-Partial-clock-value
+      http://www.w3.org/TR/smil/smil-timing.html#TimingSyntax-Timecount-value
+    -->
+    <define name="datatype.smil.npt">
+      <choice>
+        <data type="string">
+          <param name="pattern">(\s*)[0-9]+:[0-5][0-9]:[0-5][0-9](\.[0-9]+)?(\s*)</param>
+        </data>
+        <data type="string">
+          <param name="pattern">(\s*)[0-5][0-9]:[0-5][0-9](\.[0-9]+)?(\s*)</param>
+        </data>
+        <data type="string">
+          <param name="pattern">(\s*)[0-9]+(\.[0-9]+)?(h|min|s|ms)?(\s*)</param>
+        </data>
+      </choice>
+    </define>
+  </div>
+  <div xml:id="datatypes-vocab">
+    <define name="datatype.property">
+      <data type="NMTOKEN"/>
+    </define>
+    <define name="datatype.properties">
+      <data type="NMTOKENS"/>
+    </define>
+    <define name="datatype.prefixdecl">
+      <text/>
+    </define>
+    <!-- \s*([\i-[:]][\c-[:]]*: +[^ ]+)(\s+[\i-[:]][\c-[:]]*: +[^ ]+)*\s* -->
+  </div>
+  <div xml:id="datatypes-ssml">
+    <!-- http://www.w3.org/TR/speech-synthesis11/#edef_phoneme -->
+    <define name="datatype.ssml.PhoneticExpression">
+      <data type="string"/>
+    </define>
+    <define name="datatype.ssml.PhoneticAlphabet">
+      <data type="string">
+        <param name="pattern">(ipa|x-.+)</param>
+      </data>
+    </define>
+  </div>
+  <div xml:id="datatypes-html5">
+    <define name="datatype.html5.browsing.context.name.or.keyword">
+      <data type="string">
+        <param name="pattern">()|([^_].*)|(_[bB][lL][aA][nN][kK])|(_[sS][eE][lL][fF])|(_[pP][aA][rR][eE][nN][tT])|(_[tT][oO][pP])</param>
+      </data>
+    </define>
+    <define name="datatype.html5.browsing.context.name">
+      <data type="string">
+        <param name="pattern">()|([^_].*)</param>
+      </data>
+    </define>
+    <define name="datatype.html5.token">
+      <data type="string">
+        <param name="pattern">[^\s]+</param>
+      </data>
+    </define>
+    <!-- http://www.w3.org/TR/html5/common-microsyntaxes.html#space-separated-tokens -->
+    <define name="datatype.html5.space.separated.tokens">
+      <list>
+        <zeroOrMore>
+          <ref name="datatype.html5.token"/>
+        </zeroOrMore>
+      </list>
+    </define>
+    <define name="datatype.html5.ordered.set.unique.tokens">
+      <ref name="datatype.html5.space.separated.tokens"/>
+    </define>
+    <define name="datatype.html5.URL.spaces">
+      <ref name="datatype.URI"/>
+    </define>
+    <!--
+      http://dev.w3.org/csswg/css3-mediaqueries/#syntax
+      http://www.w3.org/TR/html5/common-microsyntaxes.html#mq
+    -->
+    <define name="datatype.html5.media.query">
+      <data type="string"/>
+    </define>
+    <define name="datatype.html5.name">
+      <data type="string"/>
+    </define>
+    <define name="datatype.html5.name.reference">
+      <data type="string">
+        <param name="pattern">#.+</param>
+      </data>
+    </define>
+    <define name="datatype.html5.year">
+      <data type="token">
+        <param name="pattern">[0-9]{4}</param>
+      </data>
+    </define>
+    <define name="datatype.html5.yearless">
+      <data type="token">
+        <param name="pattern">(--)?(0[0-9]|1[0-2])-(0[0-9]|[1-2][0-9]|3[0-1])</param>
+      </data>
+    </define>
+    <define name="datatype.html5.duration">
+      <data type="token">
+        <param name="pattern">(((P[0-9]+D)|(P([0-9]+D)?T((([0-9]+H)([0-9]+M)?([0-9]+(\.[0-9]{1,3})?S)?)|(([0-9]+H)?([0-9]+M)([0-9]+(\.[0-9]{1,3})?S)?)|(([0-9]+H)?([0-9]+M)?([0-9]+(\.[0-9]{1,3})?S)))))|( *(([0-9]+ *[WDHM])|([0-9]+(\.[0-9]{1,3})? *S)) *)+)</param>
+      </data>
+    </define>
+    <!-- http://www.w3.org/TR/html5/common-microsyntaxes.html#months -->
+    <define name="datatype.html5.month">
+      <data type="token">
+        <param name="pattern">([0-9]{4,})-([0-9]{2})</param>
+      </data>
+    </define>
+    <!-- http://www.w3.org/TR/html5/common-microsyntaxes.html#dates -->
+    <define name="datatype.html5.date">
+      <data type="token">
+        <param name="pattern">([0-9]{4,})-([0-9]{2})-([0-9]{2})</param>
+      </data>
+    </define>
+    <!-- http://www.w3.org/TR/html5/common-microsyntaxes.html#times -->
+    <define name="datatype.html5.time">
+      <data type="token">
+        <param name="pattern">([0-9]{2}):([0-9]{2})(:[0-9]{2}(\.[0-9]{1,3})?)?</param>
+      </data>
+    </define>
+    <!-- http://www.w3.org/TR/html5/common-microsyntaxes.html#local-dates-and-times -->
+    <define name="datatype.html5.datetime.local">
+      <data type="token">
+        <param name="pattern">([0-9]{4,})-([0-9]{2})-([0-9]{2})([T ])([0-9]{2}):([0-9]{2})(:[0-9]{2}(\.[0-9]{1,3})?)?</param>
+      </data>
+    </define>
+    <!-- http://www.w3.org/TR/html5/common-microsyntaxes.html#global-dates-and-times -->
+    <define name="datatype.html5.datetime.global">
+      <data type="token">
+        <param name="pattern">([0-9]{4,})-([0-9]{2})-([0-9]{2})([T ])([0-9]{2}):([0-9]{2})(:[0-9]{2}(\.[0-9]{1,3})?)?(Z|((\+|-)([0-9]{2}):?([0-9]{2})))?</param>
+      </data>
+    </define>
+    <define name="datatype.html5.datetime">
+      <ref name="datatype.html5.datetime.global"/>
+    </define>
+    <!-- http://www.w3.org/TR/html5/common-microsyntaxes.html#vaguer-moments-in-time -->
+    <define name="datatype.html5.date.or.time">
+      <choice>
+        <ref name="datatype.html5.year"/>
+        <ref name="datatype.html5.yearless"/>
+        <ref name="datatype.html5.week"/>
+        <ref name="datatype.html5.date"/>
+        <ref name="datatype.html5.month"/>
+        <ref name="datatype.html5.time"/>
+        <ref name="datatype.html5.datetime.global"/>
+        <ref name="datatype.html5.duration"/>
+      </choice>
+    </define>
+    <!-- http://www.w3.org/TR/html5/common-microsyntaxes.html#vaguer-moments-in-time -->
+    <define name="datatype.html5.date.optional.time">
+      <choice>
+        <ref name="datatype.html5.date"/>
+        <ref name="datatype.html5.datetime.global"/>
+      </choice>
+    </define>
+    <define name="datatype.html5.week">
+      <data type="token">
+        <param name="pattern">([0-9]{4,})-W([0-9]{2})</param>
+      </data>
+    </define>
+    <define name="datatype.html5.accesskey">
+      <ref name="datatype.html5.ordered.set.unique.tokens"/>
+    </define>
+    <define name="datatype.html5.coords.rectangle">
+      <data type="token">
+        <param name="pattern">-?[0-9]+,-?[0-9]+,-?[0-9]+,-?[0-9]+</param>
+      </data>
+    </define>
+    <define name="datatype.html5.coords.circle">
+      <data type="token">
+        <param name="pattern">-?[0-9]+,-?[0-9]+,[0-9]+</param>
+      </data>
+    </define>
+    <define name="datatype.html5.coords.poly">
+      <data type="token">
+        <param name="pattern">-?[0-9]+,-?[0-9]+,-?[0-9]+,-?[0-9]+,-?[0-9]+,-?[0-9]+(,-?[0-9]+,-?[0-9]+)*</param>
+      </data>
+    </define>
+    <define name="datatype.html5.js">
+      <data type="string"/>
+    </define>
+    <define name="datatype.html5.script">
+      <data type="string"/>
+    </define>
+    <define name="datatype.html5.script.documentation">
+      <data type="string"/>
+    </define>
+    <define name="datatype.html5.iframe.srcdoc.xml">
+      <data type="string"/>
+    </define>
+    <define name="datatype.style">
+      <data type="string"/>
+    </define>
+    <define name="datatype.html5.sizes">
+      <list>
+        <oneOrMore>
+          <data type="string">
+            <param name="pattern">[1-9][0-9]*x[1-9][0-9]*</param>
+          </data>
+        </oneOrMore>
+      </list>
+    </define>
+    <define name="datatype.html5.emailaddress">
+      <data type="string">
+        <param name="pattern">[^@]+@[^@]+</param>
+      </data>
+    </define>
+    <define name="datatype.html5.emailaddresslist">
+      <data type="string">
+        <param name="pattern">([^@]+@[^@]+,)*([^@]+@[^@]+)</param>
+      </data>
+    </define>
+    <!-- http://www.w3.org/TR/html5/common-microsyntaxes.html#colors -->
+    <define name="datatype.html5.color">
+      <data type="string">
+        <param name="pattern">#([A-Fa-f0-9]{6})</param>
+      </data>
+    </define>
+  </div>
+  <div xml:id="datatypes-html5forms">
+    <define name="datatype.html5.forms.mimetypelist">
+      <data type="string"/>
+    </define>
+    <!-- http://www.w3.org/TR/html5/forms.html#attr-form-accept-charset -->
+    <define name="datatype.html5.forms.charsetlist">
+      <list>
+        <oneOrMore>
+          <ref name="datatype.character.encoding"/>
+        </oneOrMore>
+      </list>
+    </define>
+    <define name="datatype.html5.forms.pattern">
+      <data type="string"/>
+    </define>
+    <define name="datatype.html5.forms.string.nolinebreaks">
+      <data type="string"/>
+    </define>
+  </div>
+
+
+  
+<!-- Inlined from epub-prefix-attr.rng -->
+
+  <!-- ##################################################################### -->
+  <define name="epub.prefix.attr">
+    <a:documentation> RELAX NG Schema for EPUB: EPUB prefix attributes                  #</a:documentation>
+    <!-- ##################################################################### -->
+    <a:documentation>prefix attributes</a:documentation>
+    <attribute name="prefix">
+      <ref name="datatype.prefixdecl"/>
+    </attribute>
+  </define>
+  <define name="epub.prefix.attr.ns">
+    <attribute name="prefix" ns="http://www.idpf.org/2007/ops">
+      <ref name="datatype.prefixdecl"/>
+    </attribute>
+  </define>
+
+
+  <start>
+    <element name="package">
+      <interleave>
+        <ref name="opf.package.attlist"/>
+        <ref name="opf.package.content"/>
+      </interleave>
+    </element>
+  </start>
+  <define name="opf.package.attlist" combine="interleave">
+    <interleave>
+      <ref name="opf.version.attr"/>
+      <ref name="opf.unique.identifier.attr"/>
+      <optional>
+        <ref name="opf.id.attr"/>
+      </optional>
+      <optional>
+        <ref name="epub.prefix.attr"/>
+      </optional>
+      <ref name="opf.i18n.attrs"/>
+    </interleave>
+  </define>
+  <define name="opf.version.attr">
+    <attribute name="version">
+      <value>3.0</value>
+    </attribute>
+  </define>
+  <define name="opf.unique.identifier.attr">
+    <attribute name="unique-identifier">
+      <ref name="datatype.IDREF"/>
+    </attribute>
+  </define>
+  <define name="opf.package.content">
+    <ref name="opf.metadata"/>
+    <ref name="opf.manifest"/>
+    <ref name="opf.spine"/>
+    <optional>
+      <ref name="opf.guide"/>
+    </optional>
+    <optional>
+      <ref name="opf.bindings"/>
+    </optional>
+    <zeroOrMore>
+      <ref name="opf.collection"/>
+    </zeroOrMore>
+  </define>
+  <define name="opf.metadata">
+    <element name="metadata">
+      <interleave>
+        <optional>
+          <ref name="opf.id.attr"/>
+        </optional>
+        <ref name="opf.i18n.attrs"/>
+        <ref name="opf.metadata.content"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="opf.metadata.content">
+    <interleave>
+      <ref name="opf.dc.elems"/>
+      <zeroOrMore>
+        <ref name="opf.meta"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.link"/>
+      </zeroOrMore>
+    </interleave>
+  </define>
+  <define name="opf.meta">
+    <element name="meta">
+      <choice>
+        <ref name="opf.epub3.meta.content"/>
+        <ref name="opf.epub2.meta.content"/>
+      </choice>
+    </element>
+  </define>
+  <define name="opf.epub3.meta.content">
+    <interleave>
+      <ref name="opf.property.attr"/>
+      <optional>
+        <ref name="opf.refines.attr"/>
+      </optional>
+      <optional>
+        <ref name="opf.id.attr"/>
+      </optional>
+      <optional>
+        <ref name="opf.scheme.attr"/>
+      </optional>
+      <ref name="opf.i18n.attrs"/>
+      <ref name="datatype.string.nonempty"/>
+    </interleave>
+  </define>
+  <define name="opf.epub2.meta.content">
+    <interleave>
+      <attribute name="name"/>
+      <attribute name="content"/>
+    </interleave>
+  </define>
+  <!-- legacy -->
+  <define name="opf.link">
+    <element name="link">
+      <interleave>
+        <ref name="opf.href.attr"/>
+        <optional>
+          <ref name="opf.hreflang.attr"/>
+        </optional>
+        <ref name="opf.rel.attr"/>
+        <optional>
+          <ref name="opf.id.attr"/>
+        </optional>
+        <optional>
+          <ref name="opf.refines.attr"/>
+        </optional>
+        <optional>
+          <ref name="opf.media-type.attr"/>
+        </optional>
+        <optional>
+          <ref name="opf.properties.attr"/>
+        </optional>
+      </interleave>
+    </element>
+  </define>
+  <define name="opf.property.attr">
+    <attribute name="property">
+      <ref name="datatype.property"/>
+    </attribute>
+  </define>
+  <define name="opf.rel.attr">
+    <attribute name="rel">
+      <ref name="datatype.properties"/>
+    </attribute>
+  </define>
+  <define name="opf.hreflang.attr">
+    <attribute name="hreflang">
+      <choice>
+        <value/>
+        <ref name="datatype.languagecode"/>
+      </choice>
+    </attribute>
+  </define>
+  <define name="opf.scheme.attr">
+    <attribute name="scheme">
+      <ref name="datatype.property"/>
+    </attribute>
+  </define>
+  <define name="opf.refines.attr">
+    <attribute name="refines">
+      <ref name="datatype.URI"/>
+    </attribute>
+  </define>
+  <define name="opf.dc.identifier">
+    <element name="dc:identifier">
+      <interleave>
+        <optional>
+          <ref name="opf.id.attr"/>
+        </optional>
+        <ref name="datatype.string.nonempty"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="opf.dc.title">
+    <element name="dc:title">
+      <interleave>
+        <ref name="opf.dc.attlist"/>
+        <ref name="datatype.string.nonempty"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="opf.dc.language">
+    <element name="dc:language">
+      <interleave>
+        <optional>
+          <ref name="opf.id.attr"/>
+        </optional>
+        <ref name="datatype.string.nonempty"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="opf.dc.date">
+    <element name="dc:date">
+      <interleave>
+        <optional>
+          <ref name="opf.id.attr"/>
+        </optional>
+        <ref name="datatype.string.nonempty"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="opf.dc.source">
+    <element name="dc:source">
+      <interleave>
+        <ref name="opf.dc.attlist"/>
+        <ref name="datatype.string.nonempty"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="opf.dc.type">
+    <element name="dc:type">
+      <interleave>
+        <optional>
+          <ref name="opf.id.attr"/>
+        </optional>
+        <ref name="datatype.string.nonempty"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="opf.dc.format">
+    <element name="dc:format">
+      <interleave>
+        <optional>
+          <ref name="opf.id.attr"/>
+        </optional>
+        <ref name="datatype.string.nonempty"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="opf.dc.creator">
+    <element name="dc:creator">
+      <interleave>
+        <ref name="opf.dc.attlist"/>
+        <ref name="datatype.string.nonempty"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="opf.dc.subject">
+    <element name="dc:subject">
+      <interleave>
+        <ref name="opf.dc.attlist"/>
+        <ref name="datatype.string.nonempty"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="opf.dc.description">
+    <element name="dc:description">
+      <interleave>
+        <ref name="opf.dc.attlist"/>
+        <ref name="datatype.string.nonempty"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="opf.dc.publisher">
+    <element name="dc:publisher">
+      <interleave>
+        <ref name="opf.dc.attlist"/>
+        <ref name="datatype.string.nonempty"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="opf.dc.contributor">
+    <element name="dc:contributor">
+      <interleave>
+        <ref name="opf.dc.attlist"/>
+        <ref name="datatype.string.nonempty"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="opf.dc.relation">
+    <element name="dc:relation">
+      <interleave>
+        <ref name="opf.dc.attlist"/>
+        <ref name="datatype.string.nonempty"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="opf.dc.coverage">
+    <element name="dc:coverage">
+      <interleave>
+        <ref name="opf.dc.attlist"/>
+        <ref name="datatype.string.nonempty"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="opf.dc.rights">
+    <element name="dc:rights">
+      <interleave>
+        <ref name="opf.dc.attlist"/>
+        <ref name="datatype.string.nonempty"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="opf.dc.elems">
+    <interleave>
+      <oneOrMore>
+        <ref name="opf.dc.identifier"/>
+      </oneOrMore>
+      <oneOrMore>
+        <ref name="opf.dc.title"/>
+      </oneOrMore>
+      <oneOrMore>
+        <ref name="opf.dc.language"/>
+      </oneOrMore>
+      <optional>
+        <ref name="opf.dc.date"/>
+      </optional>
+      <zeroOrMore>
+        <ref name="opf.dc.source"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.type"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.format"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.creator"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.subject"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.description"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.publisher"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.contributor"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.relation"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.coverage"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.rights"/>
+      </zeroOrMore>
+    </interleave>
+  </define>
+  <define name="opf.dc.attlist">
+    <interleave>
+      <optional>
+        <ref name="opf.id.attr"/>
+      </optional>
+      <ref name="opf.i18n.attrs"/>
+    </interleave>
+  </define>
+  <define name="opf.manifest">
+    <element name="manifest">
+      <interleave>
+        <ref name="opf.manifest.attlist"/>
+        <ref name="opf.manifest.content"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="opf.manifest.attlist" combine="interleave">
+    <optional>
+      <ref name="opf.id.attr"/>
+    </optional>
+  </define>
+  <define name="opf.manifest.content">
+    <oneOrMore>
+      <ref name="opf.item"/>
+    </oneOrMore>
+  </define>
+  <define name="opf.item">
+    <element name="item">
+      <ref name="opf.item.attlist"/>
+    </element>
+  </define>
+  <define name="opf.item.attlist" combine="interleave">
+    <interleave>
+      <ref name="opf.id.attr"/>
+      <ref name="opf.href.attr"/>
+      <ref name="opf.media-type.attr"/>
+      <optional>
+        <ref name="opf.fallback.attr"/>
+      </optional>
+      <optional>
+        <ref name="opf.media-overlay.attr"/>
+      </optional>
+      <optional>
+        <ref name="opf.properties.attr"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="opf.fallback.attr">
+    <attribute name="fallback">
+      <ref name="datatype.IDREF"/>
+    </attribute>
+  </define>
+  <define name="opf.media-overlay.attr">
+    <attribute name="media-overlay">
+      <ref name="datatype.IDREF"/>
+    </attribute>
+  </define>
+  <define name="opf.properties.attr">
+    <attribute name="properties">
+      <ref name="datatype.properties"/>
+    </attribute>
+  </define>
+  <define name="opf.spine">
+    <element name="spine">
+      <interleave>
+        <ref name="opf.spine.attlist"/>
+        <ref name="opf.spine.content"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="opf.spine.attlist" combine="interleave">
+    <interleave>
+      <optional>
+        <ref name="opf.id.attr"/>
+      </optional>
+      <optional>
+        <ref name="opf.spine.toc.attr"/>
+      </optional>
+      <optional>
+        <ref name="opf.ppd.attr"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="opf.spine.toc.attr">
+    <attribute name="toc">
+      <ref name="datatype.IDREF"/>
+    </attribute>
+  </define>
+  <define name="opf.ppd.attr">
+    <attribute name="page-progression-direction">
+      <choice>
+        <value>ltr</value>
+        <value>rtl</value>
+        <value>default</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="opf.spine.content">
+    <oneOrMore>
+      <ref name="opf.itemref"/>
+    </oneOrMore>
+  </define>
+  <define name="opf.itemref">
+    <element name="itemref">
+      <ref name="opf.itemref.attlist"/>
+    </element>
+  </define>
+  <define name="opf.itemref.attlist" combine="interleave">
+    <interleave>
+      <ref name="opf.itemref.idref.attr"/>
+      <optional>
+        <ref name="opf.itemref.linear.attr"/>
+      </optional>
+      <optional>
+        <ref name="opf.id.attr"/>
+      </optional>
+      <optional>
+        <ref name="opf.properties.attr"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="opf.itemref.idref.attr">
+    <attribute name="idref">
+      <ref name="datatype.IDREF"/>
+    </attribute>
+  </define>
+  <define name="opf.itemref.linear.attr">
+    <attribute name="linear">
+      <choice>
+        <value>yes</value>
+        <value>no</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="opf.guide">
+    <element name="guide">
+      <oneOrMore>
+        <ref name="opf.reference"/>
+      </oneOrMore>
+    </element>
+  </define>
+  <define name="opf.reference">
+    <element name="reference">
+      <interleave>
+        <ref name="opf.href.attr"/>
+        <attribute name="type">
+          <ref name="datatype.text"/>
+        </attribute>
+        <optional>
+          <attribute name="title">
+            <ref name="datatype.text"/>
+          </attribute>
+        </optional>
+      </interleave>
+    </element>
+  </define>
+  <define name="opf.bindings">
+    <element name="bindings">
+      <oneOrMore>
+        <ref name="opf.bindings.mediaType"/>
+      </oneOrMore>
+    </element>
+  </define>
+  <define name="opf.bindings.mediaType">
+    <element name="mediaType">
+      <ref name="opf.bindings.mediaType.attlist"/>
+    </element>
+  </define>
+  <define name="opf.bindings.mediaType.attlist" combine="interleave">
+    <interleave>
+      <ref name="opf.media-type.attr"/>
+      <attribute name="handler">
+        <ref name="datatype.IDREF"/>
+      </attribute>
+    </interleave>
+  </define>
+  <define name="opf.collection">
+    <element name="collection">
+      <ref name="opf.collection.attlist"/>
+      <ref name="opf.collection.content"/>
+    </element>
+  </define>
+  <define name="opf.collection.attlist" combine="interleave">
+    <interleave>
+      <optional>
+        <ref name="opf.id.attr"/>
+      </optional>
+      <optional>
+        <ref name="opf.dir.attr"/>
+      </optional>
+      <optional>
+        <ref name="opf.xml.lang.attr"/>
+      </optional>
+      <ref name="opf.collection.role.attr"/>
+    </interleave>
+  </define>
+  <define name="opf.collection.role.attr">
+    <attribute name="role">
+      <ref name="datatype.space.separated.tokens"/>
+    </attribute>
+  </define>
+  <define name="opf.collection.content">
+    <optional>
+      <ref name="opf.collection.metadata"/>
+    </optional>
+    <choice>
+      <oneOrMore>
+        <ref name="opf.collection"/>
+      </oneOrMore>
+      <group>
+        <zeroOrMore>
+          <ref name="opf.collection"/>
+        </zeroOrMore>
+        <oneOrMore>
+          <ref name="opf.collection.link"/>
+        </oneOrMore>
+      </group>
+    </choice>
+  </define>
+  <define name="opf.collection.metadata">
+    <element name="metadata">
+      <interleave>
+        <optional>
+          <ref name="opf.id.attr"/>
+        </optional>
+        <ref name="opf.i18n.attrs"/>
+        <ref name="opf.collection.metadata.content"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="opf.collection.metadata.content">
+    <interleave>
+      <ref name="opf.collection.dc.elems"/>
+      <zeroOrMore>
+        <ref name="opf.collection.meta"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.link"/>
+      </zeroOrMore>
+    </interleave>
+  </define>
+  <define name="opf.collection.dc.elems">
+    <interleave>
+      <zeroOrMore>
+        <ref name="opf.dc.identifier"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.title"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.language"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.date"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.source"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.type"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.format"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.creator"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.subject"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.description"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.publisher"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.contributor"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.relation"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.coverage"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.rights"/>
+      </zeroOrMore>
+    </interleave>
+  </define>
+  <define name="opf.collection.meta">
+    <element name="meta">
+      <ref name="opf.epub3.meta.content"/>
+    </element>
+  </define>
+  <define name="opf.collection.link">
+    <element name="link">
+      <interleave>
+        <ref name="opf.href.attr"/>
+        <optional>
+          <ref name="opf.rel.attr"/>
+        </optional>
+        <optional>
+          <ref name="opf.id.attr"/>
+        </optional>
+        <optional>
+          <ref name="opf.media-type.attr"/>
+        </optional>
+      </interleave>
+    </element>
+  </define>
+  <define name="opf.media-type.attr">
+    <attribute name="media-type">
+      <ref name="datatype.mimetype"/>
+    </attribute>
+  </define>
+  <define name="opf.href.attr">
+    <attribute name="href">
+      <ref name="datatype.URI"/>
+    </attribute>
+  </define>
+  <define name="opf.id.attr">
+    <attribute name="id">
+      <ref name="datatype.ID"/>
+    </attribute>
+  </define>
+  <define name="opf.i18n.attrs">
+    <interleave>
+      <optional>
+        <ref name="opf.xml.lang.attr"/>
+      </optional>
+      <optional>
+        <ref name="opf.dir.attr"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="opf.xml.lang.attr">
+    <attribute name="xml:lang">
+      <choice>
+        <value/>
+        <ref name="datatype.languagecode"/>
+      </choice>
+    </attribute>
+  </define>
+  <define name="opf.dir.attr">
+    <attribute name="dir">
+      <choice>
+        <value>ltr</value>
+        <value>rtl</value>
+        <value>auto</value>
+      </choice>
+    </attribute>
+  </define>
+</grammar>

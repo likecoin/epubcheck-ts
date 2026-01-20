@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0" xmlns="http://relaxng.org/ns/structure/1.0">
+  <!-- ##################################################################### -->
+  <define name="ruby.elem">
+    <a:documentation> RELAX NG Schema for HTML 5: Ruby                                  #</a:documentation>
+    <!-- ##################################################################### -->
+    <a:documentation/>
+    <a:documentation>Ruby Annotation: &lt;ruby&gt;</a:documentation>
+    <element name="ruby">
+      <interleave>
+        <ref name="ruby.inner"/>
+        <ref name="ruby.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="ruby.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <optional>
+        <ref name="common.attrs.aria"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="ruby.inner">
+    <oneOrMore>
+      <oneOrMore>
+        <choice>
+          <ref name="common.inner.phrasing"/>
+          <ref name="rb.elem"/>
+        </choice>
+      </oneOrMore>
+      <choice>
+        <oneOrMore>
+          <choice>
+            <ref name="rt.elem"/>
+            <ref name="rtc.elem"/>
+          </choice>
+        </oneOrMore>
+        <group>
+          <ref name="rp.elem"/>
+          <oneOrMore>
+            <choice>
+              <ref name="rt.elem"/>
+              <ref name="rtc.elem"/>
+            </choice>
+            <ref name="rp.elem"/>
+          </oneOrMore>
+        </group>
+      </choice>
+    </oneOrMore>
+  </define>
+  <define name="common.elem.phrasing" combine="choice">
+    <ref name="ruby.elem"/>
+  </define>
+  <define name="rt.elem">
+    <a:documentation>Ruby Text: &lt;rt&gt;</a:documentation>
+    <element name="rt">
+      <interleave>
+        <ref name="rt.inner"/>
+        <ref name="rt.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="rt.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <optional>
+        <ref name="common.attrs.aria"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="rt.inner">
+    <ref name="common.inner.phrasing"/>
+  </define>
+  <define name="rtc.elem">
+    <a:documentation>Ruby Text Container: &lt;rtc&gt;</a:documentation>
+    <element name="rtc">
+      <interleave>
+        <ref name="rtc.inner"/>
+        <ref name="rtc.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="rtc.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <optional>
+        <ref name="common.attrs.aria"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="rtc.inner">
+    <zeroOrMore>
+      <choice>
+        <ref name="common.inner.phrasing"/>
+        <ref name="rt.elem"/>
+        <ref name="rp.elem"/>
+      </choice>
+    </zeroOrMore>
+  </define>
+  <define name="rb.elem">
+    <a:documentation>Ruby Base: &lt;rb&gt;</a:documentation>
+    <element name="rb">
+      <interleave>
+        <ref name="rb.inner"/>
+        <ref name="rb.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="rb.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <optional>
+        <ref name="common.attrs.aria"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="rb.inner">
+    <ref name="common.inner.phrasing"/>
+  </define>
+  <define name="rp.elem">
+    <a:documentation>Ruby Parenthesis: &lt;rp&gt;</a:documentation>
+    <element name="rp">
+      <interleave>
+        <ref name="rp.inner"/>
+        <ref name="rp.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="rp.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <optional>
+        <ref name="common.attrs.aria"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="rp.inner">
+    <text/>
+  </define>
+</grammar>

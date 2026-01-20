@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar ns="http://www.w3.org/2000/svg" xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0" xmlns:epub="http://www.idpf.org/2007/ops" xmlns="http://relaxng.org/ns/structure/1.0">
+  <!-- ##################################################################### -->
+  <define name="svg">
+    <a:documentation> RELAX NG Schema for EPUB: EPUB SVG forgiving grammar check        #</a:documentation>
+    <!-- ##################################################################### -->
+    <!--
+      The schema:
+      - checks the `id` attribute datatype
+      - restricts the content model of the `title` and `foreignObject`,
+        following the EPUB SVG restrictions
+      - checks that `epub:type` is only used on allowed elements
+        (i.e. structural, shape, and text elements)
+      Ohterwise, it does not report SVG validation errors.
+    -->
+    <a:documentation>Root Element: &lt;svg&gt;</a:documentation>
+    <element name="svg">
+      <interleave>
+        <ref name="svg.inner"/>
+        <ref name="svg.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="svg.attrs">
+    <ref name="svg.epubtype.allowed.attrs"/>
+  </define>
+  <define name="svg.inner">
+    <ref name="svg.any.inner"/>
+  </define>
+  <!-- ID attribute is defined specifically, for type checking -->
+  <define name="svg.attr.id">
+    <a:documentation>Attributes</a:documentation>
+    <attribute name="id">
+      <ref name="datatype.html5.token"/>
+    </attribute>
+  </define>
+  <!-- Any other attribute -->
+  <define name="svg.generic.attr">
+    <attribute>
+      <anyName>
+        <except>
+          <name ns="">id</name>
+          <nsName ns="http://www.idpf.org/2007/ops"/>
+        </except>
+      </anyName>
+    </attribute>
+  </define>
+  <!-- Attribute list of elements where `epub:type` is allowed -->
+  <define name="svg.epubtype.allowed.attrs">
+    <interleave>
+      <optional>
+        <ref name="epub.type.attr"/>
+      </optional>
+      <optional>
+        <ref name="svg.attr.id"/>
+      </optional>
+      <zeroOrMore>
+        <ref name="svg.generic.attr"/>
+      </zeroOrMore>
+    </interleave>
+  </define>
+  <!-- Attribute list of elements where `epub:type` is forbidden -->
+  <define name="svg.epubtype.forbidden.attrs">
+    <interleave>
+      <optional>
+        <ref name="svg.attr.id"/>
+      </optional>
+      <zeroOrMore>
+        <ref name="svg.generic.attr"/>
+      </zeroOrMore>
+    </interleave>
+  </define>
+  <define name="svg.restricted.elem">
+    <a:documentation>Restricted Elements</a:documentation>
+    <choice>
+      <ref name="svg.foreignObject.elem"/>
+      <ref name="svg.title.elem"/>
+    </choice>
+  </define>
+  <define name="svg.foreignObject.elem">
+    <a:documentation>Restricted Element: `foreignObject`</a:documentation>
+    <element name="foreignObject">
+      <interleave>
+        <ref name="svg.foreignObject.inner"/>
+        <ref name="svg.foreignObject.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="svg.foreignObject.attrs">
+    <ref name="svg.epubtype.forbidden.attrs"/>
+  </define>
+  <define name="svg.foreignObject.inner">
+    <ref name="common.inner.flow"/>
+  </define>
+  <define name="svg.title.elem">
+    <a:documentation>Restricted Element: `title`</a:documentation>
+    <element name="title">
+      <interleave>
+        <ref name="svg.title.inner"/>
+        <ref name="svg.title.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="svg.title.attrs">
+    <ref name="svg.epubtype.forbidden.attrs"/>
+  </define>
+  <define name="svg.title.inner">
+    <ref name="common.inner.anyhtml"/>
+  </define>
+  <!--
+    the elements where `epub:type` is allowed and that have no
+    specific content model defined anove.
+    
+    Note: an element in this list also needs to be added to the
+    exception clause in the `svg.anyother.elem` class
+  -->
+  <define name="svg.renderable.elem">
+    <a:documentation>Other elements where `epub:type` is allowed</a:documentation>
+    <choice>
+      <element name="a">
+        <interleave>
+          <ref name="svg.any.inner"/>
+          <ref name="svg.epubtype.allowed.attrs"/>
+        </interleave>
+      </element>
+      <element name="audio">
+        <interleave>
+          <ref name="svg.any.inner"/>
+          <ref name="svg.epubtype.allowed.attrs"/>
+        </interleave>
+      </element>
+      <element name="canvas">
+        <interleave>
+          <ref name="svg.any.inner"/>
+          <ref name="svg.epubtype.allowed.attrs"/>
+        </interleave>
+      </element>
+      <element name="circle">
+        <interleave>
+          <ref name="svg.any.inner"/>
+          <ref name="svg.epubtype.allowed.attrs"/>
+        </interleave>
+      </element>
+      <element name="ellipse">
+        <interleave>
+          <ref name="svg.any.inner"/>
+          <ref name="svg.epubtype.allowed.attrs"/>
+        </interleave>
+      </element>
+      <element name="g">
+        <interleave>
+          <ref name="svg.any.inner"/>
+          <ref name="svg.epubtype.allowed.attrs"/>
+        </interleave>
+      </element>
+      <element name="iframe">
+        <interleave>
+          <ref name="svg.any.inner"/>
+          <ref name="svg.epubtype.allowed.attrs"/>
+        </interleave>
+      </element>
+      <element name="image">
+        <interleave>
+          <ref name="svg.any.inner"/>
+          <ref name="svg.epubtype.allowed.attrs"/>
+        </interleave>
+      </element>
+      <element name="line">
+        <interleave>
+          <ref name="svg.any.inner"/>
+          <ref name="svg.epubtype.allowed.attrs"/>
+        </interleave>
+      </element>
+      <element name="path">
+        <interleave>
+          <ref name="svg.any.inner"/>
+          <ref name="svg.epubtype.allowed.attrs"/>
+        </interleave>
+      </element>
+      <element name="polygon">
+        <interleave>
+          <ref name="svg.any.inner"/>
+          <ref name="svg.epubtype.allowed.attrs"/>
+        </interleave>
+      </element>
+      <element name="polyline">
+        <interleave>
+          <ref name="svg.any.inner"/>
+          <ref name="svg.epubtype.allowed.attrs"/>
+        </interleave>
+      </element>
+      <element name="rect">
+        <interleave>
+          <ref name="svg.any.inner"/>
+          <ref name="svg.epubtype.allowed.attrs"/>
+        </interleave>
+      </element>
+      <element name="svg">
+        <interleave>
+          <ref name="svg.any.inner"/>
+          <ref name="svg.epubtype.allowed.attrs"/>
+        </interleave>
+      </element>
+      <element name="switch">
+        <interleave>
+          <ref name="svg.any.inner"/>
+          <ref name="svg.epubtype.allowed.attrs"/>
+        </interleave>
+      </element>
+      <element name="symbol">
+        <interleave>
+          <ref name="svg.any.inner"/>
+          <ref name="svg.epubtype.allowed.attrs"/>
+        </interleave>
+      </element>
+      <element name="text">
+        <interleave>
+          <ref name="svg.any.inner"/>
+          <ref name="svg.epubtype.allowed.attrs"/>
+        </interleave>
+      </element>
+      <element name="textPath">
+        <interleave>
+          <ref name="svg.any.inner"/>
+          <ref name="svg.epubtype.allowed.attrs"/>
+        </interleave>
+      </element>
+      <element name="tspan">
+        <interleave>
+          <ref name="svg.any.inner"/>
+          <ref name="svg.epubtype.allowed.attrs"/>
+        </interleave>
+      </element>
+      <element name="unknown">
+        <interleave>
+          <ref name="svg.any.inner"/>
+          <ref name="svg.epubtype.allowed.attrs"/>
+        </interleave>
+      </element>
+      <element name="use">
+        <interleave>
+          <ref name="svg.any.inner"/>
+          <ref name="svg.epubtype.allowed.attrs"/>
+        </interleave>
+      </element>
+      <element name="video">
+        <interleave>
+          <ref name="svg.any.inner"/>
+          <ref name="svg.epubtype.allowed.attrs"/>
+        </interleave>
+      </element>
+    </choice>
+  </define>
+  <define name="svg.epubtype.allowed.elem">
+    <ref name="svg.renderable.elem"/>
+  </define>
+  <!--
+    any element except:
+    - the elements with a restricted content model
+    - the elements allowing `epub:type`
+  -->
+  <define name="svg.anyother.elem">
+    <a:documentation>Any other elements</a:documentation>
+    <element>
+      <anyName>
+        <except>
+          <name>foreignObject</name>
+          <name>title</name>
+          <name>a</name>
+          <name>audio</name>
+          <name>canvas</name>
+          <name>circle</name>
+          <name>ellipse</name>
+          <name>g</name>
+          <name>iframe</name>
+          <name>image</name>
+          <name>line</name>
+          <name>path</name>
+          <name>polygon</name>
+          <name>polyline</name>
+          <name>rect</name>
+          <name>svg</name>
+          <name>switch</name>
+          <name>symbol</name>
+          <name>text</name>
+          <name>textPath</name>
+          <name>tspan</name>
+          <name>unknown</name>
+          <name>use</name>
+          <name>video</name>
+        </except>
+      </anyName>
+      <interleave>
+        <ref name="svg.any.inner"/>
+        <ref name="svg.epubtype.forbidden.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="svg.any.elem">
+    <a:documentation>Anything</a:documentation>
+    <choice>
+      <ref name="svg.epubtype.allowed.elem"/>
+      <ref name="svg.restricted.elem"/>
+      <ref name="svg.anyother.elem"/>
+    </choice>
+  </define>
+  <define name="svg.any.inner">
+    <interleave>
+      <text/>
+      <zeroOrMore>
+        <ref name="svg.any.elem"/>
+      </zeroOrMore>
+    </interleave>
+  </define>
+</grammar>

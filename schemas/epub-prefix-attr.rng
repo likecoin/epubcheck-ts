@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0" xmlns:epub="http://www.idpf.org/2007/ops" xmlns="http://relaxng.org/ns/structure/1.0">
+  <!-- ##################################################################### -->
+  <define name="epub.prefix.attr">
+    <a:documentation> RELAX NG Schema for EPUB: EPUB prefix attributes                  #</a:documentation>
+    <!-- ##################################################################### -->
+    <a:documentation>prefix attributes</a:documentation>
+    <attribute name="prefix">
+      <ref name="datatype.prefixdecl"/>
+    </attribute>
+  </define>
+  <define name="epub.prefix.attr.ns">
+    <attribute name="epub:prefix">
+      <ref name="datatype.prefixdecl"/>
+    </attribute>
+  </define>
+</grammar>

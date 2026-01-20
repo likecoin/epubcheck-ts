@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar ns="http://www.w3.org/1999/xhtml" xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0" xmlns:epub="http://www.idpf.org/2007/ops" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns="http://relaxng.org/ns/structure/1.0">
+  <!-- ##################################################################### -->
+  <define name="epub.switch.flow">
+    <a:documentation> RELAX NG Schema for EPUB: EPUB switch element                     #</a:documentation>
+    <!-- ##################################################################### -->
+    <a:documentation>`epub:switch` element</a:documentation>
+    <element name="epub:switch">
+      <ref name="epub.switch.attrs"/>
+      <oneOrMore>
+        <ref name="epub.switch.case.flow"/>
+      </oneOrMore>
+      <ref name="epub.switch.default.flow"/>
+    </element>
+  </define>
+  <define name="epub.switch.phrasing">
+    <element name="epub:switch">
+      <ref name="epub.switch.attrs"/>
+      <oneOrMore>
+        <ref name="epub.switch.case.phrasing"/>
+      </oneOrMore>
+      <ref name="epub.switch.default.phrasing"/>
+    </element>
+  </define>
+  <define name="epub.switch.case.flow">
+    <element name="epub:case">
+      <interleave>
+        <ref name="epub.case.attrs"/>
+        <ref name="epub.case.flow.inner"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="epub.switch.case.phrasing">
+    <element name="epub:case">
+      <interleave>
+        <ref name="epub.case.attrs"/>
+        <ref name="epub.case.phrasing.inner"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="epub.switch.default.flow">
+    <element name="epub:default">
+      <interleave>
+        <ref name="epub.default.attrs"/>
+        <ref name="epub.default.flow.inner"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="epub.switch.default.phrasing">
+    <element name="epub:default">
+      <interleave>
+        <ref name="epub.default.attrs"/>
+        <ref name="epub.default.phrasing.inner"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="epub.case.flow.inner">
+    <ref name="epub.switch.any"/>
+  </define>
+  <define name="epub.case.phrasing.inner">
+    <ref name="epub.switch.any"/>
+  </define>
+  <define name="epub.switch.any">
+    <zeroOrMore>
+      <choice>
+        <ref name="common.elem.flow"/>
+        <ref name="epub.switch.anyElement"/>
+        <text/>
+      </choice>
+    </zeroOrMore>
+  </define>
+  <define name="epub.default.flow.inner">
+    <ref name="common.inner.flow"/>
+  </define>
+  <define name="epub.default.phrasing.inner">
+    <ref name="common.inner.phrasing"/>
+  </define>
+  <define name="epub.switch.attrs" combine="interleave">
+    <optional>
+      <ref name="common.attrs.id"/>
+    </optional>
+  </define>
+  <define name="epub.case.attrs" combine="interleave">
+    <interleave>
+      <optional>
+        <ref name="common.attrs.id"/>
+      </optional>
+      <ref name="epub.case.attrs.rn"/>
+    </interleave>
+  </define>
+  <define name="epub.default.attrs" combine="interleave">
+    <optional>
+      <ref name="common.attrs.id"/>
+    </optional>
+  </define>
+  <define name="epub.case.attrs.rn">
+    <attribute name="required-namespace">
+      <ref name="datatype.URI"/>
+    </attribute>
+  </define>
+  <define name="epub.switch.anyElement">
+    <element>
+      <anyName>
+        <except>
+          <nsName ns="http://www.w3.org/1998/Math/MathML"/>
+          <nsName/>
+        </except>
+      </anyName>
+      <zeroOrMore>
+        <choice>
+          <attribute>
+            <anyName/>
+          </attribute>
+          <text/>
+          <ref name="epub.switch.anyElement"/>
+          <ref name="common.elem.flow"/>
+        </choice>
+      </zeroOrMore>
+    </element>
+  </define>
+</grammar>

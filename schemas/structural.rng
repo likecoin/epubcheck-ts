@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0" xmlns="http://relaxng.org/ns/structure/1.0">
+  <!-- ##################################################################### -->
+  <define name="section.elem">
+    <a:documentation> RELAX NG Schema for HTML 5: Block Markup Added in HTML5           #</a:documentation>
+    <!-- ##################################################################### -->
+    <a:documentation>Section: &lt;section&gt;</a:documentation>
+    <element name="section">
+      <interleave>
+        <ref name="section.inner"/>
+        <ref name="section.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="section.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <optional>
+        <choice>
+          <ref name="common.attrs.aria.implicit.region"/>
+          <ref name="common.attrs.aria.role.alert"/>
+          <ref name="common.attrs.aria.role.alertdialog"/>
+          <ref name="common.attrs.aria.role.application"/>
+          <ref name="common.attrs.aria.role.dialog"/>
+          <ref name="common.attrs.aria.role.feed"/>
+          <ref name="common.attrs.aria.role.group"/>
+          <ref name="common.attrs.aria.role.log"/>
+          <ref name="common.attrs.aria.role.marquee"/>
+          <ref name="common.attrs.aria.role.presentation"/>
+          <ref name="common.attrs.aria.role.region"/>
+          <ref name="common.attrs.aria.role.status"/>
+          <ref name="common.attrs.aria.role.tabpanel"/>
+          <ref name="common.attrs.aria.landmark.banner"/>
+          <ref name="common.attrs.aria.landmark.complementary"/>
+          <ref name="common.attrs.aria.landmark.contentinfo"/>
+          <ref name="common.attrs.aria.landmark.document"/>
+          <ref name="common.attrs.aria.landmark.main"/>
+          <ref name="common.attrs.aria.landmark.navigation"/>
+          <ref name="common.attrs.aria.landmark.note"/>
+          <ref name="common.attrs.aria.landmark.search"/>
+          <ref name="common.attrs.aria.role.doc-abstract"/>
+          <ref name="common.attrs.aria.role.doc-acknowledgments"/>
+          <ref name="common.attrs.aria.role.doc-afterword"/>
+          <ref name="common.attrs.aria.role.doc-appendix"/>
+          <ref name="common.attrs.aria.role.doc-bibliography"/>
+          <ref name="common.attrs.aria.role.doc-chapter"/>
+          <ref name="common.attrs.aria.role.doc-colophon"/>
+          <ref name="common.attrs.aria.role.doc-conclusion"/>
+          <ref name="common.attrs.aria.role.doc-credit"/>
+          <ref name="common.attrs.aria.role.doc-credits"/>
+          <ref name="common.attrs.aria.role.doc-dedication"/>
+          <ref name="common.attrs.aria.role.doc-endnotes"/>
+          <ref name="common.attrs.aria.role.doc-epigraph"/>
+          <ref name="common.attrs.aria.role.doc-epilogue"/>
+          <ref name="common.attrs.aria.role.doc-errata"/>
+          <ref name="common.attrs.aria.role.doc-example"/>
+          <ref name="common.attrs.aria.role.doc-foreword"/>
+          <ref name="common.attrs.aria.role.doc-glossary"/>
+          <ref name="common.attrs.aria.role.doc-index"/>
+          <ref name="common.attrs.aria.role.doc-introduction"/>
+          <ref name="common.attrs.aria.role.doc-notice"/>
+          <ref name="common.attrs.aria.role.doc-pagelist"/>
+          <ref name="common.attrs.aria.role.doc-part"/>
+          <ref name="common.attrs.aria.role.doc-preface"/>
+          <ref name="common.attrs.aria.role.doc-prologue"/>
+          <ref name="common.attrs.aria.role.doc-pullquote"/>
+          <ref name="common.attrs.aria.role.doc-qna"/>
+          <ref name="common.attrs.aria.role.doc-toc"/>
+        </choice>
+      </optional>
+    </interleave>
+  </define>
+  <define name="section.inner">
+    <ref name="common.inner.flow"/>
+  </define>
+  <define name="common.elem.flow" combine="choice">
+    <ref name="section.elem"/>
+  </define>
+  <define name="nav.elem">
+    <a:documentation>Navigational Links: &lt;nav&gt;</a:documentation>
+    <element name="nav">
+      <interleave>
+        <ref name="nav.inner"/>
+        <ref name="nav.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="nav.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <optional>
+        <choice>
+          <ref name="common.attrs.aria.implicit.navigation"/>
+          <ref name="common.attrs.aria.landmark.navigation"/>
+          <ref name="common.attrs.aria.role.doc-index"/>
+          <ref name="common.attrs.aria.role.doc-pagelist"/>
+          <ref name="common.attrs.aria.role.doc-toc"/>
+          <ref name="common.attrs.aria.role.menu"/>
+          <ref name="common.attrs.aria.role.menubar"/>
+          <ref name="common.attrs.aria.role.none"/>
+          <ref name="common.attrs.aria.role.presentation"/>
+          <ref name="common.attrs.aria.role.tablist"/>
+        </choice>
+      </optional>
+    </interleave>
+  </define>
+  <define name="nav.inner">
+    <ref name="common.inner.flow"/>
+  </define>
+  <define name="common.elem.flow" combine="choice">
+    <ref name="nav.elem"/>
+  </define>
+  <define name="article.elem">
+    <a:documentation>Article: &lt;article&gt;</a:documentation>
+    <element name="article">
+      <interleave>
+        <ref name="article.inner"/>
+        <ref name="article.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="article.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <optional>
+        <choice>
+          <ref name="common.attrs.aria.implicit.article"/>
+          <ref name="common.attrs.aria.landmark.article"/>
+          <ref name="common.attrs.aria.landmark.document"/>
+          <ref name="common.attrs.aria.role.application"/>
+          <ref name="common.attrs.aria.landmark.main"/>
+          <ref name="common.attrs.aria.role.feed"/>
+          <ref name="common.attrs.aria.role.region"/>
+          <ref name="common.attrs.aria.role.presentation"/>
+        </choice>
+      </optional>
+    </interleave>
+  </define>
+  <define name="article.inner">
+    <ref name="common.inner.flow"/>
+  </define>
+  <define name="common.elem.flow" combine="choice">
+    <ref name="article.elem"/>
+  </define>
+  <define name="aside.elem">
+    <a:documentation>Tangential Aside: &lt;aside&gt;</a:documentation>
+    <element name="aside">
+      <interleave>
+        <ref name="aside.inner"/>
+        <ref name="aside.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="aside.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <optional>
+        <choice>
+          <ref name="common.attrs.aria.implicit.complementary"/>
+          <ref name="common.attrs.aria.landmark.note"/>
+          <ref name="common.attrs.aria.landmark.complementary"/>
+          <ref name="common.attrs.aria.landmark.search"/>
+          <ref name="common.attrs.aria.role.feed"/>
+          <ref name="common.attrs.aria.role.region"/>
+          <ref name="common.attrs.aria.role.presentation"/>
+          <ref name="common.attrs.aria.role.doc-dedication"/>
+          <ref name="common.attrs.aria.role.doc-example"/>
+          <ref name="common.attrs.aria.role.doc-footnote"/>
+          <ref name="common.attrs.aria.role.doc-glossary"/>
+          <ref name="common.attrs.aria.role.doc-pullquote"/>
+          <ref name="common.attrs.aria.role.doc-tip"/>
+        </choice>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aside.inner">
+    <ref name="common.inner.flow"/>
+  </define>
+  <define name="common.elem.flow" combine="choice">
+    <ref name="aside.elem"/>
+  </define>
+  <define name="header.elem">
+    <a:documentation>Header: &lt;header&gt;</a:documentation>
+    <element name="header">
+      <interleave>
+        <ref name="header.inner"/>
+        <ref name="header.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="header.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <optional>
+        <choice>
+          <ref name="common.attrs.aria.implicit.banner"/>
+          <ref name="common.attrs.aria.landmark.banner"/>
+          <ref name="common.attrs.aria.role.group"/>
+          <ref name="common.attrs.aria.role.presentation"/>
+          <ref name="common.attrs.aria.role.doc-footnote"/>
+        </choice>
+      </optional>
+    </interleave>
+  </define>
+  <define name="header.inner">
+    <ref name="common.inner.flow"/>
+  </define>
+  <define name="common.elem.flow" combine="choice">
+    <ref name="header.elem"/>
+  </define>
+  <define name="footer.elem">
+    <a:documentation>Footer: &lt;footer&gt;</a:documentation>
+    <element name="footer">
+      <interleave>
+        <ref name="footer.inner"/>
+        <ref name="footer.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="footer.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <optional>
+        <choice>
+          <ref name="common.attrs.aria.implicit.contentinfo"/>
+          <ref name="common.attrs.aria.landmark.contentinfo"/>
+          <ref name="common.attrs.aria.role.group"/>
+          <ref name="common.attrs.aria.role.presentation"/>
+          <ref name="common.attrs.aria.role.doc-footnote"/>
+        </choice>
+      </optional>
+    </interleave>
+  </define>
+  <define name="footer.inner">
+    <ref name="common.inner.flow"/>
+  </define>
+  <define name="common.elem.flow" combine="choice">
+    <ref name="footer.elem"/>
+  </define>
+  <define name="main.elem">
+    <a:documentation>main content: &lt;main&gt;</a:documentation>
+    <element name="main">
+      <interleave>
+        <ref name="main.inner"/>
+        <ref name="main.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="main.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <optional>
+        <choice>
+          <ref name="common.attrs.aria.implicit.main"/>
+          <ref name="common.attrs.aria.landmark.main"/>
+        </choice>
+      </optional>
+    </interleave>
+  </define>
+  <define name="main.inner">
+    <ref name="common.inner.flow"/>
+  </define>
+  <define name="common.elem.flow" combine="choice">
+    <ref name="main.elem"/>
+  </define>
+  <define name="search.elem">
+    <a:documentation>Search: &lt;search&gt;</a:documentation>
+    <element name="search">
+      <interleave>
+        <ref name="search.inner"/>
+        <ref name="search.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="search.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <optional>
+        <choice>
+          <ref name="common.attrs.aria.implicit.search"/>
+          <ref name="common.attrs.aria.landmark.search"/>
+          <ref name="common.attrs.aria.landmark.form"/>
+          <ref name="common.attrs.aria.role.group"/>
+          <ref name="common.attrs.aria.role.none"/>
+          <ref name="common.attrs.aria.role.presentation"/>
+          <ref name="common.attrs.aria.role.region"/>
+          <ref name="common.attrs.aria.role.search"/>
+        </choice>
+      </optional>
+    </interleave>
+  </define>
+  <define name="search.inner">
+    <ref name="common.inner.flow"/>
+  </define>
+  <define name="common.elem.flow" combine="choice">
+    <ref name="search.elem"/>
+  </define>
+</grammar>

@@ -64,52 +64,40 @@ export class NCXValidator {
   }
 
   /**
-   * Check for uid element and validate it
+   * Check for dtb:uid meta element and validate it
+   * Note: dtb:uid is recommended but not strictly required by the NCX spec.
+   * The original epubcheck does not report an error if it's missing.
    */
   private checkUid(context: ValidationContext, root: XmlElement, path: string): void {
-    const uidNode = root.get('.//ncx:uid', { ncx: 'http://www.daisy.org/z3986/2005/ncx/' });
+    // Look for <meta name="dtb:uid" content="..."/> in head
+    const uidMeta = root.get(
+      './/ncx:head/ncx:meta[@name="dtb:uid"]',
+      { ncx: 'http://www.daisy.org/z3986/2005/ncx/' },
+    );
 
-    if (!uidNode) {
-      context.messages.push({
-        id: 'NCX-001',
-        severity: 'error',
-        message: 'NCX document must have a uid element',
-        location: { path },
-      });
+    if (!uidMeta) {
+      // dtb:uid is recommended but not required - don't report an error
+      // to match original epubcheck behavior
       return;
     }
 
-    // Get text content from uid element
-    let uidText: string | null = null;
-    try {
-      const uidElement = uidNode as XmlElement;
-      uidText = uidElement.toString();
-    } catch {
-      uidText = null;
-    }
+    // Get content attribute
+    const uidElement = uidMeta as XmlElement;
+    const uidAttr = uidElement.attr('content');
+    const uidContent = uidAttr?.value;
 
-    if (!uidText || uidText.trim() === '') {
+    if (!uidContent || uidContent.trim() === '') {
       context.messages.push({
-        id: 'NCX-001',
-        severity: 'error',
-        message: 'NCX uid element must not be empty',
-        location: { path },
-      });
-      return;
-    }
-
-    // Check uid has no extra whitespace
-    if (uidText !== uidText.trim()) {
-      context.messages.push({
-        id: 'NCX-004',
+        id: 'NCX-003',
         severity: 'warning',
-        message: 'NCX uid element should not contain leading or trailing whitespace',
+        message: 'NCX dtb:uid meta content should not be empty',
         location: { path },
       });
+      return;
     }
 
     // Store uid in context for comparison with OPF
-    context.ncxUid = uidText.trim();
+    context.ncxUid = uidContent.trim();
   }
 
   /**

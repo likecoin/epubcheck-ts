@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Credit: integration adapted from the Nu Html Checker drivers -->
+<grammar ns="http://www.w3.org/1999/xhtml" xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0" xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+  <!-- ##################################################################### -->
+  <include href="common.rng">
+    <a:documentation> RELAX NG Schema for XHTML 5                                       #</a:documentation>
+    <!--
+      #####################################################################
+      
+       XHTML validation based on the schemas from the Nu Html Checker,
+       with the following changes:
+         - datatypes replaced to use the patterns in datatype.rnc
+         - title element not required (a missing title element will be
+           reported as a WARNING in Schematron
+         - allows meta http-equiv in encoding declaration state
+         - allows the border attribute on tables
+         - allow EPUB extensions (epub:type, epub:switch, epub:trigger,
+           ssml:* attributes, etc)
+      
+      #####################################################################
+    -->
+    <a:documentation>Schema Framework &amp; Parameters</a:documentation>
+    <!-- XHTML flavor # -->
+    <define name="XMLonly">
+      <empty/>
+    </define>
+    <define name="HTMLonly">
+      <notAllowed/>
+    </define>
+    <!-- HTML 4 compat # -->
+    <define name="v5only">
+      <empty/>
+    </define>
+  </include>
+  <!-- ##################################################################### -->
+  <start>
+    <a:documentation>Language Definitions</a:documentation>
+    <ref name="html.elem"/>
+  </start>
+  <!--
+    Note: these are too simplistic. The Nu HTML Checker performs
+    a significant part of the checking in its Java-based datatype
+    library.
+  -->
+  <include href="datatypes.rng">
+    <a:documentation>Static datatypes</a:documentation>
+  </include>
+  <include href="meta.rng">
+    <a:documentation>Modules from the Nu HTML Checker</a:documentation>
+    <!--
+      make the title element optional, since one could see the publication title
+      as defining a proper "higher-level protocol"
+      the lack of `title` will however raise a WARNING in a Schematron rule 
+    -->
+    <define name="head.inner">
+      <interleave>
+        <optional>
+          <ref name="title.elem"/>
+        </optional>
+        <optional>
+          <ref name="base.elem"/>
+        </optional>
+        <!-- REVISIT need a non-schema checker or Schematron -->
+        <ref name="common.inner.metadata"/>
+      </interleave>
+      <!-- Limit encoding decl position in Schematron -->
+    </define>
+    <!--
+      Allow http-equiv in encoding declaration state in XHTML too
+      (W3C allows that, but not WHATWG)
+    -->
+    <define name="meta.http-equiv.content-type.elem">
+      <element name="meta">
+        <interleave>
+          <ref name="meta.inner"/>
+          <ref name="meta.http-equiv.content-type.attrs"/>
+        </interleave>
+      </element>
+    </define>
+    <!--
+      Make http-equiv case-insensitive
+      This is an ugly hack. Case-insensitiveness would better be solved
+      at parsing time.
+    -->
+    <define name="meta.http-equiv.attrs.http-equiv.content-type">
+      <attribute name="http-equiv">
+        <data type="string">
+          <param name="pattern">[cC][oO][nN][tT][eE][nN][tT]-[tT][yY][pP][eE]</param>
+        </data>
+      </attribute>
+    </define>
+    <define name="meta.http-equiv.attrs.http-equiv.refresh">
+      <attribute name="http-equiv">
+        <data type="string">
+          <param name="pattern">[rR][eE][fF][rR][eE][sS][hH]</param>
+        </data>
+      </attribute>
+    </define>
+    <define name="meta.http-equiv.attrs.http-equiv.default-style">
+      <attribute name="http-equiv">
+        <data type="string">
+          <param name="pattern">[dD][eE][fF][aA][uU][lL][tT]-[sS][tT][yY][lL][eE]</param>
+        </data>
+      </attribute>
+    </define>
+    <define name="meta.http-equiv.attrs.http-equiv.content-security-policy">
+      <attribute name="http-equiv">
+        <data type="string">
+          <param name="pattern">[cC][oO][nN][tT][eE][nN][tT]-[sS][eE][cC][uU][rR][iI][tT][yY]-[pP][oO][lL][iI][cC][yY]</param>
+        </data>
+      </attribute>
+    </define>
+    <define name="meta.http-equiv.attrs.http-equiv.x-ua-compatible">
+      <attribute name="http-equiv">
+        <data type="string">
+          <param name="pattern">[xX]-[uU][aA]-[cC][oO][mM][pP][aA][tT][iI][bB][lL][eE]</param>
+        </data>
+      </attribute>
+    </define>
+  </include>
+  <include href="phrase.rng"/>
+  <include href="block.rng"/>
+  <include href="sectional.rng"/>
+  <include href="structural.rng"/>
+  <include href="revision.rng"/>
+  <include href="embed.rng"/>
+  <include href="ruby.rng"/>
+  <include href="media.rng"/>
+  <include href="core-scripting.rng"/>
+  <include href="tables.rng"/>
+  <include href="form-datatypes.rng"/>
+  <include href="web-forms.rng"/>
+  <include href="web-forms2.rng"/>
+  <include href="applications.rng"/>
+  <include href="data.rng"/>
+  <include href="aria.rng"/>
+  <include href="microdata.rng"/>
+  <include href="web-components.rng"/>
+  <include href="rdfa.rng"/>
+  <!-- More tweaks for W3C-allowed features -->
+  <define name="table.attrs" combine="interleave">
+    <optional>
+      <attribute name="border">
+        <choice>
+          <value/>
+          <value>1</value>
+        </choice>
+      </attribute>
+    </optional>
+  </define>
+</grammar>

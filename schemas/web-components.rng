@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0" xmlns:c="http://n.validator.nu/custom-elements/" xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="">
+  <!-- ##################################################################### -->
+  <define name="template.elem">
+    <a:documentation> RELAX NG Schema for HTML 5: Web Components</a:documentation>
+    <!-- ##################################################################### -->
+    <a:documentation>Templates: &lt;template&gt;</a:documentation>
+    <element name="template">
+      <interleave>
+        <ref name="template.inner"/>
+        <ref name="template.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="template.attrs">
+    <ref name="common.attrs"/>
+  </define>
+  <define name="template.attrs.shadowrootmode">
+    <attribute name="shadowrootmode">
+      <choice>
+        <value>open</value>
+        <value>closed</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="template.attrs.shadowrootdelegatesfocus">
+    <attribute name="shadowrootdelegatesfocus">
+      <choice>
+        <value>true</value>
+        <value>false</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="template.attrs.shadowrootclonable">
+    <attribute name="shadowrootclonable">
+      <choice>
+        <value>true</value>
+        <value>false</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="template.attrs.shadowrootserializable">
+    <attribute name="shadowrootserializable">
+      <choice>
+        <value>true</value>
+        <value>false</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="template.attrs.shadowrootcustomelementregistry">
+    <attribute name="shadowrootcustomelementregistry">
+      <choice>
+        <value>true</value>
+        <value>false</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="template.inner">
+    <choice>
+      <ref name="common.inner.metadata"/>
+      <ref name="common.inner.flow"/>
+      <ref name="ol.inner"/>
+      <ref name="ul.inner"/>
+      <ref name="dl.inner"/>
+      <ref name="figure.inner"/>
+      <ref name="ruby.inner"/>
+      <ref name="object.inner.flow"/>
+      <ref name="object.inner.phrasing"/>
+      <ref name="video.inner.flow"/>
+      <ref name="video.inner.phrasing"/>
+      <ref name="audio.inner.flow"/>
+      <ref name="audio.inner.phrasing"/>
+      <ref name="table.inner"/>
+      <ref name="colgroup.inner"/>
+      <ref name="thead.inner"/>
+      <ref name="tbody.inner"/>
+      <ref name="tfoot.inner"/>
+      <ref name="tr.inner"/>
+      <ref name="fieldset.inner"/>
+      <ref name="select.inner"/>
+      <ref name="details.inner"/>
+    </choice>
+  </define>
+  <define name="common.elem.metadata" combine="choice">
+    <ref name="template.elem"/>
+  </define>
+  <define name="common.elem.phrasing" combine="choice">
+    <ref name="template.elem"/>
+  </define>
+  <define name="common.elem.script-supporting" combine="choice">
+    <ref name="template.elem"/>
+  </define>
+  <!-- also allow <script> wherever <template> is allowed -->
+  <define name="common.elem.script-supporting" combine="choice">
+    <ref name="script.elem"/>
+  </define>
+  <define name="common.elem.flow" combine="choice">
+    <a:documentation>Custom elements: &lt;foo-bar&gt;</a:documentation>
+    <element>
+      <nsName ns="http://n.validator.nu/custom-elements/"/>
+      <interleave>
+        <ref name="common.inner.transparent.flow"/>
+        <zeroOrMore>
+          <ref name="attr.any"/>
+        </zeroOrMore>
+      </interleave>
+    </element>
+  </define>
+  <define name="common.elem.phrasing" combine="choice">
+    <element>
+      <nsName ns="http://n.validator.nu/custom-elements/"/>
+      <interleave>
+        <ref name="common.inner.phrasing"/>
+        <zeroOrMore>
+          <ref name="attr.any"/>
+        </zeroOrMore>
+      </interleave>
+    </element>
+  </define>
+  <define name="attr.any">
+    <attribute>
+      <anyName/>
+    </attribute>
+  </define>
+  <define name="common.attrs.other" combine="interleave">
+    <a:documentation>The "is" attribute</a:documentation>
+    <optional>
+      <attribute name="is">
+        <ref name="common.data.custom.element.name"/>
+      </attribute>
+    </optional>
+  </define>
+  <define name="slot.elem.flow">
+    <a:documentation>Slot: &lt;slot&gt;</a:documentation>
+    <element name="slot">
+      <interleave>
+        <ref name="slot.inner.flow"/>
+        <ref name="slot.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="slot.elem.phrasing">
+    <element name="slot">
+      <interleave>
+        <ref name="slot.inner.phrasing"/>
+        <ref name="slot.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="slot.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <optional>
+        <ref name="slot.attrs.name"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.aria"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="slot.attrs.name">
+    <attribute name="name">
+      <data type="string"/>
+    </attribute>
+  </define>
+  <define name="slot.inner.flow">
+    <ref name="common.inner.transparent.flow"/>
+  </define>
+  <define name="slot.inner.phrasing">
+    <ref name="common.inner.phrasing"/>
+  </define>
+  <define name="common.elem.flow" combine="choice">
+    <ref name="slot.elem.flow"/>
+  </define>
+  <define name="common.elem.phrasing" combine="choice">
+    <ref name="slot.elem.phrasing"/>
+  </define>
+  <define name="common.attrs.other" combine="interleave">
+    <a:documentation>The "slot" attribute</a:documentation>
+    <optional>
+      <attribute name="slot"/>
+    </optional>
+  </define>
+</grammar>

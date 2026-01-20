@@ -1,0 +1,3355 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0" xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="">
+  <!-- ##################################################################### -->
+  <define name="aria.global">
+    <a:documentation>	RELAX NG Schema for HTML 5: Accessible Rich Internet Applications #</a:documentation>
+    <!--
+      #####################################################################
+      
+      history: http://hsivonen.iki.fi/aria-html5-bis/
+    -->
+    <!-- ##################################################################### -->
+    <a:documentation>ARIA</a:documentation>
+    <a:documentation>Global states and properties</a:documentation>
+    <interleave>
+      <optional>
+        <ref name="aria.prop.atomic"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.busy"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.controls"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.current"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.describedby"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.details"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.disabled"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.errormessage"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.flowto"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.haspopup"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.hidden"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.invalid"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.keyshortcuts"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.label"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.labelledby"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.live"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.owns"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.relevant"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.roledescription"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.description"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.other" combine="interleave">
+    <optional>
+      <ref name="aria.global"/>
+    </optional>
+  </define>
+  <define name="common.attrs.aria.implicit.button" combine="choice">
+    <a:documentation>States and Properties for Native Roles</a:documentation>
+    <interleave>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.pressed"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.aria.implicit.cell" combine="choice">
+    <interleave>
+      <optional>
+        <ref name="aria.prop.colspan"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.rowspan"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.rowindex"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.aria.implicit.checkbox" combine="choice">
+    <optional>
+      <ref name="aria.state.checked"/>
+    </optional>
+  </define>
+  <define name="common.attrs.aria.implicit.combobox" combine="choice">
+    <interleave>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.autocomplete"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.required"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.activedescendant"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.readonly"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.aria.implicit.definition" combine="choice">
+    <optional>
+      <ref name="aria.state.expanded"/>
+    </optional>
+  </define>
+  <define name="common.attrs.aria.implicit.dialog" combine="choice">
+    <optional>
+      <ref name="aria.state.expanded"/>
+    </optional>
+  </define>
+  <define name="common.attrs.aria.implicit.document" combine="choice">
+    <optional>
+      <ref name="aria.state.expanded"/>
+    </optional>
+  </define>
+  <define name="common.attrs.aria.implicit.figure" combine="choice">
+    <optional>
+      <ref name="aria.state.expanded"/>
+    </optional>
+  </define>
+  <define name="common.attrs.aria.implicit.form" combine="choice">
+    <optional>
+      <ref name="aria.state.expanded"/>
+    </optional>
+  </define>
+  <define name="common.attrs.aria.implicit.group" combine="choice">
+    <interleave>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.activedescendant"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.aria.implicit.heading" combine="choice">
+    <interleave>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.level"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.aria.implicit.img" combine="choice">
+    <optional>
+      <ref name="aria.state.expanded"/>
+    </optional>
+  </define>
+  <define name="common.attrs.aria.implicit.link" combine="choice">
+    <optional>
+      <ref name="aria.state.expanded"/>
+    </optional>
+  </define>
+  <define name="common.attrs.aria.implicit.listbox" combine="choice">
+    <interleave>
+      <optional>
+        <ref name="aria.prop.multiselectable"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.required"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.activedescendant"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.aria.implicit.listitem" combine="choice">
+    <interleave>
+      <optional>
+        <ref name="aria.prop.level"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.posinset"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.setsize"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.aria.implicit.math" combine="choice">
+    <optional>
+      <ref name="aria.state.expanded"/>
+    </optional>
+  </define>
+  <define name="common.attrs.aria.implicit.option" combine="choice">
+    <interleave>
+      <optional>
+        <ref name="aria.prop.posinset"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.setsize"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.checked"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.selected"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.aria.implicit.progressbar" combine="choice">
+    <interleave>
+      <optional>
+        <ref name="aria.prop.valuemax"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.valuemin"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.valuenow"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.valuetext"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.aria.implicit.radio" combine="choice">
+    <interleave>
+      <optional>
+        <ref name="aria.prop.posinset"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.setsize"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.checked"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.selected"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.aria.implicit.row" combine="choice">
+    <interleave>
+      <optional>
+        <ref name="aria.prop.level"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.state.selected"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.prop.activedescendant"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.aria.implicit.rowgroup" combine="choice">
+    <interleave>
+      <optional>
+        <ref name="aria.prop.activedescendant"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.aria.implicit.searchbox" combine="choice">
+    <interleave>
+      <optional>
+        <ref name="aria.prop.activedescendant"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.autocomplete"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.multiline"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.readonly"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.required"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.aria.implicit.separator" combine="choice">
+    <interleave>
+      <optional>
+        <ref name="aria.prop.valuemax"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.valuemin"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.valuenow"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.valuetext"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.orientation"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.aria.implicit.slider" combine="choice">
+    <interleave>
+      <optional>
+        <ref name="aria.prop.valuemax"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.valuemin"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.valuenow"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.valuetext"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.orientation"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.aria.implicit.spinbutton" combine="choice">
+    <interleave>
+      <optional>
+        <ref name="aria.prop.valuemax"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.valuemin"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.valuenow"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.valuetext"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.required"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.aria.implicit.table" combine="choice">
+    <interleave>
+      <optional>
+        <ref name="aria.prop.colcount"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.rowcount"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.aria.implicit.term" combine="choice">
+    <optional>
+      <ref name="aria.state.expanded"/>
+    </optional>
+  </define>
+  <define name="common.attrs.aria.implicit.textbox" combine="choice">
+    <interleave>
+      <optional>
+        <ref name="aria.prop.activedescendant"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.autocomplete"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.multiline"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.readonly"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.required"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.aria.implicit.toolbar" combine="choice">
+    <interleave>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.activedescendant"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.aria.implicit.column-or-row-header" combine="choice">
+    <interleave>
+      <optional>
+        <ref name="aria.prop.sort"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.readonly"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.required"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.colspan"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.colindex"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.rowspan"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.rowindex"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.selected"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <!--
+    common.attrs.aria.implicit.select |=
+    		(	aria.state.invalid?
+    	&	aria.prop.required?
+    	&	aria.prop.atomic?
+    	&	aria.state.busy?
+    	&	aria.prop.channel?
+    	&	aria.prop.controls?
+    	&	aria.prop.live?
+    	&	aria.prop.relevant?
+    	)
+  -->
+  <!--
+    section
+      |
+      |_ region
+           |
+           |_ article
+           |
+           |_ landmark
+           |     |_ banner
+           |     |_ complementary
+           |     |_ contentinfo
+           |     |_ main
+           |     |_ navigation
+           |
+           |_ list
+           |
+           |_ status
+  -->
+  <define name="common.attrs.aria.implicit.section" combine="choice">
+    <optional>
+      <ref name="aria.state.expanded"/>
+    </optional>
+  </define>
+  <define name="common.attrs.aria.implicit.region" combine="choice">
+    <ref name="common.attrs.aria.implicit.section"/>
+  </define>
+  <define name="common.attrs.aria.implicit.article" combine="choice">
+    <ref name="common.attrs.aria.implicit.region"/>
+  </define>
+  <define name="common.attrs.aria.implicit.landmark" combine="choice">
+    <ref name="common.attrs.aria.implicit.region"/>
+  </define>
+  <define name="common.attrs.aria.implicit.list" combine="choice">
+    <ref name="common.attrs.aria.implicit.region"/>
+  </define>
+  <define name="common.attrs.aria.implicit.status" combine="choice">
+    <ref name="common.attrs.aria.implicit.region"/>
+  </define>
+  <define name="common.attrs.aria.implicit.banner" combine="choice">
+    <ref name="common.attrs.aria.implicit.landmark"/>
+  </define>
+  <define name="common.attrs.aria.implicit.complementary" combine="choice">
+    <ref name="common.attrs.aria.implicit.landmark"/>
+  </define>
+  <define name="common.attrs.aria.implicit.contentinfo" combine="choice">
+    <ref name="common.attrs.aria.implicit.landmark"/>
+  </define>
+  <define name="common.attrs.aria.implicit.main" combine="choice">
+    <ref name="common.attrs.aria.implicit.landmark"/>
+  </define>
+  <define name="common.attrs.aria.implicit.navigation" combine="choice">
+    <ref name="common.attrs.aria.implicit.landmark"/>
+  </define>
+  <define name="common.attrs.aria.implicit.search" combine="choice">
+    <ref name="common.attrs.aria.implicit.landmark"/>
+  </define>
+  <!-- ##################################################################### -->
+  <define name="aria.state.busy">
+    <a:documentation>States</a:documentation>
+    <a:documentation>busy</a:documentation>
+    <attribute name="aria-busy">
+      <choice>
+        <value type="string">true</value>
+        <value type="string">false</value>
+      </choice>
+      <!-- default -->
+    </attribute>
+  </define>
+  <define name="aria.state.current">
+    <a:documentation>current</a:documentation>
+    <attribute name="aria-current">
+      <choice>
+        <value type="string">page</value>
+        <value type="string">step</value>
+        <value type="string">location</value>
+        <value type="string">date</value>
+        <value type="string">time</value>
+        <value type="string">true</value>
+        <value type="string">false</value>
+      </choice>
+      <!-- default -->
+    </attribute>
+  </define>
+  <define name="aria.state.checked">
+    <a:documentation>checked</a:documentation>
+    <attribute name="aria-checked">
+      <choice>
+        <value type="string">true</value>
+        <value type="string">false</value>
+        <value type="string">mixed</value>
+        <value type="string">undefined</value>
+      </choice>
+      <!-- default -->
+    </attribute>
+  </define>
+  <define name="aria.state.disabled">
+    <a:documentation>disabled</a:documentation>
+    <attribute name="aria-disabled">
+      <choice>
+        <value type="string">true</value>
+        <value type="string">false</value>
+      </choice>
+      <!-- default -->
+    </attribute>
+  </define>
+  <define name="aria.state.expanded">
+    <a:documentation>expanded</a:documentation>
+    <attribute name="aria-expanded">
+      <choice>
+        <value type="string">true</value>
+        <value type="string">false</value>
+        <value type="string">undefined</value>
+      </choice>
+      <!-- default -->
+    </attribute>
+  </define>
+  <define name="aria.state.hidden">
+    <a:documentation>hidden</a:documentation>
+    <attribute name="aria-hidden">
+      <choice>
+        <value type="string">true</value>
+        <value type="string">false</value>
+      </choice>
+      <!-- default -->
+    </attribute>
+  </define>
+  <define name="aria.state.invalid">
+    <a:documentation>invalid</a:documentation>
+    <attribute name="aria-invalid">
+      <choice>
+        <value type="string">true</value>
+        <value type="string">false</value>
+        <!-- default -->
+        <value type="string">grammar</value>
+        <value type="string">spelling</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="aria.state.pressed">
+    <a:documentation>pressed</a:documentation>
+    <attribute name="aria-pressed">
+      <choice>
+        <value type="string">true</value>
+        <value type="string">false</value>
+        <value type="string">mixed</value>
+        <value type="string">undefined</value>
+      </choice>
+      <!-- default -->
+    </attribute>
+  </define>
+  <define name="aria.state.selected">
+    <a:documentation>selected</a:documentation>
+    <attribute name="aria-selected">
+      <choice>
+        <value type="string">true</value>
+        <value type="string">false</value>
+        <value type="string">undefined</value>
+      </choice>
+      <!-- default -->
+    </attribute>
+  </define>
+  <!-- ##################################################################### -->
+  <define name="aria.prop.activedescendant">
+    <a:documentation>Properties</a:documentation>
+    <a:documentation>activedescendant</a:documentation>
+    <attribute name="aria-activedescendant">
+      <ref name="common.data.idref"/>
+      <!-- REVISIT add Schematron check -->
+    </attribute>
+  </define>
+  <define name="aria.prop.atomic">
+    <a:documentation>atomic</a:documentation>
+    <attribute name="aria-atomic">
+      <choice>
+        <value type="string">true</value>
+        <value type="string">false</value>
+      </choice>
+      <!-- default -->
+    </attribute>
+  </define>
+  <define name="aria.prop.autocomplete">
+    <a:documentation>autocomplete</a:documentation>
+    <attribute name="aria-autocomplete">
+      <choice>
+        <value type="string">inline</value>
+        <value type="string">list</value>
+        <value type="string">both</value>
+        <value type="string">none</value>
+      </choice>
+      <!-- default -->
+    </attribute>
+  </define>
+  <define name="aria.prop.colcount">
+    <a:documentation>colcount</a:documentation>
+    <attribute name="aria-colcount">
+      <choice>
+        <ref name="common.data.integer.non-negative"/>
+        <value type="string">-1</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="aria.prop.colindex">
+    <a:documentation>colindex</a:documentation>
+    <attribute name="aria-colindex">
+      <ref name="common.data.integer.positive"/>
+    </attribute>
+  </define>
+  <define name="aria.prop.colspan">
+    <a:documentation>colspan</a:documentation>
+    <attribute name="aria-colspan">
+      <ref name="common.data.integer.positive"/>
+    </attribute>
+  </define>
+  <define name="aria.prop.controls">
+    <a:documentation>controls</a:documentation>
+    <attribute name="aria-controls">
+      <ref name="common.data.idrefs"/>
+      <!-- REVISIT add Schematron check -->
+    </attribute>
+  </define>
+  <define name="aria.prop.describedby">
+    <a:documentation>describedby</a:documentation>
+    <attribute name="aria-describedby">
+      <ref name="common.data.idrefs"/>
+      <!-- REVISIT add Schematron check -->
+    </attribute>
+  </define>
+  <define name="aria.prop.description">
+    <a:documentation>description</a:documentation>
+    <attribute name="aria-description">
+      <data type="string"/>
+    </attribute>
+  </define>
+  <define name="aria.prop.details">
+    <a:documentation>details</a:documentation>
+    <attribute name="aria-details">
+      <ref name="common.data.idref"/>
+    </attribute>
+  </define>
+  <define name="aria.prop.errormessage">
+    <a:documentation>errormessage</a:documentation>
+    <attribute name="aria-errormessage">
+      <ref name="common.data.idref"/>
+    </attribute>
+  </define>
+  <define name="aria.prop.flowto">
+    <a:documentation>flowto</a:documentation>
+    <attribute name="aria-flowto">
+      <ref name="common.data.idrefs"/>
+      <!-- REVISIT add Schematron check -->
+    </attribute>
+  </define>
+  <define name="aria.prop.haspopup">
+    <a:documentation>haspopup</a:documentation>
+    <attribute name="aria-haspopup">
+      <choice>
+        <value type="string">true</value>
+        <!-- REVISIT check owns or descendant -->
+        <value type="string">false</value>
+        <!-- default -->
+        <value type="string">menu</value>
+        <value type="string">listbox</value>
+        <value type="string">tree</value>
+        <value type="string">grid</value>
+        <value type="string">dialog</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="aria.prop.keyshortcuts">
+    <a:documentation>keyshortcuts</a:documentation>
+    <attribute name="aria-keyshortcuts">
+      <data type="string"/>
+    </attribute>
+  </define>
+  <define name="aria.prop.label">
+    <a:documentation>label</a:documentation>
+    <attribute name="aria-label">
+      <data type="string"/>
+    </attribute>
+  </define>
+  <define name="aria.prop.labelledby">
+    <a:documentation>labelledby</a:documentation>
+    <attribute name="aria-labelledby">
+      <ref name="common.data.idrefs"/>
+      <!-- REVISIT add Schematron check -->
+    </attribute>
+  </define>
+  <define name="aria.prop.level">
+    <a:documentation>level</a:documentation>
+    <attribute name="aria-level">
+      <ref name="common.data.integer.positive"/>
+    </attribute>
+  </define>
+  <define name="aria.prop.live">
+    <a:documentation>live</a:documentation>
+    <attribute name="aria-live">
+      <choice>
+        <value type="string">off</value>
+        <!-- default -->
+        <value type="string">polite</value>
+        <value type="string">assertive</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="aria.prop.modal">
+    <a:documentation>modal</a:documentation>
+    <attribute name="aria-modal">
+      <choice>
+        <value type="string">true</value>
+        <value type="string">false</value>
+      </choice>
+      <!-- default -->
+    </attribute>
+  </define>
+  <define name="aria.prop.multiline">
+    <a:documentation>multiline</a:documentation>
+    <attribute name="aria-multiline">
+      <choice>
+        <value type="string">true</value>
+        <value type="string">false</value>
+      </choice>
+      <!-- default -->
+    </attribute>
+  </define>
+  <define name="aria.prop.multiselectable">
+    <a:documentation>multiselectable</a:documentation>
+    <attribute name="aria-multiselectable">
+      <choice>
+        <value type="string">true</value>
+        <value type="string">false</value>
+      </choice>
+      <!-- default -->
+    </attribute>
+  </define>
+  <define name="aria.prop.orientation">
+    <a:documentation>orientation</a:documentation>
+    <attribute name="aria-orientation">
+      <choice>
+        <value type="string">vertical</value>
+        <value type="string">horizontal</value>
+        <!-- default -->
+        <value type="string">undefined</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="aria.prop.owns">
+    <a:documentation>owns</a:documentation>
+    <attribute name="aria-owns">
+      <ref name="common.data.idrefs"/>
+      <!-- REVISIT add Schematron check -->
+    </attribute>
+  </define>
+  <define name="aria.prop.placeholder">
+    <a:documentation>placeholder</a:documentation>
+    <attribute name="aria-placeholder">
+      <data type="string"/>
+    </attribute>
+  </define>
+  <define name="aria.prop.posinset">
+    <a:documentation>posinset</a:documentation>
+    <attribute name="aria-posinset">
+      <ref name="common.data.integer.positive"/>
+    </attribute>
+  </define>
+  <define name="aria.prop.readonly">
+    <a:documentation>readonly</a:documentation>
+    <attribute name="aria-readonly">
+      <choice>
+        <value type="string">true</value>
+        <value type="string">false</value>
+      </choice>
+      <!-- default -->
+    </attribute>
+  </define>
+  <define name="common.attrs.aria.prop.readonly" combine="choice">
+    <ref name="aria.prop.readonly"/>
+  </define>
+  <define name="aria.prop.relevant">
+    <a:documentation>relevant</a:documentation>
+    <attribute name="aria-relevant">
+      <choice>
+        <value>all</value>
+        <list>
+          <value type="string">additions</value>
+          <optional>
+            <value type="string">removals</value>
+          </optional>
+          <optional>
+            <value type="string">text</value>
+          </optional>
+        </list>
+        <list>
+          <value type="string">additions</value>
+          <optional>
+            <value type="string">text</value>
+          </optional>
+          <optional>
+            <value type="string">removals</value>
+          </optional>
+        </list>
+        <list>
+          <value type="string">removals</value>
+          <optional>
+            <value type="string">additions</value>
+          </optional>
+          <optional>
+            <value type="string">text</value>
+          </optional>
+        </list>
+        <list>
+          <value type="string">removals</value>
+          <optional>
+            <value type="string">text</value>
+          </optional>
+          <optional>
+            <value type="string">additions</value>
+          </optional>
+        </list>
+        <list>
+          <value type="string">text</value>
+          <optional>
+            <value type="string">additions</value>
+          </optional>
+          <optional>
+            <value type="string">removals</value>
+          </optional>
+        </list>
+        <list>
+          <value type="string">text</value>
+          <optional>
+            <value type="string">removals</value>
+          </optional>
+          <optional>
+            <value type="string">additions</value>
+          </optional>
+        </list>
+      </choice>
+    </attribute>
+  </define>
+  <define name="aria.prop.required">
+    <a:documentation>required</a:documentation>
+    <attribute name="aria-required">
+      <choice>
+        <value type="string">true</value>
+        <value type="string">false</value>
+      </choice>
+      <!-- default -->
+    </attribute>
+  </define>
+  <define name="aria.prop.roledescription">
+    <a:documentation>roledescription</a:documentation>
+    <attribute name="aria-roledescription">
+      <data type="string"/>
+    </attribute>
+  </define>
+  <define name="aria.prop.rowcount">
+    <a:documentation>rowcount</a:documentation>
+    <attribute name="aria-rowcount">
+      <choice>
+        <ref name="common.data.integer.non-negative"/>
+        <value type="string">-1</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="aria.prop.rowindex">
+    <a:documentation>rowindex</a:documentation>
+    <attribute name="aria-rowindex">
+      <ref name="common.data.integer.positive"/>
+    </attribute>
+  </define>
+  <define name="aria.prop.rowspan">
+    <a:documentation>rowspan</a:documentation>
+    <attribute name="aria-rowspan">
+      <ref name="common.data.integer.positive"/>
+    </attribute>
+  </define>
+  <define name="aria.prop.setsize">
+    <a:documentation>setsize</a:documentation>
+    <attribute name="aria-setsize">
+      <choice>
+        <ref name="common.data.integer.non-negative"/>
+        <value type="string">-1</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="aria.prop.sort">
+    <a:documentation>sort</a:documentation>
+    <attribute name="aria-sort">
+      <choice>
+        <value type="string">ascending</value>
+        <value type="string">descending</value>
+        <value type="string">none</value>
+        <!-- default -->
+        <value type="string">other</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="aria.prop.valuemax">
+    <a:documentation>valuemax</a:documentation>
+    <attribute name="aria-valuemax">
+      <ref name="common.data.float"/>
+      <!-- REVISIT -->
+    </attribute>
+  </define>
+  <define name="aria.prop.valuemin">
+    <a:documentation>valuemin</a:documentation>
+    <attribute name="aria-valuemin">
+      <ref name="common.data.float"/>
+      <!-- REVISIT -->
+    </attribute>
+  </define>
+  <define name="aria.prop.valuenow">
+    <a:documentation>valuenow</a:documentation>
+    <attribute name="aria-valuenow">
+      <ref name="common.data.float"/>
+      <!-- REVISIT -->
+    </attribute>
+  </define>
+  <define name="aria.prop.valuetext">
+    <a:documentation>valuetext</a:documentation>
+    <attribute name="aria-valuetext">
+      <data type="string"/>
+    </attribute>
+  </define>
+  <!-- ##################################################################### -->
+  <define name="aria.alert">
+    <a:documentation>Roles</a:documentation>
+    <a:documentation>alert</a:documentation>
+    <interleave>
+      <ref name="aria.role.alert"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.alert">
+    <attribute name="role">
+      <value type="string">alert</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.alert"/>
+  </define>
+  <define name="common.attrs.aria.role.alert" combine="choice">
+    <ref name="aria.alert"/>
+  </define>
+  <define name="aria.alertdialog">
+    <a:documentation>alertdialog</a:documentation>
+    <interleave>
+      <ref name="aria.role.alertdialog"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.modal"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.alertdialog">
+    <attribute name="role">
+      <value type="string">alertdialog</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.alertdialog"/>
+  </define>
+  <define name="common.attrs.aria.role.alertdialog" combine="choice">
+    <ref name="aria.alertdialog"/>
+  </define>
+  <define name="aria.application">
+    <a:documentation>application</a:documentation>
+    <interleave>
+      <ref name="aria.role.application"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.application">
+    <attribute name="role">
+      <value type="string">application</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.application"/>
+  </define>
+  <define name="common.attrs.aria.role.application" combine="choice">
+    <ref name="aria.application"/>
+  </define>
+  <define name="aria.article">
+    <a:documentation>article</a:documentation>
+    <interleave>
+      <ref name="aria.role.article"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.article">
+    <attribute name="role">
+      <value type="string">article</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.article"/>
+  </define>
+  <define name="common.attrs.aria.landmark.article" combine="choice">
+    <ref name="aria.article"/>
+  </define>
+  <define name="aria.banner">
+    <a:documentation>banner</a:documentation>
+    <interleave>
+      <ref name="aria.role.banner"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.banner">
+    <attribute name="role">
+      <value type="string">banner</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.banner"/>
+  </define>
+  <define name="common.attrs.aria.landmark.banner" combine="choice">
+    <ref name="aria.banner"/>
+  </define>
+  <define name="aria.button">
+    <a:documentation>button</a:documentation>
+    <interleave>
+      <ref name="aria.role.button"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.pressed"/>
+      </optional>
+    </interleave>
+    <!-- not inherited -->
+  </define>
+  <define name="aria.role.button">
+    <attribute name="role">
+      <value type="string">button</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.button"/>
+  </define>
+  <define name="common.attrs.aria.role.button" combine="choice">
+    <ref name="aria.button"/>
+  </define>
+  <define name="aria.cell">
+    <a:documentation>cell</a:documentation>
+    <interleave>
+      <ref name="aria.role.cell"/>
+      <optional>
+        <ref name="aria.prop.colspan"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.colindex"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.rowspan"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.rowindex"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.cell">
+    <attribute name="role">
+      <value type="string">cell</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.cell"/>
+  </define>
+  <define name="common.attrs.aria.role.cell" combine="choice">
+    <ref name="aria.cell"/>
+  </define>
+  <define name="aria.checkbox">
+    <a:documentation>checkbox</a:documentation>
+    <interleave>
+      <ref name="aria.role.checkbox"/>
+      <ref name="aria.state.checked"/>
+    </interleave>
+    <!-- required! -->
+  </define>
+  <define name="aria.role.checkbox">
+    <attribute name="role">
+      <value type="string">checkbox</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.checkbox"/>
+  </define>
+  <define name="common.attrs.aria.role.checkbox" combine="choice">
+    <ref name="aria.checkbox"/>
+  </define>
+  <!-- columnheader -->
+  <define name="aria.columnheader">
+    <interleave>
+      <ref name="aria.role.columnheader"/>
+      <optional>
+        <ref name="aria.prop.sort"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.prop.readonly"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.state.selected"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.required"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.colspan"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.rowspan"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.rowindex"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.columnheader">
+    <attribute name="role">
+      <value type="string">columnheader</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.columnheader"/>
+  </define>
+  <define name="aria.combobox">
+    <a:documentation>combobox</a:documentation>
+    <!-- 	aria.prop.controls TODO: required! add check to Assertions -->
+    <interleave>
+      <ref name="aria.role.combobox"/>
+      <optional>
+        <ref name="aria.prop.activedescendant"/>
+      </optional>
+      <ref name="aria.state.expanded"/>
+      <optional>
+        <!-- required! -->
+        <ref name="aria.prop.autocomplete"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.required"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.readonly"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.orientation"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.combobox">
+    <attribute name="role">
+      <value type="string">combobox</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.combobox"/>
+  </define>
+  <define name="common.attrs.aria.role.combobox" combine="choice">
+    <ref name="aria.combobox"/>
+  </define>
+  <define name="aria.complementary">
+    <a:documentation>complementary</a:documentation>
+    <interleave>
+      <ref name="aria.role.complementary"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.complementary">
+    <attribute name="role">
+      <value type="string">complementary</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.complementary"/>
+  </define>
+  <define name="common.attrs.aria.landmark.complementary" combine="choice">
+    <ref name="aria.complementary"/>
+  </define>
+  <define name="aria.contentinfo">
+    <a:documentation>contentinfo</a:documentation>
+    <interleave>
+      <ref name="aria.role.contentinfo"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.contentinfo">
+    <attribute name="role">
+      <value type="string">contentinfo</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.contentinfo"/>
+  </define>
+  <define name="common.attrs.aria.landmark.contentinfo" combine="choice">
+    <ref name="aria.contentinfo"/>
+  </define>
+  <define name="aria.definition">
+    <a:documentation>definition</a:documentation>
+    <interleave>
+      <ref name="aria.role.definition"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.definition">
+    <attribute name="role">
+      <value type="string">definition</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.definition"/>
+  </define>
+  <define name="common.attrs.aria.role.definition" combine="choice">
+    <ref name="aria.definition"/>
+  </define>
+  <define name="aria.dialog">
+    <a:documentation>dialog</a:documentation>
+    <interleave>
+      <ref name="aria.role.dialog"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.modal"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.dialog">
+    <attribute name="role">
+      <value type="string">dialog</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.dialog"/>
+  </define>
+  <define name="common.attrs.aria.role.dialog" combine="choice">
+    <ref name="aria.dialog"/>
+  </define>
+  <define name="aria.directory">
+    <a:documentation>directory</a:documentation>
+    <interleave>
+      <ref name="aria.role.directory"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.directory">
+    <attribute name="role">
+      <value type="string">directory</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.directory"/>
+  </define>
+  <define name="common.attrs.aria.role.directory" combine="choice">
+    <ref name="aria.directory"/>
+  </define>
+  <define name="aria.document">
+    <a:documentation>document</a:documentation>
+    <interleave>
+      <ref name="aria.role.document"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.document">
+    <attribute name="role">
+      <value type="string">document</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.document"/>
+  </define>
+  <define name="common.attrs.aria.landmark.document" combine="choice">
+    <ref name="aria.document"/>
+  </define>
+  <define name="aria.feed">
+    <a:documentation>feed</a:documentation>
+    <interleave>
+      <ref name="aria.role.feed"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.feed">
+    <attribute name="role">
+      <value type="string">feed</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.feed"/>
+  </define>
+  <define name="common.attrs.aria.role.feed" combine="choice">
+    <ref name="aria.feed"/>
+  </define>
+  <define name="aria.figure">
+    <a:documentation>figure</a:documentation>
+    <interleave>
+      <ref name="aria.role.figure"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.figure">
+    <attribute name="role">
+      <value type="string">figure</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.figure"/>
+  </define>
+  <define name="common.attrs.aria.role.figure" combine="choice">
+    <ref name="aria.figure"/>
+  </define>
+  <define name="aria.form">
+    <a:documentation>form</a:documentation>
+    <interleave>
+      <ref name="aria.role.form"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.form">
+    <attribute name="role">
+      <value type="string">form</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.form"/>
+  </define>
+  <define name="common.attrs.aria.landmark.form" combine="choice">
+    <ref name="aria.form"/>
+  </define>
+  <define name="aria.grid">
+    <a:documentation>grid</a:documentation>
+    <interleave>
+      <ref name="aria.role.grid"/>
+      <optional>
+        <ref name="aria.prop.level"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.prop.multiselectable"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.prop.readonly"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.prop.activedescendant"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.colcount"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.rowcount"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.grid">
+    <attribute name="role">
+      <value type="string">grid</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.grid"/>
+  </define>
+  <define name="aria.gridcell">
+    <a:documentation>gridcell</a:documentation>
+    <interleave>
+      <ref name="aria.role.gridcell"/>
+      <optional>
+        <ref name="aria.prop.level"/>
+      </optional>
+      <optional>
+        <!-- net inherited -->
+        <ref name="aria.prop.readonly"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.state.selected"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.required"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.colspan"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.colindex"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.rowspan"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.rowindex"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.gridcell">
+    <attribute name="role">
+      <value type="string">gridcell</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.gridcell"/>
+  </define>
+  <define name="aria.group">
+    <a:documentation>group</a:documentation>
+    <interleave>
+      <ref name="aria.role.group"/>
+      <optional>
+        <ref name="aria.prop.activedescendant"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+    <!-- not inherited -->
+  </define>
+  <define name="aria.role.group">
+    <attribute name="role">
+      <value type="string">group</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.group"/>
+  </define>
+  <define name="common.attrs.aria.role.group" combine="choice">
+    <ref name="aria.group"/>
+  </define>
+  <define name="aria.graphics-document">
+    <a:documentation>graphics-document</a:documentation>
+    <ref name="aria.role.graphics-document"/>
+  </define>
+  <define name="aria.role.graphics-document">
+    <attribute name="role">
+      <value type="string">graphics-document</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.graphics-document"/>
+  </define>
+  <define name="common.attrs.aria.role.graphics-document" combine="choice">
+    <ref name="aria.graphics-document"/>
+  </define>
+  <define name="aria.graphics-object">
+    <a:documentation>graphics-object</a:documentation>
+    <ref name="aria.role.graphics-object"/>
+  </define>
+  <define name="aria.role.graphics-object">
+    <attribute name="role">
+      <value type="string">graphics-object</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.graphics-object"/>
+  </define>
+  <define name="common.attrs.aria.role.graphics-object" combine="choice">
+    <ref name="aria.graphics-object"/>
+  </define>
+  <define name="aria.graphics-symbol">
+    <a:documentation>graphics-symbol</a:documentation>
+    <ref name="aria.role.graphics-symbol"/>
+  </define>
+  <define name="aria.role.graphics-symbol">
+    <attribute name="role">
+      <value type="string">graphics-symbol</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.graphics-symbol"/>
+  </define>
+  <define name="common.attrs.aria.role.graphics-symbol" combine="choice">
+    <ref name="aria.graphics-symbol"/>
+  </define>
+  <define name="aria.heading">
+    <a:documentation>heading</a:documentation>
+    <interleave>
+      <ref name="aria.role.heading"/>
+      <optional>
+        <ref name="aria.prop.level"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.heading">
+    <attribute name="role">
+      <value type="string">heading</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.heading"/>
+  </define>
+  <define name="common.attrs.aria.role.heading" combine="choice">
+    <ref name="aria.heading"/>
+  </define>
+  <define name="aria.img">
+    <a:documentation>img</a:documentation>
+    <interleave>
+      <ref name="aria.role.img"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.img">
+    <attribute name="role">
+      <value type="string">img</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.img"/>
+  </define>
+  <define name="common.attrs.aria.role.img" combine="choice">
+    <ref name="aria.img"/>
+  </define>
+  <define name="aria.link">
+    <a:documentation>link</a:documentation>
+    <interleave>
+      <ref name="aria.role.link"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.link">
+    <attribute name="role">
+      <value type="string">link</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.link"/>
+  </define>
+  <define name="common.attrs.aria.role.link" combine="choice">
+    <ref name="aria.link"/>
+  </define>
+  <define name="aria.list">
+    <a:documentation>list</a:documentation>
+    <interleave>
+      <ref name="aria.role.list"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.list">
+    <attribute name="role">
+      <value type="string">list</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.list"/>
+  </define>
+  <define name="common.attrs.aria.role.list" combine="choice">
+    <ref name="aria.list"/>
+  </define>
+  <define name="aria.listbox">
+    <a:documentation>listbox</a:documentation>
+    <interleave>
+      <ref name="aria.role.listbox"/>
+      <optional>
+        <ref name="aria.prop.multiselectable"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.prop.required"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.activedescendant"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.orientation"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.listbox">
+    <attribute name="role">
+      <value type="string">listbox</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.listbox"/>
+  </define>
+  <define name="common.attrs.aria.role.listbox" combine="choice">
+    <ref name="aria.listbox"/>
+  </define>
+  <define name="aria.listitem">
+    <a:documentation>listitem</a:documentation>
+    <interleave>
+      <ref name="aria.role.listitem"/>
+      <optional>
+        <ref name="aria.prop.posinset"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.prop.setsize"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.prop.level"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.listitem">
+    <attribute name="role">
+      <value type="string">listitem</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.listitem"/>
+  </define>
+  <define name="common.attrs.aria.role.listitem" combine="choice">
+    <ref name="aria.listitem"/>
+  </define>
+  <define name="aria.log">
+    <a:documentation>log</a:documentation>
+    <interleave>
+      <ref name="aria.role.log"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.log">
+    <attribute name="role">
+      <value type="string">log</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.log"/>
+  </define>
+  <define name="common.attrs.aria.role.log" combine="choice">
+    <ref name="aria.log"/>
+  </define>
+  <define name="aria.main">
+    <a:documentation>main</a:documentation>
+    <interleave>
+      <ref name="aria.role.main"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.main">
+    <attribute name="role">
+      <value type="string">main</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.main"/>
+  </define>
+  <define name="common.attrs.aria.landmark.main" combine="choice">
+    <ref name="aria.main"/>
+  </define>
+  <define name="aria.marquee">
+    <a:documentation>marquee</a:documentation>
+    <interleave>
+      <ref name="aria.role.marquee"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.marquee">
+    <attribute name="role">
+      <value type="string">marquee</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.marquee"/>
+  </define>
+  <define name="common.attrs.aria.role.marquee" combine="choice">
+    <ref name="aria.marquee"/>
+  </define>
+  <define name="aria.math">
+    <a:documentation>math</a:documentation>
+    <interleave>
+      <ref name="aria.role.math"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.math">
+    <attribute name="role">
+      <value type="string">math</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.math"/>
+  </define>
+  <define name="common.attrs.aria.role.math" combine="choice">
+    <ref name="aria.math"/>
+  </define>
+  <define name="aria.menu">
+    <a:documentation>menu</a:documentation>
+    <interleave>
+      <ref name="aria.role.menu"/>
+      <optional>
+        <ref name="aria.prop.activedescendant"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.orientation"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.menu">
+    <attribute name="role">
+      <value type="string">menu</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.menu"/>
+  </define>
+  <define name="common.attrs.aria.role.menu" combine="choice">
+    <ref name="aria.menu"/>
+  </define>
+  <define name="aria.menubar">
+    <a:documentation>menubar</a:documentation>
+    <interleave>
+      <ref name="aria.role.menubar"/>
+      <optional>
+        <ref name="aria.prop.activedescendant"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.orientation"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.menubar">
+    <attribute name="role">
+      <value type="string">menubar</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.menubar"/>
+  </define>
+  <define name="common.attrs.aria.role.menubar" combine="choice">
+    <ref name="aria.menubar"/>
+  </define>
+  <define name="aria.menuitem">
+    <a:documentation>menuitem</a:documentation>
+    <interleave>
+      <ref name="aria.role.menuitem"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.posinset"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.setsize"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.menuitem">
+    <attribute name="role">
+      <value type="string">menuitem</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.menuitem"/>
+  </define>
+  <define name="common.attrs.aria.role.menuitem" combine="choice">
+    <ref name="aria.menuitem"/>
+  </define>
+  <define name="aria.menuitemcheckbox">
+    <a:documentation>menuitemcheckbox</a:documentation>
+    <interleave>
+      <ref name="aria.role.menuitemcheckbox"/>
+      <ref name="aria.state.checked"/>
+    </interleave>
+    <!-- required -->
+  </define>
+  <define name="aria.role.menuitemcheckbox">
+    <attribute name="role">
+      <value type="string">menuitemcheckbox</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.menuitemcheckbox"/>
+  </define>
+  <define name="common.attrs.aria.role.menuitemcheckbox" combine="choice">
+    <ref name="aria.menuitemcheckbox"/>
+  </define>
+  <define name="aria.menuitemcheckbox-checked-not-required">
+    <a:documentation>menuitemcheckbox w/o checked required</a:documentation>
+    <ref name="aria.role.menuitemcheckbox"/>
+  </define>
+  <define name="aria.role.menuitemcheckbox-checked-not-required">
+    <attribute name="role">
+      <value type="string">menuitemcheckbox</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria.role.menuitemcheckbox-checked-not-required" combine="choice">
+    <ref name="aria.menuitemcheckbox-checked-not-required"/>
+  </define>
+  <define name="aria.menuitemradio">
+    <a:documentation>menuitemradio</a:documentation>
+    <interleave>
+      <ref name="aria.role.menuitemradio"/>
+      <ref name="aria.state.checked"/>
+      <optional>
+        <!-- required -->
+        <ref name="aria.state.selected"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.posinset"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.setsize"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.menuitemradio">
+    <attribute name="role">
+      <value type="string">menuitemradio</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.menuitemradio"/>
+  </define>
+  <define name="common.attrs.aria.role.menuitemradio" combine="choice">
+    <ref name="aria.menuitemradio"/>
+  </define>
+  <define name="aria.menuitemradio-checked-not-required">
+    <a:documentation>menuitemradio w/o checked required</a:documentation>
+    <interleave>
+      <ref name="aria.role.menuitemradio"/>
+      <optional>
+        <ref name="aria.state.selected"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.posinset"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.setsize"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.menuitemradio-checked-not-required">
+    <attribute name="role">
+      <value type="string">menuitemradio</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria.role.menuitemradio-checked-not-required" combine="choice">
+    <ref name="aria.menuitemradio-checked-not-required"/>
+  </define>
+  <define name="aria.navigation">
+    <a:documentation>navigation</a:documentation>
+    <interleave>
+      <ref name="aria.role.navigation"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.navigation">
+    <attribute name="role">
+      <value type="string">navigation</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.navigation"/>
+  </define>
+  <define name="common.attrs.aria.landmark.navigation" combine="choice">
+    <ref name="aria.navigation"/>
+  </define>
+  <define name="aria.none">
+    <a:documentation>none</a:documentation>
+    <ref name="aria.role.none"/>
+  </define>
+  <define name="aria.role.none">
+    <attribute name="role">
+      <value type="string">none</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.none"/>
+  </define>
+  <define name="common.attrs.aria.role.none" combine="choice">
+    <ref name="aria.none"/>
+  </define>
+  <define name="aria.note">
+    <a:documentation>note</a:documentation>
+    <interleave>
+      <ref name="aria.role.note"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.note">
+    <attribute name="role">
+      <value type="string">note</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.note"/>
+  </define>
+  <define name="common.attrs.aria.landmark.note" combine="choice">
+    <ref name="aria.note"/>
+  </define>
+  <define name="aria.option">
+    <a:documentation>option</a:documentation>
+    <interleave>
+      <ref name="aria.role.option"/>
+      <optional>
+        <ref name="aria.state.checked"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.state.selected"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.prop.posinset"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.setsize"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.option">
+    <attribute name="role">
+      <value type="string">option</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.option"/>
+  </define>
+  <define name="common.attrs.aria.role.option" combine="choice">
+    <ref name="aria.option"/>
+  </define>
+  <define name="aria.presentation">
+    <a:documentation>presentation</a:documentation>
+    <ref name="aria.role.presentation"/>
+  </define>
+  <define name="aria.role.presentation">
+    <attribute name="role">
+      <value type="string">presentation</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.presentation"/>
+  </define>
+  <define name="common.attrs.aria.role.presentation" combine="choice">
+    <ref name="aria.presentation"/>
+  </define>
+  <define name="common.attrs.aria.role.presentation" combine="choice">
+    <ref name="aria.none"/>
+  </define>
+  <define name="aria.progressbar">
+    <a:documentation>progressbar</a:documentation>
+    <interleave>
+      <ref name="aria.role.progressbar"/>
+      <optional>
+        <ref name="aria.prop.valuemax"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.prop.valuemin"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.prop.valuenow"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.prop.valuetext"/>
+      </optional>
+    </interleave>
+    <!-- not inherited -->
+  </define>
+  <define name="aria.role.progressbar">
+    <attribute name="role">
+      <value type="string">progressbar</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.progressbar"/>
+  </define>
+  <define name="common.attrs.aria.role.progressbar" combine="choice">
+    <ref name="aria.progressbar"/>
+  </define>
+  <define name="aria.radio">
+    <a:documentation>radio</a:documentation>
+    <interleave>
+      <ref name="aria.role.radio"/>
+      <ref name="aria.state.checked"/>
+      <optional>
+        <!-- required! -->
+        <ref name="aria.state.selected"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.posinset"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.setsize"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.radio">
+    <attribute name="role">
+      <value type="string">radio</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.radio"/>
+  </define>
+  <define name="common.attrs.aria.role.radio" combine="choice">
+    <ref name="aria.radio"/>
+  </define>
+  <define name="aria.radiogroup">
+    <a:documentation>radiogroup</a:documentation>
+    <interleave>
+      <ref name="aria.role.radiogroup"/>
+      <optional>
+        <ref name="aria.prop.activedescendant"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.required"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.orientation"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.radiogroup">
+    <attribute name="role">
+      <value type="string">radiogroup</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.radiogroup"/>
+  </define>
+  <define name="common.attrs.aria.role.radiogroup" combine="choice">
+    <ref name="aria.radiogroup"/>
+  </define>
+  <define name="aria.region">
+    <a:documentation>region</a:documentation>
+    <interleave>
+      <ref name="aria.role.region"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.region">
+    <attribute name="role">
+      <value type="string">region</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.region"/>
+  </define>
+  <define name="common.attrs.aria.role.region" combine="choice">
+    <ref name="aria.region"/>
+  </define>
+  <define name="aria.row">
+    <a:documentation>row</a:documentation>
+    <interleave>
+      <ref name="aria.role.row"/>
+      <optional>
+        <ref name="aria.prop.level"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.state.selected"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.prop.activedescendant"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.colindex"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.rowindex"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.row">
+    <attribute name="role">
+      <value type="string">row</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.row"/>
+  </define>
+  <define name="aria.rowgroup">
+    <a:documentation>rowgroup</a:documentation>
+    <interleave>
+      <ref name="aria.role.rowgroup"/>
+      <optional>
+        <ref name="aria.prop.activedescendant"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.rowgroup">
+    <attribute name="role">
+      <value type="string">rowgroup</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.rowgroup"/>
+  </define>
+  <define name="common.attrs.aria.role.rowgroup" combine="choice">
+    <ref name="aria.rowgroup"/>
+  </define>
+  <!-- rowheader -->
+  <define name="aria.rowheader">
+    <interleave>
+      <ref name="aria.role.rowheader"/>
+      <optional>
+        <ref name="aria.prop.sort"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.prop.readonly"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.state.selected"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.required"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.colspan"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.rowspan"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.rowindex"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.rowheader">
+    <attribute name="role">
+      <value type="string">rowheader</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.rowheader"/>
+  </define>
+  <define name="aria.searchbox">
+    <a:documentation>searchbox</a:documentation>
+    <interleave>
+      <ref name="aria.role.searchbox"/>
+      <optional>
+        <ref name="aria.prop.activedescendant"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.autocomplete"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.multiline"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.readonly"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.required"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.searchbox">
+    <attribute name="role">
+      <value type="string">searchbox</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.searchbox"/>
+  </define>
+  <define name="common.attrs.aria.role.searchbox" combine="choice">
+    <ref name="aria.searchbox"/>
+  </define>
+  <define name="aria.scrollbar">
+    <a:documentation>scrollbar</a:documentation>
+    <interleave>
+      <ref name="aria.role.scrollbar"/>
+      <ref name="aria.prop.orientation"/>
+      <ref name="aria.prop.valuemax"/>
+      <ref name="aria.prop.valuemin"/>
+      <ref name="aria.prop.valuenow"/>
+      <optional>
+        <ref name="aria.prop.valuetext"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.scrollbar">
+    <attribute name="role">
+      <value type="string">scrollbar</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.scrollbar"/>
+  </define>
+  <define name="common.attrs.aria.role.scrollbar" combine="choice">
+    <ref name="aria.scrollbar"/>
+  </define>
+  <define name="aria.search">
+    <a:documentation>search</a:documentation>
+    <interleave>
+      <ref name="aria.role.search"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.orientation"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.search">
+    <attribute name="role">
+      <value type="string">search</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.search"/>
+  </define>
+  <define name="common.attrs.aria.landmark.search" combine="choice">
+    <ref name="aria.search"/>
+  </define>
+  <define name="aria.separator">
+    <a:documentation>separator</a:documentation>
+    <interleave>
+      <ref name="aria.role.separator"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.orientation"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.separator">
+    <attribute name="role">
+      <value type="string">separator</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.separator"/>
+  </define>
+  <define name="common.attrs.aria.role.separator" combine="choice">
+    <ref name="aria.separator"/>
+  </define>
+  <define name="aria.slider">
+    <a:documentation>slider</a:documentation>
+    <interleave>
+      <ref name="aria.role.slider"/>
+      <ref name="aria.prop.valuemax"/>
+      <ref name="aria.prop.valuemin"/>
+      <ref name="aria.prop.valuenow"/>
+      <optional>
+        <ref name="aria.prop.valuetext"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.orientation"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.slider">
+    <attribute name="role">
+      <value type="string">slider</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.slider"/>
+  </define>
+  <define name="common.attrs.aria.role.slider" combine="choice">
+    <ref name="aria.slider"/>
+  </define>
+  <define name="aria.spinbutton">
+    <a:documentation>spinbutton</a:documentation>
+    <interleave>
+      <ref name="aria.role.spinbutton"/>
+      <ref name="aria.prop.valuemax"/>
+      <ref name="aria.prop.valuemin"/>
+      <ref name="aria.prop.valuenow"/>
+      <optional>
+        <ref name="aria.prop.valuetext"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.required"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.spinbutton">
+    <attribute name="role">
+      <value type="string">spinbutton</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.spinbutton"/>
+  </define>
+  <define name="common.attrs.aria.role.spinbutton" combine="choice">
+    <ref name="aria.spinbutton"/>
+  </define>
+  <define name="aria.status">
+    <a:documentation>status</a:documentation>
+    <interleave>
+      <ref name="aria.role.status"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.status">
+    <attribute name="role">
+      <value type="string">status</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.status"/>
+  </define>
+  <define name="common.attrs.aria.role.status" combine="choice">
+    <ref name="aria.status"/>
+  </define>
+  <define name="aria.switch">
+    <a:documentation>switch</a:documentation>
+    <interleave>
+      <ref name="aria.role.switch"/>
+      <ref name="aria.state.checked"/>
+    </interleave>
+    <!-- required! -->
+  </define>
+  <define name="aria.role.switch">
+    <attribute name="role">
+      <value type="string">switch</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.switch"/>
+  </define>
+  <define name="common.attrs.aria.role.switch" combine="choice">
+    <ref name="aria.switch"/>
+  </define>
+  <define name="aria.switch-checked-not-required">
+    <a:documentation>switch w/o checked required</a:documentation>
+    <ref name="aria.role.switch"/>
+  </define>
+  <define name="aria.role.switch-checked-not-required">
+    <attribute name="role">
+      <value type="string">switch</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria.role.switch-checked-not-required" combine="choice">
+    <ref name="aria.switch-checked-not-required"/>
+  </define>
+  <define name="aria.tab">
+    <a:documentation>tab</a:documentation>
+    <interleave>
+      <ref name="aria.role.tab"/>
+      <optional>
+        <ref name="aria.state.selected"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.posinset"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.setsize"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.tab">
+    <attribute name="role">
+      <value type="string">tab</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.tab"/>
+  </define>
+  <define name="common.attrs.aria.role.tab" combine="choice">
+    <ref name="aria.tab"/>
+  </define>
+  <define name="aria.table">
+    <a:documentation>table</a:documentation>
+    <interleave>
+      <ref name="aria.role.table"/>
+      <optional>
+        <ref name="aria.prop.colcount"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.rowcount"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.table">
+    <attribute name="role">
+      <value type="string">table</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.table"/>
+  </define>
+  <define name="common.attrs.aria.role.table" combine="choice">
+    <ref name="aria.table"/>
+  </define>
+  <define name="aria.tablist">
+    <a:documentation>tablist</a:documentation>
+    <interleave>
+      <ref name="aria.role.tablist"/>
+      <optional>
+        <ref name="aria.prop.activedescendant"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.level"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.multiselectable"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.orientation"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.tablist">
+    <attribute name="role">
+      <value type="string">tablist</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.tablist"/>
+  </define>
+  <define name="common.attrs.aria.role.tablist" combine="choice">
+    <ref name="aria.tablist"/>
+  </define>
+  <define name="aria.tabpanel">
+    <a:documentation>tabpanel</a:documentation>
+    <interleave>
+      <ref name="aria.role.tabpanel"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.tabpanel">
+    <attribute name="role">
+      <value type="string">tabpanel</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.tabpanel"/>
+  </define>
+  <define name="common.attrs.aria.role.tabpanel" combine="choice">
+    <ref name="aria.tabpanel"/>
+  </define>
+  <define name="aria.term">
+    <a:documentation>term</a:documentation>
+    <interleave>
+      <ref name="aria.role.term"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.term">
+    <attribute name="role">
+      <value type="string">term</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.term"/>
+  </define>
+  <define name="common.attrs.aria.role.term" combine="choice">
+    <ref name="aria.term"/>
+  </define>
+  <define name="aria.textbox">
+    <a:documentation>textbox</a:documentation>
+    <interleave>
+      <ref name="aria.role.textbox"/>
+      <optional>
+        <ref name="aria.prop.activedescendant"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.autocomplete"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.prop.multiline"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.prop.readonly"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.prop.required"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.textbox">
+    <attribute name="role">
+      <value type="string">textbox</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.textbox"/>
+  </define>
+  <define name="common.attrs.aria.role.textbox" combine="choice">
+    <ref name="aria.textbox"/>
+  </define>
+  <define name="aria.timer">
+    <a:documentation>timer</a:documentation>
+    <interleave>
+      <ref name="aria.role.timer"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.timer">
+    <attribute name="role">
+      <value type="string">timer</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.timer"/>
+  </define>
+  <define name="aria.toolbar">
+    <a:documentation>toolbar</a:documentation>
+    <interleave>
+      <ref name="aria.role.toolbar"/>
+      <optional>
+        <ref name="aria.prop.activedescendant"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.orientation"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.toolbar">
+    <attribute name="role">
+      <value type="string">toolbar</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.toolbar"/>
+  </define>
+  <define name="common.attrs.aria.role.toolbar" combine="choice">
+    <ref name="aria.toolbar"/>
+  </define>
+  <define name="aria.tooltip">
+    <a:documentation>tooltip</a:documentation>
+    <interleave>
+      <ref name="aria.role.tooltip"/>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.tooltip">
+    <attribute name="role">
+      <value type="string">tooltip</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.tooltip"/>
+  </define>
+  <define name="aria.tree">
+    <a:documentation>tree</a:documentation>
+    <interleave>
+      <ref name="aria.role.tree"/>
+      <optional>
+        <ref name="aria.prop.multiselectable"/>
+      </optional>
+      <optional>
+        <!-- not inherited -->
+        <ref name="aria.prop.activedescendant"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.required"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.orientation"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.tree">
+    <attribute name="role">
+      <value type="string">tree</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.tree"/>
+  </define>
+  <define name="common.attrs.aria.role.tree" combine="choice">
+    <ref name="aria.tree"/>
+  </define>
+  <define name="aria.treegrid">
+    <a:documentation>treegrid</a:documentation>
+    <interleave>
+      <ref name="aria.role.treegrid"/>
+      <optional>
+        <ref name="aria.prop.activedescendant"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.level"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.multiselectable"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.readonly"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.required"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.orientation"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.colcount"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.rowcount"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.treegrid">
+    <attribute name="role">
+      <value type="string">treegrid</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.treegrid"/>
+  </define>
+  <define name="aria.treeitem">
+    <a:documentation>treeitem</a:documentation>
+    <interleave>
+      <ref name="aria.role.treeitem"/>
+      <optional>
+        <ref name="aria.state.checked"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.expanded"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.level"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.posinset"/>
+      </optional>
+      <optional>
+        <ref name="aria.state.selected"/>
+      </optional>
+      <optional>
+        <ref name="aria.prop.setsize"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="aria.role.treeitem">
+    <attribute name="role">
+      <value type="string">treeitem</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.treeitem"/>
+  </define>
+  <define name="common.attrs.aria.role.treeitem" combine="choice">
+    <ref name="aria.treeitem"/>
+  </define>
+  <!-- ##################################################################### -->
+  <define name="aria.doc-abstract">
+    <a:documentation>https://w3c.github.io/aria/aria/dpub.html</a:documentation>
+    <ref name="aria.role.doc-abstract"/>
+  </define>
+  <define name="aria.role.doc-abstract">
+    <attribute name="role">
+      <value type="string">doc-abstract</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-abstract"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-abstract" combine="choice">
+    <ref name="aria.doc-abstract"/>
+  </define>
+  <define name="aria.doc-acknowledgments">
+    <ref name="aria.role.doc-acknowledgments"/>
+  </define>
+  <define name="aria.role.doc-acknowledgments">
+    <attribute name="role">
+      <value type="string">doc-acknowledgments</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-acknowledgments"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-acknowledgments" combine="choice">
+    <ref name="aria.doc-acknowledgments"/>
+  </define>
+  <define name="aria.doc-afterword">
+    <ref name="aria.role.doc-afterword"/>
+  </define>
+  <define name="aria.role.doc-afterword">
+    <attribute name="role">
+      <value type="string">doc-afterword</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-afterword"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-afterword" combine="choice">
+    <ref name="aria.doc-afterword"/>
+  </define>
+  <define name="aria.doc-appendix">
+    <ref name="aria.role.doc-appendix"/>
+  </define>
+  <define name="aria.role.doc-appendix">
+    <attribute name="role">
+      <value type="string">doc-appendix</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-appendix"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-appendix" combine="choice">
+    <ref name="aria.doc-appendix"/>
+  </define>
+  <define name="aria.doc-backlink">
+    <ref name="aria.role.doc-backlink"/>
+  </define>
+  <define name="aria.role.doc-backlink">
+    <attribute name="role">
+      <value type="string">doc-backlink</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-backlink"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-backlink" combine="choice">
+    <ref name="aria.doc-backlink"/>
+  </define>
+  <define name="aria.doc-biblioentry">
+    <ref name="aria.role.doc-biblioentry"/>
+  </define>
+  <define name="aria.role.doc-biblioentry">
+    <attribute name="role">
+      <value type="string">doc-biblioentry</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-biblioentry"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-biblioentry" combine="choice">
+    <ref name="aria.doc-biblioentry"/>
+  </define>
+  <define name="aria.doc-bibliography">
+    <ref name="aria.role.doc-bibliography"/>
+  </define>
+  <define name="aria.role.doc-bibliography">
+    <attribute name="role">
+      <value type="string">doc-bibliography</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-bibliography"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-bibliography" combine="choice">
+    <ref name="aria.doc-bibliography"/>
+  </define>
+  <define name="aria.doc-biblioref">
+    <ref name="aria.role.doc-biblioref"/>
+  </define>
+  <define name="aria.role.doc-biblioref">
+    <attribute name="role">
+      <value type="string">doc-biblioref</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-biblioref"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-biblioref" combine="choice">
+    <ref name="aria.doc-biblioref"/>
+  </define>
+  <define name="aria.doc-chapter">
+    <ref name="aria.role.doc-chapter"/>
+  </define>
+  <define name="aria.role.doc-chapter">
+    <attribute name="role">
+      <value type="string">doc-chapter</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-chapter"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-chapter" combine="choice">
+    <ref name="aria.doc-chapter"/>
+  </define>
+  <define name="aria.doc-colophon">
+    <ref name="aria.role.doc-colophon"/>
+  </define>
+  <define name="aria.role.doc-colophon">
+    <attribute name="role">
+      <value type="string">doc-colophon</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-colophon"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-colophon" combine="choice">
+    <ref name="aria.doc-colophon"/>
+  </define>
+  <define name="aria.doc-conclusion">
+    <ref name="aria.role.doc-conclusion"/>
+  </define>
+  <define name="aria.role.doc-conclusion">
+    <attribute name="role">
+      <value type="string">doc-conclusion</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-conclusion"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-conclusion" combine="choice">
+    <ref name="aria.doc-conclusion"/>
+  </define>
+  <define name="aria.doc-cover">
+    <ref name="aria.role.doc-cover"/>
+  </define>
+  <define name="aria.role.doc-cover">
+    <attribute name="role">
+      <value type="string">doc-cover</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-cover"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-cover" combine="choice">
+    <ref name="aria.doc-cover"/>
+  </define>
+  <define name="aria.doc-credit">
+    <ref name="aria.role.doc-credit"/>
+  </define>
+  <define name="aria.role.doc-credit">
+    <attribute name="role">
+      <value type="string">doc-credit</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-credit"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-credit" combine="choice">
+    <ref name="aria.doc-credit"/>
+  </define>
+  <define name="aria.doc-credits">
+    <ref name="aria.role.doc-credits"/>
+  </define>
+  <define name="aria.role.doc-credits">
+    <attribute name="role">
+      <value type="string">doc-credits</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-credits"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-credits" combine="choice">
+    <ref name="aria.doc-credits"/>
+  </define>
+  <define name="aria.doc-dedication">
+    <ref name="aria.role.doc-dedication"/>
+  </define>
+  <define name="aria.role.doc-dedication">
+    <attribute name="role">
+      <value type="string">doc-dedication</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-dedication"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-dedication" combine="choice">
+    <ref name="aria.doc-dedication"/>
+  </define>
+  <define name="aria.doc-endnote">
+    <ref name="aria.role.doc-endnote"/>
+  </define>
+  <define name="aria.role.doc-endnote">
+    <attribute name="role">
+      <value type="string">doc-endnote</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-endnote"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-endnote" combine="choice">
+    <ref name="aria.doc-endnote"/>
+  </define>
+  <define name="aria.doc-endnotes">
+    <ref name="aria.role.doc-endnotes"/>
+  </define>
+  <define name="aria.role.doc-endnotes">
+    <attribute name="role">
+      <value type="string">doc-endnotes</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-endnotes"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-endnotes" combine="choice">
+    <ref name="aria.doc-endnotes"/>
+  </define>
+  <define name="aria.doc-epigraph">
+    <ref name="aria.role.doc-epigraph"/>
+  </define>
+  <define name="aria.role.doc-epigraph">
+    <attribute name="role">
+      <value type="string">doc-epigraph</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-epigraph"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-epigraph" combine="choice">
+    <ref name="aria.doc-epigraph"/>
+  </define>
+  <define name="aria.doc-epilogue">
+    <ref name="aria.role.doc-epilogue"/>
+  </define>
+  <define name="aria.role.doc-epilogue">
+    <attribute name="role">
+      <value type="string">doc-epilogue</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-epilogue"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-epilogue" combine="choice">
+    <ref name="aria.doc-epilogue"/>
+  </define>
+  <define name="aria.doc-errata">
+    <ref name="aria.role.doc-errata"/>
+  </define>
+  <define name="aria.role.doc-errata">
+    <attribute name="role">
+      <value type="string">doc-errata</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-errata"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-errata" combine="choice">
+    <ref name="aria.doc-errata"/>
+  </define>
+  <define name="aria.doc-example">
+    <ref name="aria.role.doc-example"/>
+  </define>
+  <define name="aria.role.doc-example">
+    <attribute name="role">
+      <value type="string">doc-example</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-example"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-example" combine="choice">
+    <ref name="aria.doc-example"/>
+  </define>
+  <define name="aria.doc-footnote">
+    <ref name="aria.role.doc-footnote"/>
+  </define>
+  <define name="aria.role.doc-footnote">
+    <attribute name="role">
+      <value type="string">doc-footnote</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-footnote"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-footnote" combine="choice">
+    <ref name="aria.doc-footnote"/>
+  </define>
+  <define name="aria.doc-foreword">
+    <ref name="aria.role.doc-foreword"/>
+  </define>
+  <define name="aria.role.doc-foreword">
+    <attribute name="role">
+      <value type="string">doc-foreword</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-foreword"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-foreword" combine="choice">
+    <ref name="aria.doc-foreword"/>
+  </define>
+  <define name="aria.doc-glossary">
+    <ref name="aria.role.doc-glossary"/>
+  </define>
+  <define name="aria.role.doc-glossary">
+    <attribute name="role">
+      <value type="string">doc-glossary</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-glossary"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-glossary" combine="choice">
+    <ref name="aria.doc-glossary"/>
+  </define>
+  <define name="aria.doc-glossref">
+    <ref name="aria.role.doc-glossref"/>
+  </define>
+  <define name="aria.role.doc-glossref">
+    <attribute name="role">
+      <value type="string">doc-glossref</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-glossref"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-glossref" combine="choice">
+    <ref name="aria.doc-glossref"/>
+  </define>
+  <define name="aria.doc-index">
+    <ref name="aria.role.doc-index"/>
+  </define>
+  <define name="aria.role.doc-index">
+    <attribute name="role">
+      <value type="string">doc-index</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-index"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-index" combine="choice">
+    <ref name="aria.doc-index"/>
+  </define>
+  <define name="aria.doc-introduction">
+    <ref name="aria.role.doc-introduction"/>
+  </define>
+  <define name="aria.role.doc-introduction">
+    <attribute name="role">
+      <value type="string">doc-introduction</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-introduction"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-introduction" combine="choice">
+    <ref name="aria.doc-introduction"/>
+  </define>
+  <define name="aria.doc-noteref">
+    <ref name="aria.role.doc-noteref"/>
+  </define>
+  <define name="aria.role.doc-noteref">
+    <attribute name="role">
+      <value type="string">doc-noteref</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-noteref"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-noteref" combine="choice">
+    <ref name="aria.doc-noteref"/>
+  </define>
+  <define name="aria.doc-notice">
+    <ref name="aria.role.doc-notice"/>
+  </define>
+  <define name="aria.role.doc-notice">
+    <attribute name="role">
+      <value type="string">doc-notice</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-notice"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-notice" combine="choice">
+    <ref name="aria.doc-notice"/>
+  </define>
+  <define name="aria.doc-pagebreak">
+    <ref name="aria.role.doc-pagebreak"/>
+  </define>
+  <define name="aria.role.doc-pagebreak">
+    <attribute name="role">
+      <value type="string">doc-pagebreak</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-pagebreak"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-pagebreak" combine="choice">
+    <ref name="aria.doc-pagebreak"/>
+  </define>
+  <define name="aria.doc-pagelist">
+    <ref name="aria.role.doc-pagelist"/>
+  </define>
+  <define name="aria.role.doc-pagelist">
+    <attribute name="role">
+      <value type="string">doc-pagelist</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-pagelist"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-pagelist" combine="choice">
+    <ref name="aria.doc-pagelist"/>
+  </define>
+  <define name="aria.doc-part">
+    <ref name="aria.role.doc-part"/>
+  </define>
+  <define name="aria.role.doc-part">
+    <attribute name="role">
+      <value type="string">doc-part</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-part"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-part" combine="choice">
+    <ref name="aria.doc-part"/>
+  </define>
+  <define name="aria.doc-preface">
+    <ref name="aria.role.doc-preface"/>
+  </define>
+  <define name="aria.role.doc-preface">
+    <attribute name="role">
+      <value type="string">doc-preface</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-preface"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-preface" combine="choice">
+    <ref name="aria.doc-preface"/>
+  </define>
+  <define name="aria.doc-prologue">
+    <ref name="aria.role.doc-prologue"/>
+  </define>
+  <define name="aria.role.doc-prologue">
+    <attribute name="role">
+      <value type="string">doc-prologue</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-prologue"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-prologue" combine="choice">
+    <ref name="aria.doc-prologue"/>
+  </define>
+  <define name="aria.doc-pullquote">
+    <ref name="aria.role.doc-pullquote"/>
+  </define>
+  <define name="aria.role.doc-pullquote">
+    <attribute name="role">
+      <value type="string">doc-pullquote</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-pullquote"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-pullquote" combine="choice">
+    <ref name="aria.doc-pullquote"/>
+  </define>
+  <define name="aria.doc-qna">
+    <ref name="aria.role.doc-qna"/>
+  </define>
+  <define name="aria.role.doc-qna">
+    <attribute name="role">
+      <value type="string">doc-qna</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-qna"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-qna" combine="choice">
+    <ref name="aria.doc-qna"/>
+  </define>
+  <define name="aria.doc-subtitle">
+    <ref name="aria.role.doc-subtitle"/>
+  </define>
+  <define name="aria.role.doc-subtitle">
+    <attribute name="role">
+      <value type="string">doc-subtitle</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-subtitle"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-subtitle" combine="choice">
+    <ref name="aria.doc-subtitle"/>
+  </define>
+  <define name="aria.doc-tip">
+    <ref name="aria.role.doc-tip"/>
+  </define>
+  <define name="aria.role.doc-tip">
+    <attribute name="role">
+      <value type="string">doc-tip</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-tip"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-tip" combine="choice">
+    <ref name="aria.doc-tip"/>
+  </define>
+  <define name="aria.doc-toc">
+    <ref name="aria.role.doc-toc"/>
+  </define>
+  <define name="aria.role.doc-toc">
+    <attribute name="role">
+      <value type="string">doc-toc</value>
+    </attribute>
+  </define>
+  <define name="common.attrs.aria" combine="choice">
+    <ref name="aria.doc-toc"/>
+  </define>
+  <define name="common.attrs.aria.role.doc-toc" combine="choice">
+    <ref name="aria.doc-toc"/>
+  </define>
+</grammar>

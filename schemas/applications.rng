@@ -1,0 +1,429 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0" xmlns="http://relaxng.org/ns/structure/1.0">
+  <!-- ##################################################################### -->
+  <define name="common.attrs.interact" combine="interleave">
+    <a:documentation> RELAX NG Schema for HTML 5: Web Application Features              #</a:documentation>
+    <!-- ##################################################################### -->
+    <a:documentation>Additions to Common Attributes</a:documentation>
+    <interleave>
+      <optional>
+        <ref name="common.attrs.contenteditable"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.draggable"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.hidden"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.popover"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.other" combine="interleave">
+    <ref name="common.attrs.interact"/>
+  </define>
+  <define name="common.attrs.contenteditable">
+    <a:documentation>Editable Content: contenteditable</a:documentation>
+    <attribute name="contenteditable">
+      <choice>
+        <value>true</value>
+        <value>plaintext-only</value>
+        <value>false</value>
+        <value/>
+      </choice>
+    </attribute>
+  </define>
+  <define name="common.attrs.draggable">
+    <a:documentation>Draggable Element: draggable</a:documentation>
+    <attribute name="draggable">
+      <choice>
+        <value>true</value>
+        <value>false</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="common.attrs.hidden">
+    <a:documentation>Hidden Element: hidden</a:documentation>
+    <attribute name="hidden">
+      <choice>
+        <value>hidden</value>
+        <value>until-found</value>
+        <value/>
+      </choice>
+    </attribute>
+  </define>
+  <define name="common.attrs.popover">
+    <a:documentation>Popover Element: popover</a:documentation>
+    <attribute name="popover">
+      <choice>
+        <value>auto</value>
+        <value>manual</value>
+        <value>hint</value>
+        <value/>
+      </choice>
+    </attribute>
+  </define>
+  <define name="common.attrs.editing" combine="interleave">
+    <a:documentation>Global attributes applicable on elements with editable content</a:documentation>
+    <interleave>
+      <optional>
+        <ref name="common.attrs.inputmode"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.spellcheck"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.autocapitalize"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.enterkeyhint"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.other" combine="interleave">
+    <ref name="common.attrs.editing"/>
+  </define>
+  <define name="common.attrs.inputmode">
+    <a:documentation>Hint expected data type: inputmode</a:documentation>
+    <attribute name="inputmode">
+      <choice>
+        <value>none</value>
+        <value>text</value>
+        <value>tel</value>
+        <value>url</value>
+        <value>email</value>
+        <value>numeric</value>
+        <value>decimal</value>
+        <value>search</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="common.attrs.spellcheck">
+    <a:documentation>Spellchecking and grammar checking: spellcheck</a:documentation>
+    <attribute name="spellcheck">
+      <choice>
+        <value>true</value>
+        <value>false</value>
+        <value/>
+      </choice>
+    </attribute>
+  </define>
+  <define name="common.attrs.autocapitalize">
+    <a:documentation>Autocapitalization</a:documentation>
+    <attribute name="autocapitalize">
+      <choice>
+        <value>off</value>
+        <value>none</value>
+        <value>on</value>
+        <value>sentences</value>
+        <value>words</value>
+        <value>characters</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="common.attrs.enterkeyhint">
+    <a:documentation>Type of Enter button on virtual keyboards: enterkeyhint</a:documentation>
+    <attribute name="enterkeyhint">
+      <choice>
+        <value>enter</value>
+        <value>done</value>
+        <value>go</value>
+        <value>next</value>
+        <value>previous</value>
+        <value>search</value>
+        <value>send</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="progress.elem">
+    <a:documentation>Progess Indicator: &lt;progress&gt;</a:documentation>
+    <element name="progress">
+      <interleave>
+        <ref name="progress.inner"/>
+        <ref name="progress.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="progress.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <optional>
+        <ref name="progress.attrs.value"/>
+      </optional>
+      <optional>
+        <ref name="progress.attrs.max"/>
+      </optional>
+      <optional>
+        <choice>
+          <ref name="common.attrs.aria.implicit.progressbar"/>
+          <ref name="common.attrs.aria.role.progressbar"/>
+        </choice>
+      </optional>
+    </interleave>
+  </define>
+  <define name="progress.attrs.value">
+    <attribute name="value">
+      <ref name="common.data.float.non-negative"/>
+    </attribute>
+  </define>
+  <define name="progress.attrs.max">
+    <attribute name="max">
+      <ref name="common.data.float.positive"/>
+    </attribute>
+  </define>
+  <define name="progress.inner">
+    <ref name="common.inner.phrasing"/>
+  </define>
+  <!-- Cannot enforce textContent format here -->
+  <define name="common.elem.phrasing" combine="choice">
+    <ref name="progress.elem"/>
+  </define>
+  <define name="dialog.elem">
+    <a:documentation>Dialog box, inspector, or window: &lt;dialog&gt;</a:documentation>
+    <element name="dialog">
+      <interleave>
+        <ref name="dialog.inner"/>
+        <ref name="dialog.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="dialog.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <optional>
+        <ref name="dialog.attrs.open"/>
+      </optional>
+      <optional>
+        <choice>
+          <ref name="common.attrs.aria.implicit.dialog"/>
+          <ref name="common.attrs.aria.role.alertdialog"/>
+        </choice>
+      </optional>
+    </interleave>
+  </define>
+  <define name="dialog.attrs.open">
+    <attribute name="open">
+      <choice>
+        <value>open</value>
+        <value/>
+      </choice>
+    </attribute>
+  </define>
+  <define name="dialog.inner">
+    <ref name="common.inner.flow"/>
+  </define>
+  <define name="common.elem.flow" combine="choice">
+    <ref name="dialog.elem"/>
+  </define>
+  <define name="menu.elem">
+    <a:documentation>Toolbar: &lt;menu&gt;</a:documentation>
+    <element name="menu">
+      <interleave>
+        <ref name="menu.inner"/>
+        <ref name="menu.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="menu.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <optional>
+        <choice>
+          <ref name="common.attrs.aria.implicit.list"/>
+          <ref name="common.attrs.aria.role.directory"/>
+          <ref name="common.attrs.aria.role.group"/>
+          <ref name="common.attrs.aria.role.list"/>
+          <ref name="common.attrs.aria.role.listbox"/>
+          <ref name="common.attrs.aria.role.menu"/>
+          <ref name="common.attrs.aria.role.menubar"/>
+          <ref name="common.attrs.aria.role.radiogroup"/>
+          <ref name="common.attrs.aria.role.tablist"/>
+          <ref name="common.attrs.aria.role.toolbar"/>
+          <ref name="common.attrs.aria.role.tree"/>
+          <ref name="common.attrs.aria.role.presentation"/>
+        </choice>
+      </optional>
+    </interleave>
+  </define>
+  <define name="menu.inner">
+    <interleave>
+      <zeroOrMore>
+        <ref name="mli.elem"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="common.elem.script-supporting"/>
+      </zeroOrMore>
+    </interleave>
+  </define>
+  <define name="common.elem.flow" combine="choice">
+    <ref name="menu.elem"/>
+  </define>
+  <define name="mli.elem">
+    <a:documentation>Toolbar item: &lt;li&gt;</a:documentation>
+    <element name="li">
+      <interleave>
+        <ref name="mli.inner"/>
+        <ref name="mli.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="mli.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <optional>
+        <choice>
+          <ref name="common.attrs.aria.role.listitem"/>
+          <ref name="common.attrs.aria.role.menuitem"/>
+          <ref name="common.attrs.aria.role.menuitemcheckbox"/>
+          <ref name="common.attrs.aria.role.menuitemradio"/>
+          <ref name="common.attrs.aria.role.option"/>
+          <ref name="common.attrs.aria.role.tab"/>
+          <ref name="common.attrs.aria.role.treeitem"/>
+          <ref name="common.attrs.aria.role.presentation"/>
+        </choice>
+      </optional>
+    </interleave>
+  </define>
+  <define name="mli.inner">
+    <ref name="common.inner.flow"/>
+  </define>
+  <define name="canvas.elem.flow">
+    <a:documentation>Canvas for Dynamic Graphics: &lt;canvas&gt;</a:documentation>
+    <element name="canvas">
+      <interleave>
+        <ref name="canvas.inner.flow"/>
+        <ref name="canvas.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="canvas.elem.phrasing">
+    <element name="canvas">
+      <interleave>
+        <ref name="canvas.inner.phrasing"/>
+        <ref name="canvas.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="canvas.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <optional>
+        <ref name="canvas.attrs.height"/>
+      </optional>
+      <optional>
+        <ref name="canvas.attrs.width"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.aria"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="canvas.attrs.height">
+    <attribute name="height">
+      <ref name="common.data.integer.non-negative"/>
+    </attribute>
+  </define>
+  <define name="canvas.attrs.width">
+    <attribute name="width">
+      <ref name="common.data.integer.non-negative"/>
+    </attribute>
+  </define>
+  <define name="canvas.inner.flow">
+    <ref name="common.inner.transparent.flow"/>
+  </define>
+  <define name="canvas.inner.phrasing">
+    <ref name="common.inner.phrasing"/>
+  </define>
+  <define name="common.elem.flow" combine="choice">
+    <ref name="canvas.elem.flow"/>
+  </define>
+  <define name="common.elem.phrasing" combine="choice">
+    <ref name="canvas.elem.phrasing"/>
+  </define>
+  <define name="details.elem">
+    <a:documentation>Additional On-Demand Information: &lt;details&gt;</a:documentation>
+    <element name="details">
+      <interleave>
+        <ref name="details.inner"/>
+        <ref name="details.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="details.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <optional>
+        <ref name="details.attrs.open"/>
+      </optional>
+      <optional>
+        <choice>
+          <ref name="common.attrs.aria.implicit.group"/>
+          <!-- aria-expanded must be true if open attr present; check by assertions -->
+          <ref name="common.attrs.aria.role.group"/>
+        </choice>
+      </optional>
+    </interleave>
+  </define>
+  <define name="details.attrs.open">
+    <attribute name="open">
+      <choice>
+        <value>open</value>
+        <value/>
+      </choice>
+    </attribute>
+  </define>
+  <define name="details.inner">
+    <ref name="summary.elem"/>
+    <ref name="common.inner.flow"/>
+  </define>
+  <define name="common.elem.flow" combine="choice">
+    <ref name="details.elem"/>
+  </define>
+  <define name="summary.elem">
+    <a:documentation>Caption/summary for details element: &lt;summary&gt;</a:documentation>
+    <element name="summary">
+      <interleave>
+        <ref name="summary.inner"/>
+        <ref name="summary.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="summary.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <optional>
+        <choice>
+          <ref name="common.attrs.aria.implicit.button"/>
+          <ref name="common.attrs.aria.role.button"/>
+        </choice>
+      </optional>
+    </interleave>
+  </define>
+  <define name="summary.inner">
+    <interleave>
+      <ref name="common.inner.phrasing"/>
+      <optional>
+        <ref name="h1.elem"/>
+      </optional>
+      <optional>
+        <ref name="h2.elem"/>
+      </optional>
+      <optional>
+        <ref name="h3.elem"/>
+      </optional>
+      <optional>
+        <ref name="h4.elem"/>
+      </optional>
+      <optional>
+        <ref name="h5.elem"/>
+      </optional>
+      <optional>
+        <ref name="h6.elem"/>
+      </optional>
+      <optional>
+        <ref name="hgroup.elem"/>
+      </optional>
+    </interleave>
+  </define>
+</grammar>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0" xmlns="http://relaxng.org/ns/structure/1.0">
+  <!-- ##################################################################### -->
+  <!-- EPUB elements -->
+  <include href="epub-trigger.rng">
+    <a:documentation> RELAX NG Schema for EPUB: shared definitions for inclusion        #</a:documentation>
+    <!-- ##################################################################### -->
+    <a:documentation>Includes</a:documentation>
+  </include>
+  <include href="epub-switch.rng"/>
+  <!-- EPUB attributes -->
+  <include href="epub-prefix-attr.rng"/>
+  <include href="epub-ssml-attrs.rng"/>
+  <include href="epub-type-attr.rng"/>
+  <!-- EPUB integration logic -->
+  <include href="epub-xhtml-integration.rng"/>
+  <!--
+    Note: the default HMTL schema does not define such a category, so we
+    do our best to include what makes sense here
+  -->
+  <define name="common.inner.anyhtml">
+    <a:documentation>Content model: HTML fragments</a:documentation>
+    <choice>
+      <ref name="html.elem"/>
+      <ref name="body.elem"/>
+      <ref name="common.inner.flow"/>
+    </choice>
+  </define>
+</grammar>

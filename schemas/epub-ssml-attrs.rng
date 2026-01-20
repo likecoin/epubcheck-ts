@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0" xmlns:epub="http://www.idpf.org/2007/ops" xmlns:ssml="http://www.w3.org/2001/10/synthesis" xmlns="http://relaxng.org/ns/structure/1.0">
+  <!-- ##################################################################### -->
+  <define name="epub.ssml.ph.attr">
+    <a:documentation> RELAX NG Schema for EPUB: EPUB SSML attributes                    #</a:documentation>
+    <!-- ##################################################################### -->
+    <a:documentation>SSML attributes</a:documentation>
+    <attribute name="ssml:ph">
+      <ref name="datatype.ssml.PhoneticExpression"/>
+    </attribute>
+  </define>
+  <define name="epub.ssml.alphabet.attr">
+    <attribute name="ssml:alphabet">
+      <ref name="datatype.ssml.PhoneticAlphabet"/>
+    </attribute>
+  </define>
+</grammar>

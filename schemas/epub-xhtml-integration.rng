@@ -1,0 +1,565 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0" xmlns="http://relaxng.org/ns/structure/1.0">
+  <!-- ##################################################################### -->
+  <!--
+    Allow `epub:type` on all elements except:
+     - the `head` element
+     - metadata content (base, link, meta, noscript, script, style, template, title)
+    
+    Note:
+    We can't use a common category since none is defined
+    for non-metadata content. So we add it for each element.
+  -->
+  <!-- from applications.rnc -->
+  <define name="progress.attrs" combine="interleave">
+    <a:documentation> RELAX NG Schema for EPUB: integration of EPUB specifics in HTML   #</a:documentation>
+    <!-- #####################################################################     -->
+    <a:documentation>combine `epub:type`</a:documentation>
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="dialog.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="menu.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="mli.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="canvas.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="details.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="summary.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <!-- from block.rnc -->
+  <define name="p.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="hr.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="pre.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="ul.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="li.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="ol.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="oli.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="dl.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="dt.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="dd.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="div.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="legend.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <!-- from data.rnc -->
+  <define name="time.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="time.datetime.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="data.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="meter.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <!-- from embed.rnc -->
+  <define name="img.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="picture.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="embed.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="object.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="param.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="iframe.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="map.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="area.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <!-- from media.rnc -->
+  <define name="source.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="video.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="audio.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="track.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="figure.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="figcaption.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <!-- from meta.rnc -->
+  <define name="html.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="body.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <!-- from phrase.rnc -->
+  <define name="a.href.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="a.nohref.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="em.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="strong.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="small.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="mark.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="abbr.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="dfn.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="i.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="b.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="s.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="u.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="code.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="var.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="samp.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="kbd.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="sup.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="sub.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="q.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="cite.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="span.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="bdo.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="bdi.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="br.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="wbr.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <!-- from revision.rnc -->
+  <define name="ins.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="del.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <!-- from ruby.rnc -->
+  <define name="ruby.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="rt.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="rp.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <!-- from sectional.rnc -->
+  <define name="h1.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="h2.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="h3.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="h4.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="h5.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="h6.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="hgroup.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="address.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="blockquote.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <!-- from structural.rnc -->
+  <define name="section.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="nav.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="article.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="aside.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="header.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="footer.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="main.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <!-- from tables.rnc -->
+  <define name="table.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="caption.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="colgroup.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="thead.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="tfoot.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="tbody.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="tr.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="td.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="th.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <!-- from web-forms.rnc and web-forms2.rnc -->
+  <define name="common-form.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="option.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="optgroup.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="form.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="label.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="output.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="datalist.attrs" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <define name="html.attrs" combine="interleave">
+    <a:documentation>combine prefix attributes</a:documentation>
+    <optional>
+      <ref name="epub.prefix.attr.ns"/>
+    </optional>
+  </define>
+  <define name="common.attrs.other" combine="interleave">
+    <a:documentation>combine SSML attributes</a:documentation>
+    <interleave>
+      <optional>
+        <ref name="epub.ssml.ph.attr"/>
+      </optional>
+      <optional>
+        <ref name="epub.ssml.alphabet.attr"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.elem.flow" combine="choice">
+    <a:documentation>combine `epub:switch` element</a:documentation>
+    <ref name="epub.switch.flow"/>
+  </define>
+  <define name="common.elem.phrasing" combine="choice">
+    <ref name="epub.switch.phrasing"/>
+  </define>
+  <define name="common.elem.metadata" combine="choice">
+    <a:documentation>combine `epub:trigger` element</a:documentation>
+    <ref name="epub.trigger"/>
+  </define>
+  <define name="common.elem.flow" combine="choice">
+    <ref name="epub.trigger"/>
+  </define>
+</grammar>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0" xmlns="http://relaxng.org/ns/structure/1.0">
+  <!-- ##################################################################### -->
+  <!-- ##################################################################### -->
+  <include href="epub-xhtml-inc.rng">
+    <a:documentation> RELAX NG Schema for EPUB: EPUB XHTML (+ SVG, + MathML)            #</a:documentation>
+  </include>
+  <include href="epub-svg-forgiving-inc.rng"/>
+  <include href="epub-mathml3-inc.rng"/>
+  <include href="epub-shared-inc.rng"/>
+  <define name="common.elem.phrasing" combine="choice">
+    <ref name="svg"/>
+  </define>
+  <define name="common.elem.phrasing" combine="choice">
+    <ref name="math"/>
+  </define>
+</grammar>

@@ -1,0 +1,980 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0" xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="">
+  <!-- ##################################################################### -->
+  <define name="shared-img.attrs">
+    <a:documentation> RELAX NG Schema for HTML 5: Embedded Content                      #</a:documentation>
+    <!-- ##################################################################### -->
+    <a:documentation>
+Replaced Content</a:documentation>
+    <a:documentation>Images: &lt;img&gt;</a:documentation>
+    <interleave>
+      <ref name="common.attrs"/>
+      <ref name="img.attrs.src"/>
+      <optional>
+        <ref name="img.attrs.srcset"/>
+      </optional>
+      <optional>
+        <ref name="img.attrs.sizes"/>
+      </optional>
+      <optional>
+        <ref name="img.attrs.generator-unable-to-provide-required-alt"/>
+      </optional>
+      <optional>
+        <ref name="img.attrs.height"/>
+      </optional>
+      <optional>
+        <ref name="img.attrs.width"/>
+      </optional>
+      <optional>
+        <ref name="img.attrs.usemap"/>
+      </optional>
+      <optional>
+        <ref name="img.attrs.ismap"/>
+      </optional>
+      <optional>
+        <ref name="img.attrs.decoding"/>
+      </optional>
+      <optional>
+        <ref name="img.attrs.loading"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.fetchpriority"/>
+      </optional>
+      <optional>
+        <ref name="img.attrs.border"/>
+      </optional>
+      <optional>
+        <!-- obsolete -->
+        <ref name="referrerpolicy"/>
+      </optional>
+      <optional>
+        <ref name="embedded.content.attrs.crossorigin"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="img.elem">
+    <element name="img">
+      <interleave>
+        <ref name="img.inner"/>
+        <ref name="img.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="img.attrs">
+    <interleave>
+      <ref name="shared-img.attrs"/>
+      <optional>
+        <ref name="img.attrs.alt"/>
+      </optional>
+      <optional>
+        <choice>
+          <ref name="common.attrs.aria.implicit.img"/>
+          <ref name="common.attrs.aria.role.button"/>
+          <ref name="common.attrs.aria.role.checkbox"/>
+          <ref name="common.attrs.aria.role.img"/>
+          <ref name="common.attrs.aria.role.link"/>
+          <ref name="common.attrs.aria.role.math"/>
+          <ref name="common.attrs.aria.role.menuitem"/>
+          <ref name="common.attrs.aria.role.menuitemcheckbox"/>
+          <ref name="common.attrs.aria.role.menuitemradio"/>
+          <ref name="common.attrs.aria.role.none"/>
+          <ref name="common.attrs.aria.role.option"/>
+          <ref name="common.attrs.aria.role.presentation"/>
+          <ref name="common.attrs.aria.role.progressbar"/>
+          <ref name="common.attrs.aria.role.radio"/>
+          <ref name="common.attrs.aria.role.scrollbar"/>
+          <ref name="common.attrs.aria.role.separator"/>
+          <ref name="common.attrs.aria.role.slider"/>
+          <ref name="common.attrs.aria.role.switch"/>
+          <ref name="common.attrs.aria.role.tab"/>
+          <ref name="common.attrs.aria.role.treeitem"/>
+          <ref name="common.attrs.aria.role.doc-cover"/>
+        </choice>
+      </optional>
+    </interleave>
+  </define>
+  <define name="img.attrs.src">
+    <attribute name="src">
+      <ref name="common.data.uri.non-empty"/>
+    </attribute>
+  </define>
+  <define name="img.attrs.srcset">
+    <interleave>
+      <attribute name="srcset">
+        <data type="string"/>
+      </attribute>
+      <ref name="v5only"/>
+    </interleave>
+  </define>
+  <define name="img.attrs.sizes">
+    <interleave>
+      <attribute name="sizes">
+        <ref name="common.data.source.size.list"/>
+      </attribute>
+      <ref name="v5only"/>
+    </interleave>
+  </define>
+  <define name="img.attrs.alt">
+    <attribute name="alt"/>
+  </define>
+  <define name="img.attrs.generator-unable-to-provide-required-alt">
+    <attribute name="generator-unable-to-provide-required-alt">
+      <value type="string"/>
+    </attribute>
+  </define>
+  <define name="img.attrs.height">
+    <attribute name="height">
+      <ref name="common.data.integer.non-negative"/>
+    </attribute>
+  </define>
+  <define name="img.attrs.width">
+    <attribute name="width">
+      <ref name="common.data.integer.non-negative"/>
+    </attribute>
+  </define>
+  <define name="img.attrs.usemap">
+    <attribute name="usemap">
+      <ref name="common.data.hash-name"/>
+    </attribute>
+  </define>
+  <define name="img.attrs.ismap">
+    <attribute name="ismap">
+      <choice>
+        <value>ismap</value>
+        <value/>
+      </choice>
+    </attribute>
+  </define>
+  <define name="img.attrs.decoding">
+    <attribute name="decoding">
+      <choice>
+        <value type="string">sync</value>
+        <value type="string">async</value>
+        <value type="string">auto</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="img.attrs.loading">
+    <attribute name="loading">
+      <choice>
+        <value type="string">lazy</value>
+        <value type="string">eager</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="img.attrs.border">
+    <attribute name="border">
+      <ref name="common.data.zero"/>
+    </attribute>
+  </define>
+  <define name="img.inner">
+    <empty/>
+  </define>
+  <define name="common.elem.phrasing" combine="choice">
+    <ref name="img.elem"/>
+  </define>
+  <define name="picture.elem">
+    <a:documentation>Image with multiple sources: &lt;picture&gt;</a:documentation>
+    <interleave>
+      <element name="picture">
+        <interleave>
+          <ref name="picture.inner"/>
+          <ref name="picture.attrs"/>
+        </interleave>
+      </element>
+      <ref name="v5only"/>
+    </interleave>
+  </define>
+  <define name="picture.attrs">
+    <ref name="common.attrs"/>
+  </define>
+  <define name="picture.inner">
+    <interleave>
+      <zeroOrMore>
+        <ref name="source.picture.elem"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="common.elem.script-supporting"/>
+      </zeroOrMore>
+    </interleave>
+    <interleave>
+      <ref name="img.elem"/>
+      <zeroOrMore>
+        <ref name="common.elem.script-supporting"/>
+      </zeroOrMore>
+    </interleave>
+  </define>
+  <define name="common.elem.phrasing" combine="choice">
+    <ref name="picture.elem"/>
+  </define>
+  <define name="source.picture.elem">
+    <a:documentation>Picture source: &lt;source srcset&gt;</a:documentation>
+    <element name="source">
+      <interleave>
+        <ref name="source.picture.inner"/>
+        <ref name="source.picture.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="source.picture.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <optional>
+        <ref name="source.picture.attrs.media"/>
+      </optional>
+      <ref name="source.picture.attrs.srcset"/>
+      <optional>
+        <ref name="source.picture.attrs.sizes"/>
+      </optional>
+      <optional>
+        <ref name="source.picture.attrs.type"/>
+      </optional>
+      <optional>
+        <ref name="source.picture.attrs.width"/>
+      </optional>
+      <optional>
+        <ref name="source.picture.attrs.height"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="source.picture.attrs.media">
+    <attribute name="media">
+      <ref name="common.data.mediaquery"/>
+    </attribute>
+  </define>
+  <define name="source.picture.attrs.srcset">
+    <attribute name="srcset">
+      <data type="string"/>
+    </attribute>
+  </define>
+  <define name="source.picture.attrs.sizes">
+    <attribute name="sizes">
+      <ref name="common.data.source.size.list"/>
+    </attribute>
+  </define>
+  <define name="source.picture.attrs.type">
+    <attribute name="type">
+      <ref name="common.data.mimetype"/>
+    </attribute>
+  </define>
+  <define name="source.picture.attrs.width">
+    <attribute name="width">
+      <ref name="common.data.integer.non-negative"/>
+    </attribute>
+  </define>
+  <define name="source.picture.attrs.height">
+    <attribute name="height">
+      <ref name="common.data.integer.non-negative"/>
+    </attribute>
+  </define>
+  <define name="source.picture.inner">
+    <empty/>
+  </define>
+  <define name="embed.elem">
+    <a:documentation>Plug-ins: &lt;embed&gt;</a:documentation>
+    <element name="embed">
+      <interleave>
+        <ref name="embed.inner"/>
+        <ref name="embed.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="embed.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <optional>
+        <ref name="embed.attrs.src"/>
+      </optional>
+      <optional>
+        <ref name="embed.attrs.type"/>
+      </optional>
+      <optional>
+        <ref name="embed.attrs.height"/>
+      </optional>
+      <optional>
+        <ref name="embed.attrs.width"/>
+      </optional>
+      <zeroOrMore>
+        <ref name="embed.attrs.other"/>
+      </zeroOrMore>
+      <optional>
+        <choice>
+          <ref name="common.attrs.aria.role.application"/>
+          <ref name="common.attrs.aria.landmark.document"/>
+          <ref name="common.attrs.aria.role.img"/>
+          <ref name="common.attrs.aria.role.presentation"/>
+        </choice>
+      </optional>
+    </interleave>
+  </define>
+  <define name="embed.attrs.src">
+    <attribute name="src">
+      <ref name="common.data.uri.non-empty"/>
+    </attribute>
+  </define>
+  <define name="embed.attrs.type">
+    <attribute name="type">
+      <ref name="common.data.mimetype"/>
+    </attribute>
+  </define>
+  <define name="embed.attrs.height">
+    <attribute name="height">
+      <ref name="common.data.integer.non-negative"/>
+    </attribute>
+  </define>
+  <define name="embed.attrs.width">
+    <attribute name="width">
+      <ref name="common.data.integer.non-negative"/>
+    </attribute>
+  </define>
+  <define name="embed.attrs.other">
+    <!-- REVISIT common.attrs -->
+    <attribute>
+      <nsName ns="">
+        <except>
+          <name>src</name>
+          <name>type</name>
+          <name>height</name>
+          <name>width</name>
+          <name>id</name>
+          <name>is</name>
+          <name>slot</name>
+          <name>class</name>
+          <name>title</name>
+          <name>dir</name>
+          <name>lang</name>
+          <name>translate</name>
+          <name>style</name>
+          <name>tabindex</name>
+          <name>autofocus</name>
+          <name>inert</name>
+          <name>contenteditable</name>
+          <name>draggable</name>
+          <name>hidden</name>
+          <name>popover</name>
+          <name>inputmode</name>
+          <name>nonce</name>
+          <name>onauxclick</name>
+          <name>onbeforeinput</name>
+          <name>onbeforematch</name>
+          <name>onblur</name>
+          <name>oncancel</name>
+          <name>oncanplay</name>
+          <name>oncanplaythrough</name>
+          <name>onchange</name>
+          <name>onclick</name>
+          <name>onclose</name>
+          <name>oncontextlost</name>
+          <name>oncontextmenu</name>
+          <name>oncontextrestored</name>
+          <name>oncopy</name>
+          <name>oncuechange</name>
+          <name>oncut</name>
+          <name>ondblclick</name>
+          <name>ondrag</name>
+          <name>ondragend</name>
+          <name>ondragenter</name>
+          <name>ondragleave</name>
+          <name>ondragover</name>
+          <name>ondragstart</name>
+          <name>ondrop</name>
+          <name>ondurationchange</name>
+          <name>onemptied</name>
+          <name>onended</name>
+          <name>onerror</name>
+          <name>onfocus</name>
+          <name>onformdata</name>
+          <name>oninput</name>
+          <name>oninvalid</name>
+          <name>onkeydown</name>
+          <name>onkeypress</name>
+          <name>onkeyup</name>
+          <name>onload</name>
+          <name>onloadeddata</name>
+          <name>onloadedmetadata</name>
+          <name>onloadstart</name>
+          <name>onmousedown</name>
+          <name>onmouseenter</name>
+          <name>onmouseleave</name>
+          <name>onmousemove</name>
+          <name>onmouseout</name>
+          <name>onmouseover</name>
+          <name>onmouseup</name>
+          <name>onpaste</name>
+          <name>onpause</name>
+          <name>onplay</name>
+          <name>onplaying</name>
+          <name>onprogress</name>
+          <name>onratechange</name>
+          <name>onreset</name>
+          <name>onresize</name>
+          <name>onscroll</name>
+          <name>onscrollend</name>
+          <name>onsecuritypolicyviolation</name>
+          <name>onseeked</name>
+          <name>onseeking</name>
+          <name>onselect</name>
+          <name>onslotchange</name>
+          <name>onstalled</name>
+          <name>onsubmit</name>
+          <name>onsuspend</name>
+          <name>ontimeupdate</name>
+          <name>ontoggle</name>
+          <name>onvolumechange</name>
+          <name>onwaiting</name>
+          <name>onwheel</name>
+          <name>onpointerover</name>
+          <name>onpointerenter</name>
+          <name>onpointerdown</name>
+          <name>onpointermove</name>
+          <name>onpointerrawupdate</name>
+          <name>onpointerup</name>
+          <name>onpointercancel</name>
+          <name>onpointerout</name>
+          <name>onpointerleave</name>
+          <name>ongotpointercapture</name>
+          <name>onlostpointercapture</name>
+          <name>role</name>
+          <name>aria-atomic</name>
+          <name>aria-busy</name>
+          <name>aria-controls</name>
+          <name>aria-current</name>
+          <name>aria-details</name>
+          <name>aria-describedby</name>
+          <name>aria-description</name>
+          <name>aria-disabled</name>
+          <name>aria-dropeffect</name>
+          <name>aria-errormessage</name>
+          <name>aria-expanded</name>
+          <name>aria-flowto</name>
+          <name>aria-grabbed</name>
+          <name>aria-haspopup</name>
+          <name>aria-hidden</name>
+          <name>aria-invalid</name>
+          <name>aria-keyshortcuts</name>
+          <name>aria-label</name>
+          <name>aria-labelledby</name>
+          <name>aria-live</name>
+          <name>aria-owns</name>
+          <name>aria-relevant</name>
+          <name>aria-required</name>
+          <name>aria-roledescription</name>
+          <name>spellcheck</name>
+          <name>autocapitalize</name>
+          <name>enterkeyhint</name>
+          <name>accesskey</name>
+          <name>itemref</name>
+          <name>itemprop</name>
+          <name>itemscope</name>
+          <name>itemtype</name>
+          <name>itemid</name>
+          <name>name</name>
+          <name>align</name>
+          <name>hspace</name>
+          <name>vspace</name>
+          <name>about</name>
+          <name>prefix</name>
+          <name>property</name>
+          <name>typeof</name>
+          <name>vocab</name>
+          <name>content</name>
+          <name>datatype</name>
+          <name>href</name>
+          <name>rel</name>
+          <name>resource</name>
+          <name>rev</name>
+          <name>inlist</name>
+          <name>its-loc-note</name>
+          <name>its-loc-note-type</name>
+          <name>its-loc-note-ref</name>
+          <name>its-term-info-ref</name>
+          <name>its-term</name>
+          <name>its-term-confidence</name>
+          <name>its-within-text</name>
+          <name>its-domain-mapping</name>
+          <name>its-ta-confidence</name>
+          <name>its-ta-class-ref</name>
+          <name>its-ta-ident</name>
+          <name>its-ta-ident-ref</name>
+          <name>its-ta-source</name>
+          <name>its-locale-filter-list</name>
+          <name>its-locale-filter-type</name>
+          <name>its-person</name>
+          <name>its-person-ref</name>
+          <name>its-org</name>
+          <name>its-org-ref</name>
+          <name>its-tool</name>
+          <name>its-tool-ref</name>
+          <name>its-rev-person</name>
+          <name>its-rev-person-ref</name>
+          <name>its-rev-org</name>
+          <name>its-rev-org-ref</name>
+          <name>its-rev-tool</name>
+          <name>its-rev-tool-ref</name>
+          <name>its-prov-ref</name>
+          <name>its-provenance-records-ref</name>
+          <name>its-loc-quality-issues-ref</name>
+          <name>its-loc-quality-issue-type</name>
+          <name>its-loc-quality-issue-comment</name>
+          <name>its-loc-quality-issue-severity</name>
+          <name>its-loc-quality-issue-profile-ref</name>
+          <name>its-loc-quality-issue-enabled</name>
+          <name>its-loc-quality-rating-score</name>
+          <name>its-loc-quality-rating-vote</name>
+          <name>its-loc-quality-rating-score-threshold</name>
+          <name>its-loc-quality-rating-vote-threshold</name>
+          <name>its-loc-quality-rating-profile-ref</name>
+          <name>its-mt-confidence</name>
+          <name>its-allowed-characters</name>
+          <name>its-storage-size</name>
+          <name>its-storage-encoding</name>
+          <name>its-line-break-type</name>
+          <name>its-annotators-ref</name>
+        </except>
+      </nsName>
+      <data type="string"/>
+    </attribute>
+  </define>
+  <define name="embed.inner">
+    <empty/>
+  </define>
+  <define name="common.elem.phrasing" combine="choice">
+    <ref name="embed.elem"/>
+  </define>
+  <define name="object.elem.flow">
+    <a:documentation>Generic Objects: &lt;object&gt;</a:documentation>
+    <element name="object">
+      <interleave>
+        <ref name="object.inner.flow"/>
+        <ref name="object.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="object.elem.phrasing">
+    <element name="object">
+      <interleave>
+        <ref name="object.inner.phrasing"/>
+        <ref name="object.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="object.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <choice>
+        <interleave>
+          <ref name="object.attrs.data"/>
+          <optional>
+            <ref name="object.attrs.type"/>
+          </optional>
+        </interleave>
+        <ref name="object.attrs.type"/>
+      </choice>
+      <optional>
+        <!--
+          		&	object.attrs.classid?
+          		&	object.attrs.codebase?
+          		&	object.attrs.codetype?
+        -->
+        <ref name="object.attrs.height"/>
+      </optional>
+      <optional>
+        <ref name="object.attrs.width"/>
+      </optional>
+      <optional>
+        <ref name="object.attrs.usemap"/>
+      </optional>
+      <optional>
+        <ref name="object.attrs.name"/>
+      </optional>
+      <optional>
+        <ref name="common-form.attrs.form"/>
+      </optional>
+      <optional>
+        <choice>
+          <ref name="common.attrs.aria.role.application"/>
+          <ref name="common.attrs.aria.landmark.document"/>
+          <ref name="common.attrs.aria.role.img"/>
+        </choice>
+      </optional>
+    </interleave>
+  </define>
+  <define name="object.attrs.data">
+    <attribute name="data">
+      <ref name="common.data.uri.non-empty"/>
+    </attribute>
+  </define>
+  <define name="object.attrs.type">
+    <attribute name="type">
+      <ref name="common.data.mimetype"/>
+    </attribute>
+  </define>
+  <define name="object.attrs.height">
+    <attribute name="height">
+      <ref name="common.data.integer.non-negative"/>
+    </attribute>
+  </define>
+  <define name="object.attrs.width">
+    <attribute name="width">
+      <ref name="common.data.integer.non-negative"/>
+    </attribute>
+  </define>
+  <define name="object.attrs.usemap">
+    <attribute name="usemap">
+      <ref name="common.data.hash-name"/>
+    </attribute>
+  </define>
+  <define name="object.attrs.name">
+    <attribute name="name">
+      <ref name="common.data.browsing-context"/>
+    </attribute>
+  </define>
+  <define name="object.inner.flow">
+    <zeroOrMore>
+      <ref name="param.elem"/>
+    </zeroOrMore>
+    <ref name="common.inner.transparent.flow"/>
+  </define>
+  <define name="object.inner.phrasing">
+    <zeroOrMore>
+      <ref name="param.elem"/>
+    </zeroOrMore>
+    <ref name="common.inner.phrasing"/>
+  </define>
+  <define name="common.elem.flow" combine="choice">
+    <ref name="object.elem.flow"/>
+  </define>
+  <define name="common.elem.phrasing" combine="choice">
+    <ref name="object.elem.phrasing"/>
+  </define>
+  <define name="param.elem">
+    <a:documentation>Initialization Parameters: &lt;param&gt;</a:documentation>
+    <element name="param">
+      <interleave>
+        <ref name="param.inner"/>
+        <ref name="param.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="param.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <ref name="param.attrs.name"/>
+      <ref name="param.attrs.value"/>
+    </interleave>
+  </define>
+  <define name="param.attrs.name">
+    <attribute name="name">
+      <data type="string"/>
+    </attribute>
+  </define>
+  <define name="param.attrs.value">
+    <attribute name="value">
+      <data type="string"/>
+    </attribute>
+  </define>
+  <define name="param.inner">
+    <empty/>
+  </define>
+  <define name="iframe.elem">
+    <a:documentation>Inline Frame: &lt;iframe&gt;</a:documentation>
+    <element name="iframe">
+      <interleave>
+        <ref name="iframe.inner"/>
+        <ref name="iframe.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="iframe.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <optional>
+        <ref name="iframe.attrs.src"/>
+      </optional>
+      <optional>
+        <ref name="iframe.attrs.srcdoc"/>
+      </optional>
+      <optional>
+        <ref name="iframe.attrs.name"/>
+      </optional>
+      <optional>
+        <ref name="iframe.attrs.width"/>
+      </optional>
+      <optional>
+        <ref name="iframe.attrs.height"/>
+      </optional>
+      <optional>
+        <ref name="iframe.attrs.loading"/>
+      </optional>
+      <optional>
+        <ref name="iframe.attrs.sandbox"/>
+      </optional>
+      <optional>
+        <ref name="iframe.attrs.allowfullscreen"/>
+      </optional>
+      <optional>
+        <ref name="iframe.attrs.allow"/>
+      </optional>
+      <optional>
+        <ref name="referrerpolicy"/>
+      </optional>
+      <optional>
+        <choice>
+          <ref name="common.attrs.aria.role.application"/>
+          <ref name="common.attrs.aria.landmark.document"/>
+          <ref name="common.attrs.aria.role.img"/>
+          <ref name="common.attrs.aria.role.presentation"/>
+        </choice>
+      </optional>
+    </interleave>
+  </define>
+  <define name="iframe.attrs.src">
+    <attribute name="src">
+      <ref name="common.data.uri.non-empty"/>
+    </attribute>
+  </define>
+  <define name="iframe.attrs.srcdoc">
+    <attribute name="srcdoc">
+      <data type="string"/>
+      <!-- FIXME -->
+    </attribute>
+  </define>
+  <define name="iframe.attrs.name">
+    <attribute name="name">
+      <ref name="common.data.browsing-context"/>
+    </attribute>
+  </define>
+  <define name="iframe.attrs.height">
+    <attribute name="height">
+      <ref name="common.data.integer.non-negative"/>
+    </attribute>
+  </define>
+  <define name="iframe.attrs.loading">
+    <attribute name="loading">
+      <choice>
+        <value>lazy</value>
+        <value>eager</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="iframe.attrs.width">
+    <attribute name="width">
+      <ref name="common.data.integer.non-negative"/>
+    </attribute>
+  </define>
+  <define name="iframe.attrs.sandbox">
+    <interleave>
+      <attribute name="sandbox">
+        <ref name="common.data.sandbox-allow-list"/>
+      </attribute>
+      <ref name="v5only"/>
+    </interleave>
+  </define>
+  <define name="iframe.attrs.allowfullscreen">
+    <interleave>
+      <attribute name="allowfullscreen">
+        <choice>
+          <value>allowfullscreen</value>
+          <value/>
+        </choice>
+      </attribute>
+      <ref name="v5only"/>
+    </interleave>
+  </define>
+  <define name="iframe.attrs.allow">
+    <attribute name="allow">
+      <ref name="common.data.feature-policy"/>
+    </attribute>
+  </define>
+  <define name="iframe.inner">
+    <empty/>
+  </define>
+  <define name="common.elem.phrasing" combine="choice">
+    <ref name="iframe.elem"/>
+  </define>
+  <define name="map.elem.flow">
+    <a:documentation>
+Image Maps</a:documentation>
+    <a:documentation>Map Definition: &lt;map&gt;</a:documentation>
+    <element name="map">
+      <interleave>
+        <ref name="map.inner.flow"/>
+        <ref name="map.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="map.elem.phrasing">
+    <element name="map">
+      <interleave>
+        <ref name="map.inner.phrasing"/>
+        <ref name="map.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="map.attrs">
+    <interleave>
+      <ref name="common.attrs"/>
+      <ref name="map.attrs.name"/>
+    </interleave>
+  </define>
+  <!-- REVISIT make id required in Schematron -->
+  <define name="map.attrs.name">
+    <attribute name="name">
+      <ref name="common.data.name"/>
+    </attribute>
+  </define>
+  <define name="map.inner.flow">
+    <ref name="common.inner.transparent.flow"/>
+  </define>
+  <define name="map.inner.phrasing">
+    <ref name="common.inner.phrasing"/>
+  </define>
+  <define name="common.elem.flow" combine="choice">
+    <ref name="map.elem.flow"/>
+  </define>
+  <define name="common.elem.phrasing" combine="choice">
+    <ref name="map.elem.phrasing"/>
+  </define>
+  <define name="area.elem">
+    <a:documentation>Map Area Definition: &lt;area&gt;</a:documentation>
+    <element name="area">
+      <interleave>
+        <ref name="area.inner"/>
+        <ref name="area.attrs"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="area.attrs">
+    <interleave>
+      <ref name="common.attrs.basic"/>
+      <ref name="common.attrs.i18n"/>
+      <ref name="common.attrs.present"/>
+      <ref name="common.attrs.other"/>
+      <optional>
+        <ref name="shared-hyperlink.attrs.download"/>
+      </optional>
+      <optional>
+        <interleave>
+          <ref name="area.attrs.alt"/>
+          <ref name="shared-hyperlink.attrs.href"/>
+        </interleave>
+      </optional>
+      <optional>
+        <ref name="shared-hyperlink.attrs.target"/>
+      </optional>
+      <optional>
+        <ref name="shared-hyperlink.attrs.ping"/>
+      </optional>
+      <optional>
+        <ref name="shared-hyperlink.attrs.rel"/>
+      </optional>
+      <optional>
+        <ref name="shared-hyperlink.attrs.hreflang"/>
+      </optional>
+      <optional>
+        <ref name="shared-hyperlink.attrs.type"/>
+      </optional>
+      <optional>
+        <ref name="area.attrs.shape"/>
+      </optional>
+      <optional>
+        <choice>
+          <ref name="common.attrs.aria.role.link"/>
+          <ref name="common.attrs.aria.role.button"/>
+          <ref name="common.attrs.aria.implicit.link"/>
+        </choice>
+      </optional>
+    </interleave>
+  </define>
+  <define name="area.attrs.alt">
+    <attribute name="alt"/>
+  </define>
+  <define name="area.attrs.shape">
+    <choice>
+      <interleave>
+        <optional>
+          <ref name="area.attrs.shape.rect"/>
+        </optional>
+        <ref name="area.attrs.coords.rect"/>
+      </interleave>
+      <interleave>
+        <ref name="area.attrs.shape.circle"/>
+        <ref name="area.attrs.coords.circle"/>
+      </interleave>
+      <interleave>
+        <ref name="area.attrs.shape.poly"/>
+        <ref name="area.attrs.coords.poly"/>
+      </interleave>
+      <ref name="area.attrs.shape.default"/>
+    </choice>
+  </define>
+  <define name="area.attrs.shape.rect">
+    <attribute name="shape">
+      <value>rect</value>
+    </attribute>
+  </define>
+  <define name="area.attrs.coords.rect">
+    <attribute name="coords">
+      <ref name="datatype.html5.coords.rectangle"/>
+      <!--
+        				xsd:token {
+        					pattern = "-?[0-9]+,-?[0-9]+,-?[0-9]+,-?[0-9]+"
+        				}
+      -->
+    </attribute>
+  </define>
+  <define name="area.attrs.shape.circle">
+    <attribute name="shape">
+      <value>circle</value>
+    </attribute>
+  </define>
+  <define name="area.attrs.coords.circle">
+    <attribute name="coords">
+      <ref name="datatype.html5.coords.circle"/>
+      <!--
+        				xsd:token {
+        					pattern = "-?[0-9]+,-?[0-9]+,[0-9]+"
+        				}
+      -->
+    </attribute>
+  </define>
+  <define name="area.attrs.shape.poly">
+    <attribute name="shape">
+      <value>poly</value>
+    </attribute>
+  </define>
+  <define name="area.attrs.coords.poly">
+    <attribute name="coords">
+      <ref name="datatype.html5.coords.poly"/>
+      <!--
+        				xsd:token {
+        					pattern = "-?[0-9]+,-?[0-9]+,-?[0-9]+,-?[0-9]+,-?[0-9]+,-?[0-9]+(,-?[0-9]+,-?[0-9]+)*"
+        				}
+      -->
+    </attribute>
+  </define>
+  <define name="area.attrs.shape.default">
+    <attribute name="shape">
+      <value>default</value>
+    </attribute>
+  </define>
+  <define name="area.inner">
+    <empty/>
+  </define>
+  <define name="common.elem.phrasing" combine="choice">
+    <ref name="area.elem"/>
+  </define>
+  <define name="embedded.content.attrs.crossorigin">
+    <a:documentation>Attributes Common to Embedded Content</a:documentation>
+    <interleave>
+      <attribute name="crossorigin">
+        <choice>
+          <value>anonymous</value>
+          <value>use-credentials</value>
+          <value/>
+        </choice>
+      </attribute>
+      <ref name="v5only"/>
+    </interleave>
+  </define>
+</grammar>

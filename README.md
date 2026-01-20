@@ -218,7 +218,7 @@ This library is a TypeScript port of the Java-based [EPUBCheck](https://github.c
 | Package Document (OPF) | 🟡 Partial | ~40% | Metadata, manifest, spine, fallback chains |
 | Content Documents | 🟡 Partial | ~25% | XML well-formedness, XHTML structure |
 | Navigation Document | 🟡 Partial | ~30% | Nav structure, NCX validation |
-| Schema Validation | 🟡 Partial | ~50% | RelaxNG, XSD, Schematron infrastructure |
+| Schema Validation | 🟡 Partial | ~70% | RelaxNG, XSD, Schematron working |
 | CSS | 🔴 Basic | ~5% | Parser available, validation minimal |
 | Media Overlays | ❌ Not Started | 0% | Planned |
 | Cross-reference Validation | 🔴 Basic | ~15% | Basic reference tracking |

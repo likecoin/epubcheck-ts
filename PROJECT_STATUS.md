@@ -11,7 +11,7 @@ This document tracks the implementation progress compared to the original Java E
 | Content (XHTML/SVG) | 100% | ~25% | 🟡 Partial |
 | CSS Validation | 100% | ~5% | 🔴 Basic |
 | Navigation (nav/NCX) | 100% | ~30% | 🟡 Partial |
-| Schema Validation | 100% | ~50% | 🟡 Partial |
+| Schema Validation | 100% | ~70% | 🟡 Partial |
 | Media Overlays | 100% | 0% | ❌ Not Started |
 | Accessibility | 100% | 0% | ❌ Not Started |
 | Cross-reference | 100% | ~15% | 🔴 Basic |
@@ -152,14 +152,14 @@ This document tracks the implementation progress compared to the original Java E
 
 | Feature | Java | TS | Message IDs | Notes |
 |---------|:----:|:--:|------------|-------|
-| RelaxNG (RNC/RNG) | ✅ | ✅ | RSC-005 | libxml2-wasm |
+| RelaxNG (RNC/RNG) | ✅ | ✅ | RSC-005 | libxml2-wasm (RNC converted to RNG) |
 | XSD | ✅ | ✅ | RSC-005 | libxml2-wasm |
 | Schematron | ✅ | ✅ | SCH-* | fontoxpath + slimdom |
 | NVDL | ✅ | ❌ | - | Multi-namespace |
 | XML Catalog | ✅ | ❌ | - | Schema resolution |
-| Schema bundling | ✅ | 🟡 | - | Node.js only, browser pending |
+| Schema bundling | ✅ | ✅ | - | Schemas inlined as constants |
 
-**Status: ~50% complete** (RelaxNG, XSD, Schematron implemented)
+**Status: ~70% complete** (RelaxNG, XSD, Schematron implemented; schemas bundled)
 
 ---
 
@@ -279,7 +279,8 @@ This document tracks the implementation progress compared to the original Java E
 | src/ocf/zip.ts | 15 | ✅ Passing |
 | src/opf/parser.ts | 12 | ✅ Passing |
 | src/content/validator.ts | 21 | ✅ Passing |
-| **Total** | **59** | **✅ All passing** |
+| Integration tests | 4 | ✅ Passing |
+| **Total** | **118** | **✅ All passing** |
 
 ---
 
@@ -305,8 +306,8 @@ This document tracks the implementation progress compared to the original Java E
 
 ## Next Steps
 
-1. Implement schema validation infrastructure (libxml2-wasm)
+1. ~~Implement schema validation infrastructure (libxml2-wasm)~~ ✅ Complete
 2. Add full XML DOM parsing for content validation
 3. Implement cross-reference validation
 4. Complete CSS validation
-5. Add comprehensive integration tests
+5. ~~Add comprehensive integration tests~~ ✅ Integration tests added

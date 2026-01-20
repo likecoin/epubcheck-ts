@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0" xmlns:epub="http://www.idpf.org/2007/ops" xmlns="http://relaxng.org/ns/structure/1.0">
+  <!-- ##################################################################### -->
+  <define name="epub.type.attr">
+    <a:documentation> RELAX NG Schema for EPUB: `epub:type` attribute                   #</a:documentation>
+    <!-- ##################################################################### -->
+    <a:documentation>`epub:type` attribute</a:documentation>
+    <attribute name="epub:type">
+      <ref name="datatype.properties"/>
+    </attribute>
+  </define>
+</grammar>

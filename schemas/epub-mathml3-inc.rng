@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar ns="http://www.w3.org/1998/Math/MathML" xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+  <!--
+    #####################################################################
+    
+     MathML validation based on the schemas from the Nu Html Checker,
+     with the following changes:
+       - Content MathML is only allowed in annotation-xml
+       - annotation-xml follows the restrictions defined in
+         EPUB Content Documents
+       - EPUB SSML attributes are allowed
+    
+    #####################################################################
+  -->
+  <include href="mathml3-inc.rng">
+    <!-- extend to circumvent datatype collisions -->
+    <define name="NonMathMLAtt">
+      <attribute>
+        <anyName>
+          <except>
+            <nsName ns=""/>
+            <nsName/>
+            <nsName ns="http://www.w3.org/XML/1998/namespace"/>
+            <nsName ns="http://www.w3.org/1999/xhtml"/>
+            <nsName ns="http://www.w3.org/2001/xml-events"/>
+            <nsName ns="http://www.w3.org/2001/10/synthesis"/>
+            <nsName ns="http://www.idpf.org/2007/ops"/>
+          </except>
+        </anyName>
+        <ref name="datatype.string"/>
+      </attribute>
+    </define>
+    <!-- as ops allows presentation mathml only at top level, kill the contribution to MathExpression -->
+    <define name="MathExpression">
+      <choice>
+        <ref name="semantics"/>
+        <ref name="PresentationExpression"/>
+      </choice>
+    </define>
+    <!-- override annotation-xml with EPUB restrictions -->
+    <define name="annotation-xml">
+      <ref name="epub.annotation-xml"/>
+    </define>
+  </include>
+  <!--
+    Common attribute extensions
+    - epub:type
+  -->
+  <define name="CommonAtt" combine="interleave">
+    <optional>
+      <ref name="epub.type.attr"/>
+    </optional>
+  </define>
+  <!-- - SSML attributes -->
+  <define name="CommonAtt" combine="interleave">
+    <optional>
+      <ref name="epub.ssml.ph.attr"/>
+    </optional>
+  </define>
+  <!-- - xml:base -->
+  <define name="CommonAtt" combine="interleave">
+    <optional>
+      <ref name="common.attrs.xmlbase"/>
+    </optional>
+  </define>
+  <!-- - ARIA -->
+  <define name="CommonAtt" combine="interleave">
+    <optional>
+      <ref name="aria.global"/>
+    </optional>
+  </define>
+  <define name="annotation-xml.model.xhtml" combine="choice">
+    <ref name="common.inner.flow"/>
+  </define>
+  <define name="annotation-xml.model.svg" combine="choice">
+    <ref name="svg"/>
+  </define>
+  <!--
+    The following comes from validator.nu’s xhtml5-svg-mathml.rnc driver:
+    in our integration, <mtext> is the only MathML "token element" that can
+    contain HTML element content; the <mi>, <mn>, <mo> and <ms> elements
+    cannot; see http://www.w3.org/Bugs/Public/show_bug.cgi?id=9859#c8 for a
+    rationale
+  -->
+  <define name="mtext.content" combine="choice">
+    <ref name="common.elem.phrasing"/>
+  </define>
+  <!-- EPUB very specific annotation-xml restrictions: -->
+  <define name="epub.annotation-xml">
+    <choice>
+      <ref name="annotation-xml.xhtml"/>
+      <ref name="annotation-xml.svg"/>
+      <ref name="epub.annotation-xml.mathml.content"/>
+      <ref name="epub.annotation-xml.mathml.presentation"/>
+    </choice>
+  </define>
+  <define name="epub.annotation-xml.attributes">
+    <ref name="CommonAtt"/>
+    <optional>
+      <ref name="cd"/>
+    </optional>
+    <optional>
+      <ref name="src"/>
+    </optional>
+  </define>
+  <define name="epub.annotation-xml.mathml.content">
+    <element name="annotation-xml">
+      <ref name="epub.annotation-xml.model.mathml.content"/>
+      <ref name="epub.annotation-xml.attributes"/>
+      <ref name="epub.att-encoding.mathml.content"/>
+      <ref name="epub.att-name.mathml.content"/>
+    </element>
+  </define>
+  <define name="epub.annotation-xml.model.mathml.content">
+    <zeroOrMore>
+      <ref name="ContExp"/>
+    </zeroOrMore>
+  </define>
+  <define name="epub.att-encoding.mathml.content">
+    <attribute name="encoding">
+      <choice>
+        <value type="string" datatypeLibrary="">MathML-Content</value>
+        <value type="string" datatypeLibrary="">application/mathml-content+xml</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="epub.att-name.mathml.content">
+    <attribute name="name">
+      <value type="string" datatypeLibrary="">contentequiv</value>
+    </attribute>
+  </define>
+  <define name="epub.annotation-xml.mathml.presentation">
+    <element name="annotation-xml">
+      <ref name="epub.annotation-xml.model.mathml.presentation"/>
+      <ref name="epub.annotation-xml.attributes"/>
+      <ref name="epub.att-encoding.mathml.presentation"/>
+      <optional>
+        <ref name="epub.att-name.mathml.presentation"/>
+      </optional>
+    </element>
+  </define>
+  <define name="epub.annotation-xml.model.mathml.presentation">
+    <zeroOrMore>
+      <ref name="MathExpression"/>
+    </zeroOrMore>
+  </define>
+  <define name="epub.att-encoding.mathml.presentation">
+    <attribute name="encoding">
+      <choice>
+        <value type="string" datatypeLibrary="">MathML</value>
+        <value>MathML-Presentation</value>
+        <value type="string" datatypeLibrary="">application/mathml-presentation+xml</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="epub.att-name.mathml.presentation">
+    <attribute name="name">
+      <data type="NCName"/>
+    </attribute>
+  </define>
+</grammar>

@@ -1,0 +1,1076 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0" xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+  <!-- ##################################################################### -->
+  <define name="XMLonly">
+    <a:documentation> RELAX NG Schema for HTML 5: Common Definitions                    #</a:documentation>
+    <!-- ##################################################################### -->
+    <!-- ##################################################################### -->
+    <a:documentation> Language Parameters - redefine in inclusion block as necessary    #</a:documentation>
+    <!-- ##################################################################### -->
+    <a:documentation>HTML vs. XHTML restrictions</a:documentation>
+    <empty/>
+  </define>
+  <define name="HTMLonly">
+    <notAllowed/>
+  </define>
+  <!--
+                            (This only affects mixed-version modules; wholly HTML5
+                             modules should simply be left out of the inclusion list.)
+  -->
+  <define name="v5only">
+    <a:documentation>HTML 4 Compatibility - set to notAllowed to disallow markup introduced in HTML 5</a:documentation>
+    <empty/>
+  </define>
+  <!--  (xml:base on elements other than <html>) -->
+  <define name="nonRoundtrippable">
+    <a:documentation>HTML Compatibility Switches - set to notAllowed to disallow</a:documentation>
+    <a:documentation>XML features that can't be roundtripped HTML &lt;-&gt; XHTML</a:documentation>
+    <empty/>
+  </define>
+  <define name="nonHTMLizable">
+    <a:documentation>XML features that can't be serialized as HTML</a:documentation>
+    <empty/>
+  </define>
+  <!-- ##################################################################### -->
+  <define name="common.attr.anything">
+    <a:documentation> Wildcards                                                         #</a:documentation>
+    <!-- ##################################################################### -->
+    <a:documentation>Any attribute from any namespace</a:documentation>
+    <zeroOrMore>
+      <attribute>
+        <anyName/>
+      </attribute>
+    </zeroOrMore>
+  </define>
+  <define name="common.elem.anything">
+    <a:documentation>Any element from any namespace</a:documentation>
+    <element>
+      <anyName/>
+      <interleave>
+        <ref name="common.inner.anything"/>
+        <ref name="common.attr.anything"/>
+      </interleave>
+    </element>
+  </define>
+  <define name="common.inner.anything">
+    <a:documentation>Any content from any namespace</a:documentation>
+    <interleave>
+      <text/>
+      <zeroOrMore>
+        <ref name="common.elem.anything"/>
+      </zeroOrMore>
+    </interleave>
+  </define>
+  <!-- ##################################################################### -->
+  <define name="common.elem.metadata">
+    <a:documentation> Common Element Classes                                            #</a:documentation>
+    <!-- ##################################################################### -->
+    <a:documentation>Metadata Elements</a:documentation>
+    <notAllowed/>
+  </define>
+  <define name="common.elem.phrasing">
+    <a:documentation>Phrase Elements</a:documentation>
+    <notAllowed/>
+  </define>
+  <define name="common.elem.flow">
+    <a:documentation>Prose Elements</a:documentation>
+    <ref name="common.elem.phrasing"/>
+  </define>
+  <!-- ##################################################################### -->
+  <define name="common.inner.metadata">
+    <a:documentation> Common Content Models                                             #</a:documentation>
+    <!-- ##################################################################### -->
+    <a:documentation>Metadata Content</a:documentation>
+    <zeroOrMore>
+      <ref name="common.elem.metadata"/>
+    </zeroOrMore>
+  </define>
+  <define name="common.inner.phrasing">
+    <a:documentation>Phrase Content</a:documentation>
+    <interleave>
+      <text/>
+      <zeroOrMore>
+        <ref name="common.elem.phrasing"/>
+      </zeroOrMore>
+    </interleave>
+  </define>
+  <define name="common.inner.transparent.flow">
+    <a:documentation>Prose Content</a:documentation>
+    <interleave>
+      <text/>
+      <zeroOrMore>
+        <ref name="common.elem.flow"/>
+      </zeroOrMore>
+    </interleave>
+  </define>
+  <define name="common.inner.flow">
+    <interleave>
+      <text/>
+      <zeroOrMore>
+        <ref name="common.elem.flow"/>
+      </zeroOrMore>
+    </interleave>
+  </define>
+  <!-- ##################################################################### -->
+  <!-- ##################################################################### -->
+  <!-- When updating, check <bdo> definition too -->
+  <define name="common.attrs">
+    <a:documentation> Common Attributes                                                 #</a:documentation>
+    <interleave>
+      <ref name="common.attrs.basic"/>
+      <ref name="common.attrs.i18n"/>
+      <ref name="common.attrs.present"/>
+      <ref name="common.attrs.other"/>
+    </interleave>
+  </define>
+  <define name="common.attrs.basic">
+    <interleave>
+      <optional>
+        <ref name="common.attrs.id"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.class"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.title"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.base"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.space"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.id">
+    <attribute name="id">
+      <ref name="common.data.id"/>
+    </attribute>
+  </define>
+  <define name="common.attrs.class">
+    <attribute name="class">
+      <ref name="common.data.tokens"/>
+    </attribute>
+  </define>
+  <define name="common.attrs.title">
+    <attribute name="title"/>
+  </define>
+  <define name="common.attrs.base">
+    <interleave>
+      <ref name="common.attrs.xmlbase"/>
+      <ref name="nonRoundtrippable"/>
+    </interleave>
+  </define>
+  <define name="common.attrs.xmlbase">
+    <interleave>
+      <attribute name="xml:base">
+        <ref name="common.data.uri"/>
+      </attribute>
+      <ref name="XMLonly"/>
+    </interleave>
+  </define>
+  <define name="common.attrs.space">
+    <ref name="common.attrs.xmlspace"/>
+  </define>
+  <define name="common.attrs.xmlspace">
+    <interleave>
+      <attribute name="xml:space">
+        <choice>
+          <value type="string" datatypeLibrary="">preserve</value>
+          <value type="string" datatypeLibrary="">default</value>
+        </choice>
+      </attribute>
+      <ref name="XMLonly"/>
+    </interleave>
+  </define>
+  <define name="common.attrs.i18n">
+    <interleave>
+      <optional>
+        <ref name="common.attrs.dir"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.language"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.translate"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.dir">
+    <attribute name="dir">
+      <choice>
+        <value>ltr</value>
+        <value>rtl</value>
+        <value>auto</value>
+      </choice>
+    </attribute>
+  </define>
+  <!--
+    This lang definition is a hack for environments where
+    the HTML5 parser maps lang to xml:lang.
+    Sameness check left to Schematron
+  -->
+  <define name="common.attrs.language">
+    <interleave>
+      <optional>
+        <ref name="common.attrs.xmllang"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.lang"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.lang">
+    <interleave>
+      <attribute name="lang">
+        <ref name="common.data.langcode"/>
+      </attribute>
+      <ref name="XMLonly"/>
+    </interleave>
+  </define>
+  <define name="common.attrs.xmllang">
+    <attribute name="xml:lang">
+      <ref name="common.data.langcode"/>
+    </attribute>
+  </define>
+  <!--
+    	common.attrs.language =
+    		(	common.attrs.lang
+    		|	common.attrs.xmllang
+    		)
+    	common.attrs.lang =
+    		attribute lang {
+    			common.data.langcode
+    		} & HTMLonly
+    	common.attrs.xmllang =
+    		attribute xml:lang {
+    			common.data.langcode
+    		} & XMLonly
+  -->
+  <define name="common.attrs.translate">
+    <attribute name="translate">
+      <choice>
+        <value/>
+        <value>yes</value>
+        <value>no</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="common.attrs.present">
+    <interleave>
+      <optional>
+        <ref name="common.attrs.style"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.tabindex"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.accesskey"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.style">
+    <attribute name="style">
+      <data type="string" datatypeLibrary=""/>
+    </attribute>
+  </define>
+  <define name="common.attrs.tabindex">
+    <attribute name="tabindex">
+      <ref name="common.data.integer"/>
+    </attribute>
+  </define>
+  <!-- REVISIT move style to a module and bundle tabindex with ARIA -->
+  <define name="common.attrs.accesskey">
+    <attribute name="accesskey">
+      <ref name="common.data.keylabellist"/>
+    </attribute>
+  </define>
+  <define name="common.attrs.other">
+    <interleave>
+      <optional>
+        <ref name="common.attrs.autofocus"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.nonce"/>
+      </optional>
+      <optional>
+        <ref name="common.attrs.inert"/>
+      </optional>
+    </interleave>
+  </define>
+  <define name="common.attrs.autofocus">
+    <attribute name="autofocus">
+      <choice>
+        <value>autofocus</value>
+        <value/>
+      </choice>
+    </attribute>
+  </define>
+  <define name="common.attrs.blocking">
+    <attribute name="blocking">
+      <list>
+        <value>render</value>
+      </list>
+    </attribute>
+  </define>
+  <define name="common.attrs.fetchpriority">
+    <attribute name="fetchpriority">
+      <choice>
+        <value>high</value>
+        <value>low</value>
+        <value>auto</value>
+      </choice>
+    </attribute>
+  </define>
+  <define name="common.attrs.nonce">
+    <attribute name="nonce">
+      <data type="string" datatypeLibrary=""/>
+    </attribute>
+  </define>
+  <define name="common.attrs.inert">
+    <attribute name="inert">
+      <choice>
+        <value type="string" datatypeLibrary="">inert</value>
+        <value type="string" datatypeLibrary=""/>
+      </choice>
+    </attribute>
+  </define>
+  <!-- ##################################################################### -->
+  <define name="common.data.tokens">
+    <a:documentation> Common Datatypes                                                  #</a:documentation>
+    <!-- ##################################################################### -->
+    <a:documentation>Names and Tokens</a:documentation>
+    <list>
+      <zeroOrMore>
+        <data type="token" datatypeLibrary=""/>
+      </zeroOrMore>
+    </list>
+  </define>
+  <define name="common.data.browsing-context">
+    <ref name="datatype.html5.browsing.context.name"/>
+  </define>
+  <define name="common.data.browsing-context-or-keyword">
+    <ref name="datatype.html5.browsing.context.name.or.keyword"/>
+  </define>
+  <!--
+    		xsd:string {
+    			pattern = "()|([^_].*)|(_[bB][lL][aA][nN][kK])|(_[sS][eE][lL][fF])|(_[pP][aA][rR][eE][nN][tT])|(_[tT][oO][pP])"
+    		}
+  -->
+  <define name="common.data.id">
+    <a:documentation>IDs and IDREFs</a:documentation>
+    <ref name="datatype.html5.token"/>
+  </define>
+  <!--
+    		xsd:string {
+    			pattern = "\S+"
+    		}
+  -->
+  <define name="common.data.idref">
+    <ref name="datatype.html5.token"/>
+  </define>
+  <define name="common.data.idrefs">
+    <ref name="datatype.html5.space.separated.tokens"/>
+  </define>
+  <define name="common.data.name">
+    <ref name="datatype.html5.token"/>
+  </define>
+  <define name="common.data.hash-name">
+    <ref name="datatype.html5.name.reference"/>
+  </define>
+  <!--
+    		xsd:string {
+    			pattern = "#.+"
+    		}
+  -->
+  <define name="common.data.integer">
+    <a:documentation>Numerical</a:documentation>
+    <ref name="datatype.integer"/>
+  </define>
+  <!--
+    		xsd:string {
+    			pattern = "-?[0-9]+"
+    		}
+  -->
+  <define name="common.data.integer.positive">
+    <ref name="datatype.positive.integer"/>
+  </define>
+  <!--
+    		xsd:string {
+    			pattern = "0*[1-9][0-9]*"
+    		}
+  -->
+  <define name="common.data.integer.non-negative">
+    <ref name="datatype.non-negative.integer"/>
+  </define>
+  <!--
+    		xsd:string {
+    			pattern = "[0-9]+"
+    		}
+  -->
+  <!--
+    	common.data.percent =
+    		xsd:string {
+    			pattern = "(100)|([1-9]?[0-9](\.[0-9]+)?)%"
+    		}
+  -->
+  <define name="common.data.float">
+    <ref name="datatype.float"/>
+  </define>
+  <!--
+    		xsd:string {
+    			pattern = "-?[0-9]+(\.[0-9]+)?([eE]-?[0-9]+)?"
+    		}
+  -->
+  <define name="common.data.float.positive">
+    <ref name="datatype.float.positive"/>
+  </define>
+  <!--
+    		xsd:string {
+    			pattern = "(0*[1-9][0-9]*(\.[0-9]+)?)|([0-9]+(\.0*[1-9][0-9]*)?)([eE]-?[0-9]+)?"
+    		}
+  -->
+  <define name="common.data.float.non-negative">
+    <ref name="datatype.float.non-negative"/>
+  </define>
+  <!--
+    		xsd:string {
+    			pattern = "[0-9]+(\.[0-9]+)?([eE]-?[0-9]+)?"
+    		}
+  -->
+  <define name="common.data.datetime">
+    <a:documentation>Temporal</a:documentation>
+    <ref name="datatype.html5.datetime"/>
+  </define>
+  <define name="common.data.date">
+    <ref name="datatype.html5.date"/>
+  </define>
+  <define name="common.data.time-datetime">
+    <ref name="datatype.html5.date.or.time"/>
+  </define>
+  <define name="common.data.uri">
+    <a:documentation>IRIs</a:documentation>
+    <!--
+      allow either a non-empty IRI ref or zero or more HTML
+      space characters (which are: space, tab, LF, FF, CR)
+    -->
+    <choice>
+      <ref name="datatype.IRI"/>
+      <data type="string">
+        <param name="pattern">[ 
+-&#xD;]*</param>
+      </data>
+    </choice>
+    <!--
+      NOTE The range above incorrectly allows U+000B
+      in addition to the HTML space characters; but
+      that's not a problem in practice because HTML
+      and XML parsers will both catch any U+000B
+      and report an error for it before that pattern
+      ever gets evaluated.
+    -->
+  </define>
+  <define name="common.data.uri.non-empty">
+    <ref name="datatype.string.nonempty"/>
+  </define>
+  <define name="common.data.uris">
+    <list>
+      <zeroOrMore>
+        <ref name="datatype.IRI"/>
+      </zeroOrMore>
+    </list>
+  </define>
+  <define name="common.data.uris.http.or.https">
+    <list>
+      <zeroOrMore>
+        <ref name="datatype.URI.absolute"/>
+      </zeroOrMore>
+    </list>
+  </define>
+  <define name="common.data.uri.absolute">
+    <ref name="datatype.URI.absolute"/>
+  </define>
+  <define name="common.data.sizes">
+    <a:documentation>&lt;link type='icon'&gt; sizes</a:documentation>
+    <!-- 		list { w:sizes } -->
+    <list>
+      <oneOrMore>
+        <data type="string">
+          <param name="pattern">[1-9][0-9]*x[1-9][0-9]*</param>
+        </data>
+      </oneOrMore>
+    </list>
+  </define>
+  <define name="common.data.color">
+    <a:documentation>color for &lt;link rel="mask-icon"&gt; and &lt;meta name="theme-color"&gt;</a:documentation>
+    <ref name="datatype.html5.color"/>
+  </define>
+  <define name="common.data.mimetype">
+    <a:documentation>MIME types</a:documentation>
+    <ref name="datatype.mimetype"/>
+  </define>
+  <define name="common.data.scripttype">
+    <a:documentation>Script type</a:documentation>
+    <ref name="datatype.string"/>
+  </define>
+  <define name="common.data.charset">
+    <a:documentation>Encodings</a:documentation>
+    <ref name="datatype.character.encoding"/>
+  </define>
+  <define name="common.data.meta-charset">
+    <ref name="datatype.string"/>
+  </define>
+  <define name="common.data.refresh">
+    <a:documentation>Refresh</a:documentation>
+    <ref name="datatype.string"/>
+  </define>
+  <define name="common.data.default-style">
+    <a:documentation>Default style</a:documentation>
+    <data type="string" datatypeLibrary=""/>
+  </define>
+  <!-- 		w:default-style -->
+  <define name="common.data.x-ua-compatible">
+    <a:documentation>X-UA-Compatible</a:documentation>
+    <data type="string" datatypeLibrary=""/>
+  </define>
+  <define name="common.data.mediaquery">
+    <a:documentation>Media Queries</a:documentation>
+    <ref name="datatype.html5.media.query"/>
+  </define>
+  <define name="common.data.langcode">
+    <a:documentation>Language Codes</a:documentation>
+    <choice>
+      <value/>
+      <ref name="datatype.languagecode"/>
+    </choice>
+  </define>
+  <define name="common.data.keylabellist">
+    <a:documentation>List of Key Labels</a:documentation>
+    <ref name="datatype.html5.accesskey"/>
+  </define>
+  <define name="common.data.source.size.list">
+    <a:documentation>List of Source Sizes</a:documentation>
+    <ref name="datatype.string"/>
+  </define>
+  <define name="common.data.integrity">
+    <a:documentation>Subresource Integrity</a:documentation>
+    <ref name="datatype.string"/>
+  </define>
+  <define name="common.data.content-security-policy">
+    <a:documentation>Content Security Policy</a:documentation>
+    <ref name="datatype.string"/>
+  </define>
+  <define name="common.data.feature-policy">
+    <a:documentation>Feature Policy</a:documentation>
+    <data type="string" datatypeLibrary=""/>
+  </define>
+  <define name="common.data.sandbox-allow-list">
+    <a:documentation>List of sandbox keywords</a:documentation>
+    <choice>
+      <value/>
+      <list>
+        <optional>
+          <value>allow-top-navigation</value>
+        </optional>
+        <optional>
+          <value>allow-same-origin</value>
+        </optional>
+        <optional>
+          <value>allow-forms</value>
+        </optional>
+        <optional>
+          <value>allow-scripts</value>
+        </optional>
+      </list>
+      <list>
+        <optional>
+          <value>allow-top-navigation</value>
+        </optional>
+        <optional>
+          <value>allow-same-origin</value>
+        </optional>
+        <optional>
+          <value>allow-scripts</value>
+        </optional>
+        <optional>
+          <value>allow-forms</value>
+        </optional>
+      </list>
+    </choice>
+  </define>
+  <define name="common.data.custom.element.name">
+    <a:documentation>Custom element name</a:documentation>
+    <ref name="datatype.string"/>
+  </define>
+  <define name="common.data.microdata-properties">
+    <a:documentation>Microdata Properties</a:documentation>
+    <list>
+      <oneOrMore>
+        <ref name="datatype.string"/>
+      </oneOrMore>
+    </list>
+  </define>
+  <define name="common.data.zero">
+    <a:documentation>Zero</a:documentation>
+    <value>0</value>
+  </define>
+  <define name="common.data.functionbody">
+    <a:documentation>ECMAScript FunctionBody</a:documentation>
+    <data type="string" datatypeLibrary=""/>
+  </define>
+  <define name="common.data.autocomplete.any">
+    <a:documentation>autocomplete</a:documentation>
+    <ref name="datatype.string"/>
+  </define>
+  <!-- ##################################################################### -->
+  <!-- ##################################################################### -->
+  <define name="common-form.attrs.form">
+    <a:documentation> WF2 Module Hook                                                   #</a:documentation>
+    <notAllowed/>
+  </define>
+  <!-- ##################################################################### -->
+  <!-- ##################################################################### -->
+  <define name="common.elem.script-supporting">
+    <a:documentation> Script-supporting elements</a:documentation>
+    <notAllowed/>
+  </define>
+  <!-- ##################################################################### -->
+  <!-- ##################################################################### -->
+  <define name="common.attrs.aria">
+    <a:documentation> ARIA Module Hooks                                                 #</a:documentation>
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.alert">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.alertdialog">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.application">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.article">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.banner">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.button">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.cell" combine="choice">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.checkbox">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.combobox">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.complementary">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.dialog">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.directory">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.document">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.feed" combine="choice">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.figure" combine="choice">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.group">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.heading">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.img">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.link">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.list">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.listitem">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.log">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.listbox">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.main">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.marquee">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.menu">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.menubar">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.menuitem">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.menuitemcheckbox">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.menuitemradio">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.option">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.presentation">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.progressbar">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.radio">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.radiogroup" combine="choice">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.region">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.rowgroup" combine="choice">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.search">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.searchbox" combine="choice">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.separator">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.slider">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.spinbutton">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.status">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.switch">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.tab">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.table" combine="choice">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.tablist">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.tabpanel">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.textbox">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.toolbar">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.tree">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.treeitem">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.article">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.banner">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.button">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.cell" combine="choice">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.checkbox">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.column-or-row-header">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.combobox">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.complementary">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.contentinfo">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.dialog">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.figure" combine="choice">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.document">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.form">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.group">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.heading">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.img">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.landmark">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.link">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.list">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.listbox">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.listitem">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.main">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.math" combine="choice">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.navigation">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.option">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.progressbar">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.radio">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.region">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.row" combine="choice">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.rowgroup" combine="choice">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.search">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.searchbox" combine="choice">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.section">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.select">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.separator">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.slider">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.spinbutton">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.status">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.structure">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.table" combine="choice">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.textbox">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.implicit.toolbar">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.prop.readonly">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.landmark.banner">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.landmark.complementary">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.landmark.contentinfo">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.landmark.form">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.landmark.main">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.landmark.navigation">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.landmark.search">
+    <notAllowed/>
+  </define>
+  <!-- per ARIA spec: article, document, and note are not actually landmarks -->
+  <define name="common.attrs.aria.landmark.article">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.landmark.document">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.landmark.note">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-abstract">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-acknowledgments">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-afterword">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-appendix">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-backlink">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-biblioentry">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-bibliography">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-biblioref">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-chapter">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-colophon">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-conclusion">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-cover">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-credit">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-credits">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-dedication">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-endnote">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-endnotes">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-epigraph">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-epilogue">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-errata">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-example">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-footnote">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-foreword">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-glossary">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-glossref">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-index">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-introduction">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-noteref">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-notice">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-pagebreak">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-pagelist">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-part">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-preface">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-prologue">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-pullquote">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-qna">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-subtitle">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-tip">
+    <notAllowed/>
+  </define>
+  <define name="common.attrs.aria.role.doc-toc">
+    <notAllowed/>
+  </define>
+</grammar>

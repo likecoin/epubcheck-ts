@@ -8,37 +8,37 @@ const SCHEMA_MAPPINGS = {
   // EPUB 2.0
   '2.0': {
     container: 'container.rng',
-    opf: 'opf.rng',
+    opf: 'opf20.rng',
     // TODO: Add XHTML 2.0 schemas (NVDL format, more complex)
   },
-  // EPUB 3.x
+  // EPUB 3.x (using RNG format with inlined includes)
   '3.0': {
-    container: 'ocf-container-30.rnc',
-    opf: 'package-30.rnc',
-    nav: 'epub-nav-30.rnc',
-    xhtml: 'epub-xhtml-30.rnc',
-    svg: 'epub-svg-30.rnc',
+    container: 'ocf-container-30.rng',
+    opf: 'package-30.rng',
+    nav: 'epub-nav-30.rng',
+    xhtml: 'epub-xhtml-30.rng',
+    svg: 'epub-svg-30.rng',
   },
   '3.1': {
-    container: 'ocf-container-30.rnc',
-    opf: 'package-30.rnc',
-    nav: 'epub-nav-30.rnc',
-    xhtml: 'epub-xhtml-30.rnc',
-    svg: 'epub-svg-30.rnc',
+    container: 'ocf-container-30.rng',
+    opf: 'package-30.rng',
+    nav: 'epub-nav-30.rng',
+    xhtml: 'epub-xhtml-30.rng',
+    svg: 'epub-svg-30.rng',
   },
   '3.2': {
-    container: 'ocf-container-30.rnc',
-    opf: 'package-30.rnc',
-    nav: 'epub-nav-30.rnc',
-    xhtml: 'epub-xhtml-30.rnc',
-    svg: 'epub-svg-30.rnc',
+    container: 'ocf-container-30.rng',
+    opf: 'package-30.rng',
+    nav: 'epub-nav-30.rng',
+    xhtml: 'epub-xhtml-30.rng',
+    svg: 'epub-svg-30.rng',
   },
   '3.3': {
-    container: 'ocf-container-30.rnc',
-    opf: 'package-30.rnc',
-    nav: 'epub-nav-30.rnc',
-    xhtml: 'epub-xhtml-30.rnc',
-    svg: 'epub-svg-30.rnc',
+    container: 'ocf-container-30.rng',
+    opf: 'package-30.rng',
+    nav: 'epub-nav-30.rng',
+    xhtml: 'epub-xhtml-30.rng',
+    svg: 'epub-svg-30.rng',
   },
 } as const;
 
