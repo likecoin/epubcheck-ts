@@ -57,7 +57,8 @@ export function parseOPF(xml: string): PackageDocument {
 
   // Parse spine
   const spineSection = extractSection(xml, 'spine');
-  const spineResult = parseSpine(spineSection);
+  const spineAttrs = extractElementAttributes(xml, 'spine');
+  const spineResult = parseSpine(spineSection, spineAttrs);
 
   // Parse guide (EPUB 2)
   const guideSection = extractSection(xml, 'guide');
@@ -129,13 +130,26 @@ function parsePrefixes(xml: string): Record<string, string> {
 }
 
 /**
- * Extract a section from XML by tag name
+ * Extract a section from XML by tag name (returns content between tags)
  */
 function extractSection(xml: string, tagName: string): string {
   // Handle both prefixed and non-prefixed tags
   const regex = new RegExp(`<(?:opf:)?${tagName}[^>]*>([\\s\\S]*?)</(?:opf:)?${tagName}>`, 'i');
-  const match = xml.match(regex);
+  const match = regex.exec(xml);
   return match?.[1] ?? '';
+}
+
+/**
+ * Extract an element's opening tag attributes
+ */
+function extractElementAttributes(xml: string, tagName: string): Record<string, string> {
+  // Match the opening tag with its attributes
+  const regex = new RegExp(`<(?:opf:)?${tagName}([^>]*)>`, 'i');
+  const match = regex.exec(xml);
+  if (match?.[1]) {
+    return parseAttributes(match[1]);
+  }
+  return {};
 }
 
 /**
@@ -298,17 +312,17 @@ function parseManifestItems(manifestXml: string): ManifestItem[] {
 /**
  * Parse spine element and itemrefs
  */
-function parseSpine(spineXml: string): {
+function parseSpine(
+  spineXml: string,
+  spineAttrs: Record<string, string>,
+): {
   spine: SpineItemRef[];
   toc: string | null;
   pageProgressionDirection: 'ltr' | 'rtl' | 'default' | null;
 } {
   const spine: SpineItemRef[] = [];
 
-  // Extract spine attributes from the opening tag
-  const spineOpenRegex = /^([^>]*)/;
-  const spineOpenMatch = spineOpenRegex.exec(spineXml);
-  const spineAttrs = spineOpenMatch?.[1] ? parseAttributes(spineOpenMatch[1]) : {};
+  // Use the passed-in attributes from the spine element
   const toc = spineAttrs['toc'] ?? null;
   const ppdRaw = spineAttrs['page-progression-direction'];
   const ppd: 'ltr' | 'rtl' | 'default' | null =
