@@ -67,6 +67,12 @@ import { Report } from './core/report.js';
 - Place integration tests in `test/integration/`
 - Test fixtures go in `test/fixtures/`
 
+**Current Test Status:**
+- 59 tests across 4 test files
+- All tests passing
+- No integration tests yet
+- No test fixtures yet
+
 ### Test Structure
 
 ```typescript
