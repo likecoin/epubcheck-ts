@@ -1,0 +1,71 @@
+/**
+ * Navigation document validation
+ */
+
+import type { ValidationContext } from '../types.js';
+
+/**
+ * Validator for EPUB 3 navigation documents
+ */
+export class NavValidator {
+  /**
+   * Validate navigation document
+   */
+  validate(context: ValidationContext, navContent: string, navPath: string): void {
+    this.checkNavElement(context, navContent, navPath);
+    this.checkNavTypes(context, navContent, navPath);
+    this.checkNavLinks(context, navContent, navPath);
+  }
+
+  /**
+   * Check for nav element
+   */
+  private checkNavElement(context: ValidationContext, content: string, path: string): void {
+    if (!/<nav/i.test(content)) {
+      context.messages.push({
+        id: 'NAV-001',
+        severity: 'error',
+        message: 'Navigation document must contain a nav element',
+        location: { path },
+      });
+    }
+  }
+
+  /**
+   * Check epub:type attributes on nav elements
+   */
+  private checkNavTypes(context: ValidationContext, content: string, path: string): void {
+    // Check for toc nav
+    if (!/<nav[^>]*epub:type\s*=\s*["'][^"']*toc[^"']*["']/i.test(content)) {
+      context.messages.push({
+        id: 'NAV-001',
+        severity: 'error',
+        message: 'Navigation document must have a nav element with epub:type="toc"',
+        location: { path },
+      });
+    }
+  }
+
+  /**
+   * Check nav structure (ol element)
+   */
+  private checkNavLinks(context: ValidationContext, content: string, path: string): void {
+    // Find the toc nav
+    const tocMatch =
+      /<nav[^>]*epub:type\s*=\s*["'][^"']*toc[^"']*["'][^>]*>([\s\S]*?)<\/nav>/i.exec(content);
+
+    if (tocMatch?.[1]) {
+      const navContent = tocMatch[1];
+
+      // Check for ol element inside nav
+      if (!/<ol[\s>]/i.test(navContent)) {
+        context.messages.push({
+          id: 'NAV-002',
+          severity: 'error',
+          message: 'Navigation document toc nav must contain an ol element',
+          location: { path },
+        });
+      }
+    }
+  }
+}
