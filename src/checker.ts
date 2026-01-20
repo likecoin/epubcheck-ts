@@ -2,6 +2,7 @@ import { ContentValidator } from './content/index.js';
 import { buildReport } from './core/report.js';
 import { OCFValidator } from './ocf/index.js';
 import { OPFValidator } from './opf/index.js';
+import { SchemaValidator } from './schema/orchestrator.js';
 import type {
   EPUBVersion,
   EpubCheckOptions,
@@ -58,7 +59,7 @@ export class EpubCheck {
    * @param data - The EPUB file as a Uint8Array
    * @returns Validation result
    */
-  check(data: Uint8Array): Promise<EpubCheckResult> {
+  async check(data: Uint8Array): Promise<EpubCheckResult> {
     const startTime = performance.now();
 
     // Initialize validation context
@@ -79,7 +80,7 @@ export class EpubCheck {
       // Stop if fatal errors in OCF
       if (context.messages.some((m) => m.severity === 'fatal')) {
         const elapsedMs = performance.now() - startTime;
-        return Promise.resolve(buildReport(context.messages, context.version, elapsedMs));
+        return buildReport(context.messages, context.version, elapsedMs);
       }
 
       // Step 2: Validate package document (OPF)
@@ -94,7 +95,8 @@ export class EpubCheck {
       // TODO: Implement navigation validation
 
       // Step 5: Run schema validations (RelaxNG, XSD, Schematron)
-      // TODO: Implement schema validation
+      const schemaValidator = new SchemaValidator(context);
+      await schemaValidator.validate();
     } catch (error) {
       // Add fatal error for unexpected exceptions
       context.messages.push({
@@ -107,7 +109,7 @@ export class EpubCheck {
     const elapsedMs = performance.now() - startTime;
 
     // Build and return result
-    return Promise.resolve(buildReport(context.messages, context.version, elapsedMs));
+    return buildReport(context.messages, context.version, elapsedMs);
   }
 
   /**

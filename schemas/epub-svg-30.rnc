@@ -1,0 +1,17 @@
+
+# #####################################################################
+##  RELAX NG Schema for EPUB: EPUB SVG (+ XHTML, + MathML)            #
+# #####################################################################
+
+include "./mod/epub-xhtml-svg-mathml.rnc" {
+  start = svg
+  
+  # Override the `id` attribute to require a valid XML ID
+  svg.attr.id = attribute id { xsd:ID }?
+}
+
+# Allow `body` element as a child of `foreignObject` 
+svg.foreignObject.inner |= body.elem 
+
+# Allow `epub:prefix` attribute on `svg` root
+svg.attrs &= epub.prefix.attr.ns?
