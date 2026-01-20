@@ -1,3 +1,5 @@
+import type { PackageDocument } from './opf/types.js';
+
 /**
  * Severity levels for validation messages
  */
@@ -103,6 +105,8 @@ export interface ValidationContext {
   opfPath?: string;
   /** Container rootfiles */
   rootfiles: { path: string; mediaType: string }[];
+  /** Parsed package document (set by OPF validator) */
+  packageDocument?: PackageDocument;
 }
 
 /**

@@ -1,12 +1,13 @@
+import { buildReport } from './core/report.js';
+import { OCFValidator } from './ocf/index.js';
+import { OPFValidator } from './opf/index.js';
 import type {
+  EPUBVersion,
   EpubCheckOptions,
   EpubCheckResult,
-  EPUBVersion,
   ValidationContext,
   ValidationMessage,
 } from './types.js';
-import { buildReport } from './core/report.js';
-import { OCFValidator } from './ocf/index.js';
 
 /**
  * Default options for EpubCheck
@@ -74,10 +75,15 @@ export class EpubCheck {
       const ocfValidator = new OCFValidator();
       ocfValidator.validate(context);
 
+      // Stop if fatal errors in OCF
+      if (context.messages.some((m) => m.severity === 'fatal')) {
+        const elapsedMs = performance.now() - startTime;
+        return Promise.resolve(buildReport(context.messages, context.version, elapsedMs));
+      }
+
       // Step 2: Validate package document (OPF)
-      // TODO: Implement OPF validation
-      // const opfValidator = new OPFValidator();
-      // await opfValidator.validate(context);
+      const opfValidator = new OPFValidator();
+      opfValidator.validate(context);
 
       // Step 3: Validate content documents
       // TODO: Implement content validation
