@@ -1,9 +1,4 @@
-import type {
-  EpubCheckResult,
-  EPUBVersion,
-  Severity,
-  ValidationMessage,
-} from '../types.js';
+import type { EpubCheckResult, EPUBVersion, Severity, ValidationMessage } from '../types.js';
 
 /**
  * Build a validation result from messages
@@ -31,9 +26,7 @@ export function buildReport(
 /**
  * Count messages by severity
  */
-export function countBySeverity(
-  messages: ValidationMessage[],
-): Record<Severity, number> {
+export function countBySeverity(messages: ValidationMessage[]): Record<Severity, number> {
   const counts: Record<Severity, number> = {
     fatal: 0,
     error: 0,
@@ -62,10 +55,7 @@ export function filterBySeverity(
 /**
  * Filter messages by path
  */
-export function filterByPath(
-  messages: ValidationMessage[],
-  path: string,
-): ValidationMessage[] {
+export function filterByPath(messages: ValidationMessage[], path: string): ValidationMessage[] {
   return messages.filter((msg) => msg.location?.path === path);
 }
 
