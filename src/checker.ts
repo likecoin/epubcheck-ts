@@ -1,5 +1,6 @@
 import { ContentValidator } from './content/index.js';
 import { buildReport } from './core/report.js';
+import { NCXValidator } from './nav/index.js';
 import { OCFValidator } from './ocf/index.js';
 import { OPFValidator } from './opf/index.js';
 import { SchemaValidator } from './schema/orchestrator.js';
@@ -91,8 +92,10 @@ export class EpubCheck {
       const contentValidator = new ContentValidator();
       contentValidator.validate(context);
 
-      // Step 4: Validate navigation
-      // TODO: Implement navigation validation
+      // Step 4: Validate navigation (NCX for EPUB 2, nav for EPUB 3)
+      if (context.version === '2.0' && context.packageDocument) {
+        this.validateNCX(context);
+      }
 
       // Step 5: Run schema validations (RelaxNG, XSD, Schematron)
       const schemaValidator = new SchemaValidator(context);
@@ -132,6 +135,60 @@ export class EpubCheck {
    */
   get version(): EPUBVersion {
     return this.options.version;
+  }
+
+  /**
+   * Validate NCX navigation document (EPUB 2.0)
+   */
+  private validateNCX(context: ValidationContext): void {
+    if (!context.packageDocument) {
+      return;
+    }
+
+    const ncxId = context.packageDocument.spineToc;
+    if (!ncxId) {
+      return;
+    }
+
+    // Find NCX manifest item
+    const ncxItem = context.packageDocument.manifest.find((item) => item.id === ncxId);
+    if (!ncxItem) {
+      return;
+    }
+
+    const opfPath = context.opfPath ?? '';
+    const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/')) : '';
+    const ncxPath = opfDir ? `${opfDir}/${ncxItem.href}` : ncxItem.href;
+
+    const ncxData = context.files.get(ncxPath);
+    if (!ncxData) {
+      return;
+    }
+
+    const ncxContent = new TextDecoder().decode(ncxData);
+
+    const ncxValidator = new NCXValidator();
+    ncxValidator.validate(context, ncxContent, ncxPath);
+
+    // Check if NCX UID matches OPF unique identifier
+    if (context.ncxUid) {
+      const dcIdentifiers = context.packageDocument.dcElements.filter(
+        (dc) => dc.name === 'identifier',
+      );
+
+      for (const dc of dcIdentifiers) {
+        const opfUid = dc.value.trim();
+        if (context.ncxUid !== opfUid) {
+          context.messages.push({
+            id: 'NCX-001',
+            severity: 'warning',
+            message: `NCX uid "${context.ncxUid}" does not match OPF unique identifier "${opfUid}"`,
+            location: { path: ncxPath },
+          });
+          break;
+        }
+      }
+    }
   }
 
   /**

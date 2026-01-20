@@ -91,22 +91,32 @@ export interface EpubCheckOptions {
  * Internal validation context passed through the validation pipeline
  */
 export interface ValidationContext {
-  /** The EPUB data being validated */
+  /** EPUB file data */
   data: Uint8Array;
-  /** Options for validation */
+  /** Validation options */
   options: Required<EpubCheckOptions>;
-  /** Detected or specified EPUB version */
+  /** Detected EPUB version */
   version: EPUBVersion;
-  /** Accumulated validation messages */
+  /** Validation messages collected so far */
   messages: ValidationMessage[];
-  /** Map of file paths to their content */
+  /** Files extracted from EPUB container */
   files: Map<string, Uint8Array>;
+  /** Rootfiles found in container.xml */
+  rootfiles: Rootfile[];
   /** Path to the package document (OPF) */
   opfPath?: string;
-  /** Container rootfiles */
-  rootfiles: { path: string; mediaType: string }[];
-  /** Parsed package document (set by OPF validator) */
+  /** Parsed package document */
   packageDocument?: PackageDocument;
+  /** NCX UID for validation against OPF identifier */
+  ncxUid?: string;
+}
+
+/**
+ * Rootfile reference from container.xml
+ */
+export interface Rootfile {
+  path: string;
+  mediaType: string;
 }
 
 /**
