@@ -157,7 +157,7 @@ This document tracks the implementation progress compared to the original Java E
 | Schematron | ✅ | ✅ | SCH-* | fontoxpath + slimdom |
 | NVDL | ✅ | ❌ | - | Multi-namespace |
 | XML Catalog | ✅ | ❌ | - | Schema resolution |
-| Schema bundling | ✅ | ✅ | - | Schemas inlined as constants |
+| Schema bundling | ✅ | ✅ | - | Gzip-compressed, lazy decompression |
 
 **Status: ~70% complete** (RelaxNG, XSD, Schematron implemented; schemas bundled)
 

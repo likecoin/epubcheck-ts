@@ -1,5 +1,5 @@
 import type { ValidationMessage } from '../types.js';
-import { getSchema } from './schemas.generated.js';
+import { getSchema, getSchemaNames } from './schemas.generated.js';
 import { BaseSchemaValidator } from './validator.js';
 
 /**
@@ -26,9 +26,7 @@ async function loadSchema(schemaPath: string): Promise<string> {
     return await response.text();
   }
 
-  throw new Error(
-    `Schema not found: "${filename}". Available schemas: ${Object.keys(await import('./schemas.generated.js').then((m) => m.SCHEMAS)).join(', ')}`,
-  );
+  throw new Error(`Schema not found: "${filename}". Available schemas: ${getSchemaNames().join(', ')}`);
 }
 
 /**

@@ -265,8 +265,9 @@ export class ZipReader {
 ### Adding Schema Files
 
 1. Add schema to `schemas/` directory
-2. Update schema loader to handle new schema
-3. Ensure schema is included in `package.json` `files` array
+2. Run `npm run generate:schemas` to regenerate the compressed bundle
+3. Schemas are automatically gzip-compressed and bundled as base64 strings
+4. Decompression happens lazily at runtime with caching
 
 ## Commands Reference
 
@@ -320,6 +321,7 @@ npm run clean        # Clean dist/
 - ✅ **RelaxNG Compact (.rnc) format** - Converted EPUB 3.x schemas from RNC to RNG format using jing-trang, then inlined all `<include>` elements for bundling
 - ✅ **EPUB 2.0 schema includes** - Added opf20.rng from Java source with proper `<start>` element
 - ✅ **Integration tests** - All EPUB 2.0 and 3.0 integration tests now passing
+- ✅ **Schema bundle size** - Compressed with gzip (87% reduction: 2.4 MB → 326 KB), lazy decompression at runtime
 
 ## Questions?
 

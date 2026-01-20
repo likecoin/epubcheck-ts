@@ -3,9 +3,11 @@
  * Generate schemas.generated.ts from schema files
  *
  * This script reads all schema files from the schemas/ directory and generates
- * a TypeScript module that exports them as string constants. This allows schemas
- * to be bundled into the JavaScript output, enabling use in browsers and test
- * environments without file system access.
+ * a TypeScript module that exports them as compressed base64 strings. Schemas
+ * are decompressed lazily at runtime on first access.
+ *
+ * Uses gzip compression via fflate (already a dependency) for good compression
+ * ratio with fast decompression.
  *
  * Usage: npx tsx scripts/generate-schemas.ts
  */
@@ -13,6 +15,7 @@
 import { readFileSync, readdirSync, writeFileSync } from 'fs';
 import { dirname, join, resolve } from 'path';
 import { fileURLToPath } from 'url';
+import { gzipSync } from 'fflate';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = resolve(__dirname, '..');
@@ -23,25 +26,18 @@ const OUTPUT_FILE = join(ROOT_DIR, 'src', 'schema', 'schemas.generated.ts');
 const SCHEMA_EXTENSIONS = ['.rng', '.rnc', '.sch', '.xsd'];
 
 /**
- * Convert filename to a valid TypeScript constant name
- * e.g., "package-30.rnc" -> "PACKAGE_30_RNC"
+ * Compress and base64-encode a string
  */
-function toConstantName(filename: string): string {
-  return filename
-    .toUpperCase()
-    .replace(/[.-]/g, '_')
-    .replace(/[^A-Z0-9_]/g, '');
-}
-
-/**
- * Escape a string for use in a template literal
- */
-function escapeTemplateString(content: string): string {
-  return content.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
+function compressToBase64(content: string): string {
+  const data = new TextEncoder().encode(content);
+  // Use maximum compression level (9)
+  const compressed = gzipSync(data, { level: 9 });
+  // Convert to base64
+  return Buffer.from(compressed).toString('base64');
 }
 
 function main(): void {
-  console.log('Generating schemas.generated.ts...');
+  console.log('Generating schemas.generated.ts (compressed)...');
 
   // Read all schema files
   const files = readdirSync(SCHEMAS_DIR).filter((file) =>
@@ -56,49 +52,124 @@ function main(): void {
   console.log(`Found ${String(files.length)} schema files`);
 
   // Generate the TypeScript content
-  const exports: string[] = [];
-  const schemaMap: string[] = [];
+  const compressedData: string[] = [];
+  let totalOriginal = 0;
+  let totalCompressed = 0;
 
   for (const file of files.sort()) {
     const filePath = join(SCHEMAS_DIR, file);
     const content = readFileSync(filePath, 'utf-8');
-    const constName = toConstantName(file);
-    const escapedContent = escapeTemplateString(content);
+    const compressed = compressToBase64(content);
 
-    exports.push(`export const ${constName} = \`${escapedContent}\`;`);
-    schemaMap.push(`  '${file}': ${constName},`);
+    compressedData.push(`  '${file}': '${compressed}',`);
 
-    console.log(`  ${file} -> ${constName} (${String(content.length)} bytes)`);
+    const originalSize = Buffer.byteLength(content, 'utf-8');
+    const compressedSize = compressed.length;
+    totalOriginal += originalSize;
+    totalCompressed += compressedSize;
+
+    const ratio = ((1 - compressedSize / originalSize) * 100).toFixed(1);
+    console.log(
+      `  ${file}: ${String(originalSize)} -> ${String(compressedSize)} bytes (${ratio}% reduction)`,
+    );
   }
 
   const output = `/**
- * Auto-generated schema constants
+ * Auto-generated compressed schema constants
  *
  * DO NOT EDIT MANUALLY - Run "npm run generate:schemas" to regenerate
+ *
+ * Schemas are gzip-compressed and base64-encoded. They are decompressed
+ * lazily on first access for optimal bundle size with fast runtime access.
  *
  * Generated: ${new Date().toISOString()}
  */
 
-${exports.join('\n\n')}
+import { gunzipSync, strFromU8 } from 'fflate';
 
 /**
- * Map of schema filenames to their content
+ * Base64-encoded gzip-compressed schema data
  */
-export const SCHEMAS: Record<string, string> = {
-${schemaMap.join('\n')}
+const COMPRESSED_SCHEMAS: Record<string, string> = {
+${compressedData.join('\n')}
 };
 
 /**
- * Get schema content by filename
+ * Cache for decompressed schemas
+ */
+const schemaCache = new Map<string, string>();
+
+/**
+ * Decode base64 string to Uint8Array
+ */
+function base64ToUint8Array(base64: string): Uint8Array {
+  // Use atob for browser compatibility, Buffer for Node.js
+  if (typeof atob === 'function') {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
+  }
+  return new Uint8Array(Buffer.from(base64, 'base64'));
+}
+
+/**
+ * Decompress a schema from its compressed form
+ */
+function decompressSchema(compressed: string): string {
+  const data = base64ToUint8Array(compressed);
+  const decompressed = gunzipSync(data);
+  return strFromU8(decompressed);
+}
+
+/**
+ * Get schema content by filename (decompresses lazily on first access)
  */
 export function getSchema(filename: string): string | undefined {
-  return SCHEMAS[filename];
+  // Check cache first
+  const cached = schemaCache.get(filename);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  // Get compressed data
+  const compressed = COMPRESSED_SCHEMAS[filename];
+  if (compressed === undefined) {
+    return undefined;
+  }
+
+  // Decompress and cache
+  const schema = decompressSchema(compressed);
+  schemaCache.set(filename, schema);
+  return schema;
+}
+
+/**
+ * Get list of available schema filenames
+ */
+export function getSchemaNames(): string[] {
+  return Object.keys(COMPRESSED_SCHEMAS);
+}
+
+/**
+ * Preload all schemas into cache (useful if you need all schemas upfront)
+ */
+export function preloadSchemas(): void {
+  for (const filename of Object.keys(COMPRESSED_SCHEMAS)) {
+    getSchema(filename);
+  }
 }
 `;
 
   writeFileSync(OUTPUT_FILE, output, 'utf-8');
+
+  const overallRatio = ((1 - totalCompressed / totalOriginal) * 100).toFixed(1);
   console.log(`\nGenerated ${OUTPUT_FILE}`);
-  console.log(`Total size: ${String(output.length)} bytes`);
+  console.log(`Original total: ${String(totalOriginal)} bytes`);
+  console.log(`Compressed total: ${String(totalCompressed)} bytes (${overallRatio}% reduction)`);
+  console.log(`Output file size: ${String(output.length)} bytes`);
 }
 
 main();
