@@ -28,8 +28,28 @@ export class ContentValidator {
       if (item.mediaType === 'application/xhtml+xml') {
         const fullPath = opfDir ? `${opfDir}/${item.href}` : item.href;
         this.validateXHTMLDocument(context, fullPath, item.id, opfDir, registry, refValidator);
+      } else if (item.mediaType === 'text/css' && refValidator) {
+        const fullPath = opfDir ? `${opfDir}/${item.href}` : item.href;
+        this.validateCSSDocument(context, fullPath, opfDir, refValidator);
       }
     }
+  }
+
+  private validateCSSDocument(
+    context: ValidationContext,
+    path: string,
+    opfDir: string,
+    refValidator: ReferenceValidator,
+  ): void {
+    const cssData = context.files.get(path);
+    if (!cssData) {
+      return;
+    }
+
+    const cssContent = new TextDecoder().decode(cssData);
+
+    // Extract @import statements and register as stylesheet references
+    this.extractCSSImports(path, cssContent, opfDir, refValidator);
   }
 
   private validateXHTMLDocument(
@@ -945,6 +965,52 @@ export class ContentValidator {
         targetResource,
         type,
         location: { path },
+      });
+    }
+  }
+
+  /**
+   * Parse CSS content and extract @import statements
+   */
+  private extractCSSImports(
+    cssPath: string,
+    cssContent: string,
+    opfDir: string,
+    refValidator: ReferenceValidator,
+  ): void {
+    const cssDir = cssPath.includes('/') ? cssPath.substring(0, cssPath.lastIndexOf('/')) : '';
+
+    // Remove CSS comments first to avoid matching imports inside comments
+    const cleanedCSS = cssContent.replace(/\/\*[\s\S]*?\*\//g, '');
+
+    // Simple regex to match @import statements
+    // Matches: @import "file.css"; @import 'file.css'; @import url("file.css"); @import url('file.css');
+    const importRegex = /@import\s+(?:url\s*\(\s*)?["']([^"']+)["']\s*\)?[^;]*;/gi;
+
+    let match;
+    while ((match = importRegex.exec(cleanedCSS)) !== null) {
+      const importUrl = match[1];
+      if (!importUrl) continue;
+
+      // Skip remote URLs
+      if (importUrl.startsWith('http://') || importUrl.startsWith('https://')) {
+        refValidator.addReference({
+          url: importUrl,
+          targetResource: importUrl,
+          type: ReferenceType.STYLESHEET,
+          location: { path: cssPath },
+        });
+        continue;
+      }
+
+      // Resolve relative path
+      const resolvedPath = this.resolveRelativePath(cssDir, importUrl, opfDir);
+
+      refValidator.addReference({
+        url: importUrl,
+        targetResource: resolvedPath,
+        type: ReferenceType.STYLESHEET,
+        location: { path: cssPath },
       });
     }
   }
