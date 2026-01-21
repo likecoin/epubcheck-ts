@@ -5,6 +5,11 @@
 import { XmlDocument, type XmlElement } from 'libxml2-wasm';
 import type { ValidationContext } from '../types.js';
 
+// Note: Full list of event handlers for reference, but we use XPath for detection
+// const SCRIPT_EVENT_HANDLERS = ['onclick', 'onload', 'onmouseover', ...];
+
+const DISCOURAGED_ELEMENTS = new Set(['base', 'embed']);
+
 export class ContentValidator {
   validate(context: ValidationContext): void {
     const packageDoc = context.packageDocument;
@@ -115,14 +120,30 @@ export class ContentValidator {
       }
 
       // Check if it's a navigation document
-      const isNavItem = packageDoc.manifest.find(
-        (item: { id: string; properties?: string[] }) =>
-          item.id === itemId && item.properties?.includes('nav'),
+      const manifestItem = packageDoc.manifest.find(
+        (item: { id: string; properties?: string[] }) => item.id === itemId,
       );
+      const isNavItem = manifestItem?.properties?.includes('nav');
 
       if (isNavItem) {
         this.checkNavDocument(context, path, doc, root);
       }
+
+      // Check for scripts and scripted property (EPUB 3 only)
+      if (context.version.startsWith('3')) {
+        const hasScripts = this.detectScripts(context, path, root);
+        if (hasScripts && !manifestItem?.properties?.includes('scripted')) {
+          context.messages.push({
+            id: 'OPF-014',
+            severity: 'error',
+            message: 'Content document contains scripts but manifest item is missing "scripted" property',
+            location: { path },
+          });
+        }
+      }
+
+      // Check for discouraged elements
+      this.checkDiscouragedElements(context, path, root);
     } finally {
       doc.dispose();
     }
@@ -230,6 +251,50 @@ export class ContentValidator {
         message: 'Navigation document toc nav must contain an ol element',
         location: { path },
       });
+    }
+  }
+
+  private detectScripts(
+    _context: ValidationContext,
+    _path: string,
+    root: XmlElement,
+  ): boolean {
+    // Check for script elements
+    const htmlScript = root.get('.//html:script', { html: 'http://www.w3.org/1999/xhtml' });
+    if (htmlScript) return true;
+
+    const svgScript = root.get('.//svg:script', { svg: 'http://www.w3.org/2000/svg' });
+    if (svgScript) return true;
+
+    // Check for form elements (require scripted property)
+    const form = root.get('.//html:form', { html: 'http://www.w3.org/1999/xhtml' });
+    if (form) return true;
+
+    // Check for event handler attributes via XPath
+    // This is a simplified check - look for common event handlers
+    const elementsWithEvents = root.find(
+      './/*[@onclick or @onload or @onmouseover or @onmouseout or @onchange or @onsubmit or @onfocus or @onblur]',
+    );
+    if (elementsWithEvents.length > 0) return true;
+
+    return false;
+  }
+
+  private checkDiscouragedElements(
+    context: ValidationContext,
+    path: string,
+    root: XmlElement,
+  ): void {
+    for (const elemName of DISCOURAGED_ELEMENTS) {
+      const element = root.get(`.//html:${elemName}`, { html: 'http://www.w3.org/1999/xhtml' });
+      if (element) {
+        context.messages.push({
+          id: 'HTM-055',
+          severity: 'warning',
+          message: `The "${elemName}" element is discouraged in EPUB`,
+          location: { path },
+        });
+      }
     }
   }
 }

@@ -15,11 +15,11 @@ describe('CSSValidator', () => {
     locale: 'en',
   };
 
-  const createContext = (): ValidationContext => ({
+  const createContext = (includeInfo = false): ValidationContext => ({
     messages: [],
     files: new Map(),
     data: new Uint8Array(),
-    options: defaultOptions,
+    options: { ...defaultOptions, includeInfo },
     version: '3.0',
     rootfiles: [{ path: 'OEBPS/content.opf', mediaType: 'application/oebps-package+xml' }],
   });
@@ -77,6 +77,121 @@ describe('CSSValidator', () => {
       validator.validate(context, css, 'OEBPS/styles.css');
       const cssWarnings = context.messages.filter((m) => m.id === 'CSS-006' || m.id === 'CSS-019');
       expect(cssWarnings).toHaveLength(0);
+    });
+  });
+
+  describe('@import validation', () => {
+    it('should extract @import url references', () => {
+      const css = '@import url("other.css");';
+      const result = validator.validate(context, css, 'OEBPS/styles.css');
+      expect(result.references).toHaveLength(1);
+      expect(result.references[0]).toMatchObject({
+        url: 'other.css',
+        type: 'import',
+      });
+    });
+
+    it('should extract @import string references', () => {
+      const css = '@import "typography.css";';
+      const result = validator.validate(context, css, 'OEBPS/styles.css');
+      expect(result.references).toHaveLength(1);
+      expect(result.references[0]).toMatchObject({
+        url: 'typography.css',
+        type: 'import',
+      });
+    });
+
+    it('should report empty @import URL (CSS-002)', () => {
+      const css = '@import url("");';
+      validator.validate(context, css, 'OEBPS/styles.css');
+      const errors = context.messages.filter((m) => m.id === 'CSS-002');
+      expect(errors).toHaveLength(1);
+      expect(errors[0]?.message).toContain('Empty');
+    });
+  });
+
+  describe('@font-face validation', () => {
+    it('should extract font references from @font-face src', () => {
+      const css = `
+        @font-face {
+          font-family: "MyFont";
+          src: url("fonts/myfont.woff2");
+        }
+      `;
+      const result = validator.validate(context, css, 'OEBPS/styles.css');
+      expect(result.references).toHaveLength(1);
+      expect(result.references[0]).toMatchObject({
+        url: 'fonts/myfont.woff2',
+        type: 'font',
+      });
+      expect(result.fontFamilies).toContain('MyFont');
+    });
+
+    it('should warn about empty @font-face (CSS-019)', () => {
+      const css = '@font-face {}';
+      validator.validate(context, css, 'OEBPS/styles.css');
+      const warnings = context.messages.filter((m) => m.id === 'CSS-019');
+      expect(warnings).toHaveLength(1);
+    });
+
+    it('should warn about @font-face missing src (CSS-019)', () => {
+      const css = '@font-face { font-family: "NoSrc"; }';
+      validator.validate(context, css, 'OEBPS/styles.css');
+      const warnings = context.messages.filter((m) => m.id === 'CSS-019');
+      expect(warnings).toHaveLength(1);
+      expect(warnings[0]?.message).toContain('src');
+    });
+
+    it('should report empty font src URL (CSS-002)', () => {
+      const css = '@font-face { font-family: "Test"; src: url(""); }';
+      validator.validate(context, css, 'OEBPS/styles.css');
+      const errors = context.messages.filter((m) => m.id === 'CSS-002');
+      expect(errors).toHaveLength(1);
+    });
+
+    it('should report info for @font-face when includeInfo is true (CSS-028)', () => {
+      context = createContext(true);
+      const css = '@font-face { font-family: "Test"; src: url("font.woff"); }';
+      validator.validate(context, css, 'OEBPS/styles.css');
+      const infos = context.messages.filter((m) => m.id === 'CSS-028');
+      expect(infos).toHaveLength(1);
+      expect(infos[0]?.severity).toBe('info');
+    });
+
+    it('should skip data: URLs in @font-face', () => {
+      const css = '@font-face { font-family: "Test"; src: url("data:font/woff2;base64,AAA"); }';
+      const result = validator.validate(context, css, 'OEBPS/styles.css');
+      expect(result.references).toHaveLength(0);
+    });
+
+    it('should handle multiple src URLs in @font-face', () => {
+      const css = `
+        @font-face {
+          font-family: "MyFont";
+          src: url("fonts/myfont.woff2") format("woff2"),
+               url("fonts/myfont.woff") format("woff");
+        }
+      `;
+      const result = validator.validate(context, css, 'OEBPS/styles.css');
+      expect(result.references).toHaveLength(2);
+    });
+  });
+
+  describe('CSS result structure', () => {
+    it('should return CSSValidationResult with references and fontFamilies', () => {
+      const css = `
+        @import "base.css";
+        @font-face {
+          font-family: "CustomFont";
+          src: url("custom.woff2");
+        }
+        body { margin: 0; }
+      `;
+      const result = validator.validate(context, css, 'OEBPS/styles.css');
+      expect(result).toHaveProperty('references');
+      expect(result).toHaveProperty('fontFamilies');
+      expect(result.references).toHaveLength(2);
+      expect(result.fontFamilies).toContain('CustomFont');
     });
   });
 });

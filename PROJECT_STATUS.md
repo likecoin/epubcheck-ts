@@ -8,15 +8,15 @@ This document tracks the implementation progress compared to the original Java E
 |----------|---------------|-----------------|--------|
 | OCF Validation | 100% | ~40% | 🟡 Partial |
 | OPF Validation | 100% | ~40% | 🟡 Partial |
-| Content (XHTML/SVG) | 100% | ~25% | 🟡 Partial |
-| CSS Validation | 100% | ~15% | 🔴 Basic |
+| Content (XHTML/SVG) | 100% | ~35% | 🟡 Partial |
+| CSS Validation | 100% | ~30% | 🟡 Partial |
 | Navigation (nav/NCX) | 100% | ~30% | 🟡 Partial |
 | Schema Validation | 100% | ~70% | 🟡 Partial |
 | Media Overlays | 100% | 0% | ❌ Not Started |
 | Accessibility | 100% | 0% | ❌ Not Started |
 | Cross-reference | 100% | ~40% | 🟡 Partial |
 
-**Overall Completion: ~35%**
+**Overall Completion: ~38%**
 
 ---
 
@@ -96,16 +96,16 @@ This document tracks the implementation progress compared to the original Java E
 | Unescaped less-than | ✅ | ✅ | HTM-012 | Implemented |
 | Link validation | ✅ | ❌ | RSC-007, RSC-010-011 | Target validation |
 | Image validation | ✅ | ❌ | MED-001, OPF-051 | src, alt, media types |
-| Script detection | ✅ | ❌ | SCP-* | Scripted property |
+| Script detection | ✅ | ✅ | OPF-014 | Scripted property check |
 | MathML detection | ✅ | ❌ | OPF-014 | mathml property |
 | SVG validation | ✅ | ❌ | - | Separate schema |
 | epub:type validation | ✅ | ❌ | OPF-088 | Vocabulary check |
 | Fixed-layout viewport | ✅ | ❌ | HTM-046-060 | Meta viewport |
 | img alt text | ✅ | ❌ | ACC-* | Accessibility |
 | MathML alt text | ✅ | ❌ | ACC-009 | - |
-| Discouraged elements | ✅ | ❌ | HTM-055 | base, embed |
+| Discouraged elements | ✅ | ✅ | HTM-055 | base, embed warnings |
 
-**Status: ~25% complete**
+**Status: ~35% complete**
 
 ---
 
@@ -113,17 +113,17 @@ This document tracks the implementation progress compared to the original Java E
 
 | Feature | Java | TS | Message IDs | Notes |
 |---------|:----:|:--:|------------|-------|
-| CSS syntax parsing | ✅ | ✅ | CSS-001 | css-tree integrated |
-| @font-face validation | ✅ | ❌ | CSS-007 | Font MIME types |
+| CSS syntax parsing | ✅ | ✅ | CSS-008 | css-tree integrated |
+| @font-face validation | ✅ | ✅ | CSS-007, CSS-019, CSS-028 | Font MIME types, empty check, info |
 | position: fixed | ✅ | ✅ | CSS-006 | Warning - discouraged |
 | position: absolute | ✅ | ✅ | CSS-019 | Warning - use caution |
-| Remote fonts | ✅ | ❌ | - | Property requirement |
-| Empty URIs | ✅ | ❌ | CSS-002 | - |
+| Remote fonts | ✅ | 🟡 | - | Font URLs extracted for validation |
+| Empty URIs | ✅ | ✅ | CSS-002 | Implemented |
 | Alt stylesheet | ✅ | ❌ | CSS-005, CSS-015 | Conflict, title |
-| @import validation | ✅ | ❌ | - | - |
+| @import validation | ✅ | ✅ | CSS-002 | Import URLs extracted |
 | Media overlay classes | ✅ | ❌ | CSS-029, CSS-030 | - |
 
-**Status: ~15% complete** (parsing + position warnings)
+**Status: ~30% complete**
 
 ---
 
@@ -236,12 +236,12 @@ This document tracks the implementation progress compared to the original Java E
 
 | Feature | Java | TS | Message IDs | Notes |
 |---------|:----:|:--:|------------|-------|
-| Script detection | ✅ | ❌ | SCP-* | In XHTML |
-| Scripted property | ✅ | ❌ | OPF-014 | Required if scripts |
-| Script events | ✅ | ❌ | SCP-* | onclick, etc. |
-| Form detection | ✅ | ❌ | SCP-* | - |
+| Script detection | ✅ | ✅ | OPF-014 | script, svg:script elements |
+| Scripted property | ✅ | ✅ | OPF-014 | Required if scripts (EPUB 3) |
+| Script events | ✅ | ✅ | OPF-014 | onclick, onload, etc. |
+| Form detection | ✅ | ✅ | OPF-014 | form element detection |
 
-**Status: 0% complete**
+**Status: ~80% complete**
 
 ---
 
@@ -279,11 +279,14 @@ This document tracks the implementation progress compared to the original Java E
 | src/ocf/validator.ts | 11 | ✅ Passing |
 | src/ocf/zip.ts | 15 | ✅ Passing |
 | src/opf/parser.ts | 12 | ✅ Passing |
-| src/content/validator.ts | 21 | ✅ Passing |
+| src/content/validator.ts | 28 | ✅ Passing |
+| src/content/parser.ts | 23 | ✅ Passing |
 | src/references/validator.ts | 19 | ✅ Passing |
-| src/css/validator.ts | 6 | ✅ Passing |
+| src/css/validator.ts | 17 | ✅ Passing |
+| src/nav/validator.ts | 7 | ✅ Passing |
+| src/schema/*.ts | 9 | ✅ Passing |
 | Integration tests | 4 | ✅ Passing |
-| **Total** | **127** | **✅ All passing** |
+| **Total** | **145** | **✅ All passing** |
 
 ---
 
@@ -292,10 +295,10 @@ This document tracks the implementation progress compared to the original Java E
 | Prefix | Category | Defined | Used | Progress |
 |--------|----------|---------|------|----------|
 | PKG | Package/Container | 15 | 8 | 53% |
-| OPF | Package Document | 15 | 13 | 87% |
+| OPF | Package Document | 15 | 14 | 93% |
 | RSC | Resources | 20 | 0 | 0% |
-| HTM | HTML/XHTML | 33 | 4 | 12% |
-| CSS | CSS Validation | 19 | 0 | 0% |
+| HTM | HTML/XHTML | 33 | 5 | 15% |
+| CSS | CSS Validation | 19 | 6 | 32% |
 | NAV | Navigation | 9 | 2 | 22% |
 | NCX | NCX (EPUB 2) | 5 | 0 | 0% |
 | ACC | Accessibility | 17 | 0 | 0% |
@@ -303,14 +306,14 @@ This document tracks the implementation progress compared to the original Java E
 | SCP | Scripting | 10 | 0 | 0% |
 | CHK | Internal Errors | 7 | 0 | 0% |
 
-**Total: ~165 defined, ~35 actively used (21%)**
+**Total: ~165 defined, ~43 actively used (26%)**
 
 ---
 
 ## Release Readiness (0.1.0)
 
 ### ✅ Ready
-- All 127 tests passing
+- All 145 tests passing
 - Build successful (ESM + CJS + type definitions)
 - ESLint and TypeScript checks passing
 - Documentation complete (README, AGENTS.md, PROJECT_STATUS.md)
@@ -318,12 +321,8 @@ This document tracks the implementation progress compared to the original Java E
 - Schema infrastructure working (RelaxNG, XSD, Schematron)
 - Web demo functional
 - CI/CD workflows configured
-
-### ⚠️ Before Release
-- Update package.json version from 0.1.0 to 0.0.1
-- Create git tag v0.0.1
-- Test npm publish locally
-- Verify browser compatibility
+- CSS validation with @font-face, @import, empty URI detection
+- Content validation with script detection, discouraged elements
 
 ### 📋 Post-Release Tasks
 - Add more validation coverage
@@ -337,7 +336,9 @@ This document tracks the implementation progress compared to the original Java E
 1. ~~Implement schema validation infrastructure (libxml2-wasm)~~ ✅ Complete
 2. ~~Add comprehensive integration tests~~ ✅ Integration tests added
 3. ~~Fix lint/format configuration conflicts~~ ✅ Resolved
-4. Prepare for 0.0.1 release
-5. Add full XML DOM parsing for content validation
-6. Implement media validation
-7. Add accessibility checks
+4. ~~Enhance CSS validation (@font-face, @import)~~ ✅ Complete
+5. ~~Add script detection and OPF-014 validation~~ ✅ Complete
+6. ~~Add discouraged element warnings (HTM-055)~~ ✅ Complete
+7. Implement media validation
+8. Add accessibility checks
+9. Add MathML/SVG detection

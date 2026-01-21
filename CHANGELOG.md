@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- CSS validation enhancements:
+  - @font-face validation with font MIME type checking (CSS-007)
+  - @font-face empty declaration warnings (CSS-019)
+  - @font-face info messages (CSS-028)
+  - @import URL extraction for cross-reference validation
+  - Empty URI detection in CSS (CSS-002)
+  - Font reference extraction for manifest validation
+- Content document validation enhancements:
+  - Script detection (script elements, event handlers, form elements)
+  - Missing "scripted" property validation (OPF-014) for EPUB 3
+  - Discouraged element warnings for base and embed (HTM-055)
+- 18 new unit tests (145 total, up from 127)
+
+### Changed
+
+- CSS parse errors now use CSS-008 message ID (more accurate than CSS-001)
+- CSSValidator.validate() now returns CSSValidationResult with extracted references
+
 ## [0.1.0] - 2026-01-21
 
 ### Added

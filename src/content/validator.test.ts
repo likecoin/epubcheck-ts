@@ -505,4 +505,165 @@ describe('ContentValidator', () => {
       expect(context.messages).toHaveLength(0);
     });
   });
+
+  describe('script detection', () => {
+    it('should detect script elements and require scripted property (OPF-014)', () => {
+      const scriptedXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+    <script type="text/javascript">console.log("hello");</script>
+  </head>
+  <body>
+    <p>Content</p>
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(scriptedXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const opfErrors = context.messages.filter((m) => m.id === 'OPF-014');
+      expect(opfErrors).toHaveLength(1);
+      expect(opfErrors[0]?.message).toContain('scripted');
+    });
+
+    it('should detect onclick event handlers', () => {
+      const scriptedXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <button onclick="alert('clicked')">Click me</button>
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(scriptedXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const opfErrors = context.messages.filter((m) => m.id === 'OPF-014');
+      expect(opfErrors).toHaveLength(1);
+    });
+
+    it('should detect form elements', () => {
+      const formXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <form action="/submit">
+      <input type="text" name="name" />
+    </form>
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(formXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const opfErrors = context.messages.filter((m) => m.id === 'OPF-014');
+      expect(opfErrors).toHaveLength(1);
+    });
+
+    it('should accept scripted content when scripted property is present', () => {
+      const scriptedXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+    <script type="text/javascript">console.log("hello");</script>
+  </head>
+  <body>
+    <p>Content</p>
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(scriptedXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml', properties: ['scripted'] },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const opfErrors = context.messages.filter((m) => m.id === 'OPF-014');
+      expect(opfErrors).toHaveLength(0);
+    });
+
+    it('should not check scripted property for EPUB 2', () => {
+      const scriptedXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+    <script type="text/javascript">console.log("hello");</script>
+  </head>
+  <body>
+    <p>Content</p>
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(scriptedXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' },
+      ]);
+      context = createContext(files, packageDoc);
+      context.version = '2.0';
+      validator.validate(context);
+
+      const opfErrors = context.messages.filter((m) => m.id === 'OPF-014');
+      expect(opfErrors).toHaveLength(0);
+    });
+  });
+
+  describe('discouraged elements', () => {
+    it('should warn about base element (HTM-055)', () => {
+      const baseXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+    <base href="https://example.com/" />
+  </head>
+  <body>
+    <p>Content</p>
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(baseXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const htmWarnings = context.messages.filter((m) => m.id === 'HTM-055');
+      expect(htmWarnings).toHaveLength(1);
+      expect(htmWarnings[0]?.message).toContain('base');
+    });
+
+    it('should warn about embed element (HTM-055)', () => {
+      const embedXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <embed src="video.swf" type="application/x-shockwave-flash" />
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(embedXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const htmWarnings = context.messages.filter((m) => m.id === 'HTM-055');
+      expect(htmWarnings).toHaveLength(1);
+      expect(htmWarnings[0]?.message).toContain('embed');
+    });
+  });
 });
