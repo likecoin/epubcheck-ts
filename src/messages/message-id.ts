@@ -65,6 +65,7 @@ export enum MessageId {
   RSC_005 = 'RSC-005', // Schema validation error
   RSC_006 = 'RSC-006', // Remote resource referenced
   RSC_007 = 'RSC-007', // Referenced resource not in manifest
+  RSC_007w = 'RSC-007w', // LINK reference missing (warning for EPUB 3)
   RSC_008 = 'RSC-008', // Undeclared resource
   RSC_009 = 'RSC-009', // Resource in spine not content document
   RSC_010 = 'RSC-010', // Non-content hyperlink

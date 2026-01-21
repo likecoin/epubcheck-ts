@@ -133,10 +133,13 @@ export class ReferenceValidator {
 
     // Check if target resource exists
     if (!this.registry.hasResource(parsed.resource)) {
+      // RSC-007w: LINK references get a warning (may be external/optional)
+      // RSC-007: Other references get an error
+      const isLinkRef = reference.type === ReferenceType.LINK;
       context.messages.push({
-        id: 'RSC-008',
-        severity: 'error',
-        message: `Resource not declared in manifest: ${parsed.resource}`,
+        id: isLinkRef ? 'RSC-007w' : 'RSC-007',
+        severity: isLinkRef ? 'warning' : 'error',
+        message: `Referenced resource not found in manifest: ${parsed.resource}`,
         location: reference.location,
       });
       return;

@@ -31,7 +31,7 @@ export class ResourceRegistry {
    * Register an ID in a resource
    */
   registerID(resourceURL: string, id: string): void {
-    if (!id || this.resources.has(resourceURL)) {
+    if (!id || !this.resources.has(resourceURL)) {
       return;
     }
 

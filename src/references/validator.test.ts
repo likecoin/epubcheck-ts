@@ -66,14 +66,24 @@ describe('ReferenceValidator', () => {
       expect(context.messages).toHaveLength(0);
     });
 
-    it('should report missing resource', () => {
+    it('should report missing resource (RSC-007)', () => {
       validator.addReference(
         createReference('missing.xhtml', ReferenceType.HYPERLINK, 'OEBPS/nav.xhtml'),
       );
       validator.validate(context);
-      const rscErrors = context.messages.filter((m) => m.id === 'RSC-008');
+      const rscErrors = context.messages.filter((m) => m.id === 'RSC-007');
       expect(rscErrors).toHaveLength(1);
-      expect(rscErrors[0]?.message).toContain('not declared in manifest');
+      expect(rscErrors[0]?.message).toContain('not found in manifest');
+    });
+
+    it('should report missing LINK reference as warning (RSC-007w)', () => {
+      validator.addReference(
+        createReference('missing.css', ReferenceType.LINK, 'OEBPS/chapter1.xhtml'),
+      );
+      validator.validate(context);
+      const rscWarnings = context.messages.filter((m) => m.id === 'RSC-007w');
+      expect(rscWarnings).toHaveLength(1);
+      expect(rscWarnings[0]?.severity).toBe('warning');
     });
 
     it('should report absolute paths', () => {
@@ -96,12 +106,11 @@ describe('ReferenceValidator', () => {
   });
 
   describe('fragment validation', () => {
-    it.skip('should accept valid fragment', () => {
-      // TODO: Fix ID registration logic for proper fragment validation
+    it('should accept valid fragment', () => {
       const resource = createResource('chapter1.xhtml', true, ['section1']);
       registry.registerResource(resource);
       validator.addReference(
-        createReference('chapter1.xhtml#section1', ReferenceType.IMAGE, 'OEBPS/nav.xhtml'),
+        createReference('chapter1.xhtml#section1', ReferenceType.HYPERLINK, 'OEBPS/nav.xhtml'),
       );
       validator.validate(context);
       const rscErrors = context.messages.filter((m) => m.id === 'RSC-012');
