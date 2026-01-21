@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Package version attribute validation (OPF-001) - validates 2.0, 3.0, 3.1, 3.2, 3.3
   - RFC4288 media type format validation (OPF-014)
   - Deprecated OEB 1.0 media type warnings (OPF-035, OPF-037, OPF-038)
+  - W3C date format validation for dc:date (OPF-053)
+  - W3C date format validation for dcterms:modified (OPF-054)
 - NCX validation enhancements:
   - navPoint content src reference validation (NCX-006)
 - Content document validation enhancements:
@@ -36,6 +38,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Empty URI detection in CSS (CSS-002)
   - Font reference extraction for manifest validation
 - Cross-reference validation:
+  - Fragment type mismatch validation (RSC-014) - SVG view fragments
+  - Data URL validation (RSC-029) - not allowed in EPUB 3
   - Undeclared resources detection (RSC-008) - files in container not in manifest
 - 24 new unit tests (151 total, up from 127)
 

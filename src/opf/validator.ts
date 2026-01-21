@@ -190,18 +190,37 @@ export class OPFValidator {
           });
         }
       }
+
+      // Validate dc:date format (OPF-053)
+      if (dc.name === 'date' && dc.value) {
+        if (!isValidW3CDateFormat(dc.value)) {
+          context.messages.push({
+            id: 'OPF-053',
+            severity: 'error',
+            message: `Invalid date format "${dc.value}"; must be W3C date format (ISO 8601)`,
+            location: { path: opfPath },
+          });
+        }
+      }
     }
 
     // EPUB 3: Check for dcterms:modified meta
     if (this.packageDoc.version !== '2.0') {
-      const hasModified = this.packageDoc.metaElements.some(
+      const modifiedMeta = this.packageDoc.metaElements.find(
         (meta) => meta.property === 'dcterms:modified',
       );
-      if (!hasModified) {
+      if (!modifiedMeta) {
         context.messages.push({
           id: 'OPF-054',
           severity: 'error',
           message: 'EPUB 3 metadata must include a dcterms:modified meta element',
+          location: { path: opfPath },
+        });
+      } else if (modifiedMeta.value && !isValidW3CDateFormat(modifiedMeta.value)) {
+        context.messages.push({
+          id: 'OPF-054',
+          severity: 'error',
+          message: `Invalid dcterms:modified date format "${modifiedMeta.value}"; must be W3C date format (ISO 8601)`,
           location: { path: opfPath },
         });
       }
@@ -621,4 +640,51 @@ function isValidMimeType(mediaType: string): boolean {
   }
 
   return true;
+}
+
+/**
+ * Validate W3C date format (ISO 8601)
+ * Accepts: YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS[Z|+/-HH:MM]
+ */
+function isValidW3CDateFormat(dateStr: string): boolean {
+  // W3C date format (ISO 8601) patterns
+  // Date only: YYYY-MM-DD
+  const dateOnlyPattern = /^\d{4}-\d{2}-\d{2}$/;
+
+  // Date-time: YYYY-MM-DDTHH:MM:SS followed by optional timezone
+  const dateTimePattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})?$/;
+
+  if (dateOnlyPattern.test(dateStr)) {
+    const parts = dateStr.split('-');
+    const year = Number.parseInt(parts[0]!, 10);
+    const month = Number.parseInt(parts[1]!, 10);
+    const day = Number.parseInt(parts[2]!, 10);
+    if (month < 1 || month > 12) return false;
+    const daysInMonth = new Date(year, month, 0).getDate();
+    if (day < 1 || day > daysInMonth) return false;
+    return true;
+  }
+
+  if (dateTimePattern.test(dateStr)) {
+    const datePart = dateStr.substring(0, 10);
+    const dateParts = datePart.split('-');
+    const year = Number.parseInt(dateParts[0]!, 10);
+    const month = Number.parseInt(dateParts[1]!, 10);
+    const day = Number.parseInt(dateParts[2]!, 10);
+    if (month < 1 || month > 12) return false;
+    const daysInMonth = new Date(year, month, 0).getDate();
+    if (day < 1 || day > daysInMonth) return false;
+
+    const timePart = dateStr.substring(11, 19);
+    const timeParts = timePart.split(':');
+    const hours = Number.parseInt(timeParts[0]!, 10);
+    const minutes = Number.parseInt(timeParts[1]!, 10);
+    const seconds = Number.parseInt(timeParts[2]!, 10);
+    if (hours < 0 || hours > 23) return false;
+    if (minutes < 0 || minutes > 59) return false;
+    if (seconds < 0 || seconds > 59) return false;
+    return true;
+  }
+
+  return false;
 }

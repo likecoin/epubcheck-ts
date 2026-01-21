@@ -7,16 +7,16 @@ This document tracks the implementation progress compared to the original Java E
 | Category | Java EPUBCheck | TypeScript Port | Status |
 |----------|---------------|-----------------|--------|
 | OCF Validation | 100% | ~40% | 🟡 Partial |
-| OPF Validation | 100% | ~50% | 🟡 Partial |
+| OPF Validation | 100% | ~55% | 🟡 Partial |
 | Content (XHTML/SVG) | 100% | ~45% | 🟡 Partial |
 | CSS Validation | 100% | ~30% | 🟡 Partial |
 | Navigation (nav/NCX) | 100% | ~40% | 🟡 Partial |
 | Schema Validation | 100% | ~70% | 🟡 Partial |
 | Media Overlays | 100% | 0% | ❌ Not Started |
 | Accessibility | 100% | ~75% | 🟡 Partial |
-| Cross-reference | 100% | ~50% | 🟡 Partial |
+| Cross-reference | 100% | ~60% | 🟡 Partial |
 
-**Overall Completion: ~45%**
+**Overall Completion: ~46%**
 
 ---
 
@@ -53,7 +53,7 @@ This document tracks the implementation progress compared to the original Java E
 | dc:identifier required | ✅ | ✅ | OPF-015 | Implemented |
 | dc:title required | ✅ | ✅ | OPF-016 | Implemented |
 | dc:language required | ✅ | ✅ | OPF-017 | Implemented |
-| dc:date format | ✅ | ❌ | OPF-053, OPF-054 | W3C date validation |
+| dc:date format | ✅ | ✅ | OPF-053, OPF-054 | W3C date validation |
 | dcterms:modified | ✅ | ✅ | OPF-054 | EPUB 3 |
 | dc:creator role | ✅ | ❌ | OPF-052 | MARC relator codes |
 | Empty metadata | ✅ | ❌ | OPF-072 | - |
@@ -62,7 +62,7 @@ This document tracks the implementation progress compared to the original Java E
 | Media type format | ✅ | ✅ | OPF-014 | RFC4288 validation |
 | Deprecated types | ✅ | ✅ | OPF-035, OPF-037, OPF-038 | OEB 1.x warnings |
 | Remote resources | ✅ | ❌ | RSC-006, RSC-006b | Property requirement |
-| Data URLs | ✅ | ❌ | RSC-029 | EPUB 3 |
+| Data URLs | ✅ | ✅ | RSC-029 | EPUB 3 |
 | META-INF items | ✅ | ❌ | PKG-025 | - |
 | Item properties | ✅ | ✅ | OPF-012 | nav, cover-image, etc. |
 | Unknown properties | ✅ | ✅ | OPF-012 | Warning |
@@ -79,7 +79,7 @@ This document tracks the implementation progress compared to the original Java E
 | Guide validation | ✅ | ✅ | OPF-031 | EPUB 2 |
 | Collections | ✅ | ❌ | OPF-071-084 | Dict, Index, Preview |
 
-**Status: ~50% complete**
+**Status: ~55% complete**
 
 ---
 
@@ -171,7 +171,7 @@ This document tracks the implementation progress compared to the original Java E
 | Missing targets | ✅ | ✅ | RSC-007, RSC-007w | Implemented |
 | Undeclared resources | ✅ | ✅ | RSC-008 | Files in container not in manifest |
 | Fragment validation | ✅ | ✅ | RSC-012 | ID existence check |
-| Fragment type mismatch | ✅ | ❌ | RSC-014 | SVG vs XHTML |
+| Fragment type mismatch | ✅ | ✅ | RSC-014 | SVG view fragments |
 | Hyperlink to non-spine | ✅ | ✅ | RSC-011 | Implemented |
 | Non-content hyperlink | ✅ | ✅ | RSC-010 | Implemented |
 | Stylesheet fragment | ✅ | ✅ | RSC-013 | Implemented |
@@ -181,7 +181,7 @@ This document tracks the implementation progress compared to the original Java E
 | Leaking path | ✅ | ✅ | RSC-027, RSC-028 | Implemented |
 | Unused resources | ✅ | ✅ | OPF-097 | Implemented |
 
-**Status: ~50% complete**
+**Status: ~60% complete**
 
 ---
 
@@ -349,6 +349,9 @@ This document tracks the implementation progress compared to the original Java E
 12. ~~Add NCX content src validation (NCX-006)~~ ✅ Complete
 13. ~~Add MathML accessibility check (ACC-009)~~ ✅ Complete
 14. ~~Add nav remote link validation (NAV-010)~~ ✅ Complete
-15. Implement media validation
-16. Add dc:date format validation (OPF-053, OPF-054)
-17. Add remote resources property check (RSC-006)
+15. ~~Add fragment type mismatch validation (RSC-014)~~ ✅ Complete
+16. ~~Add data URL validation (RSC-029)~~ ✅ Complete
+17. ~~Add dc:date format validation (OPF-053, OPF-054)~~ ✅ Complete
+18. Implement media validation
+19. Add remote resources property check (RSC-006)
+20. Add dc:creator role validation (OPF-052)

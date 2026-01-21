@@ -213,10 +213,11 @@ export class ReferenceValidator {
     reference: Reference,
     parsed: ParsedURL,
   ): void {
-    // Only validate fragments for resources that exist
     if (!parsed.fragment || !this.registry.hasResource(parsed.resource)) {
       return;
     }
+
+    const resource = this.registry.getResource(parsed.resource);
 
     // RSC-013: Stylesheets should not have fragment identifiers
     if (reference.type === ReferenceType.STYLESHEET) {
@@ -227,6 +228,22 @@ export class ReferenceValidator {
         location: reference.location,
       });
       return;
+    }
+
+    // RSC-014: SVG fragment type mismatch
+    // SVG views (svgView(...) or viewBox(...)) can only be referenced from SVG documents
+    if (resource?.mimeType === 'image/svg+xml') {
+      const fragment = parsed.fragment;
+      const hasSVGView = fragment.includes('svgView(') || fragment.includes('viewBox(');
+
+      if (hasSVGView && reference.type === ReferenceType.HYPERLINK) {
+        context.messages.push({
+          id: 'RSC-014',
+          severity: 'error',
+          message: 'SVG view fragments can only be referenced from SVG documents',
+          location: reference.location,
+        });
+      }
     }
 
     // Check if fragment target exists
