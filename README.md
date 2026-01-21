@@ -215,18 +215,18 @@ This library is a TypeScript port of the Java-based [EPUBCheck](https://github.c
 | Component | Status | Completeness | Notes |
 |-----------|--------|--------------|-------|
 | OCF Container | 🟡 Partial | ~40% | ZIP structure, mimetype, container.xml |
-| Package Document (OPF) | 🟡 Partial | ~40% | Metadata, manifest, spine, fallback chains |
-| Content Documents | 🟡 Partial | ~35% | XML well-formedness, XHTML structure, script detection |
+| Package Document (OPF) | 🟡 Partial | ~45% | Metadata, manifest, spine, undeclared resources |
+| Content Documents | 🟡 Partial | ~40% | XML well-formedness, XHTML structure, script detection |
 | Navigation Document | 🟡 Partial | ~30% | Nav structure, NCX validation |
 | Schema Validation | 🟡 Partial | ~70% | RelaxNG, XSD, Schematron working |
 | CSS | 🟡 Partial | ~30% | @font-face, @import, position warnings |
 | Media Overlays | ❌ Not Started | 0% | Planned |
-| Cross-reference Validation | 🟡 Partial | ~40% | Reference tracking, CSS URL extraction |
-| Accessibility Checks | ❌ Not Started | 0% | Alt text, etc. |
+| Cross-reference Validation | 🟡 Partial | ~50% | Reference tracking, undeclared resources |
+| Accessibility Checks | 🟡 Partial | ~60% | Empty links, image alt, SVG titles |
 
 Legend: 🟢 Complete | 🟡 Partial | 🔴 Basic | ❌ Not Started
 
-**Overall Progress: ~38% of Java EPUBCheck features**
+**Overall Progress: ~42% of Java EPUBCheck features**
 
 See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for detailed comparison.
 

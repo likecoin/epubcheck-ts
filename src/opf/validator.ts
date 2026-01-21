@@ -290,6 +290,45 @@ export class OPFValidator {
         });
       }
     }
+
+    // Check for undeclared resources (RSC-008)
+    this.checkUndeclaredResources(context, opfPath);
+  }
+
+  /**
+   * Check for files in container that are not declared in manifest
+   */
+  private checkUndeclaredResources(context: ValidationContext, opfPath: string): void {
+    if (!this.packageDoc) return;
+
+    // Build set of declared manifest hrefs (resolved to full paths)
+    const declaredPaths = new Set<string>();
+    for (const item of this.packageDoc.manifest) {
+      const fullPath = resolvePath(opfPath, item.href);
+      declaredPaths.add(fullPath);
+    }
+
+    // Also add the OPF itself and META-INF files
+    declaredPaths.add(opfPath);
+
+    // Check each file in the container
+    for (const filePath of context.files.keys()) {
+      // Skip META-INF directory
+      if (filePath.startsWith('META-INF/')) continue;
+
+      // Skip mimetype file
+      if (filePath === 'mimetype') continue;
+
+      // Skip if declared in manifest
+      if (declaredPaths.has(filePath)) continue;
+
+      context.messages.push({
+        id: 'RSC-008',
+        severity: 'warning',
+        message: `File in container is not declared in manifest: ${filePath}`,
+        location: { path: filePath },
+      });
+    }
   }
 
   /**

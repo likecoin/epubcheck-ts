@@ -666,4 +666,134 @@ describe('ContentValidator', () => {
       expect(htmWarnings[0]?.message).toContain('embed');
     });
   });
+
+  describe('accessibility', () => {
+    it('should warn about empty links (ACC-004)', () => {
+      const emptyLinkXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <a href="chapter2.xhtml"></a>
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(emptyLinkXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const accWarnings = context.messages.filter((m) => m.id === 'ACC-004');
+      expect(accWarnings).toHaveLength(1);
+      expect(accWarnings[0]?.message).toContain('accessible');
+    });
+
+    it('should accept links with text content', () => {
+      const goodLinkXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <a href="chapter2.xhtml">Chapter 2</a>
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(goodLinkXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const accWarnings = context.messages.filter((m) => m.id === 'ACC-004');
+      expect(accWarnings).toHaveLength(0);
+    });
+
+    it('should accept links with aria-label', () => {
+      const ariaLinkXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <a href="chapter2.xhtml" aria-label="Go to Chapter 2"></a>
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(ariaLinkXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const accWarnings = context.messages.filter((m) => m.id === 'ACC-004');
+      expect(accWarnings).toHaveLength(0);
+    });
+
+    it('should warn about images without alt attribute (ACC-005)', () => {
+      const noAltXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <img src="image.png" />
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(noAltXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const accWarnings = context.messages.filter((m) => m.id === 'ACC-005');
+      expect(accWarnings).toHaveLength(1);
+      expect(accWarnings[0]?.message).toContain('alt');
+    });
+
+    it('should accept images with alt attribute', () => {
+      const withAltXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <img src="image.png" alt="A beautiful sunset" />
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(withAltXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const accWarnings = context.messages.filter((m) => m.id === 'ACC-005');
+      expect(accWarnings).toHaveLength(0);
+    });
+
+    it('should accept images with empty alt for decorative images', () => {
+      const emptyAltXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <img src="decoration.png" alt="" />
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(emptyAltXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const accWarnings = context.messages.filter((m) => m.id === 'ACC-005');
+      expect(accWarnings).toHaveLength(0);
+    });
+  });
 });

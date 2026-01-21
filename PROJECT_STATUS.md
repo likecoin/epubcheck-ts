@@ -7,16 +7,16 @@ This document tracks the implementation progress compared to the original Java E
 | Category | Java EPUBCheck | TypeScript Port | Status |
 |----------|---------------|-----------------|--------|
 | OCF Validation | 100% | ~40% | 🟡 Partial |
-| OPF Validation | 100% | ~40% | 🟡 Partial |
-| Content (XHTML/SVG) | 100% | ~35% | 🟡 Partial |
+| OPF Validation | 100% | ~45% | 🟡 Partial |
+| Content (XHTML/SVG) | 100% | ~40% | 🟡 Partial |
 | CSS Validation | 100% | ~30% | 🟡 Partial |
 | Navigation (nav/NCX) | 100% | ~30% | 🟡 Partial |
 | Schema Validation | 100% | ~70% | 🟡 Partial |
 | Media Overlays | 100% | 0% | ❌ Not Started |
-| Accessibility | 100% | 0% | ❌ Not Started |
-| Cross-reference | 100% | ~40% | 🟡 Partial |
+| Accessibility | 100% | ~60% | 🟡 Partial |
+| Cross-reference | 100% | ~50% | 🟡 Partial |
 
-**Overall Completion: ~38%**
+**Overall Completion: ~42%**
 
 ---
 
@@ -169,7 +169,7 @@ This document tracks the implementation progress compared to the original Java E
 | Feature | Java | TS | Message IDs | Notes |
 |---------|:----:|:--:|------------|-------|
 | Missing targets | ✅ | ✅ | RSC-007, RSC-007w | Implemented |
-| Undeclared resources | ✅ | ❌ | RSC-008 | Files in container not in manifest |
+| Undeclared resources | ✅ | ✅ | RSC-008 | Files in container not in manifest |
 | Fragment validation | ✅ | ✅ | RSC-012 | ID existence check |
 | Fragment type mismatch | ✅ | ❌ | RSC-014 | SVG vs XHTML |
 | Hyperlink to non-spine | ✅ | ✅ | RSC-011 | Implemented |
@@ -181,7 +181,7 @@ This document tracks the implementation progress compared to the original Java E
 | Leaking path | ✅ | ✅ | RSC-027, RSC-028 | Implemented |
 | Unused resources | ✅ | ✅ | OPF-097 | Implemented |
 
-**Status: ~40% complete**
+**Status: ~50% complete**
 
 ---
 
@@ -223,12 +223,12 @@ This document tracks the implementation progress compared to the original Java E
 
 | Feature | Java | TS | Message IDs | Notes |
 |---------|:----:|:--:|------------|-------|
-| Empty links | ✅ | ❌ | ACC-004 | Anchors need text |
-| Image alt | ✅ | ❌ | - | Alt text required |
+| Empty links | ✅ | ✅ | ACC-004 | Anchors need text |
+| Image alt | ✅ | ✅ | ACC-005 | Alt text required |
 | MathML alt | ✅ | ❌ | ACC-009 | alttext/annotation |
-| SVG link title | ✅ | ❌ | ACC-011 | Accessible name |
+| SVG link title | ✅ | ✅ | ACC-011 | Accessible name |
 
-**Status: 0% complete**
+**Status: ~60% complete**
 
 ---
 
@@ -279,14 +279,14 @@ This document tracks the implementation progress compared to the original Java E
 | src/ocf/validator.ts | 11 | ✅ Passing |
 | src/ocf/zip.ts | 15 | ✅ Passing |
 | src/opf/parser.ts | 12 | ✅ Passing |
-| src/content/validator.ts | 28 | ✅ Passing |
+| src/content/validator.ts | 34 | ✅ Passing |
 | src/content/parser.ts | 23 | ✅ Passing |
 | src/references/validator.ts | 19 | ✅ Passing |
 | src/css/validator.ts | 17 | ✅ Passing |
 | src/nav/validator.ts | 7 | ✅ Passing |
 | src/schema/*.ts | 9 | ✅ Passing |
 | Integration tests | 4 | ✅ Passing |
-| **Total** | **145** | **✅ All passing** |
+| **Total** | **151** | **✅ All passing** |
 
 ---
 
@@ -296,24 +296,24 @@ This document tracks the implementation progress compared to the original Java E
 |--------|----------|---------|------|----------|
 | PKG | Package/Container | 15 | 8 | 53% |
 | OPF | Package Document | 15 | 14 | 93% |
-| RSC | Resources | 20 | 0 | 0% |
+| RSC | Resources | 20 | 1 | 5% |
 | HTM | HTML/XHTML | 33 | 5 | 15% |
 | CSS | CSS Validation | 19 | 6 | 32% |
 | NAV | Navigation | 9 | 2 | 22% |
 | NCX | NCX (EPUB 2) | 5 | 0 | 0% |
-| ACC | Accessibility | 17 | 0 | 0% |
+| ACC | Accessibility | 17 | 3 | 18% |
 | MED | Media | 15 | 0 | 0% |
 | SCP | Scripting | 10 | 0 | 0% |
 | CHK | Internal Errors | 7 | 0 | 0% |
 
-**Total: ~165 defined, ~43 actively used (26%)**
+**Total: ~165 defined, ~47 actively used (28%)**
 
 ---
 
 ## Release Readiness (0.1.0)
 
 ### ✅ Ready
-- All 145 tests passing
+- All 151 tests passing
 - Build successful (ESM + CJS + type definitions)
 - ESLint and TypeScript checks passing
 - Documentation complete (README, AGENTS.md, PROJECT_STATUS.md)
@@ -323,11 +323,13 @@ This document tracks the implementation progress compared to the original Java E
 - CI/CD workflows configured
 - CSS validation with @font-face, @import, empty URI detection
 - Content validation with script detection, discouraged elements
+- Accessibility validation with empty links, image alt, SVG titles
+- Undeclared resources detection (RSC-008)
 
 ### 📋 Post-Release Tasks
 - Add more validation coverage
 - Implement media validation
-- Add accessibility checks
+- Add MathML accessibility checks
 - Improve Schematron XSLT 2.0 support
 - Add CLI tool
 
@@ -339,6 +341,7 @@ This document tracks the implementation progress compared to the original Java E
 4. ~~Enhance CSS validation (@font-face, @import)~~ ✅ Complete
 5. ~~Add script detection and OPF-014 validation~~ ✅ Complete
 6. ~~Add discouraged element warnings (HTM-055)~~ ✅ Complete
-7. Implement media validation
-8. Add accessibility checks
-9. Add MathML/SVG detection
+7. ~~Add accessibility validation (ACC-004, ACC-005, ACC-011)~~ ✅ Complete
+8. ~~Add undeclared resources check (RSC-008)~~ ✅ Complete
+9. Implement media validation
+10. Add MathML detection and accessibility

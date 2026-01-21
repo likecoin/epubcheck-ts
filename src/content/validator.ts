@@ -144,6 +144,9 @@ export class ContentValidator {
 
       // Check for discouraged elements
       this.checkDiscouragedElements(context, path, root);
+
+      // Check accessibility
+      this.checkAccessibility(context, path, root);
     } finally {
       doc.dispose();
     }
@@ -296,5 +299,92 @@ export class ContentValidator {
         });
       }
     }
+  }
+
+  private checkAccessibility(
+    context: ValidationContext,
+    path: string,
+    root: XmlElement,
+  ): void {
+    // ACC-004: Check for empty links
+    const links = root.find('.//html:a', { html: 'http://www.w3.org/1999/xhtml' });
+    for (const link of links) {
+      if (!this.hasAccessibleContent(link as XmlElement)) {
+        context.messages.push({
+          id: 'ACC-004',
+          severity: 'warning',
+          message: 'Hyperlink has no accessible text content',
+          location: { path },
+        });
+      }
+    }
+
+    // Check for images without alt attribute
+    const images = root.find('.//html:img', { html: 'http://www.w3.org/1999/xhtml' });
+    for (const img of images) {
+      const altAttr = this.getAttribute(img as XmlElement, 'alt');
+      if (altAttr === null) {
+        context.messages.push({
+          id: 'ACC-005',
+          severity: 'warning',
+          message: 'Image is missing alt attribute',
+          location: { path },
+        });
+      }
+    }
+
+    // ACC-011: Check for SVG links without accessible name
+    const svgLinks = root.find('.//svg:a', { svg: 'http://www.w3.org/2000/svg' });
+    for (const svgLink of svgLinks) {
+      const svgElem = svgLink as XmlElement;
+      const title = svgElem.get('./svg:title', { svg: 'http://www.w3.org/2000/svg' });
+      const ariaLabel = this.getAttribute(svgElem, 'aria-label');
+      if (!title && !ariaLabel) {
+        context.messages.push({
+          id: 'ACC-011',
+          severity: 'warning',
+          message: 'SVG hyperlink has no accessible name (missing title element or aria-label)',
+          location: { path },
+        });
+      }
+    }
+  }
+
+  private hasAccessibleContent(element: XmlElement): boolean {
+    // Check if element has text content
+    const textContent = element.content;
+    if (textContent && textContent.trim().length > 0) {
+      return true;
+    }
+
+    // Check for aria-label
+    const ariaLabel = this.getAttribute(element, 'aria-label');
+    if (ariaLabel && ariaLabel.trim().length > 0) {
+      return true;
+    }
+
+    // Check for child img with alt
+    const img = element.get('./html:img[@alt]', { html: 'http://www.w3.org/1999/xhtml' });
+    if (img) {
+      const alt = this.getAttribute(img as XmlElement, 'alt');
+      if (alt && alt.trim().length > 0) {
+        return true;
+      }
+    }
+
+    // Check for title attribute
+    const title = this.getAttribute(element, 'title');
+    if (title && title.trim().length > 0) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private getAttribute(element: XmlElement, name: string): string | null {
+    if (!('attrs' in element)) return null;
+    const attrs = element.attrs as { name: string; value: string }[];
+    const attr = attrs.find((a) => a.name === name);
+    return attr?.value ?? null;
   }
 }

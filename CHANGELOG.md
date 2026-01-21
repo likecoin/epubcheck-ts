@@ -19,7 +19,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Script detection (script elements, event handlers, form elements)
   - Missing "scripted" property validation (OPF-014) for EPUB 3
   - Discouraged element warnings for base and embed (HTM-055)
-- 18 new unit tests (145 total, up from 127)
+- Accessibility validation:
+  - Empty link detection (ACC-004)
+  - Image alt attribute validation (ACC-005)
+  - SVG link accessible name validation (ACC-011)
+- Cross-reference validation:
+  - Undeclared resources detection (RSC-008) - files in container not in manifest
+- 24 new unit tests (151 total, up from 127)
 
 ### Changed
 
