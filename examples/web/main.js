@@ -1,4 +1,4 @@
-import { EpubCheck } from 'epubcheck-ts';
+import { EpubCheck } from '@likecoin/epubcheck-ts';
 
 // DOM Elements
 const dropZone = document.getElementById('dropZone');

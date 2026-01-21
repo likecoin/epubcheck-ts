@@ -3,8 +3,8 @@
 A TypeScript port of [EPUBCheck](https://github.com/w3c/epubcheck) - the official conformance checker for EPUB publications.
 
 [![CI](https://github.com/likecoin/epubcheck-ts/actions/workflows/ci.yml/badge.svg)](https://github.com/likecoin/epubcheck-ts/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/epubcheck-ts)](https://www.npmjs.com/package/epubcheck-ts)
-[![License](https://img.shields.io/npm/l/epubcheck-ts)](./LICENSE)
+[![npm](https://img.shields.io/npm/v/%40likecoin%2Fepubcheck-ts)](https://www.npmjs.com/package/@likecoin/epubcheck-ts)
+[![License](https://img.shields.io/npm/l/%40likecoin%2Fepubcheck-ts)](./LICENSE)
 
 ## Features
 
@@ -17,7 +17,7 @@ A TypeScript port of [EPUBCheck](https://github.com/w3c/epubcheck) - the officia
 ## Installation
 
 ```bash
-npm install epubcheck-ts
+npm install @likecoin/epubcheck-ts
 ```
 
 ## Quick Start
@@ -25,7 +25,7 @@ npm install epubcheck-ts
 ### ES Modules (recommended)
 
 ```typescript
-import { EpubCheck } from 'epubcheck-ts';
+import { EpubCheck } from '@likecoin/epubcheck-ts';
 import { readFile } from 'node:fs/promises';
 
 // Load EPUB file
@@ -68,7 +68,7 @@ validate();
 ### Browser
 
 ```typescript
-import { EpubCheck } from 'epubcheck-ts';
+import { EpubCheck } from '@likecoin/epubcheck-ts';
 
 // From file input
 const fileInput = document.querySelector('input[type="file"]');
@@ -184,7 +184,7 @@ interface ValidationMessage {
 Generate a JSON report compatible with the original EPUBCheck:
 
 ```typescript
-import { EpubCheck, Report } from 'epubcheck-ts';
+import { EpubCheck, Report } from '@likecoin/epubcheck-ts';
 
 const result = await EpubCheck.validate(data);
 const jsonReport = Report.toJSON(result);

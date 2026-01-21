@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "epubcheck-ts": "file:../.."
+    "@likecoin/epubcheck-ts": "file:../.."
   },
   "devDependencies": {
     "vite": "^6.0.0"
