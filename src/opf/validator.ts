@@ -146,6 +146,16 @@ export class OPFValidator {
 
     const dcElements = this.packageDoc.dcElements;
 
+    if (dcElements.length === 0 && this.packageDoc.metaElements.length === 0) {
+      context.messages.push({
+        id: 'OPF-072',
+        severity: 'error',
+        message: 'Metadata section is empty',
+        location: { path: opfPath },
+      });
+      return;
+    }
+
     // Check required elements
     const hasIdentifier = dcElements.some((dc) => dc.name === 'identifier');
     const hasTitle = dcElements.some((dc) => dc.name === 'title');

@@ -16,7 +16,7 @@ This document tracks the implementation progress compared to the original Java E
 | Accessibility | 100% | ~75% | 🟡 Partial |
 | Cross-reference | 100% | ~60% | 🟡 Partial |
 
-**Overall Completion: ~50%**
+**Overall Completion: ~52%**
 
 ---
 
@@ -33,13 +33,13 @@ This document tracks the implementation progress compared to the original Java E
 | container.xml exists | ✅ | ✅ | PKG-003 | Implemented |
 | container.xml parsing | ✅ | ✅ | PKG-004 | Basic parsing |
 | container.xml schema | ✅ | 🟡 | RSC-005 | RelaxNG validation available |
-| Filename validation | ✅ | ❌ | PKG-009-012 | Special chars, Unicode |
+| Filename validation | ✅ | ✅ | PKG-009-012 | Special chars, Unicode |
 | encryption.xml | ✅ | ❌ | - | Font obfuscation |
 | signatures.xml | ✅ | ❌ | - | Digital signatures |
 | metadata.xml | ✅ | ❌ | - | Multiple renditions |
 | Empty directories | ✅ | ❌ | PKG-014 | - |
 
-**Status: ~40% complete**
+**Status: ~55% complete**
 
 ---
 
@@ -56,14 +56,14 @@ This document tracks the implementation progress compared to the original Java E
 | dc:date format | ✅ | ✅ | OPF-053, OPF-054 | W3C date validation |
 | dcterms:modified | ✅ | ✅ | OPF-054 | EPUB 3 |
 | dc:creator role | ✅ | ✅ | OPF-052 | MARC relator codes |
-| Empty metadata | ✅ | ❌ | OPF-072 | - |
+| Empty metadata | ✅ | ✅ | OPF-072 | - |
 | Manifest duplicates | ✅ | ✅ | OPF-074 | Implemented |
 | Manifest file exists | ✅ | ✅ | OPF-010 | Implemented |
 | Media type format | ✅ | ✅ | OPF-014 | RFC4288 validation |
 | Deprecated types | ✅ | ✅ | OPF-035, OPF-037, OPF-038 | OEB 1.x warnings |
 | Remote resources | ✅ | ✅ | RSC-006, RSC-006b | Property requirement |
 | Data URLs | ✅ | ✅ | RSC-029 | EPUB 3 |
-| META-INF items | ✅ | ❌ | PKG-025 | - |
+| META-INF items | ✅ | ✅ | PKG-025 | - |
 | Item properties | ✅ | ✅ | OPF-012 | nav, cover-image, etc. |
 | Unknown properties | ✅ | ✅ | OPF-012 | Warning |
 | Invalid nav media type | ✅ | ✅ | OPF-012 | Implemented |
@@ -79,7 +79,7 @@ This document tracks the implementation progress compared to the original Java E
 | Guide validation | ✅ | ✅ | OPF-031 | EPUB 2 |
 | Collections | ✅ | ❌ | OPF-071-084 | Dict, Index, Preview |
 
-**Status: ~60% complete**
+**Status: ~65% complete**
 
 ---
 
@@ -389,6 +389,9 @@ This document tracks the implementation progress compared to the original Java E
 20. ~~Add epub:type validation (OPF-088)~~
 21. ~~Add CSS alt stylesheet validation (CSS-005, CSS-015)~~
 22. ~~Add dc:creator role validation (OPF-052)~~
+23. ~~Add empty metadata check (OPF-072)~~
+24. ~~Add META-INF items validation (PKG-025)~~
+25. ~~Add filename validation (PKG-009-012)~~
 
 ### In Progress 🚧
 - None
@@ -396,8 +399,7 @@ This document tracks the implementation progress compared to the original Java E
 ### Upcoming 📋
 1. Link validation in content documents (RSC-007, RSC-010-011) - Medium Priority
 2. Collections validation (OPF-071-084) - Medium Priority
-3. OCF container improvements (PKG-006, PKG-009-012, PKG-014) - Medium Priority
-4. CSS media overlay classes (CSS-029, CSS-030) - Medium Priority
-5. Empty metadata check (OPF-072) - Medium Priority
-6. META-INF items validation (PKG-025) - Medium Priority
-7. Fixed-layout viewport validation (HTM-046-060) - Medium Priority
+3. OCF mimetype uncompressed check (PKG-006) - Medium Priority
+4. Empty directories check (PKG-014) - Medium Priority
+5. CSS media overlay classes (CSS-029, CSS-030) - Medium Priority
+6. Fixed-layout viewport validation (HTM-046-060) - Medium Priority

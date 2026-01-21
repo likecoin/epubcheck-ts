@@ -9,7 +9,7 @@ A TypeScript port of [EPUBCheck](https://github.com/w3c/epubcheck) - the officia
 ## Features
 
 - **Cross-platform**: Works in Node.js (18+) and modern browsers
-- **Partial EPUB validation**: Currently ~50% of EPUBCheck feature parity
+- **Partial EPUB validation**: Currently ~52% of EPUBCheck feature parity
 - **Zero native dependencies**: Pure JavaScript/WebAssembly, no compilation required
 - **TypeScript first**: Full type definitions included
 - **Tree-shakable**: ESM with proper exports for optimal bundling

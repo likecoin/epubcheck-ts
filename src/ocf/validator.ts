@@ -48,6 +48,9 @@ export class OCFValidator {
 
     // Validate META-INF directory
     this.validateMetaInf(zip, context.messages);
+
+    // Validate filenames
+    this.validateFilenames(zip, context.messages);
   }
 
   /**
@@ -207,7 +210,6 @@ export class OCFValidator {
    * Validate META-INF directory
    */
   private validateMetaInf(zip: ZipReader, messages: ValidationMessage[]): void {
-    // Check for required META-INF directory
     const metaInfFiles = zip.listDirectory('META-INF');
     if (metaInfFiles.length === 0) {
       messages.push({
@@ -216,6 +218,69 @@ export class OCFValidator {
         message: 'Missing META-INF directory',
         location: { path: 'META-INF/' },
       });
+      return;
+    }
+
+    const allowedFiles = new Set(['container.xml', 'encryption.xml', 'signatures.xml', 'metadata.xml']);
+
+    for (const file of metaInfFiles) {
+      const filename = file.replace('META-INF/', '');
+      if (!allowedFiles.has(filename)) {
+        messages.push({
+          id: 'PKG-025',
+          severity: 'error',
+          message: `File not allowed in META-INF directory: ${filename}`,
+          location: { path: file },
+        });
+      }
+    }
+  }
+
+  /**
+   * Validate filenames for invalid characters
+   */
+  private validateFilenames(zip: ZipReader, messages: ValidationMessage[]): void {
+    for (const path of zip.paths) {
+      if (path === 'mimetype') continue;
+
+      const filename = path.includes('/') ? path.split('/').pop() ?? path : path;
+
+      if (filename === '' || filename === '.' || filename === '..') {
+        messages.push({
+          id: 'PKG-009',
+          severity: 'error',
+          message: `Invalid filename: "${path}"`,
+          location: { path },
+        });
+        continue;
+      }
+
+      for (let i = 0; i < filename.length; i++) {
+        const code = filename.charCodeAt(i);
+
+        if (code < 32 || code === 127 || (code >= 128 && code <= 159)) {
+          messages.push({
+            id: 'PKG-010',
+            severity: 'error',
+            message: `Filename contains control character: "${path}"`,
+            location: { path },
+          });
+          break;
+        }
+      }
+
+      const specialChars = '<>:"|?*';
+      for (const char of specialChars) {
+        if (filename.includes(char)) {
+          messages.push({
+            id: 'PKG-011',
+            severity: 'error',
+            message: `Filename contains special character: "${path}"`,
+            location: { path },
+          });
+          break;
+        }
+      }
     }
   }
 }

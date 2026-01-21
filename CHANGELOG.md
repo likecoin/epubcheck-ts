@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - W3C date format validation for dcterms:modified (OPF-054)
   - Remote resources property requirement check (RSC-006b)
   - dc:creator MARC relator code validation (OPF-052)
+  - Empty metadata section check (OPF-072)
 - NCX validation enhancements:
   - navPoint content src reference validation (NCX-006)
 - Content document validation enhancements:
@@ -46,14 +47,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Fragment type mismatch validation (RSC-014) - SVG view fragments
   - Data URL validation (RSC-029) - not allowed in EPUB 3
   - Undeclared resources detection (RSC-008) - files in container not in manifest
+- OCF container validation enhancements:
+  - Filename validation for special characters (PKG-009-012)
+  - META-INF directory allowed files check (PKG-025)
 - 24 new unit tests (151 total, up from 127)
 
 ### Changed
 
-- Overall completion improved from ~46% to ~50%
-- OPF validation completion improved from ~55% to ~60%
-- Content document validation completion improved from ~45% to ~50%
-- CSS validation completion improved from ~30% to ~40%
+- Overall completion improved from ~50% to ~52%
+- OPF validation completion improved from ~60% to ~65%
+- OCF validation completion improved from ~40% to ~55%
 
 ### Changed
 
