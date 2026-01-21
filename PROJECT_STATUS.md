@@ -16,7 +16,7 @@ This document tracks the implementation progress compared to the original Java E
 | Accessibility | 100% | ~75% | 🟡 Partial |
 | Cross-reference | 100% | ~60% | 🟡 Partial |
 
-**Overall Completion: ~46%**
+**Overall Completion: ~50%**
 
 ---
 
@@ -55,13 +55,13 @@ This document tracks the implementation progress compared to the original Java E
 | dc:language required | ✅ | ✅ | OPF-017 | Implemented |
 | dc:date format | ✅ | ✅ | OPF-053, OPF-054 | W3C date validation |
 | dcterms:modified | ✅ | ✅ | OPF-054 | EPUB 3 |
-| dc:creator role | ✅ | ❌ | OPF-052 | MARC relator codes |
+| dc:creator role | ✅ | ✅ | OPF-052 | MARC relator codes |
 | Empty metadata | ✅ | ❌ | OPF-072 | - |
 | Manifest duplicates | ✅ | ✅ | OPF-074 | Implemented |
 | Manifest file exists | ✅ | ✅ | OPF-010 | Implemented |
 | Media type format | ✅ | ✅ | OPF-014 | RFC4288 validation |
 | Deprecated types | ✅ | ✅ | OPF-035, OPF-037, OPF-038 | OEB 1.x warnings |
-| Remote resources | ✅ | ❌ | RSC-006, RSC-006b | Property requirement |
+| Remote resources | ✅ | ✅ | RSC-006, RSC-006b | Property requirement |
 | Data URLs | ✅ | ✅ | RSC-029 | EPUB 3 |
 | META-INF items | ✅ | ❌ | PKG-025 | - |
 | Item properties | ✅ | ✅ | OPF-012 | nav, cover-image, etc. |
@@ -79,7 +79,7 @@ This document tracks the implementation progress compared to the original Java E
 | Guide validation | ✅ | ✅ | OPF-031 | EPUB 2 |
 | Collections | ✅ | ❌ | OPF-071-084 | Dict, Index, Preview |
 
-**Status: ~55% complete**
+**Status: ~60% complete**
 
 ---
 
@@ -95,17 +95,17 @@ This document tracks the implementation progress compared to the original Java E
 | Unescaped ampersands | ✅ | ✅ | HTM-012 | Implemented |
 | Unescaped less-than | ✅ | ✅ | HTM-012 | Implemented |
 | Link validation | ✅ | ❌ | RSC-007, RSC-010-011 | Target validation |
-| Image validation | ✅ | ❌ | MED-001, OPF-051 | src, alt, media types |
+| Image validation | ✅ | ✅ | MED-001, OPF-051 | src, alt, media types |
 | Script detection | ✅ | ✅ | OPF-014 | Scripted property check |
 | MathML detection | ✅ | ❌ | OPF-014 | mathml property |
 | SVG validation | ✅ | ❌ | - | Separate schema |
-| epub:type validation | ✅ | ❌ | OPF-088 | Vocabulary check |
+| epub:type validation | ✅ | ✅ | OPF-088 | Vocabulary check |
 | Fixed-layout viewport | ✅ | ❌ | HTM-046-060 | Meta viewport |
 | img alt text | ✅ | ❌ | ACC-* | Accessibility |
 | MathML alt text | ✅ | ❌ | ACC-009 | - |
 | Discouraged elements | ✅ | ✅ | HTM-055 | base, embed warnings |
 
-**Status: ~35% complete**
+**Status: ~50% complete**
 
 ---
 
@@ -119,11 +119,11 @@ This document tracks the implementation progress compared to the original Java E
 | position: absolute | ✅ | ✅ | CSS-019 | Warning - use caution |
 | Remote fonts | ✅ | 🟡 | - | Font URLs extracted for validation |
 | Empty URIs | ✅ | ✅ | CSS-002 | Implemented |
-| Alt stylesheet | ✅ | ❌ | CSS-005, CSS-015 | Conflict, title |
+| Alt stylesheet | ✅ | ✅ | CSS-005, CSS-015 | Conflict, title |
 | @import validation | ✅ | ✅ | CSS-002 | Import URLs extracted |
 | Media overlay classes | ✅ | ❌ | CSS-029, CSS-030 | - |
 
-**Status: ~30% complete**
+**Status: ~40% complete**
 
 ---
 
@@ -384,16 +384,20 @@ This document tracks the implementation progress compared to the original Java E
 15. ~~Add fragment type mismatch validation (RSC-014)~~
 16. ~~Add data URL validation (RSC-029)~~
 17. ~~Add dc:date format validation (OPF-053, OPF-054)~~
+18. ~~Add remote resources property check (RSC-006, RSC-006b)~~
+19. ~~Add image validation (MED-001, OPF-051)~~
+20. ~~Add epub:type validation (OPF-088)~~
+21. ~~Add CSS alt stylesheet validation (CSS-005, CSS-015)~~
+22. ~~Add dc:creator role validation (OPF-052)~~
 
 ### In Progress 🚧
 - None
 
 ### Upcoming 📋
-1. Remote resources property check (RSC-006, RSC-006b) - High Priority
-2. Image validation (MED-001, OPF-051) - High Priority
-3. epub:type validation (OPF-088) - High Priority
-4. CSS alt stylesheet validation (CSS-005, CSS-015) - High Priority
-5. dc:creator role validation (OPF-052) - High Priority
-6. Link validation in content documents (RSC-007, RSC-010-011) - Medium Priority
-7. Collections validation (OPF-071-084) - Medium Priority
-8. OCF container improvements (PKG-006, PKG-009-012, PKG-014) - Medium Priority
+1. Link validation in content documents (RSC-007, RSC-010-011) - Medium Priority
+2. Collections validation (OPF-071-084) - Medium Priority
+3. OCF container improvements (PKG-006, PKG-009-012, PKG-014) - Medium Priority
+4. CSS media overlay classes (CSS-029, CSS-030) - Medium Priority
+5. Empty metadata check (OPF-072) - Medium Priority
+6. META-INF items validation (PKG-025) - Medium Priority
+7. Fixed-layout viewport validation (HTM-046-060) - Medium Priority

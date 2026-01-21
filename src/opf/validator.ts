@@ -202,6 +202,43 @@ export class OPFValidator {
           });
         }
       }
+
+      // OPF-052: Validate dc:creator with opf:role attribute
+      if (dc.name === 'creator' && dc.attributes) {
+        const opfRole = dc.attributes['opf:role'];
+        if (opfRole?.startsWith('marc:')) {
+          const relatorCode = opfRole.substring(5);
+          const validRelatorCodes = new Set([
+            'arr', 'aut', 'aut', 'ccp',
+            'com', 'ctb', 'csl', 'edt', 'ill',
+            'itr', 'pbl', 'pdr', 'prt', 'trl',
+            'cre', 'art', 'ctb', 'edt', 'pfr',
+            'red', 'rev', 'spn', 'dsx', 'pmc',
+            'dte', 'ove', 'trc', 'ldr', 'led',
+            'prg', 'rap', 'rce', 'rpc', 'rtr',
+            'sad', 'sgn', 'tce', 'aac', 'acq',
+            'ant', 'arr', 'art', 'ard', 'asg',
+            'aus', 'aft', 'bdd', 'bdd', 'clb',
+            'clc', 'drd', 'edt', 'edt', 'fmd',
+            'flm', 'fmo', 'fpy', 'hnr', 'ill',
+            'ilt', 'img', 'itr', 'lrg', 'lsa',
+            'led', 'lee', 'lel', 'lgd', 'lse',
+            'mfr', 'mod', 'mon', 'mus', 'nrt',
+            'ogt', 'org', 'oth', 'pnt', 'ppa',
+            'prv', 'pup', 'red', 'rev', 'rsg',
+            'srv', 'stn', 'stl', 'trc', 'typ',
+            'vdg', 'voc', 'wac', 'wdc',
+          ]);
+          if (!validRelatorCodes.has(relatorCode)) {
+            context.messages.push({
+              id: 'OPF-052',
+              severity: 'error',
+              message: `Unknown MARC relator code "${relatorCode}" in dc:creator`,
+              location: { path: opfPath },
+            });
+          }
+        }
+      }
     }
 
     // EPUB 3: Check for dcterms:modified meta
@@ -331,6 +368,18 @@ export class OPFValidator {
           message: `Manifest item href must not contain fragment identifier: "${item.href}"`,
           location: { path: opfPath },
         });
+      }
+
+      // EPUB 3: Check for remote resources require remote-resources property (RSC-006b)
+      if (this.packageDoc.version !== '2.0' && (item.href.startsWith('http://') || item.href.startsWith('https://'))) {
+        if (!item.properties?.includes('remote-resources')) {
+          context.messages.push({
+            id: 'RSC-006',
+            severity: 'error',
+            message: `Manifest item "${item.id}" references remote resource but is missing "remote-resources" property`,
+            location: { path: opfPath },
+          });
+        }
       }
     }
 

@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Deprecated OEB 1.0 media type warnings (OPF-035, OPF-037, OPF-038)
   - W3C date format validation for dc:date (OPF-053)
   - W3C date format validation for dcterms:modified (OPF-054)
+  - Remote resources property requirement check (RSC-006b)
+  - dc:creator MARC relator code validation (OPF-052)
 - NCX validation enhancements:
   - navPoint content src reference validation (NCX-006)
 - Content document validation enhancements:
@@ -23,6 +25,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Script detection (script elements, event handlers, form elements)
   - Missing "scripted" property validation (OPF-014) for EPUB 3
   - Discouraged element warnings for base and embed (HTM-055)
+  - Image src reference validation (MED-001, OPF-051)
+  - epub:type vocabulary validation (OPF-088)
+  - Alternate stylesheet validation (CSS-005, CSS-015) - title requirement and conflict detection
 - Navigation validation:
   - Remote link validation in toc, landmarks, and page-list navs (NAV-010)
 - Accessibility validation:
@@ -42,6 +47,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Data URL validation (RSC-029) - not allowed in EPUB 3
   - Undeclared resources detection (RSC-008) - files in container not in manifest
 - 24 new unit tests (151 total, up from 127)
+
+### Changed
+
+- Overall completion improved from ~46% to ~50%
+- OPF validation completion improved from ~55% to ~60%
+- Content document validation completion improved from ~45% to ~50%
+- CSS validation completion improved from ~30% to ~40%
 
 ### Changed
 

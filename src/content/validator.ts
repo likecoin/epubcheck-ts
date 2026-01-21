@@ -179,6 +179,17 @@ export class ContentValidator {
 
       // Check accessibility
       this.checkAccessibility(context, path, root);
+
+      // Validate images
+      this.validateImages(context, path, root);
+
+      // Validate epub:type attributes (EPUB 3)
+      if (context.version.startsWith('3')) {
+        this.validateEpubTypes(context, path, root);
+      }
+
+      // Validate stylesheet links
+      this.validateStylesheetLinks(context, path, root);
     } finally {
       doc.dispose();
     }
@@ -469,6 +480,157 @@ export class ContentValidator {
           message: 'MathML element should have alttext attribute or annotation for accessibility',
           location: { path },
         });
+      }
+    }
+  }
+
+  private validateImages(context: ValidationContext, path: string, root: XmlElement): void {
+    const packageDoc = context.packageDocument;
+    if (!packageDoc) return;
+
+    const images = root.find('.//html:img[@src]', { html: 'http://www.w3.org/1999/xhtml' });
+    for (const img of images) {
+      const imgElem = img as XmlElement;
+      const srcAttr = this.getAttribute(imgElem, 'src');
+      if (!srcAttr) continue;
+
+      const src = srcAttr;
+      const opfDir = context.opfPath?.includes('/') ? context.opfPath.substring(0, context.opfPath.lastIndexOf('/')) : '';
+
+      let fullPath = src;
+      if (opfDir && !src.startsWith('http://') && !src.startsWith('https://')) {
+        if (src.startsWith('/')) {
+          fullPath = src.slice(1);
+        } else {
+          const parts = opfDir.split('/');
+          const relParts = src.split('/');
+          for (const part of relParts) {
+            if (part === '..') {
+              parts.pop();
+            } else if (part !== '.') {
+              parts.push(part);
+            }
+          }
+          fullPath = parts.join('/');
+        }
+      }
+
+      if (src.startsWith('http://') || src.startsWith('https://')) {
+        continue;
+      }
+
+      const manifestItem = packageDoc.manifest.find((item) => fullPath.endsWith(item.href) || item.href.endsWith(fullPath));
+      if (!manifestItem) {
+        context.messages.push({
+          id: 'MED-001',
+          severity: 'error',
+          message: `Image src references missing manifest item: ${src}`,
+          location: { path },
+        });
+        continue;
+      }
+
+      const imageMediaTypes = new Set([
+        'image/gif',
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'image/svg+xml',
+        'image/webp',
+      ]);
+
+      if (!imageMediaTypes.has(manifestItem.mediaType)) {
+        context.messages.push({
+          id: 'OPF-051',
+          severity: 'error',
+          message: `Image has invalid media type "${manifestItem.mediaType}": ${src}`,
+          location: { path },
+        });
+      }
+    }
+  }
+
+  private validateEpubTypes(context: ValidationContext, path: string, root: XmlElement): void {
+    const epubTypeElements = root.find('.//*[@epub:type]', {
+      epub: 'http://www.idpf.org/2007/ops',
+    });
+
+    const knownPrefixes = new Set([
+      '',
+      'http://idpf.org/epub/structure/v1/',
+      'http://idpf.org/epub/vocab/structure/',
+      'http://www.idpf.org/2007/ops',
+    ]);
+
+    for (const elem of epubTypeElements) {
+      const elemTyped = elem as XmlElement;
+      const epubTypeAttr = elemTyped.attr('epub:type');
+      if (!epubTypeAttr?.value) continue;
+
+      const epubTypeValue = epubTypeAttr.value;
+
+      for (const part of epubTypeValue.split(/\s+/)) {
+        const prefix = part.includes(':') ? part.substring(0, part.indexOf(':')) : '';
+
+        if (!knownPrefixes.has(prefix) && !prefix.startsWith('http://') && !prefix.startsWith('https://')) {
+          context.messages.push({
+            id: 'OPF-088',
+            severity: 'warning',
+            message: `Unknown epub:type prefix "${prefix}": ${epubTypeValue}`,
+            location: { path },
+          });
+        }
+      }
+    }
+  }
+
+  private validateStylesheetLinks(context: ValidationContext, path: string, root: XmlElement): void {
+    const linkElements = root.find('.//html:link[@rel]', { html: 'http://www.w3.org/1999/xhtml' });
+
+    const stylesheetTitles = new Map<string, Set<string>>();
+
+    for (const linkElem of linkElements) {
+      const elem = linkElem as XmlElement;
+      const relAttr = this.getAttribute(elem, 'rel');
+      const titleAttr = this.getAttribute(elem, 'title');
+      const hrefAttr = this.getAttribute(elem, 'href');
+
+      if (!relAttr || !hrefAttr) continue;
+
+      const rel = relAttr.toLowerCase();
+      const rels = rel.split(/\s+/);
+
+      if (rels.includes('stylesheet')) {
+        const isAlternate = rels.includes('alternate');
+
+        if (isAlternate && !titleAttr) {
+          context.messages.push({
+            id: 'CSS-015',
+            severity: 'error',
+            message: 'Alternate stylesheet must have a title attribute',
+            location: { path },
+          });
+        }
+
+        if (titleAttr) {
+          const key = `${titleAttr}:${isAlternate ? 'alt' : 'persistent'}`;
+          const expectedRel = isAlternate ? 'alternate' : 'persistent';
+          const existing = stylesheetTitles.get(key);
+
+          if (existing) {
+            if (!existing.has(expectedRel)) {
+              context.messages.push({
+                id: 'CSS-005',
+                severity: 'error',
+                message: `Stylesheet with title "${titleAttr}" conflicts with another stylesheet with same title`,
+                location: { path },
+              });
+            }
+            existing.add(expectedRel);
+          } else {
+            stylesheetTitles.set(key, new Set([expectedRel]));
+          }
+        }
       }
     }
   }
