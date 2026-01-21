@@ -20,8 +20,8 @@ describe('XMLParser', () => {
       const parser = new XMLParser();
       const result = parser.parse(xml);
 
-      expect(result?.attributes['id']).toBe('test');
-      expect(result?.attributes['class']).toBe('container');
+      expect(result?.attributes.id).toBe('test');
+      expect(result?.attributes.class).toBe('container');
     });
 
     it('should parse nested elements', () => {
@@ -80,7 +80,7 @@ describe('XMLParser', () => {
       const result = parser.parse(xml);
 
       // libxml2-wasm normalizes xml:id to id with xml prefix/namespace
-      expect(result?.children[0]?.attributes['id']).toBe('test-id');
+      expect(result?.children[0]?.attributes.id).toBe('test-id');
     });
   });
 });

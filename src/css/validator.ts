@@ -2,7 +2,7 @@
  * CSS validation using css-tree
  */
 
-import { parse, walk, type CssNode, type Declaration } from 'css-tree';
+import { type CssNode, type Declaration, parse, walk } from 'css-tree';
 import type { ValidationContext } from '../types.js';
 
 interface ParseErrorWithLocation {

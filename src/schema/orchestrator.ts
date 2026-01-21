@@ -143,12 +143,12 @@ export class SchemaValidator {
 
       // Determine which schema to use
       let schemaPath: string | undefined;
-      if (item.properties?.includes('nav') && schemas['nav']) {
-        schemaPath = schemas['nav'];
-      } else if (item.mediaType === 'image/svg+xml' && schemas['svg']) {
-        schemaPath = schemas['svg'];
-      } else if (item.mediaType === 'application/xhtml+xml' && schemas['xhtml']) {
-        schemaPath = schemas['xhtml'];
+      if (item.properties?.includes('nav') && schemas.nav) {
+        schemaPath = schemas.nav;
+      } else if (item.mediaType === 'image/svg+xml' && schemas.svg) {
+        schemaPath = schemas.svg;
+      } else if (item.mediaType === 'application/xhtml+xml' && schemas.xhtml) {
+        schemaPath = schemas.xhtml;
       }
 
       if (schemaPath) {

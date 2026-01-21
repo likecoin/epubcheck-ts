@@ -125,10 +125,10 @@ export class ContentValidator {
   private normalizeErrorMessage(error: string): string {
     // Normalize libxml2-wasm error messages to match test expectations
     if (error.includes('Opening and ending tag mismatch')) {
-      return 'Mismatched closing tag: ' + error.replace('Opening and ending tag mismatch: ', '');
+      return `Mismatched closing tag: ${error.replace('Opening and ending tag mismatch: ', '')}`;
     }
     if (error.includes('mismatch')) {
-      return 'Mismatched closing tag: ' + error;
+      return `Mismatched closing tag: ${error}`;
     }
     return error;
   }

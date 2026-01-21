@@ -94,8 +94,8 @@ export class XMLWalker {
       return;
     }
 
-    if (element.attributes['id']) {
-      ids.set(element.attributes['id'], element);
+    if (element.attributes.id) {
+      ids.set(element.attributes.id, element);
     }
 
     if (element.attributes['xml:id']) {

@@ -48,9 +48,9 @@ describe('Integration Tests - Real EPUB Files', () => {
  * Helper function to load EPUB file from fixtures
  */
 async function loadEpub(path: string): Promise<Uint8Array> {
-  const fs = await import('fs');
-  const pathModule = await import('path');
-  const url = await import('url');
+  const fs = await import('node:fs');
+  const pathModule = await import('node:path');
+  const url = await import('node:url');
 
   const currentDir = url.fileURLToPath(new URL('.', import.meta.url));
   const filePath = pathModule.resolve(currentDir, '../fixtures', path);

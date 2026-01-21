@@ -28,7 +28,7 @@ dropZone.addEventListener('drop', (e) => {
   dropZone.classList.remove('drag-over');
 
   const file = e.dataTransfer.files[0];
-  if (file && file.name.endsWith('.epub')) {
+  if (file?.name.endsWith('.epub')) {
     validateFile(file);
   } else {
     alert('Please drop a valid EPUB file');

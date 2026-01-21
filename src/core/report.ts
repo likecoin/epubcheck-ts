@@ -1,4 +1,4 @@
-import type { EpubCheckResult, EPUBVersion, Severity, ValidationMessage } from '../types.js';
+import type { EPUBVersion, EpubCheckResult, Severity, ValidationMessage } from '../types.js';
 
 /**
  * Build a validation result from messages

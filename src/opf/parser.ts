@@ -169,8 +169,8 @@ function parseDCElements(metadataXml: string): DCElement[] {
     if (!name) continue;
 
     const attrs = parseAttributes(attrsStr);
-    const id = attrs['id'];
-    delete attrs['id'];
+    const id = attrs.id;
+    delete attrs.id;
 
     const element: DCElement = {
       name,
@@ -203,7 +203,7 @@ function parseMetaElements(metadataXml: string): MetaElement[] {
     const attrsStr = match[1] ?? '';
     const value = match[2] ?? '';
     const attrs = parseAttributes(attrsStr);
-    const property = attrs['property'];
+    const property = attrs.property;
 
     if (property) {
       const element: MetaElement = {
@@ -211,14 +211,14 @@ function parseMetaElements(metadataXml: string): MetaElement[] {
         value: decodeXmlEntities(value.trim()),
       };
 
-      if (attrs['refines']) {
-        element.refines = attrs['refines'];
+      if (attrs.refines) {
+        element.refines = attrs.refines;
       }
-      if (attrs['scheme']) {
-        element.scheme = attrs['scheme'];
+      if (attrs.scheme) {
+        element.scheme = attrs.scheme;
       }
-      if (attrs['id']) {
-        element.id = attrs['id'];
+      if (attrs.id) {
+        element.id = attrs.id;
       }
 
       elements.push(element);
@@ -240,8 +240,8 @@ function parseLinkElements(metadataXml: string): LinkElement[] {
   while ((match = linkRegex.exec(metadataXml)) !== null) {
     const attrsStr = match[1] ?? '';
     const attrs = parseAttributes(attrsStr);
-    const rel = attrs['rel'];
-    const href = attrs['href'];
+    const rel = attrs.rel;
+    const href = attrs.href;
 
     if (rel && href) {
       const element: LinkElement = {
@@ -252,14 +252,14 @@ function parseLinkElements(metadataXml: string): LinkElement[] {
       if (attrs['media-type']) {
         element.mediaType = attrs['media-type'];
       }
-      if (attrs['refines']) {
-        element.refines = attrs['refines'];
+      if (attrs.refines) {
+        element.refines = attrs.refines;
       }
-      if (attrs['properties']) {
-        element.properties = attrs['properties'].split(/\s+/);
+      if (attrs.properties) {
+        element.properties = attrs.properties.split(/\s+/);
       }
-      if (attrs['id']) {
-        element.id = attrs['id'];
+      if (attrs.id) {
+        element.id = attrs.id;
       }
 
       elements.push(element);
@@ -281,8 +281,8 @@ function parseManifestItems(manifestXml: string): ManifestItem[] {
   while ((match = itemRegex.exec(manifestXml)) !== null) {
     const attrsStr = match[1] ?? '';
     const attrs = parseAttributes(attrsStr);
-    const id = attrs['id'];
-    const href = attrs['href'];
+    const id = attrs.id;
+    const href = attrs.href;
     const mediaType = attrs['media-type'];
 
     if (id && href && mediaType) {
@@ -292,14 +292,14 @@ function parseManifestItems(manifestXml: string): ManifestItem[] {
         mediaType,
       };
 
-      if (attrs['fallback']) {
-        item.fallback = attrs['fallback'];
+      if (attrs.fallback) {
+        item.fallback = attrs.fallback;
       }
       if (attrs['media-overlay']) {
         item.mediaOverlay = attrs['media-overlay'];
       }
-      if (attrs['properties']) {
-        item.properties = attrs['properties'].split(/\s+/);
+      if (attrs.properties) {
+        item.properties = attrs.properties.split(/\s+/);
       }
 
       items.push(item);
@@ -323,7 +323,7 @@ function parseSpine(
   const spine: SpineItemRef[] = [];
 
   // Use the passed-in attributes from the spine element
-  const toc = spineAttrs['toc'] ?? null;
+  const toc = spineAttrs.toc ?? null;
   const ppdRaw = spineAttrs['page-progression-direction'];
   const ppd: 'ltr' | 'rtl' | 'default' | null =
     ppdRaw === 'ltr' || ppdRaw === 'rtl' || ppdRaw === 'default' ? ppdRaw : null;
@@ -334,16 +334,16 @@ function parseSpine(
   while ((match = itemrefRegex.exec(spineXml)) !== null) {
     const attrsStr = match[1] ?? '';
     const attrs = parseAttributes(attrsStr);
-    const idref = attrs['idref'];
+    const idref = attrs.idref;
 
     if (idref) {
       const itemref: SpineItemRef = {
         idref,
-        linear: attrs['linear'] !== 'no',
+        linear: attrs.linear !== 'no',
       };
 
-      if (attrs['properties']) {
-        itemref.properties = attrs['properties'].split(/\s+/);
+      if (attrs.properties) {
+        itemref.properties = attrs.properties.split(/\s+/);
       }
 
       spine.push(itemref);
@@ -365,8 +365,8 @@ function parseGuide(guideXml: string): GuideReference[] {
   while ((match = refRegex.exec(guideXml)) !== null) {
     const attrsStr = match[1] ?? '';
     const attrs = parseAttributes(attrsStr);
-    const type = attrs['type'];
-    const href = attrs['href'];
+    const type = attrs.type;
+    const href = attrs.href;
 
     if (type && href) {
       const ref: GuideReference = {
@@ -374,8 +374,8 @@ function parseGuide(guideXml: string): GuideReference[] {
         href: decodeXmlEntities(href),
       };
 
-      if (attrs['title']) {
-        ref.title = attrs['title'];
+      if (attrs.title) {
+        ref.title = attrs.title;
       }
 
       references.push(ref);

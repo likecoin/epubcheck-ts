@@ -258,7 +258,7 @@ export class SchematronValidator {
           } catch (evalError) {
             // XPath evaluation failed - likely unsupported function
             // Skip this assertion but log for debugging
-            if (process.env['DEBUG']) {
+            if (process.env.DEBUG) {
               console.warn(`Schematron assertion evaluation failed: ${assertion.test}`, evalError);
             }
           }
@@ -287,7 +287,7 @@ export class SchematronValidator {
             }
           } catch (evalError) {
             // XPath evaluation failed - skip
-            if (process.env['DEBUG']) {
+            if (process.env.DEBUG) {
               console.warn(`Schematron report evaluation failed: ${report.test}`, evalError);
             }
           }
@@ -295,7 +295,7 @@ export class SchematronValidator {
       }
     } catch (contextError) {
       // Context XPath failed - skip this rule
-      if (process.env['DEBUG']) {
+      if (process.env.DEBUG) {
         console.warn(`Schematron context evaluation failed: ${rule.context}`, contextError);
       }
     }

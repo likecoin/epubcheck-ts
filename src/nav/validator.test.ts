@@ -37,7 +37,7 @@ describe('NavValidator', () => {
     });
 
     it('should reject document without nav element', () => {
-      const content = `<html><body><p>No nav</p></body></html>`;
+      const content = '<html><body><p>No nav</p></body></html>';
       validator.validate(context, content, 'nav.xhtml');
       const nav001 = context.messages.filter((m) => m.id === 'NAV-001');
       expect(nav001).toHaveLength(2);

@@ -12,9 +12,9 @@
  * Usage: npx tsx scripts/generate-schemas.ts
  */
 
-import { readFileSync, readdirSync, writeFileSync } from 'fs';
-import { dirname, join, resolve } from 'path';
-import { fileURLToPath } from 'url';
+import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'fflate';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

@@ -26,7 +26,9 @@ async function loadSchema(schemaPath: string): Promise<string> {
     return await response.text();
   }
 
-  throw new Error(`Schema not found: "${filename}". Available schemas: ${getSchemaNames().join(', ')}`);
+  throw new Error(
+    `Schema not found: "${filename}". Available schemas: ${getSchemaNames().join(', ')}`,
+  );
 }
 
 /**

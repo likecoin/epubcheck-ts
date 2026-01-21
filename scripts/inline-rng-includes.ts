@@ -6,9 +6,9 @@
  * and inlines their content, producing standalone schema files.
  */
 
-import { readFileSync, writeFileSync, existsSync } from 'fs';
-import { dirname, join, resolve } from 'path';
-import { fileURLToPath } from 'url';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -110,7 +110,7 @@ function inlineIncludes(filePath: string, processedFiles = new Set<string>()): s
     // Replace the include with the content
     const before = xml.substring(0, include.start);
     const after = xml.substring(include.end);
-    xml = before + `\n<!-- Inlined from ${include.href} -->\n${content}\n` + after;
+    xml = `${before}\n<!-- Inlined from ${include.href} -->\n${content}\n${after}`;
   }
 
   return xml;

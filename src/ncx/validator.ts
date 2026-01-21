@@ -70,10 +70,9 @@ export class NCXValidator {
    */
   private checkUid(context: ValidationContext, root: XmlElement, path: string): void {
     // Look for <meta name="dtb:uid" content="..."/> in head
-    const uidMeta = root.get(
-      './/ncx:head/ncx:meta[@name="dtb:uid"]',
-      { ncx: 'http://www.daisy.org/z3986/2005/ncx/' },
-    );
+    const uidMeta = root.get('.//ncx:head/ncx:meta[@name="dtb:uid"]', {
+      ncx: 'http://www.daisy.org/z3986/2005/ncx/',
+    });
 
     if (!uidMeta) {
       // dtb:uid is recommended but not required - don't report an error

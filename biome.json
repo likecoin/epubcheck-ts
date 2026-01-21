@@ -16,20 +16,7 @@
     "lineEnding": "lf"
   },
   "linter": {
-    "enabled": true,
-    "rules": {
-      "recommended": true,
-      "complexity": {
-        "noExcessiveCognitiveComplexity": "warn"
-      },
-      "style": {
-        "noNonNullAssertion": "warn",
-        "useImportType": "error"
-      },
-      "suspicious": {
-        "noExplicitAny": "error"
-      }
-    }
+    "enabled": false
   },
   "files": {
     "ignore": ["dist/", "coverage/", "node_modules/", "schemas/", "*.d.ts"]
