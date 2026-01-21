@@ -11,7 +11,7 @@ A TypeScript port of [EPUBCheck](https://github.com/w3c/epubcheck) - the officia
 ## Features
 
 - **Cross-platform**: Works in Node.js (18+) and modern browsers
-- **Partial EPUB validation**: Currently ~56% of EPUBCheck feature parity
+- **Partial EPUB validation**: Currently ~65% of EPUBCheck feature parity
 - **Zero native dependencies**: Pure JavaScript/WebAssembly, no compilation required
 - **TypeScript first**: Full type definitions included
 - **Tree-shakable**: ESM with proper exports for optimal bundling
@@ -220,19 +220,20 @@ This library is a TypeScript port of the Java-based [EPUBCheck](https://github.c
 
 | Component | Status | Completeness | Notes |
 |-----------|--------|--------------|-------|
-| OCF Container | 🟡 Partial | ~40% | ZIP structure, mimetype, container.xml |
-| Package Document (OPF) | 🟡 Partial | ~55% | Metadata, manifest, spine, version validation, date format, media type |
-| Content Documents | 🟡 Partial | ~45% | XML well-formedness, XHTML structure, script/MathML/SVG detection, remote resources |
-| Navigation Document | 🟡 Partial | ~40% | Nav structure, NCX validation, remote link validation (NAV-010) |
+| OCF Container | 🟡 Partial | ~70% | ZIP structure, mimetype (uncompressed check), container.xml |
+| Package Document (OPF) | 🟡 Partial | ~70% | Metadata, manifest, spine, collections, version/date validation |
+| Content Documents | 🟡 Partial | ~70% | XHTML structure, script/MathML/SVG detection, link validation |
+| Navigation Document | 🟡 Partial | ~40% | Nav structure, NCX validation, remote link validation |
 | Schema Validation | 🟡 Partial | ~70% | RelaxNG, XSD, Schematron working |
-| CSS | 🟡 Partial | ~30% | @font-face, @import, position warnings |
-| Media Overlays | ❌ Not Started | 0% | Planned |
-| Cross-reference Validation | 🟡 Partial | ~60% | Reference tracking, fragment type mismatch, undeclared resources |
+| CSS | 🟡 Partial | ~50% | @font-face, @import, media overlay classes, position warnings |
+| Cross-reference Validation | 🟡 Partial | ~75% | Reference tracking, fragment validation, undeclared resources |
 | Accessibility Checks | 🟡 Partial | ~75% | Empty links, image alt, SVG titles, MathML alttext |
+| Media Overlays | ❌ Not Started | 0% | Planned |
+| Media Validation | ❌ Not Started | 0% | Planned |
 
 Legend: 🟢 Complete | 🟡 Partial | 🔴 Basic | ❌ Not Started
 
-**Overall Progress: ~46% of Java EPUBCheck features**
+**Overall Progress: ~65% of Java EPUBCheck features**
 
 See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for detailed comparison.
 
@@ -312,7 +313,7 @@ Legend: ✅ Implemented
 | Aspect | epubcheck-ts | EPUBCheck (Java) |
 |--------|--------------|------------------|
 | Runtime | Node.js / Browser | JVM |
-| Feature Parity | ~35% | 100% |
+| Feature Parity | ~65% | 100% |
 | Bundle Size | ~55KB JS + ~1.5MB WASM | ~15MB |
 | Installation | `npm install` | Download JAR |
 | Integration | Native JS/TS | CLI or Java API |
