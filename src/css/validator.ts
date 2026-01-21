@@ -109,6 +109,7 @@ export class CSSValidator {
     // Walk the AST to check for discouraged properties and collect references
     this.checkDiscouragedProperties(context, ast, resourcePath);
     this.checkAtRules(context, ast, resourcePath, result);
+    this.checkMediaOverlayClasses(context, ast, resourcePath);
 
     return result;
   }
@@ -484,5 +485,61 @@ export class CSSValidator {
     }
 
     return resultSegments.join('/');
+  }
+
+  /**
+   * Check for reserved media overlay class names
+   */
+  private checkMediaOverlayClasses(
+    context: ValidationContext,
+    ast: CssNode,
+    resourcePath: string,
+  ): void {
+    const reservedClassNames = new Set([
+      '-epub-media-overlay-active',
+      'media-overlay-active',
+      '-epub-media-overlay-playing',
+      'media-overlay-playing',
+    ]);
+
+    walk(ast, (node) => {
+      if (node.type === 'ClassSelector') {
+        const className = node.name.toLowerCase();
+
+        if (reservedClassNames.has(className)) {
+          const loc = (node as CssNode & { loc?: CssLocation }).loc;
+          const start = loc?.start;
+          const location: { path: string; line?: number; column?: number } = { path: resourcePath };
+          if (start) {
+            location.line = start.line;
+            location.column = start.column;
+          }
+
+          context.messages.push({
+            id: 'CSS-029',
+            severity: 'error',
+            message: `Class name "${className}" is reserved for media overlays`,
+            location,
+          });
+        }
+
+        if (className.startsWith('-epub-media-overlay-')) {
+          const loc = (node as CssNode & { loc?: CssLocation }).loc;
+          const start = loc?.start;
+          const location: { path: string; line?: number; column?: number } = { path: resourcePath };
+          if (start) {
+            location.line = start.line;
+            location.column = start.column;
+          }
+
+          context.messages.push({
+            id: 'CSS-030',
+            severity: 'warning',
+            message: `Class names starting with "-epub-media-overlay-" are reserved for future use`,
+            location,
+          });
+        }
+      }
+    });
   }
 }

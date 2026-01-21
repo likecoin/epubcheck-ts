@@ -190,6 +190,9 @@ export class ContentValidator {
 
       // Validate stylesheet links
       this.validateStylesheetLinks(context, path, root);
+
+      // Validate viewport meta for fixed-layout
+      this.validateViewportMeta(context, path, root, manifestItem);
     } finally {
       doc.dispose();
     }
@@ -667,5 +670,64 @@ export class ContentValidator {
     const attrs = element.attrs as { name: string; value: string }[];
     const attr = attrs.find((a) => a.name === name);
     return attr?.value ?? null;
+  }
+
+  private validateViewportMeta(
+    context: ValidationContext,
+    path: string,
+    root: XmlElement,
+    manifestItem: { properties?: string[] } | undefined,
+  ): void {
+    const isFixedLayout = manifestItem?.properties?.includes('fixed-layout');
+    if (!isFixedLayout) {
+      return;
+    }
+
+    const metaTags = root.find('.//html:meta[@name]', { html: 'http://www.w3.org/1999/xhtml' });
+
+    for (const meta of metaTags) {
+      const nameAttr = this.getAttribute(meta as XmlElement, 'name');
+      if (nameAttr === 'viewport') {
+        const contentAttr = this.getAttribute(meta as XmlElement, 'content');
+        if (!contentAttr) {
+          context.messages.push({
+            id: 'HTM-046',
+            severity: 'warning',
+            message: 'Viewport meta element should have a content attribute in fixed-layout documents',
+            location: { path },
+          });
+          return;
+        }
+
+        const contentLower = contentAttr.toLowerCase();
+
+        if (contentLower.includes('width=device-width')) {
+          context.messages.push({
+            id: 'HTM-047',
+            severity: 'warning',
+            message: 'Viewport width should not be set to "device-width" in fixed-layout documents',
+            location: { path },
+          });
+        }
+
+        if (contentLower.includes('height=device-height')) {
+          context.messages.push({
+            id: 'HTM-048',
+            severity: 'warning',
+            message: 'Viewport height should not be set to "device-height" in fixed-layout documents',
+            location: { path },
+          });
+        }
+
+        return;
+      }
+    }
+
+    context.messages.push({
+      id: 'HTM-049',
+      severity: 'info',
+      message: 'Fixed-layout document should include a viewport meta element',
+      location: { path },
+    });
   }
 }

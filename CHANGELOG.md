@@ -29,6 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Image src reference validation (MED-001, OPF-051)
   - epub:type vocabulary validation (OPF-088)
   - Alternate stylesheet validation (CSS-005, CSS-015) - title requirement and conflict detection
+  - Fixed-layout viewport meta validation (HTM-046-060)
 - Navigation validation:
   - Remote link validation in toc, landmarks, and page-list navs (NAV-010)
 - Accessibility validation:
@@ -43,6 +44,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - @import URL extraction for cross-reference validation
   - Empty URI detection in CSS (CSS-002)
   - Font reference extraction for manifest validation
+  - Media overlay class name validation (CSS-029, CSS-030)
 - Cross-reference validation:
   - Fragment type mismatch validation (RSC-014) - SVG view fragments
   - Data URL validation (RSC-029) - not allowed in EPUB 3
@@ -50,13 +52,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - OCF container validation enhancements:
   - Filename validation for special characters (PKG-009-012)
   - META-INF directory allowed files check (PKG-025)
+  - Empty directory detection (PKG-014)
 - 24 new unit tests (151 total, up from 127)
 
 ### Changed
 
-- Overall completion improved from ~50% to ~52%
-- OPF validation completion improved from ~60% to ~65%
-- OCF validation completion improved from ~40% to ~55%
+- Overall completion improved from ~52% to ~54%
+- OCF validation completion improved from ~55% to ~65%
+- Content validation completion improved from ~50% to ~52%
+- CSS validation completion improved from ~40% to ~50%
 
 ### Changed
 

@@ -16,7 +16,7 @@ This document tracks the implementation progress compared to the original Java E
 | Accessibility | 100% | ~75% | 🟡 Partial |
 | Cross-reference | 100% | ~60% | 🟡 Partial |
 
-**Overall Completion: ~52%**
+**Overall Completion: ~54%**
 
 ---
 
@@ -37,9 +37,9 @@ This document tracks the implementation progress compared to the original Java E
 | encryption.xml | ✅ | ❌ | - | Font obfuscation |
 | signatures.xml | ✅ | ❌ | - | Digital signatures |
 | metadata.xml | ✅ | ❌ | - | Multiple renditions |
-| Empty directories | ✅ | ❌ | PKG-014 | - |
+| Empty directories | ✅ | ✅ | PKG-014 | - |
 
-**Status: ~55% complete**
+**Status: ~65% complete**
 
 ---
 
@@ -100,12 +100,12 @@ This document tracks the implementation progress compared to the original Java E
 | MathML detection | ✅ | ❌ | OPF-014 | mathml property |
 | SVG validation | ✅ | ❌ | - | Separate schema |
 | epub:type validation | ✅ | ✅ | OPF-088 | Vocabulary check |
-| Fixed-layout viewport | ✅ | ❌ | HTM-046-060 | Meta viewport |
+| Fixed-layout viewport | ✅ | ✅ | HTM-046-060 | Meta viewport |
 | img alt text | ✅ | ❌ | ACC-* | Accessibility |
 | MathML alt text | ✅ | ❌ | ACC-009 | - |
 | Discouraged elements | ✅ | ✅ | HTM-055 | base, embed warnings |
 
-**Status: ~50% complete**
+**Status: ~52% complete**
 
 ---
 
@@ -121,9 +121,9 @@ This document tracks the implementation progress compared to the original Java E
 | Empty URIs | ✅ | ✅ | CSS-002 | Implemented |
 | Alt stylesheet | ✅ | ✅ | CSS-005, CSS-015 | Conflict, title |
 | @import validation | ✅ | ✅ | CSS-002 | Import URLs extracted |
-| Media overlay classes | ✅ | ❌ | CSS-029, CSS-030 | - |
+| Media overlay classes | ✅ | ✅ | CSS-029, CSS-030 | - |
 
-**Status: ~40% complete**
+**Status: ~50% complete**
 
 ---
 
@@ -392,6 +392,9 @@ This document tracks the implementation progress compared to the original Java E
 23. ~~Add empty metadata check (OPF-072)~~
 24. ~~Add META-INF items validation (PKG-025)~~
 25. ~~Add filename validation (PKG-009-012)~~
+26. ~~Add empty directories check (PKG-014)~~
+27. ~~Add CSS media overlay classes validation (CSS-029, CSS-030)~~
+28. ~~Add fixed-layout viewport validation (HTM-046-060)~~
 
 ### In Progress 🚧
 - None
@@ -400,6 +403,3 @@ This document tracks the implementation progress compared to the original Java E
 1. Link validation in content documents (RSC-007, RSC-010-011) - Medium Priority
 2. Collections validation (OPF-071-084) - Medium Priority
 3. OCF mimetype uncompressed check (PKG-006) - Medium Priority
-4. Empty directories check (PKG-014) - Medium Priority
-5. CSS media overlay classes (CSS-029, CSS-030) - Medium Priority
-6. Fixed-layout viewport validation (HTM-046-060) - Medium Priority

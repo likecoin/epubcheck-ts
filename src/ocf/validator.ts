@@ -51,6 +51,9 @@ export class OCFValidator {
 
     // Validate filenames
     this.validateFilenames(zip, context.messages);
+
+    // Validate empty directories
+    this.validateEmptyDirectories(zip, context.messages);
   }
 
   /**
@@ -279,6 +282,35 @@ export class OCFValidator {
             location: { path },
           });
           break;
+        }
+      }
+    }
+  }
+
+  /**
+   * Validate empty directories
+   */
+  private validateEmptyDirectories(zip: ZipReader, messages: ValidationMessage[]): void {
+    const directories = new Set<string>();
+
+    for (const path of zip.paths) {
+      const parts = path.split('/');
+      for (let i = 1; i < parts.length; i++) {
+        const dir = parts.slice(0, i).join('/') + '/';
+        directories.add(dir);
+      }
+    }
+
+    for (const dir of directories) {
+      if (dir !== 'META-INF/' && dir !== 'OEBPS/' && dir !== 'OPS/') {
+        const filesInDir = zip.paths.filter((p) => p.startsWith(dir) && p !== dir);
+        if (filesInDir.length === 0) {
+          messages.push({
+            id: 'PKG-014',
+            severity: 'warning',
+            message: `Empty directory found: ${dir}`,
+            location: { path: dir },
+          });
         }
       }
     }
