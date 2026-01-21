@@ -250,4 +250,92 @@ describe('parseOPF', () => {
       expect(result.guide[0]?.href).toBe('cover.xhtml');
     });
   });
+
+  describe('collection parsing (EPUB 3)', () => {
+    it('should parse collections with role attribute', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:identifier id="uid">test</dc:identifier>
+  </metadata>
+  <manifest>
+    <item id="idx1" href="index1.xhtml" media-type="application/xhtml+xml"/>
+    <item id="idx2" href="index2.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine></spine>
+  <collection role="index">
+    <link href="index1.xhtml"/>
+    <link href="index2.xhtml"/>
+  </collection>
+</package>`;
+      const result = parseOPF(xml);
+
+      expect(result.collections).toHaveLength(1);
+      expect(result.collections[0]?.role).toBe('index');
+      expect(result.collections[0]?.links).toHaveLength(2);
+    });
+
+    it('should parse dictionary collections with name', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:identifier id="uid">test</dc:identifier>
+  </metadata>
+  <manifest>
+    <item id="dict1" href="dictionary.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine></spine>
+  <collection role="dictionary" id="dict-collection">
+    <metadata>
+      <dc:title xmlns:dc="http://purl.org/dc/elements/1.1/">English Dictionary</dc:title>
+    </metadata>
+    <link href="dictionary.xhtml"/>
+  </collection>
+</package>`;
+      const result = parseOPF(xml);
+
+      expect(result.collections).toHaveLength(1);
+      expect(result.collections[0]?.role).toBe('dictionary');
+      expect(result.collections[0]?.id).toBe('dict-collection');
+    });
+
+    it('should parse multiple collections', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:identifier id="uid">test</dc:identifier>
+  </metadata>
+  <manifest>
+    <item id="idx1" href="index.xhtml" media-type="application/xhtml+xml"/>
+    <item id="preview1" href="preview.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine></spine>
+  <collection role="index">
+    <link href="index.xhtml"/>
+  </collection>
+  <collection role="preview">
+    <link href="preview.xhtml"/>
+  </collection>
+</package>`;
+      const result = parseOPF(xml);
+
+      expect(result.collections).toHaveLength(2);
+      expect(result.collections[0]?.role).toBe('index');
+      expect(result.collections[1]?.role).toBe('preview');
+    });
+
+    it('should return empty collections array when none present', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:identifier id="uid">test</dc:identifier>
+  </metadata>
+  <manifest></manifest>
+  <spine></spine>
+</package>`;
+      const result = parseOPF(xml);
+
+      expect(result.collections).toHaveLength(0);
+    });
+  });
 });

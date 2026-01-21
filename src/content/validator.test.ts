@@ -797,4 +797,340 @@ describe('ContentValidator', () => {
       expect(accWarnings).toHaveLength(0);
     });
   });
+
+  describe('MathML detection', () => {
+    it('should detect MathML and require mathml property (OPF-014)', () => {
+      const mathXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+      <mrow>
+        <mi>x</mi>
+        <mo>=</mo>
+        <mfrac>
+          <mrow><mo>-</mo><mi>b</mi></mrow>
+          <mrow><mn>2</mn><mi>a</mi></mrow>
+        </mfrac>
+      </mrow>
+    </math>
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(mathXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const errors = context.messages.filter((m) => m.id === 'OPF-014' && m.message.includes('mathml'));
+      expect(errors).toHaveLength(1);
+    });
+
+    it('should accept MathML when mathml property is present', () => {
+      const mathXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+      <mi>x</mi>
+    </math>
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(mathXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml', properties: ['mathml'] },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const errors = context.messages.filter((m) => m.id === 'OPF-014' && m.message.includes('mathml'));
+      expect(errors).toHaveLength(0);
+    });
+  });
+
+  describe('SVG detection', () => {
+    it('should detect SVG and require svg property (OPF-014)', () => {
+      const svgXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+      <circle cx="50" cy="50" r="40" fill="red"/>
+    </svg>
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(svgXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const errors = context.messages.filter((m) => m.id === 'OPF-014' && m.message.includes('svg'));
+      expect(errors).toHaveLength(1);
+    });
+
+    it('should accept SVG when svg property is present', () => {
+      const svgXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+      <rect width="100" height="100" fill="blue"/>
+    </svg>
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(svgXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml', properties: ['svg'] },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const errors = context.messages.filter((m) => m.id === 'OPF-014' && m.message.includes('svg'));
+      expect(errors).toHaveLength(0);
+    });
+  });
+
+  describe('remote resources detection', () => {
+    it('should detect remote image and require remote-resources property (OPF-014)', () => {
+      const remoteXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <img src="https://example.com/image.png" alt="Remote image" />
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(remoteXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const errors = context.messages.filter((m) => m.id === 'OPF-014' && m.message.includes('remote-resources'));
+      expect(errors).toHaveLength(1);
+    });
+
+    it('should detect remote link and require remote-resources property', () => {
+      const remoteXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+    <link rel="stylesheet" href="https://example.com/style.css" />
+  </head>
+  <body>
+    <p>Content</p>
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(remoteXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const errors = context.messages.filter((m) => m.id === 'OPF-014' && m.message.includes('remote-resources'));
+      expect(errors).toHaveLength(1);
+    });
+
+    it('should accept remote resources when remote-resources property is present', () => {
+      const remoteXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <img src="https://example.com/image.png" alt="Remote image" />
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(remoteXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml', properties: ['remote-resources'] },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const errors = context.messages.filter((m) => m.id === 'OPF-014' && m.message.includes('remote-resources'));
+      expect(errors).toHaveLength(0);
+    });
+  });
+
+  describe('navigation remote links', () => {
+    it('should report error for remote links in toc nav (NAV-010)', () => {
+      const navXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Navigation</title>
+  </head>
+  <body>
+    <nav epub:type="toc">
+      <ol>
+        <li><a href="https://example.com/chapter1.xhtml">Remote Chapter</a></li>
+      </ol>
+    </nav>
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/nav.xhtml', toBytes(navXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'nav', href: 'nav.xhtml', mediaType: 'application/xhtml+xml', properties: ['nav'] },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const errors = context.messages.filter((m) => m.id === 'NAV-010');
+      expect(errors).toHaveLength(1);
+      expect(errors[0]?.message).toContain('toc');
+    });
+
+    it('should accept local links in toc nav', () => {
+      const navXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Navigation</title>
+  </head>
+  <body>
+    <nav epub:type="toc">
+      <ol>
+        <li><a href="chapter1.xhtml">Chapter 1</a></li>
+      </ol>
+    </nav>
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/nav.xhtml', toBytes(navXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'nav', href: 'nav.xhtml', mediaType: 'application/xhtml+xml', properties: ['nav'] },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const errors = context.messages.filter((m) => m.id === 'NAV-010');
+      expect(errors).toHaveLength(0);
+    });
+  });
+
+  describe('fixed-layout viewport meta', () => {
+    it('should warn about missing viewport content in fixed-layout (HTM-046)', () => {
+      const fixedXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+    <meta name="viewport" />
+  </head>
+  <body>
+    <p>Fixed layout content</p>
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(fixedXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml', properties: ['fixed-layout'] },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const warnings = context.messages.filter((m) => m.id === 'HTM-046');
+      expect(warnings).toHaveLength(1);
+    });
+
+    it('should warn about device-width in fixed-layout viewport (HTM-047)', () => {
+      const fixedXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <p>Fixed layout content</p>
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(fixedXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml', properties: ['fixed-layout'] },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const warnings = context.messages.filter((m) => m.id === 'HTM-047');
+      expect(warnings).toHaveLength(1);
+      expect(warnings[0]?.message).toContain('device-width');
+    });
+
+    it('should warn about device-height in fixed-layout viewport (HTM-048)', () => {
+      const fixedXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+    <meta name="viewport" content="width=1024, height=device-height" />
+  </head>
+  <body>
+    <p>Fixed layout content</p>
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(fixedXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml', properties: ['fixed-layout'] },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const warnings = context.messages.filter((m) => m.id === 'HTM-048');
+      expect(warnings).toHaveLength(1);
+      expect(warnings[0]?.message).toContain('device-height');
+    });
+
+    it('should accept proper viewport in fixed-layout', () => {
+      const fixedXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+    <meta name="viewport" content="width=1024, height=768" />
+  </head>
+  <body>
+    <p>Fixed layout content</p>
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(fixedXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml', properties: ['fixed-layout'] },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const warnings = context.messages.filter((m) => m.id === 'HTM-046' || m.id === 'HTM-047' || m.id === 'HTM-048');
+      expect(warnings).toHaveLength(0);
+    });
+
+    it('should not check viewport for non-fixed-layout documents', () => {
+      const reflowXHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+    <meta name="viewport" content="width=device-width" />
+  </head>
+  <body>
+    <p>Reflowable content</p>
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(reflowXHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' },
+      ]);
+      context = createContext(files, packageDoc);
+      validator.validate(context);
+
+      const warnings = context.messages.filter((m) => m.id === 'HTM-047');
+      expect(warnings).toHaveLength(0);
+    });
+  });
 });

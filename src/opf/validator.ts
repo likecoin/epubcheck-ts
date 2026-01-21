@@ -659,13 +659,13 @@ export class OPFValidator {
           });
         }
 
-        for (const itemref of collection.itemrefs) {
-          const manifestItem = this.manifestById.get(itemref);
+        for (const linkHref of collection.links) {
+          const manifestItem = this.manifestByHref.get(linkHref);
           if (!manifestItem) {
             context.messages.push({
               id: 'OPF-073',
               severity: 'error',
-              message: `Collection itemref "${itemref}" references non-existent manifest item`,
+              message: `Collection link "${linkHref}" references non-existent manifest item`,
               location: { path: opfPath },
             });
             continue;
@@ -675,7 +675,7 @@ export class OPFValidator {
             context.messages.push({
               id: 'OPF-074',
               severity: 'error',
-              message: `Dictionary collection item "${itemref}" must be an XHTML or SVG document`,
+              message: `Dictionary collection item "${linkHref}" must be an XHTML or SVG document`,
               location: { path: opfPath },
             });
           }
@@ -683,13 +683,13 @@ export class OPFValidator {
       }
 
       if (collection.role === 'index') {
-        for (const itemref of collection.itemrefs) {
-          const manifestItem = this.manifestById.get(itemref);
+        for (const linkHref of collection.links) {
+          const manifestItem = this.manifestByHref.get(linkHref);
           if (!manifestItem) {
             context.messages.push({
               id: 'OPF-073',
               severity: 'error',
-              message: `Collection itemref "${itemref}" references non-existent manifest item`,
+              message: `Collection link "${linkHref}" references non-existent manifest item`,
               location: { path: opfPath },
             });
             continue;
@@ -699,7 +699,7 @@ export class OPFValidator {
             context.messages.push({
               id: 'OPF-075',
               severity: 'error',
-              message: `Index collection item "${itemref}" must be an XHTML document`,
+              message: `Index collection item "${linkHref}" must be an XHTML document`,
               location: { path: opfPath },
             });
           }
@@ -707,13 +707,13 @@ export class OPFValidator {
       }
 
       if (collection.role === 'preview') {
-        for (const itemref of collection.itemrefs) {
-          const manifestItem = this.manifestById.get(itemref);
+        for (const linkHref of collection.links) {
+          const manifestItem = this.manifestByHref.get(linkHref);
           if (!manifestItem) {
             context.messages.push({
               id: 'OPF-073',
               severity: 'error',
-              message: `Collection itemref "${itemref}" references non-existent manifest item`,
+              message: `Collection link "${linkHref}" references non-existent manifest item`,
               location: { path: opfPath },
             });
           }

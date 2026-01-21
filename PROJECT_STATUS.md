@@ -303,17 +303,18 @@ This document tracks the implementation progress compared to the original Java E
 
 | Module | Tests | Status |
 |--------|-------|--------|
-| src/ocf/validator.ts | 11 | ✅ Passing |
+| src/ocf/validator.ts | 14 | ✅ Passing |
 | src/ocf/zip.ts | 15 | ✅ Passing |
-| src/opf/parser.ts | 12 | ✅ Passing |
-| src/content/validator.ts | 34 | ✅ Passing |
+| src/opf/parser.ts | 16 | ✅ Passing |
+| src/opf/validator.ts | 22 | ✅ Passing |
+| src/content/validator.ts | 43 | ✅ Passing |
 | src/content/parser.ts | 23 | ✅ Passing |
 | src/references/validator.ts | 19 | ✅ Passing |
-| src/css/validator.ts | 17 | ✅ Passing |
+| src/css/validator.ts | 19 | ✅ Passing |
 | src/nav/validator.ts | 7 | ✅ Passing |
 | src/schema/*.ts | 9 | ✅ Passing |
 | Integration tests | 4 | ✅ Passing |
-| **Total** | **151** | **✅ All passing** |
+| **Total** | **203** | **✅ All passing** |
 
 ---
 
@@ -343,7 +344,7 @@ This document tracks the implementation progress compared to the original Java E
 ## Release Readiness (0.1.0)
 
 ### ✅ Ready
-- All 151 tests passing
+- All 203 tests passing
 - Build successful (ESM + CJS + type definitions)
 - ESLint and TypeScript checks passing
 - Documentation complete (README, AGENTS.md, PROJECT_STATUS.md)

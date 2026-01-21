@@ -440,26 +440,26 @@ function parseCollections(xml: string): Collection[] {
     const nameMatch = /name=["']([^"']+)["']/.exec(collectionStartTag);
     const name = nameMatch?.[1];
 
-    const itemrefs: string[] = [];
+    const links: string[] = [];
 
-    const itemrefRegex = /<itemref[^>]*\sidref=["']([^"']+)["'][^>]*>/g;
+    const linkRegex = /<link[^>]*\shref=["']([^"']+)["'][^>]*\/?>/g;
     const closingTag = `</collection>`;
     const closingIndex = xml.indexOf(closingTag, collectionStart);
     const collectionEnd = closingIndex >= 0 ? closingIndex + closingTag.length : xml.length;
 
     const collectionXml = xml.slice(collectionStart, collectionEnd);
 
-    let itemrefMatch: RegExpExecArray | null;
-    while ((itemrefMatch = itemrefRegex.exec(collectionXml)) !== null) {
-      const idref = itemrefMatch[1];
-      if (idref) {
-        itemrefs.push(idref);
+    let linkMatch: RegExpExecArray | null;
+    while ((linkMatch = linkRegex.exec(collectionXml)) !== null) {
+      const href = linkMatch[1];
+      if (href) {
+        links.push(decodeXmlEntities(href));
       }
     }
 
     const collection: Collection = {
       role,
-      itemrefs,
+      links,
     };
     if (id) collection.id = id;
     if (name) collection.name = name;

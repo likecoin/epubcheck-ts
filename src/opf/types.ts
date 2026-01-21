@@ -132,8 +132,8 @@ export interface Collection {
   id?: string;
   /** Collection name/label */
   name?: string;
-  /** Manifest item IDs in this collection */
-  itemrefs: string[];
+  /** Resource hrefs in this collection (from link elements) */
+  links: string[];
 }
 
 /**
