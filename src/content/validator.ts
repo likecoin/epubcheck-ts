@@ -3,15 +3,19 @@
  */
 
 import { XmlDocument, type XmlElement } from 'libxml2-wasm';
+import type { ResourceRegistry } from '../references/registry.js';
+import { ReferenceType } from '../references/types.js';
+import type { ReferenceValidator } from '../references/validator.js';
 import type { ValidationContext } from '../types.js';
-
-// Note: Full list of event handlers for reference, but we use XPath for detection
-// const SCRIPT_EVENT_HANDLERS = ['onclick', 'onload', 'onmouseover', ...];
 
 const DISCOURAGED_ELEMENTS = new Set(['base', 'embed']);
 
 export class ContentValidator {
-  validate(context: ValidationContext): void {
+  validate(
+    context: ValidationContext,
+    registry?: ResourceRegistry,
+    refValidator?: ReferenceValidator,
+  ): void {
     const packageDoc = context.packageDocument;
     if (!packageDoc) {
       return;
@@ -23,12 +27,19 @@ export class ContentValidator {
     for (const item of packageDoc.manifest) {
       if (item.mediaType === 'application/xhtml+xml') {
         const fullPath = opfDir ? `${opfDir}/${item.href}` : item.href;
-        this.validateXHTMLDocument(context, fullPath, item.id);
+        this.validateXHTMLDocument(context, fullPath, item.id, opfDir, registry, refValidator);
       }
     }
   }
 
-  private validateXHTMLDocument(context: ValidationContext, path: string, itemId: string): void {
+  private validateXHTMLDocument(
+    context: ValidationContext,
+    path: string,
+    itemId: string,
+    opfDir?: string,
+    registry?: ResourceRegistry,
+    refValidator?: ReferenceValidator,
+  ): void {
     const data = context.files.get(path);
     if (!data) {
       return;
@@ -193,6 +204,16 @@ export class ContentValidator {
 
       // Validate viewport meta for fixed-layout
       this.validateViewportMeta(context, path, root, manifestItem);
+
+      // Extract IDs and register with registry
+      if (registry) {
+        this.extractAndRegisterIDs(path, root, registry);
+      }
+
+      // Extract hyperlinks and register with reference validator
+      if (refValidator && opfDir !== undefined) {
+        this.extractAndRegisterHyperlinks(path, root, opfDir, refValidator);
+      }
     } finally {
       doc.dispose();
     }
@@ -729,5 +750,132 @@ export class ContentValidator {
       message: 'Fixed-layout document should include a viewport meta element',
       location: { path },
     });
+  }
+
+  private extractAndRegisterIDs(
+    path: string,
+    root: XmlElement,
+    registry: ResourceRegistry,
+  ): void {
+    const elementsWithId = root.find('.//*[@id]');
+    for (const elem of elementsWithId) {
+      const id = this.getAttribute(elem as XmlElement, 'id');
+      if (id) {
+        registry.registerID(path, id);
+      }
+    }
+  }
+
+  private extractAndRegisterHyperlinks(
+    path: string,
+    root: XmlElement,
+    opfDir: string,
+    refValidator: ReferenceValidator,
+  ): void {
+    const docDir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
+
+    const links = root.find('.//html:a[@href]', { html: 'http://www.w3.org/1999/xhtml' });
+    for (const link of links) {
+      const href = this.getAttribute(link as XmlElement, 'href');
+      if (!href) continue;
+
+      if (href.startsWith('http://') || href.startsWith('https://')) {
+        continue;
+      }
+      if (href.startsWith('mailto:') || href.startsWith('tel:')) {
+        continue;
+      }
+      if (href.startsWith('#')) {
+        const targetResource = path;
+        const fragment = href.slice(1);
+        refValidator.addReference({
+          url: href,
+          targetResource,
+          fragment,
+          type: ReferenceType.HYPERLINK,
+          location: { path },
+        });
+        continue;
+      }
+
+      const resolvedPath = this.resolveRelativePath(docDir, href, opfDir);
+      const hashIndex = resolvedPath.indexOf('#');
+      const targetResource = hashIndex >= 0 ? resolvedPath.slice(0, hashIndex) : resolvedPath;
+      const fragmentPart = hashIndex >= 0 ? resolvedPath.slice(hashIndex + 1) : undefined;
+
+      const ref: Parameters<typeof refValidator.addReference>[0] = {
+        url: href,
+        targetResource,
+        type: ReferenceType.HYPERLINK,
+        location: { path },
+      };
+      if (fragmentPart) {
+        ref.fragment = fragmentPart;
+      }
+      refValidator.addReference(ref);
+    }
+
+    const svgLinks = root.find('.//svg:a', { svg: 'http://www.w3.org/2000/svg' });
+    for (const link of svgLinks) {
+      const elem = link as XmlElement;
+      const href = this.getAttribute(elem, 'xlink:href') ?? this.getAttribute(elem, 'href');
+      if (!href) continue;
+
+      if (href.startsWith('http://') || href.startsWith('https://')) {
+        continue;
+      }
+      if (href.startsWith('#')) {
+        const targetResource = path;
+        const fragment = href.slice(1);
+        refValidator.addReference({
+          url: href,
+          targetResource,
+          fragment,
+          type: ReferenceType.HYPERLINK,
+          location: { path },
+        });
+        continue;
+      }
+
+      const resolvedPath = this.resolveRelativePath(docDir, href, opfDir);
+      const hashIndex = resolvedPath.indexOf('#');
+      const targetResource = hashIndex >= 0 ? resolvedPath.slice(0, hashIndex) : resolvedPath;
+      const svgFragment = hashIndex >= 0 ? resolvedPath.slice(hashIndex + 1) : undefined;
+
+      const svgRef: Parameters<typeof refValidator.addReference>[0] = {
+        url: href,
+        targetResource,
+        type: ReferenceType.HYPERLINK,
+        location: { path },
+      };
+      if (svgFragment) {
+        svgRef.fragment = svgFragment;
+      }
+      refValidator.addReference(svgRef);
+    }
+  }
+
+  private resolveRelativePath(docDir: string, href: string, _opfDir: string): string {
+    const hrefWithoutFragment = href.split('#')[0] ?? href;
+    const fragment = href.includes('#') ? href.split('#')[1] : '';
+
+    if (hrefWithoutFragment.startsWith('/')) {
+      const result = hrefWithoutFragment.slice(1);
+      return fragment ? `${result}#${fragment}` : result;
+    }
+
+    const parts = docDir ? docDir.split('/') : [];
+    const relParts = hrefWithoutFragment.split('/');
+
+    for (const part of relParts) {
+      if (part === '..') {
+        parts.pop();
+      } else if (part !== '.' && part !== '') {
+        parts.push(part);
+      }
+    }
+
+    const result = parts.join('/');
+    return fragment ? `${result}#${fragment}` : result;
   }
 }

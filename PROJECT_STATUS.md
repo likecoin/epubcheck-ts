@@ -181,7 +181,7 @@ This document tracks the implementation progress compared to the original Java E
 | Leaking path | ✅ | ✅ | RSC-027, RSC-028 | Implemented |
 | Unused resources | ✅ | ✅ | OPF-097 | Implemented |
 
-**Status: ~60% complete**
+**Status: ~75% complete** (content document link extraction integrated)
 
 ---
 
@@ -397,10 +397,10 @@ This document tracks the implementation progress compared to the original Java E
 27. ~~Add CSS media overlay classes validation (CSS-029, CSS-030)~~
 28. ~~Add fixed-layout viewport validation (HTM-046-060)~~
 29. ~~Add collections validation (OPF-071-084)~~
+30. ~~Add link validation in content documents (RSC-007, RSC-010-011)~~
 
 ### In Progress 🚧
 - None
 
 ### Upcoming 📋
-1. Link validation in content documents (RSC-007, RSC-010-011) - Medium Priority
-2. OCF mimetype uncompressed check (PKG-006) - Medium Priority
+1. OCF mimetype uncompressed check (PKG-006) - Medium Priority

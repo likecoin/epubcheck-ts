@@ -5,7 +5,7 @@
 import type { ValidationContext } from '../types.js';
 import type { ResourceRegistry } from './registry.js';
 import type { Reference } from './types.js';
-import { type ParsedURL, ReferenceType, isPublicationResourceReference } from './types.js';
+import { ReferenceType, isPublicationResourceReference } from './types.js';
 import {
   hasAbsolutePath,
   hasParentDirectoryReference,
@@ -53,21 +53,21 @@ export class ReferenceValidator {
    * Validate a single reference
    */
   private validateReference(context: ValidationContext, reference: Reference): void {
-    const parsed = parseURL(reference.url);
+    const url = reference.url;
 
     // Check for malformed URLs
-    if (isMalformedURL(parsed.url)) {
+    if (isMalformedURL(url)) {
       context.messages.push({
         id: 'RSC-020',
         severity: 'error',
-        message: `Malformed URL: ${parsed.url}`,
+        message: `Malformed URL: ${url}`,
         location: reference.location,
       });
       return;
     }
 
     // Skip data URLs
-    if (isDataURL(parsed.url)) {
+    if (isDataURL(url)) {
       if (this.version.startsWith('3.')) {
         context.messages.push({
           id: 'RSC-029',
@@ -80,7 +80,7 @@ export class ReferenceValidator {
     }
 
     // Check for file URLs
-    if (isFileURL(parsed.url)) {
+    if (isFileURL(url)) {
       context.messages.push({
         id: 'RSC-026',
         severity: 'error',
@@ -90,16 +90,21 @@ export class ReferenceValidator {
       return;
     }
 
+    // Use targetResource if available, otherwise parse URL
+    const resourcePath = reference.targetResource || parseURL(url).resource;
+    const fragment = reference.fragment ?? parseURL(url).fragment;
+    const hasFragment = fragment !== undefined && fragment !== '';
+
     // Validate relative URLs
-    if (!isRemoteURL(parsed.url)) {
-      this.validateLocalReference(context, reference, parsed);
+    if (!isRemoteURL(url)) {
+      this.validateLocalReference(context, reference, resourcePath);
     } else {
-      this.validateRemoteReference(context, reference, parsed);
+      this.validateRemoteReference(context, reference);
     }
 
     // Validate fragments
-    if (parsed.hasFragment) {
-      this.validateFragment(context, reference, parsed);
+    if (hasFragment) {
+      this.validateFragment(context, reference, resourcePath, fragment);
     }
   }
 
@@ -109,10 +114,10 @@ export class ReferenceValidator {
   private validateLocalReference(
     context: ValidationContext,
     reference: Reference,
-    parsed: ParsedURL,
+    resourcePath: string,
   ): void {
     // Check for absolute paths
-    if (hasAbsolutePath(parsed.resource)) {
+    if (hasAbsolutePath(resourcePath)) {
       context.messages.push({
         id: 'RSC-027',
         severity: 'error',
@@ -121,8 +126,8 @@ export class ReferenceValidator {
       });
     }
 
-    // Check for parent directory references
-    if (hasParentDirectoryReference(parsed.resource)) {
+    // Check for parent directory references in original URL
+    if (hasParentDirectoryReference(reference.url)) {
       context.messages.push({
         id: 'RSC-028',
         severity: 'error',
@@ -132,20 +137,18 @@ export class ReferenceValidator {
     }
 
     // Check if target resource exists
-    if (!this.registry.hasResource(parsed.resource)) {
-      // RSC-007w: LINK references get a warning (may be external/optional)
-      // RSC-007: Other references get an error
+    if (!this.registry.hasResource(resourcePath)) {
       const isLinkRef = reference.type === ReferenceType.LINK;
       context.messages.push({
         id: isLinkRef ? 'RSC-007w' : 'RSC-007',
         severity: isLinkRef ? 'warning' : 'error',
-        message: `Referenced resource not found in manifest: ${parsed.resource}`,
+        message: `Referenced resource not found in manifest: ${resourcePath}`,
         location: reference.location,
       });
       return;
     }
 
-    const resource = this.registry.getResource(parsed.resource);
+    const resource = this.registry.getResource(resourcePath);
 
     // Check if hyperlinks point to spine items
     if (reference.type === ReferenceType.HYPERLINK && !resource?.inSpine) {
@@ -171,13 +174,11 @@ export class ReferenceValidator {
   /**
    * Validate a remote reference
    */
-  private validateRemoteReference(
-    context: ValidationContext,
-    reference: Reference,
-    parsed: ParsedURL,
-  ): void {
+  private validateRemoteReference(context: ValidationContext, reference: Reference): void {
+    const url = reference.url;
+
     // Check if using HTTPS
-    if (isHTTP(parsed.url) && !isHTTPS(parsed.url)) {
+    if (isHTTP(url) && !isHTTPS(url)) {
       context.messages.push({
         id: 'RSC-031',
         severity: 'error',
@@ -211,13 +212,14 @@ export class ReferenceValidator {
   private validateFragment(
     context: ValidationContext,
     reference: Reference,
-    parsed: ParsedURL,
+    resourcePath: string,
+    fragment: string,
   ): void {
-    if (!parsed.fragment || !this.registry.hasResource(parsed.resource)) {
+    if (!fragment || !this.registry.hasResource(resourcePath)) {
       return;
     }
 
-    const resource = this.registry.getResource(parsed.resource);
+    const resource = this.registry.getResource(resourcePath);
 
     // RSC-013: Stylesheets should not have fragment identifiers
     if (reference.type === ReferenceType.STYLESHEET) {
@@ -233,7 +235,6 @@ export class ReferenceValidator {
     // RSC-014: SVG fragment type mismatch
     // SVG views (svgView(...) or viewBox(...)) can only be referenced from SVG documents
     if (resource?.mimeType === 'image/svg+xml') {
-      const fragment = parsed.fragment;
       const hasSVGView = fragment.includes('svgView(') || fragment.includes('viewBox(');
 
       if (hasSVGView && reference.type === ReferenceType.HYPERLINK) {
@@ -247,11 +248,11 @@ export class ReferenceValidator {
     }
 
     // Check if fragment target exists
-    if (!this.registry.hasID(parsed.resource, parsed.fragment)) {
+    if (!this.registry.hasID(resourcePath, fragment)) {
       context.messages.push({
         id: 'RSC-012',
         severity: 'error',
-        message: `Fragment identifier not found: #${parsed.fragment}`,
+        message: `Fragment identifier not found: #${fragment}`,
         location: reference.location,
       });
     }

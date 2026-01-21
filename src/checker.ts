@@ -3,6 +3,8 @@ import { buildReport } from './core/report.js';
 import { NCXValidator } from './nav/index.js';
 import { OCFValidator } from './ocf/index.js';
 import { OPFValidator } from './opf/index.js';
+import { ResourceRegistry } from './references/registry.js';
+import { ReferenceValidator } from './references/validator.js';
 import { SchemaValidator } from './schema/orchestrator.js';
 import type {
   EPUBVersion,
@@ -88,16 +90,28 @@ export class EpubCheck {
       const opfValidator = new OPFValidator();
       opfValidator.validate(context);
 
-      // Step 3: Validate content documents (XHTML)
-      const contentValidator = new ContentValidator();
-      contentValidator.validate(context);
+      // Step 3: Create resource registry and reference validator
+      const registry = new ResourceRegistry();
+      const refValidator = new ReferenceValidator(registry, context.version);
 
-      // Step 4: Validate navigation (NCX for EPUB 2, nav for EPUB 3)
+      // Populate registry from manifest
+      if (context.packageDocument) {
+        this.populateRegistry(context, registry);
+      }
+
+      // Step 4: Validate content documents (XHTML) and extract references
+      const contentValidator = new ContentValidator();
+      contentValidator.validate(context, registry, refValidator);
+
+      // Step 5: Validate navigation (NCX for EPUB 2, nav for EPUB 3)
       if (context.version === '2.0' && context.packageDocument) {
         this.validateNCX(context);
       }
 
-      // Step 5: Run schema validations (RelaxNG, XSD, Schematron)
+      // Step 6: Run cross-reference validation
+      refValidator.validate(context);
+
+      // Step 7: Run schema validations (RelaxNG, XSD, Schematron)
       const schemaValidator = new SchemaValidator(context);
       await schemaValidator.validate();
     } catch (error) {
@@ -213,5 +227,28 @@ export class EpubCheck {
     }
 
     messages.push(message);
+  }
+
+  /**
+   * Populate resource registry from package document manifest
+   */
+  private populateRegistry(context: ValidationContext, registry: ResourceRegistry): void {
+    const packageDoc = context.packageDocument;
+    if (!packageDoc) return;
+
+    const opfPath = context.opfPath ?? '';
+    const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/')) : '';
+
+    const spineIdrefs = new Set(packageDoc.spine.map((item) => item.idref));
+
+    for (const item of packageDoc.manifest) {
+      const fullPath = opfDir ? `${opfDir}/${item.href}` : item.href;
+      registry.registerResource({
+        url: fullPath,
+        mimeType: item.mediaType,
+        inSpine: spineIdrefs.has(item.id),
+        ids: new Set(),
+      });
+    }
   }
 }
