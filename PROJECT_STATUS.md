@@ -14,7 +14,7 @@ This document tracks the implementation progress compared to the original Java E
 | Schema Validation | 100% | ~70% | 🟡 Partial |
 | Media Overlays | 100% | 0% | ❌ Not Started |
 | Accessibility | 100% | 0% | ❌ Not Started |
-| Cross-reference | 100% | ~15% | 🔴 Basic |
+| Cross-reference | 100% | ~40% | 🟡 Partial |
 
 **Overall Completion: ~35%**
 
@@ -167,20 +167,20 @@ This document tracks the implementation progress compared to the original Java E
 
 | Feature | Java | TS | Message IDs | Notes |
 |---------|:----:|:--:|------------|-------|
-| Missing targets | ✅ | ❌ | RSC-007, RSC-007w | - |
-| Undeclared resources | ✅ | ❌ | RSC-008 | - |
-| Fragment validation | ✅ | ❌ | RSC-012 | ID existence |
-| Fragment type mismatch | ✅ | ❌ | RSC-014 | - |
-| Hyperlink to non-spine | ✅ | ❌ | RSC-011 | - |
-| Non-content hyperlink | ✅ | ❌ | RSC-010 | - |
-| Stylesheet fragment | ✅ | ❌ | RSC-013 | - |
-| Remote HTTPS | ✅ | ❌ | RSC-031 | Required |
-| Malformed URL | ✅ | ❌ | RSC-020 | - |
-| File URL | ✅ | ❌ | RSC-026 | Disallowed |
-| Leaking path | ✅ | ❌ | RSC-027, RSC-028 | Absolute/parent |
-| Unused resources | ✅ | ❌ | OPF-097 | Unreferenced |
+| Missing targets | ✅ | ✅ | RSC-007, RSC-007w | Implemented |
+| Undeclared resources | ✅ | ❌ | RSC-008 | Files in container not in manifest |
+| Fragment validation | ✅ | ✅ | RSC-012 | ID existence check |
+| Fragment type mismatch | ✅ | ❌ | RSC-014 | SVG vs XHTML |
+| Hyperlink to non-spine | ✅ | ✅ | RSC-011 | Implemented |
+| Non-content hyperlink | ✅ | ✅ | RSC-010 | Implemented |
+| Stylesheet fragment | ✅ | ✅ | RSC-013 | Implemented |
+| Remote HTTPS | ✅ | ✅ | RSC-031 | Implemented |
+| Malformed URL | ✅ | ✅ | RSC-020 | Implemented |
+| File URL | ✅ | ✅ | RSC-026 | Implemented |
+| Leaking path | ✅ | ✅ | RSC-027, RSC-028 | Implemented |
+| Unused resources | ✅ | ✅ | OPF-097 | Implemented |
 
-**Status: 0% complete**
+**Status: ~40% complete**
 
 ---
 

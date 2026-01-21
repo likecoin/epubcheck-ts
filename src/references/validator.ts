@@ -218,6 +218,17 @@ export class ReferenceValidator {
       return;
     }
 
+    // RSC-013: Stylesheets should not have fragment identifiers
+    if (reference.type === ReferenceType.STYLESHEET) {
+      context.messages.push({
+        id: 'RSC-013',
+        severity: 'error',
+        message: 'Stylesheet references must not have fragment identifiers',
+        location: reference.location,
+      });
+      return;
+    }
+
     // Check if fragment target exists
     if (!this.registry.hasID(parsed.resource, parsed.fragment)) {
       context.messages.push({

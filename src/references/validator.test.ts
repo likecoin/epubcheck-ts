@@ -126,6 +126,16 @@ describe('ReferenceValidator', () => {
       const rscErrors = context.messages.filter((m) => m.id === 'RSC-012');
       expect(rscErrors).toHaveLength(1);
     });
+
+    it('should reject fragments in stylesheet references (RSC-013)', () => {
+      registry.registerResource(createResource('styles.css', false, ['section1']));
+      validator.addReference(
+        createReference('styles.css#section1', ReferenceType.STYLESHEET, 'OEBPS/chapter1.xhtml'),
+      );
+      validator.validate(context);
+      const rscErrors = context.messages.filter((m) => m.id === 'RSC-013');
+      expect(rscErrors).toHaveLength(1);
+    });
   });
 
   describe('URL validation', () => {
