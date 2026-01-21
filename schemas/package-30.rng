@@ -479,8 +479,55 @@
     </element>
   </define>
   <define name="opf.metadata.content">
+    <!-- Flattened interleave to avoid nested interleave issues in libxml2 -->
     <interleave>
-      <ref name="opf.dc.elems"/>
+      <!-- DC elements (inlined from opf.dc.elems) -->
+      <oneOrMore>
+        <ref name="opf.dc.identifier"/>
+      </oneOrMore>
+      <oneOrMore>
+        <ref name="opf.dc.title"/>
+      </oneOrMore>
+      <oneOrMore>
+        <ref name="opf.dc.language"/>
+      </oneOrMore>
+      <optional>
+        <ref name="opf.dc.date"/>
+      </optional>
+      <zeroOrMore>
+        <ref name="opf.dc.source"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.type"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.format"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.creator"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.subject"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.description"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.publisher"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.contributor"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.relation"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.coverage"/>
+      </zeroOrMore>
+      <zeroOrMore>
+        <ref name="opf.dc.rights"/>
+      </zeroOrMore>
+      <!-- meta and link elements -->
       <zeroOrMore>
         <ref name="opf.meta"/>
       </zeroOrMore>
