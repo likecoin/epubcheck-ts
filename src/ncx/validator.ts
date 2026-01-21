@@ -127,7 +127,11 @@ export class NCXValidator {
         }
       }
 
-      if (!context.files.has(fullPath) && !srcBase.startsWith('http://') && !srcBase.startsWith('https://')) {
+      if (
+        !context.files.has(fullPath) &&
+        !srcBase.startsWith('http://') &&
+        !srcBase.startsWith('https://')
+      ) {
         context.messages.push({
           id: 'NCX-006',
           severity: 'error',

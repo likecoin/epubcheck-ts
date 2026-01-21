@@ -53,7 +53,7 @@ This document tracks the implementation progress compared to the original Java E
 | dc:identifier required | ✅ | ✅ | OPF-015 | Implemented |
 | dc:title required | ✅ | ✅ | OPF-016 | Implemented |
 | dc:language required | ✅ | ✅ | OPF-017 | Implemented |
-| dc:date format | ✅ | ✅ | OPF-053, OPF-054 | W3C date validation |
+| dc:date format | ✅ | ✅ | OPF-053, OPF-054 | W3C date validation (including partial dates like YYYY-MM) |
 | dcterms:modified | ✅ | ✅ | OPF-054 | EPUB 3 |
 | dc:creator role | ✅ | ✅ | OPF-052 | MARC relator codes |
 | Empty metadata | ✅ | ✅ | OPF-072 | - |
@@ -61,7 +61,7 @@ This document tracks the implementation progress compared to the original Java E
 | Manifest file exists | ✅ | ✅ | OPF-010 | Implemented |
 | Media type format | ✅ | ✅ | OPF-014 | RFC4288 validation |
 | Deprecated types | ✅ | ✅ | OPF-035, OPF-037, OPF-038 | OEB 1.x warnings |
-| Remote resources | ✅ | ✅ | RSC-006, RSC-006b | Property requirement |
+| Remote resources | ✅ | ✅ | RSC-006, RSC-006b | Property requirement (images, audio, video, stylesheets only; not hyperlinks) |
 | Data URLs | ✅ | ✅ | RSC-029 | EPUB 3 |
 | META-INF items | ✅ | ✅ | PKG-025 | - |
 | Item properties | ✅ | ✅ | OPF-012 | nav, cover-image, etc. |

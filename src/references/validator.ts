@@ -2,7 +2,7 @@
  * Cross-reference validator for EPUB resources
  */
 
-import type { ValidationContext } from '../types.js';
+import type { ValidationContext, EPUBVersion } from '../types.js';
 import type { ResourceRegistry } from './registry.js';
 import type { Reference } from './types.js';
 import { ReferenceType, isPublicationResourceReference } from './types.js';
@@ -127,7 +127,17 @@ export class ReferenceValidator {
     }
 
     // Check for parent directory references in original URL
-    if (hasParentDirectoryReference(reference.url)) {
+    // Note: Parent directory references are allowed for stylesheets, images, and other resources
+    // They are only forbidden for hyperlinks and navigation references
+    const forbiddenParentDirTypes = [
+      ReferenceType.HYPERLINK,
+      ReferenceType.NAV_TOC_LINK,
+      ReferenceType.NAV_PAGELIST_LINK,
+    ];
+    if (
+      hasParentDirectoryReference(reference.url) &&
+      forbiddenParentDirTypes.includes(reference.type)
+    ) {
       context.messages.push({
         id: 'RSC-028',
         severity: 'error',
@@ -161,13 +171,25 @@ export class ReferenceValidator {
     }
 
     // Check if publication resources point to content documents
-    if (isPublicationResourceReference(reference.type) && !resource?.inSpine) {
-      context.messages.push({
-        id: 'RSC-010',
-        severity: 'error',
-        message: 'Publication resource references must point to content documents',
-        location: reference.location,
-      });
+    // RSC-010: Hyperlinks and overlay text links must point to blessed content document types
+    if (
+      reference.type === ReferenceType.HYPERLINK ||
+      reference.type === ReferenceType.OVERLAY_TEXT_LINK
+    ) {
+      const targetMimeType = resource?.mimeType;
+      if (
+        targetMimeType &&
+        !this.isBlessedItemType(targetMimeType, context.version) &&
+        !this.isDeprecatedBlessedItemType(targetMimeType) &&
+        !resource.hasCoreMediaTypeFallback
+      ) {
+        context.messages.push({
+          id: 'RSC-010',
+          severity: 'error',
+          message: 'Publication resource references must point to content documents',
+          location: reference.location,
+        });
+      }
     }
   }
 
@@ -260,36 +282,55 @@ export class ReferenceValidator {
 
   /**
    * Check for resources that were never referenced
+   * Following Java EPUBCheck OPFChecker30.java logic:
+   * - Skip items in spine (implicitly referenced)
+   * - Skip nav and NCX resources
+   * - Only check for "publication resource references" (not HYPERLINK)
    */
   private checkUndeclaredResources(context: ValidationContext): void {
-    // Get all resources that are referenced
     const referencedResources = new Set(
       this.references
         .filter((ref) => {
-          // Only count references that point to existing resources
-          const parsed = parseURL(ref.url);
-          return this.registry.hasResource(parsed.resource);
+          if (!isPublicationResourceReference(ref.type)) {
+            return false;
+          }
+          const targetResource = ref.targetResource || parseURL(ref.url).resource;
+          return this.registry.hasResource(targetResource);
         })
-        .map((ref) => parseURL(ref.url).resource),
+        .map((ref) => ref.targetResource || parseURL(ref.url).resource),
     );
 
     for (const resource of this.registry.getAllResources()) {
-      // Skip resources that are referenced
+      if (resource.inSpine) continue;
       if (referencedResources.has(resource.url)) continue;
-
-      // Skip resources that don't typically need to be referenced
-      // (this is a simplified check - real EPUBCheck has more complex logic)
-      const skipPatterns = ['nav', 'cover-image', 'toc.ncx'];
-      if (skipPatterns.some((pattern) => resource.url.includes(pattern))) {
-        continue;
-      }
+      if (resource.url.includes('nav')) continue;
+      if (resource.url.includes('toc.ncx') || resource.url.includes('.ncx')) continue;
+      if (resource.url.includes('cover-image')) continue;
 
       context.messages.push({
         id: 'OPF-097',
-        severity: 'warning',
+        severity: 'usage',
         message: `Resource declared in manifest but not referenced: ${resource.url}`,
         location: { path: resource.url },
       });
     }
+  }
+
+  /**
+   * Check if a MIME type is a blessed content document type
+   */
+  private isBlessedItemType(mimeType: string, version: EPUBVersion): boolean {
+    if (version === '2.0') {
+      return mimeType === 'application/xhtml+xml' || mimeType === 'application/x-dtbook+xml';
+    } else {
+      return mimeType === 'application/xhtml+xml' || mimeType === 'image/svg+xml';
+    }
+  }
+
+  /**
+   * Check if a MIME type is a deprecated blessed content document type
+   */
+  private isDeprecatedBlessedItemType(mimeType: string): boolean {
+    return mimeType === 'text/x-oeb1-document' || mimeType === 'text/html';
   }
 }

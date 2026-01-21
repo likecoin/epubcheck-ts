@@ -16,10 +16,18 @@ describe('OPFValidator', () => {
 
   const toBytes = (str: string): Uint8Array => new TextEncoder().encode(str);
 
-  const createContext = (opfContent: string, additionalFiles: Record<string, string> = {}): ValidationContext => {
+  const createContext = (
+    opfContent: string,
+    additionalFiles: Record<string, string> = {},
+  ): ValidationContext => {
     const files = new Map<string, Uint8Array>();
     files.set('OEBPS/content.opf', toBytes(opfContent));
-    files.set('OEBPS/nav.xhtml', toBytes('<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Nav</title></head><body></body></html>'));
+    files.set(
+      'OEBPS/nav.xhtml',
+      toBytes(
+        '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Nav</title></head><body></body></html>',
+      ),
+    );
 
     for (const [path, content] of Object.entries(additionalFiles)) {
       files.set(path, toBytes(content));
@@ -298,7 +306,9 @@ describe('OPFValidator', () => {
       const context = createContext(opf);
       validator.validate(context);
 
-      const errors = context.messages.filter((m) => m.id === 'OPF-072' && m.message.includes('Metadata section is empty'));
+      const errors = context.messages.filter(
+        (m) => m.id === 'OPF-072' && m.message.includes('Metadata section is empty'),
+      );
       expect(errors).toHaveLength(1);
     });
 
@@ -444,7 +454,9 @@ describe('OPFValidator', () => {
       const context = createContext(opf, { 'OEBPS/other.xhtml': '<html/>' });
       validator.validate(context);
 
-      const errors = context.messages.filter((m) => m.id === 'OPF-074' && m.message.includes('Duplicate manifest item id'));
+      const errors = context.messages.filter(
+        (m) => m.id === 'OPF-074' && m.message.includes('Duplicate manifest item id'),
+      );
       expect(errors).toHaveLength(1);
     });
   });
@@ -605,7 +617,9 @@ describe('OPFValidator', () => {
       const context = createContext(validOPF);
       validator.validate(context);
 
-      const errors = context.messages.filter((m) => m.severity === 'error' || m.severity === 'fatal');
+      const errors = context.messages.filter(
+        (m) => m.severity === 'error' || m.severity === 'fatal',
+      );
       expect(errors).toHaveLength(0);
     });
   });

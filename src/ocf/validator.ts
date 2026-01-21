@@ -224,7 +224,12 @@ export class OCFValidator {
       return;
     }
 
-    const allowedFiles = new Set(['container.xml', 'encryption.xml', 'signatures.xml', 'metadata.xml']);
+    const allowedFiles = new Set([
+      'container.xml',
+      'encryption.xml',
+      'signatures.xml',
+      'metadata.xml',
+    ]);
 
     for (const file of metaInfFiles) {
       const filename = file.replace('META-INF/', '');
@@ -246,7 +251,7 @@ export class OCFValidator {
     for (const path of zip.paths) {
       if (path === 'mimetype') continue;
 
-      const filename = path.includes('/') ? path.split('/').pop() ?? path : path;
+      const filename = path.includes('/') ? (path.split('/').pop() ?? path) : path;
 
       if (filename === '' || filename === '.' || filename === '..') {
         messages.push({

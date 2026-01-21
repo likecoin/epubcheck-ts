@@ -223,25 +223,99 @@ export class OPFValidator {
         if (opfRole?.startsWith('marc:')) {
           const relatorCode = opfRole.substring(5);
           const validRelatorCodes = new Set([
-            'arr', 'aut', 'aut', 'ccp',
-            'com', 'ctb', 'csl', 'edt', 'ill',
-            'itr', 'pbl', 'pdr', 'prt', 'trl',
-            'cre', 'art', 'ctb', 'edt', 'pfr',
-            'red', 'rev', 'spn', 'dsx', 'pmc',
-            'dte', 'ove', 'trc', 'ldr', 'led',
-            'prg', 'rap', 'rce', 'rpc', 'rtr',
-            'sad', 'sgn', 'tce', 'aac', 'acq',
-            'ant', 'arr', 'art', 'ard', 'asg',
-            'aus', 'aft', 'bdd', 'bdd', 'clb',
-            'clc', 'drd', 'edt', 'edt', 'fmd',
-            'flm', 'fmo', 'fpy', 'hnr', 'ill',
-            'ilt', 'img', 'itr', 'lrg', 'lsa',
-            'led', 'lee', 'lel', 'lgd', 'lse',
-            'mfr', 'mod', 'mon', 'mus', 'nrt',
-            'ogt', 'org', 'oth', 'pnt', 'ppa',
-            'prv', 'pup', 'red', 'rev', 'rsg',
-            'srv', 'stn', 'stl', 'trc', 'typ',
-            'vdg', 'voc', 'wac', 'wdc',
+            'arr',
+            'aut',
+            'aut',
+            'ccp',
+            'com',
+            'ctb',
+            'csl',
+            'edt',
+            'ill',
+            'itr',
+            'pbl',
+            'pdr',
+            'prt',
+            'trl',
+            'cre',
+            'art',
+            'ctb',
+            'edt',
+            'pfr',
+            'red',
+            'rev',
+            'spn',
+            'dsx',
+            'pmc',
+            'dte',
+            'ove',
+            'trc',
+            'ldr',
+            'led',
+            'prg',
+            'rap',
+            'rce',
+            'rpc',
+            'rtr',
+            'sad',
+            'sgn',
+            'tce',
+            'aac',
+            'acq',
+            'ant',
+            'arr',
+            'art',
+            'ard',
+            'asg',
+            'aus',
+            'aft',
+            'bdd',
+            'bdd',
+            'clb',
+            'clc',
+            'drd',
+            'edt',
+            'edt',
+            'fmd',
+            'flm',
+            'fmo',
+            'fpy',
+            'hnr',
+            'ill',
+            'ilt',
+            'img',
+            'itr',
+            'lrg',
+            'lsa',
+            'led',
+            'lee',
+            'lel',
+            'lgd',
+            'lse',
+            'mfr',
+            'mod',
+            'mon',
+            'mus',
+            'nrt',
+            'ogt',
+            'org',
+            'oth',
+            'pnt',
+            'ppa',
+            'prv',
+            'pup',
+            'red',
+            'rev',
+            'rsg',
+            'srv',
+            'stn',
+            'stl',
+            'trc',
+            'typ',
+            'vdg',
+            'voc',
+            'wac',
+            'wdc',
           ]);
           if (!validRelatorCodes.has(relatorCode)) {
             context.messages.push({
@@ -385,7 +459,10 @@ export class OPFValidator {
       }
 
       // EPUB 3: Check for remote resources require remote-resources property (RSC-006b)
-      if (this.packageDoc.version !== '2.0' && (item.href.startsWith('http://') || item.href.startsWith('https://'))) {
+      if (
+        this.packageDoc.version !== '2.0' &&
+        (item.href.startsWith('http://') || item.href.startsWith('https://'))
+      ) {
         if (!item.properties?.includes('remote-resources')) {
           context.messages.push({
             id: 'RSC-006',
@@ -671,7 +748,10 @@ export class OPFValidator {
             continue;
           }
 
-          if (manifestItem.mediaType !== 'application/xhtml+xml' && manifestItem.mediaType !== 'image/svg+xml') {
+          if (
+            manifestItem.mediaType !== 'application/xhtml+xml' &&
+            manifestItem.mediaType !== 'image/svg+xml'
+          ) {
             context.messages.push({
               id: 'OPF-074',
               severity: 'error',
@@ -779,7 +859,8 @@ function resolvePath(basePath: string, relativePath: string): string {
  * Validate MIME type format according to RFC4288
  */
 function isValidMimeType(mediaType: string): boolean {
-  const mimeTypePattern = /^[a-zA-Z][a-zA-Z0-9!#$&\-^_]*\/[a-zA-Z0-9][a-zA-Z0-9!#$&\-^_+]*(?:\s*;\s*[a-zA-Z0-9-]+=[^;]+)?$/;
+  const mimeTypePattern =
+    /^[a-zA-Z][a-zA-Z0-9!#$&\-^_]*\/[a-zA-Z0-9][a-zA-Z0-9!#$&\-^_+]*(?:\s*;\s*[a-zA-Z0-9-]+=[^;]+)?$/;
 
   if (!mimeTypePattern.test(mediaType)) {
     return false;
@@ -800,38 +881,55 @@ function isValidMimeType(mediaType: string): boolean {
 
 /**
  * Validate W3C date format (ISO 8601)
- * Accepts: YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS[Z|+/-HH:MM]
+ * Based on Java EPUBCheck DateParser
  */
 function isValidW3CDateFormat(dateStr: string): boolean {
-  const dateOnlyPattern = /^\d{4}-\d{2}-\d{2}$/;
-  const dateTimePattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})?$/;
+  const trimmed = dateStr.trim();
 
-  if (dateOnlyPattern.test(dateStr)) {
-    const parts = dateStr.split('-');
-    const year = Number(parts[0]);
-    const month = Number(parts[1]);
-    const day = Number(parts[2]);
+  const yearOnlyPattern = /^\d{4}$/;
+  if (yearOnlyPattern.test(trimmed)) {
+    const year = Number(trimmed);
+    return year >= 0 && year <= 9999;
+  }
+
+  const yearMonthPattern = /^(\d{4})-(\d{2})$/;
+  const yearMonthMatch = yearMonthPattern.exec(trimmed);
+  if (yearMonthMatch) {
+    const year = Number(yearMonthMatch[1]);
+    const month = Number(yearMonthMatch[2]);
+    if (year < 0 || year > 9999) return false;
+    if (month < 1 || month > 12) return false;
+    return true;
+  }
+
+  const dateOnlyPattern = /^(\d{4})-(\d{2})-(\d{2})$/;
+  const dateMatch = dateOnlyPattern.exec(trimmed);
+  if (dateMatch) {
+    const year = Number(dateMatch[1]);
+    const month = Number(dateMatch[2]);
+    const day = Number(dateMatch[3]);
+    if (year < 0 || year > 9999) return false;
     if (month < 1 || month > 12) return false;
     const daysInMonth = new Date(year, month, 0).getDate();
     if (day < 1 || day > daysInMonth) return false;
     return true;
   }
 
-  if (dateTimePattern.test(dateStr)) {
-    const datePart = dateStr.substring(0, 10);
-    const dateParts = datePart.split('-');
-    const year = Number(dateParts[0]);
-    const month = Number(dateParts[1]);
-    const day = Number(dateParts[2]);
+  const dateTimePattern =
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?(Z|[+-]\d{2}:\d{2})?$/;
+  const dateTimeMatch = dateTimePattern.exec(trimmed);
+  if (dateTimeMatch) {
+    const year = Number(dateTimeMatch[1]);
+    const month = Number(dateTimeMatch[2]);
+    const day = Number(dateTimeMatch[3]);
+    if (year < 0 || year > 9999) return false;
     if (month < 1 || month > 12) return false;
     const daysInMonth = new Date(year, month, 0).getDate();
     if (day < 1 || day > daysInMonth) return false;
 
-    const timePart = dateStr.substring(11, 19);
-    const timeParts = timePart.split(':');
-    const hours = Number(timeParts[0]);
-    const minutes = Number(timeParts[1]);
-    const seconds = Number(timeParts[2]);
+    const hours = Number(dateTimeMatch[4]);
+    const minutes = Number(dateTimeMatch[5]);
+    const seconds = Number(dateTimeMatch[6]);
     if (hours < 0 || hours > 23) return false;
     if (minutes < 0 || minutes > 59) return false;
     if (seconds < 0 || seconds > 59) return false;

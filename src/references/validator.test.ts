@@ -231,11 +231,13 @@ describe('ReferenceValidator', () => {
 
   describe('unused resources', () => {
     it('should report unreferenced resources', () => {
-      registry.registerResource(createResource('unused.xhtml', true));
+      // Register a resource that is NOT in spine (inSpine: false)
+      // Spine items are implicitly referenced and should NOT trigger OPF-097
+      registry.registerResource(createResource('unused.xhtml', false));
       validator.validate(context);
       const opfErrors = context.messages.filter((m) => m.id === 'OPF-097');
       expect(opfErrors).toHaveLength(1);
-      expect(opfErrors[0]?.severity).toBe('warning');
+      expect(opfErrors[0]?.severity).toBe('usage');
     });
 
     it('should not report referenced resources', () => {

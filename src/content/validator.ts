@@ -213,6 +213,8 @@ export class ContentValidator {
       // Extract hyperlinks and register with reference validator
       if (refValidator && opfDir !== undefined) {
         this.extractAndRegisterHyperlinks(path, root, opfDir, refValidator);
+        this.extractAndRegisterStylesheets(path, root, opfDir, refValidator);
+        this.extractAndRegisterImages(path, root, opfDir, refValidator);
       }
     } finally {
       doc.dispose();
@@ -389,19 +391,20 @@ export class ContentValidator {
     return false;
   }
 
+  /**
+   * Detect if the content document references remote resources that require
+   * the "remote-resources" property in the manifest.
+   * Per EPUB spec and Java EPUBCheck behavior:
+   * - Remote images, audio, video, fonts REQUIRE the property
+   * - Remote hyperlinks (<a href>) do NOT require the property
+   * - Remote scripts do NOT require the property (scripted property is used instead)
+   * - Remote stylesheets DO require the property
+   */
   private detectRemoteResources(
     _context: ValidationContext,
     _path: string,
     root: XmlElement,
   ): boolean {
-    const links = root.find('.//html:a[@href]', { html: 'http://www.w3.org/1999/xhtml' });
-    for (const link of links) {
-      const href = this.getAttribute(link as XmlElement, 'href');
-      if (href && (href.startsWith('http://') || href.startsWith('https://'))) {
-        return true;
-      }
-    }
-
     const images = root.find('.//html:img[@src]', { html: 'http://www.w3.org/1999/xhtml' });
     for (const img of images) {
       const src = this.getAttribute(img as XmlElement, 'src');
@@ -410,19 +413,40 @@ export class ContentValidator {
       }
     }
 
-    const scripts = root.find('.//html:script[@src]', { html: 'http://www.w3.org/1999/xhtml' });
-    for (const script of scripts) {
-      const src = this.getAttribute(script as XmlElement, 'src');
+    const audio = root.find('.//html:audio[@src]', { html: 'http://www.w3.org/1999/xhtml' });
+    for (const elem of audio) {
+      const src = this.getAttribute(elem as XmlElement, 'src');
       if (src && (src.startsWith('http://') || src.startsWith('https://'))) {
         return true;
       }
     }
 
-    const linkElements = root.find('.//html:link[@href]', { html: 'http://www.w3.org/1999/xhtml' });
-    for (const linkElem of linkElements) {
-      const href = this.getAttribute(linkElem as XmlElement, 'href');
-      if (href && (href.startsWith('http://') || href.startsWith('https://'))) {
+    const video = root.find('.//html:video[@src]', { html: 'http://www.w3.org/1999/xhtml' });
+    for (const elem of video) {
+      const src = this.getAttribute(elem as XmlElement, 'src');
+      if (src && (src.startsWith('http://') || src.startsWith('https://'))) {
         return true;
+      }
+    }
+
+    const sources = root.find('.//html:source[@src]', { html: 'http://www.w3.org/1999/xhtml' });
+    for (const source of sources) {
+      const src = this.getAttribute(source as XmlElement, 'src');
+      if (src && (src.startsWith('http://') || src.startsWith('https://'))) {
+        return true;
+      }
+    }
+
+    const linkElements = root.find('.//html:link[@rel and @href]', {
+      html: 'http://www.w3.org/1999/xhtml',
+    });
+    for (const linkElem of linkElements) {
+      const rel = this.getAttribute(linkElem as XmlElement, 'rel');
+      const href = this.getAttribute(linkElem as XmlElement, 'href');
+      if (href && rel?.toLowerCase().includes('stylesheet')) {
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+          return true;
+        }
       }
     }
 
@@ -473,7 +497,10 @@ export class ContentValidator {
       }
     }
 
-    const svgLinks = root.find('.//svg:a', { svg: 'http://www.w3.org/2000/svg' });
+    const svgLinks = root.find('.//svg:a', {
+      svg: 'http://www.w3.org/2000/svg',
+      xlink: 'http://www.w3.org/1999/xlink',
+    });
     for (const svgLink of svgLinks) {
       const svgElem = svgLink as XmlElement;
       const title = svgElem.get('./svg:title', { svg: 'http://www.w3.org/2000/svg' });
@@ -519,7 +546,9 @@ export class ContentValidator {
       if (!srcAttr) continue;
 
       const src = srcAttr;
-      const opfDir = context.opfPath?.includes('/') ? context.opfPath.substring(0, context.opfPath.lastIndexOf('/')) : '';
+      const opfDir = context.opfPath?.includes('/')
+        ? context.opfPath.substring(0, context.opfPath.lastIndexOf('/'))
+        : '';
 
       let fullPath = src;
       if (opfDir && !src.startsWith('http://') && !src.startsWith('https://')) {
@@ -543,7 +572,9 @@ export class ContentValidator {
         continue;
       }
 
-      const manifestItem = packageDoc.manifest.find((item) => fullPath.endsWith(item.href) || item.href.endsWith(fullPath));
+      const manifestItem = packageDoc.manifest.find(
+        (item) => fullPath.endsWith(item.href) || item.href.endsWith(fullPath),
+      );
       if (!manifestItem) {
         context.messages.push({
           id: 'MED-001',
@@ -596,7 +627,11 @@ export class ContentValidator {
       for (const part of epubTypeValue.split(/\s+/)) {
         const prefix = part.includes(':') ? part.substring(0, part.indexOf(':')) : '';
 
-        if (!knownPrefixes.has(prefix) && !prefix.startsWith('http://') && !prefix.startsWith('https://')) {
+        if (
+          !knownPrefixes.has(prefix) &&
+          !prefix.startsWith('http://') &&
+          !prefix.startsWith('https://')
+        ) {
           context.messages.push({
             id: 'OPF-088',
             severity: 'warning',
@@ -608,7 +643,11 @@ export class ContentValidator {
     }
   }
 
-  private validateStylesheetLinks(context: ValidationContext, path: string, root: XmlElement): void {
+  private validateStylesheetLinks(
+    context: ValidationContext,
+    path: string,
+    root: XmlElement,
+  ): void {
     const linkElements = root.find('.//html:link[@rel]', { html: 'http://www.w3.org/1999/xhtml' });
 
     const stylesheetTitles = new Map<string, Set<string>>();
@@ -714,7 +753,8 @@ export class ContentValidator {
           context.messages.push({
             id: 'HTM-046',
             severity: 'warning',
-            message: 'Viewport meta element should have a content attribute in fixed-layout documents',
+            message:
+              'Viewport meta element should have a content attribute in fixed-layout documents',
             location: { path },
           });
           return;
@@ -735,7 +775,8 @@ export class ContentValidator {
           context.messages.push({
             id: 'HTM-048',
             severity: 'warning',
-            message: 'Viewport height should not be set to "device-height" in fixed-layout documents',
+            message:
+              'Viewport height should not be set to "device-height" in fixed-layout documents',
             location: { path },
           });
         }
@@ -752,11 +793,7 @@ export class ContentValidator {
     });
   }
 
-  private extractAndRegisterIDs(
-    path: string,
-    root: XmlElement,
-    registry: ResourceRegistry,
-  ): void {
+  private extractAndRegisterIDs(path: string, root: XmlElement, registry: ResourceRegistry): void {
     const elementsWithId = root.find('.//*[@id]');
     for (const elem of elementsWithId) {
       const id = this.getAttribute(elem as XmlElement, 'id');
@@ -815,7 +852,10 @@ export class ContentValidator {
       refValidator.addReference(ref);
     }
 
-    const svgLinks = root.find('.//svg:a', { svg: 'http://www.w3.org/2000/svg' });
+    const svgLinks = root.find('.//svg:a', {
+      svg: 'http://www.w3.org/2000/svg',
+      xlink: 'http://www.w3.org/1999/xlink',
+    });
     for (const link of svgLinks) {
       const elem = link as XmlElement;
       const href = this.getAttribute(elem, 'xlink:href') ?? this.getAttribute(elem, 'href');
@@ -852,6 +892,145 @@ export class ContentValidator {
         svgRef.fragment = svgFragment;
       }
       refValidator.addReference(svgRef);
+    }
+  }
+
+  private extractAndRegisterStylesheets(
+    path: string,
+    root: XmlElement,
+    opfDir: string,
+    refValidator: ReferenceValidator,
+  ): void {
+    const docDir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
+
+    const linkElements = root.find('.//html:link[@href]', { html: 'http://www.w3.org/1999/xhtml' });
+    for (const linkElem of linkElements) {
+      const href = this.getAttribute(linkElem as XmlElement, 'href');
+      const rel = this.getAttribute(linkElem as XmlElement, 'rel');
+      if (!href) continue;
+
+      const isStylesheet = rel?.toLowerCase().includes('stylesheet');
+      const type = isStylesheet ? ReferenceType.STYLESHEET : ReferenceType.LINK;
+
+      if (href.startsWith('http://') || href.startsWith('https://')) {
+        // Still register remote resources
+        refValidator.addReference({
+          url: href,
+          targetResource: href,
+          type,
+          location: { path },
+        });
+        continue;
+      }
+
+      const resolvedPath = this.resolveRelativePath(docDir, href, opfDir);
+      const hashIndex = resolvedPath.indexOf('#');
+      const targetResource = hashIndex >= 0 ? resolvedPath.slice(0, hashIndex) : resolvedPath;
+
+      refValidator.addReference({
+        url: href,
+        targetResource,
+        type,
+        location: { path },
+      });
+    }
+  }
+
+  private extractAndRegisterImages(
+    path: string,
+    root: XmlElement,
+    opfDir: string,
+    refValidator: ReferenceValidator,
+  ): void {
+    const docDir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
+
+    const images = root.find('.//html:img[@src]', { html: 'http://www.w3.org/1999/xhtml' });
+    for (const img of images) {
+      const src = this.getAttribute(img as XmlElement, 'src');
+      if (!src) continue;
+
+      if (src.startsWith('http://') || src.startsWith('https://')) {
+        // Still register remote resources
+        refValidator.addReference({
+          url: src,
+          targetResource: src,
+          type: ReferenceType.IMAGE,
+          location: { path },
+        });
+        continue;
+      }
+
+      const resolvedPath = this.resolveRelativePath(docDir, src, opfDir);
+      refValidator.addReference({
+        url: src,
+        targetResource: resolvedPath,
+        type: ReferenceType.IMAGE,
+        location: { path },
+      });
+    }
+
+    // Also check for images in SVG - use separate queries to avoid XPath 'or' issues
+    let svgImages: unknown[] = [];
+    try {
+      const svgImagesXlink = root.find('.//svg:image[@xlink:href]', {
+        svg: 'http://www.w3.org/2000/svg',
+        xlink: 'http://www.w3.org/1999/xlink',
+      });
+      const svgImagesHref = root.find('.//svg:image[@href]', {
+        svg: 'http://www.w3.org/2000/svg',
+      });
+      svgImages = [...svgImagesXlink, ...svgImagesHref];
+    } catch {
+      // Fallback: skip SVG image extraction if namespace resolution fails
+      svgImages = [];
+    }
+    for (const svgImg of svgImages) {
+      const elem = svgImg as XmlElement;
+      const href = this.getAttribute(elem, 'xlink:href') ?? this.getAttribute(elem, 'href');
+      if (!href) continue;
+
+      if (href.startsWith('http://') || href.startsWith('https://')) {
+        refValidator.addReference({
+          url: href,
+          targetResource: href,
+          type: ReferenceType.IMAGE,
+          location: { path },
+        });
+        continue;
+      }
+
+      const resolvedPath = this.resolveRelativePath(docDir, href, opfDir);
+      refValidator.addReference({
+        url: href,
+        targetResource: resolvedPath,
+        type: ReferenceType.IMAGE,
+        location: { path },
+      });
+    }
+
+    // Check for poster images on video elements
+    const videos = root.find('.//html:video[@poster]', { html: 'http://www.w3.org/1999/xhtml' });
+    for (const video of videos) {
+      const poster = this.getAttribute(video as XmlElement, 'poster');
+      if (!poster) continue;
+
+      if (poster.startsWith('http://') || poster.startsWith('https://')) {
+        refValidator.addReference({
+          url: poster,
+          targetResource: poster,
+          type: ReferenceType.IMAGE,
+          location: { path },
+        });
+        continue;
+      }
+
+      const resolvedPath = this.resolveRelativePath(docDir, poster, opfDir);
+      refValidator.addReference({
+        url: poster,
+        targetResource: resolvedPath,
+        type: ReferenceType.IMAGE,
+        location: { path },
+      });
     }
   }
 

@@ -65,11 +65,7 @@ export class CSSValidator {
   /**
    * Validate CSS content and extract references
    */
-  validate(
-    context: ValidationContext,
-    css: string,
-    resourcePath: string,
-  ): CSSValidationResult {
+  validate(context: ValidationContext, css: string, resourcePath: string): CSSValidationResult {
     const result: CSSValidationResult = {
       references: [],
       fontFamilies: [],

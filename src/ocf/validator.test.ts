@@ -282,7 +282,9 @@ describe('OCFValidator', () => {
       validator.validate(context);
 
       // The minimal epub doesn't have control characters, so no error expected
-      const errors = context.messages.filter((m) => m.id === 'PKG-010' && m.message.includes('control character'));
+      const errors = context.messages.filter(
+        (m) => m.id === 'PKG-010' && m.message.includes('control character'),
+      );
       expect(errors).toHaveLength(0);
     });
 

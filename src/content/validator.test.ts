@@ -588,7 +588,12 @@ describe('ContentValidator', () => {
 </html>`;
       const files = new Map([['OEBPS/chapter1.xhtml', toBytes(scriptedXHTML)]]);
       const packageDoc = createPackageDoc([
-        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml', properties: ['scripted'] },
+        {
+          id: 'ch1',
+          href: 'chapter1.xhtml',
+          mediaType: 'application/xhtml+xml',
+          properties: ['scripted'],
+        },
       ]);
       context = createContext(files, packageDoc);
       validator.validate(context);
@@ -825,7 +830,9 @@ describe('ContentValidator', () => {
       context = createContext(files, packageDoc);
       validator.validate(context);
 
-      const errors = context.messages.filter((m) => m.id === 'OPF-014' && m.message.includes('mathml'));
+      const errors = context.messages.filter(
+        (m) => m.id === 'OPF-014' && m.message.includes('mathml'),
+      );
       expect(errors).toHaveLength(1);
     });
 
@@ -843,12 +850,19 @@ describe('ContentValidator', () => {
 </html>`;
       const files = new Map([['OEBPS/chapter1.xhtml', toBytes(mathXHTML)]]);
       const packageDoc = createPackageDoc([
-        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml', properties: ['mathml'] },
+        {
+          id: 'ch1',
+          href: 'chapter1.xhtml',
+          mediaType: 'application/xhtml+xml',
+          properties: ['mathml'],
+        },
       ]);
       context = createContext(files, packageDoc);
       validator.validate(context);
 
-      const errors = context.messages.filter((m) => m.id === 'OPF-014' && m.message.includes('mathml'));
+      const errors = context.messages.filter(
+        (m) => m.id === 'OPF-014' && m.message.includes('mathml'),
+      );
       expect(errors).toHaveLength(0);
     });
   });
@@ -873,7 +887,9 @@ describe('ContentValidator', () => {
       context = createContext(files, packageDoc);
       validator.validate(context);
 
-      const errors = context.messages.filter((m) => m.id === 'OPF-014' && m.message.includes('svg'));
+      const errors = context.messages.filter(
+        (m) => m.id === 'OPF-014' && m.message.includes('svg'),
+      );
       expect(errors).toHaveLength(1);
     });
 
@@ -891,12 +907,19 @@ describe('ContentValidator', () => {
 </html>`;
       const files = new Map([['OEBPS/chapter1.xhtml', toBytes(svgXHTML)]]);
       const packageDoc = createPackageDoc([
-        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml', properties: ['svg'] },
+        {
+          id: 'ch1',
+          href: 'chapter1.xhtml',
+          mediaType: 'application/xhtml+xml',
+          properties: ['svg'],
+        },
       ]);
       context = createContext(files, packageDoc);
       validator.validate(context);
 
-      const errors = context.messages.filter((m) => m.id === 'OPF-014' && m.message.includes('svg'));
+      const errors = context.messages.filter(
+        (m) => m.id === 'OPF-014' && m.message.includes('svg'),
+      );
       expect(errors).toHaveLength(0);
     });
   });
@@ -919,7 +942,9 @@ describe('ContentValidator', () => {
       context = createContext(files, packageDoc);
       validator.validate(context);
 
-      const errors = context.messages.filter((m) => m.id === 'OPF-014' && m.message.includes('remote-resources'));
+      const errors = context.messages.filter(
+        (m) => m.id === 'OPF-014' && m.message.includes('remote-resources'),
+      );
       expect(errors).toHaveLength(1);
     });
 
@@ -941,7 +966,9 @@ describe('ContentValidator', () => {
       context = createContext(files, packageDoc);
       validator.validate(context);
 
-      const errors = context.messages.filter((m) => m.id === 'OPF-014' && m.message.includes('remote-resources'));
+      const errors = context.messages.filter(
+        (m) => m.id === 'OPF-014' && m.message.includes('remote-resources'),
+      );
       expect(errors).toHaveLength(1);
     });
 
@@ -957,12 +984,19 @@ describe('ContentValidator', () => {
 </html>`;
       const files = new Map([['OEBPS/chapter1.xhtml', toBytes(remoteXHTML)]]);
       const packageDoc = createPackageDoc([
-        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml', properties: ['remote-resources'] },
+        {
+          id: 'ch1',
+          href: 'chapter1.xhtml',
+          mediaType: 'application/xhtml+xml',
+          properties: ['remote-resources'],
+        },
       ]);
       context = createContext(files, packageDoc);
       validator.validate(context);
 
-      const errors = context.messages.filter((m) => m.id === 'OPF-014' && m.message.includes('remote-resources'));
+      const errors = context.messages.filter(
+        (m) => m.id === 'OPF-014' && m.message.includes('remote-resources'),
+      );
       expect(errors).toHaveLength(0);
     });
   });
@@ -1034,7 +1068,12 @@ describe('ContentValidator', () => {
 </html>`;
       const files = new Map([['OEBPS/chapter1.xhtml', toBytes(fixedXHTML)]]);
       const packageDoc = createPackageDoc([
-        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml', properties: ['fixed-layout'] },
+        {
+          id: 'ch1',
+          href: 'chapter1.xhtml',
+          mediaType: 'application/xhtml+xml',
+          properties: ['fixed-layout'],
+        },
       ]);
       context = createContext(files, packageDoc);
       validator.validate(context);
@@ -1056,7 +1095,12 @@ describe('ContentValidator', () => {
 </html>`;
       const files = new Map([['OEBPS/chapter1.xhtml', toBytes(fixedXHTML)]]);
       const packageDoc = createPackageDoc([
-        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml', properties: ['fixed-layout'] },
+        {
+          id: 'ch1',
+          href: 'chapter1.xhtml',
+          mediaType: 'application/xhtml+xml',
+          properties: ['fixed-layout'],
+        },
       ]);
       context = createContext(files, packageDoc);
       validator.validate(context);
@@ -1079,7 +1123,12 @@ describe('ContentValidator', () => {
 </html>`;
       const files = new Map([['OEBPS/chapter1.xhtml', toBytes(fixedXHTML)]]);
       const packageDoc = createPackageDoc([
-        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml', properties: ['fixed-layout'] },
+        {
+          id: 'ch1',
+          href: 'chapter1.xhtml',
+          mediaType: 'application/xhtml+xml',
+          properties: ['fixed-layout'],
+        },
       ]);
       context = createContext(files, packageDoc);
       validator.validate(context);
@@ -1102,12 +1151,19 @@ describe('ContentValidator', () => {
 </html>`;
       const files = new Map([['OEBPS/chapter1.xhtml', toBytes(fixedXHTML)]]);
       const packageDoc = createPackageDoc([
-        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml', properties: ['fixed-layout'] },
+        {
+          id: 'ch1',
+          href: 'chapter1.xhtml',
+          mediaType: 'application/xhtml+xml',
+          properties: ['fixed-layout'],
+        },
       ]);
       context = createContext(files, packageDoc);
       validator.validate(context);
 
-      const warnings = context.messages.filter((m) => m.id === 'HTM-046' || m.id === 'HTM-047' || m.id === 'HTM-048');
+      const warnings = context.messages.filter(
+        (m) => m.id === 'HTM-046' || m.id === 'HTM-047' || m.id === 'HTM-048',
+      );
       expect(warnings).toHaveLength(0);
     });
 
