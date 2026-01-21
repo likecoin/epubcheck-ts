@@ -16,7 +16,7 @@ This document tracks the implementation progress compared to the original Java E
 | Accessibility | 100% | ~75% | 🟡 Partial |
 | Cross-reference | 100% | ~60% | 🟡 Partial |
 
-**Overall Completion: ~54%**
+**Overall Completion: ~56%**
 
 ---
 
@@ -77,9 +77,9 @@ This document tracks the implementation progress compared to the original Java E
 | Invalid spine media type | ✅ | ✅ | OPF-043 | Implemented |
 | Fallback chains | ✅ | ✅ | OPF-040, OPF-045 | Implemented |
 | Guide validation | ✅ | ✅ | OPF-031 | EPUB 2 |
-| Collections | ✅ | ❌ | OPF-071-084 | Dict, Index, Preview |
+| Collections | ✅ | ✅ | OPF-071-084 | Dict, Index, Preview |
 
-**Status: ~65% complete**
+**Status: ~70% complete**
 
 ---
 
@@ -395,11 +395,11 @@ This document tracks the implementation progress compared to the original Java E
 26. ~~Add empty directories check (PKG-014)~~
 27. ~~Add CSS media overlay classes validation (CSS-029, CSS-030)~~
 28. ~~Add fixed-layout viewport validation (HTM-046-060)~~
+29. ~~Add collections validation (OPF-071-084)~~
 
 ### In Progress 🚧
 - None
 
 ### Upcoming 📋
 1. Link validation in content documents (RSC-007, RSC-010-011) - Medium Priority
-2. Collections validation (OPF-071-084) - Medium Priority
-3. OCF mimetype uncompressed check (PKG-006) - Medium Priority
+2. OCF mimetype uncompressed check (PKG-006) - Medium Priority

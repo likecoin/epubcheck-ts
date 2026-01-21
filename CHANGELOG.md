@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Remote resources property requirement check (RSC-006b)
   - dc:creator MARC relator code validation (OPF-052)
   - Empty metadata section check (OPF-072)
+  - Collections validation (OPF-071-084) - Dictionary, Index, Preview collection support
 - NCX validation enhancements:
   - navPoint content src reference validation (NCX-006)
 - Content document validation enhancements:
@@ -57,7 +58,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- Overall completion improved from ~52% to ~54%
+- Overall completion improved from ~54% to ~56%
+- OPF validation completion improved from ~65% to ~70%
 - OCF validation completion improved from ~55% to ~65%
 - Content validation completion improved from ~50% to ~52%
 - CSS validation completion improved from ~40% to ~50%

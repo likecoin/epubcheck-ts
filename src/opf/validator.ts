@@ -78,6 +78,10 @@ export class OPFValidator {
     if (this.packageDoc.version === '2.0') {
       this.validateGuide(context, opfPath);
     }
+
+    if (this.packageDoc.version.startsWith('3.')) {
+      this.validateCollections(context, opfPath);
+    }
   }
 
   /**
@@ -621,6 +625,99 @@ export class OPFValidator {
           message: `Guide reference "${ref.type}" references item not in manifest: ${ref.href}`,
           location: { path: opfPath },
         });
+      }
+    }
+  }
+
+  private validateCollections(context: ValidationContext, opfPath: string): void {
+    if (!this.packageDoc) return;
+
+    const collections = this.packageDoc.collections;
+    if (collections.length === 0) {
+      return;
+    }
+
+    const validRoles = new Set(['dictionary', 'index', 'preview', 'recordings']);
+
+    for (const collection of collections) {
+      if (!validRoles.has(collection.role)) {
+        context.messages.push({
+          id: 'OPF-071',
+          severity: 'warning',
+          message: `Unknown collection role: "${collection.role}"`,
+          location: { path: opfPath },
+        });
+      }
+
+      if (collection.role === 'dictionary') {
+        if (!collection.name || collection.name.trim() === '') {
+          context.messages.push({
+            id: 'OPF-072',
+            severity: 'error',
+            message: 'Dictionary collection must have a name attribute',
+            location: { path: opfPath },
+          });
+        }
+
+        for (const itemref of collection.itemrefs) {
+          const manifestItem = this.manifestById.get(itemref);
+          if (!manifestItem) {
+            context.messages.push({
+              id: 'OPF-073',
+              severity: 'error',
+              message: `Collection itemref "${itemref}" references non-existent manifest item`,
+              location: { path: opfPath },
+            });
+            continue;
+          }
+
+          if (manifestItem.mediaType !== 'application/xhtml+xml' && manifestItem.mediaType !== 'image/svg+xml') {
+            context.messages.push({
+              id: 'OPF-074',
+              severity: 'error',
+              message: `Dictionary collection item "${itemref}" must be an XHTML or SVG document`,
+              location: { path: opfPath },
+            });
+          }
+        }
+      }
+
+      if (collection.role === 'index') {
+        for (const itemref of collection.itemrefs) {
+          const manifestItem = this.manifestById.get(itemref);
+          if (!manifestItem) {
+            context.messages.push({
+              id: 'OPF-073',
+              severity: 'error',
+              message: `Collection itemref "${itemref}" references non-existent manifest item`,
+              location: { path: opfPath },
+            });
+            continue;
+          }
+
+          if (manifestItem.mediaType !== 'application/xhtml+xml') {
+            context.messages.push({
+              id: 'OPF-075',
+              severity: 'error',
+              message: `Index collection item "${itemref}" must be an XHTML document`,
+              location: { path: opfPath },
+            });
+          }
+        }
+      }
+
+      if (collection.role === 'preview') {
+        for (const itemref of collection.itemrefs) {
+          const manifestItem = this.manifestById.get(itemref);
+          if (!manifestItem) {
+            context.messages.push({
+              id: 'OPF-073',
+              severity: 'error',
+              message: `Collection itemref "${itemref}" references non-existent manifest item`,
+              location: { path: opfPath },
+            });
+          }
+        }
       }
     }
   }

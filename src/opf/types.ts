@@ -118,6 +118,22 @@ export interface PackageDocument {
   pageProgressionDirection?: 'ltr' | 'rtl' | 'default';
   /** Guide references (EPUB 2) */
   guide: GuideReference[];
+  /** Collections (EPUB 3) */
+  collections: Collection[];
+}
+
+/**
+ * Represents a collection in the OPF (EPUB 3)
+ */
+export interface Collection {
+  /** Collection role (dictionary, index, preview, etc.) */
+  role: string;
+  /** Collection identifier */
+  id?: string;
+  /** Collection name/label */
+  name?: string;
+  /** Manifest item IDs in this collection */
+  itemrefs: string[];
 }
 
 /**

@@ -80,6 +80,7 @@ describe('ContentValidator', () => {
     manifest: items.map(createManifestItem),
     spine: [],
     guide: [],
+    collections: [],
   });
 
   beforeEach(() => {

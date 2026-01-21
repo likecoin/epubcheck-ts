@@ -1,5 +1,6 @@
 import type { EPUBVersion } from '../types.js';
 import type {
+  Collection,
   DCElement,
   GuideReference,
   LinkElement,
@@ -64,6 +65,9 @@ export function parseOPF(xml: string): PackageDocument {
   const guideSection = extractSection(xml, 'guide');
   const guide = parseGuide(guideSection);
 
+  // Parse collections (EPUB 3)
+  const collections = parseCollections(xml);
+
   // Build result with proper optional property handling
   const result: PackageDocument = {
     version,
@@ -74,6 +78,7 @@ export function parseOPF(xml: string): PackageDocument {
     manifest,
     spine: spineResult.spine,
     guide,
+    collections,
   };
 
   // Only add optional properties if they have values
@@ -415,4 +420,52 @@ function decodeXmlEntities(str: string): string {
     .replace(/&amp;/g, '&')
     .replace(/&apos;/g, "'")
     .replace(/&quot;/g, '"');
+}
+
+function parseCollections(xml: string): Collection[] {
+  const collections: Collection[] = [];
+  const collectionRegex = /<collection[^>]*\srole=["']([^"']+)["'][^>]*>/g;
+  let collectionMatch: RegExpExecArray | null;
+
+  while ((collectionMatch = collectionRegex.exec(xml)) !== null) {
+    const role = collectionMatch[1];
+    if (!role) continue;
+
+    const collectionStart = collectionMatch.index;
+    const collectionStartTag = collectionMatch[0];
+
+    const idMatch = /id=["']([^"']+)["']/.exec(collectionStartTag);
+    const id = idMatch?.[1];
+
+    const nameMatch = /name=["']([^"']+)["']/.exec(collectionStartTag);
+    const name = nameMatch?.[1];
+
+    const itemrefs: string[] = [];
+
+    const itemrefRegex = /<itemref[^>]*\sidref=["']([^"']+)["'][^>]*>/g;
+    const closingTag = `</collection>`;
+    const closingIndex = xml.indexOf(closingTag, collectionStart);
+    const collectionEnd = closingIndex >= 0 ? closingIndex + closingTag.length : xml.length;
+
+    const collectionXml = xml.slice(collectionStart, collectionEnd);
+
+    let itemrefMatch: RegExpExecArray | null;
+    while ((itemrefMatch = itemrefRegex.exec(collectionXml)) !== null) {
+      const idref = itemrefMatch[1];
+      if (idref) {
+        itemrefs.push(idref);
+      }
+    }
+
+    const collection: Collection = {
+      role,
+      itemrefs,
+    };
+    if (id) collection.id = id;
+    if (name) collection.name = name;
+
+    collections.push(collection);
+  }
+
+  return collections;
 }
