@@ -307,10 +307,37 @@ This document tracks the implementation progress compared to the original Java E
 
 ---
 
+## Release Readiness (0.1.0)
+
+### ✅ Ready
+- All 127 tests passing
+- Build successful (ESM + CJS + type definitions)
+- ESLint and TypeScript checks passing
+- Documentation complete (README, AGENTS.md, PROJECT_STATUS.md)
+- Integration tests with valid/invalid EPUB files
+- Schema infrastructure working (RelaxNG, XSD, Schematron)
+- Web demo functional
+- CI/CD workflows configured
+
+### ⚠️ Before Release
+- Update package.json version from 0.1.0 to 0.0.1
+- Create git tag v0.0.1
+- Test npm publish locally
+- Verify browser compatibility
+
+### 📋 Post-Release Tasks
+- Add more validation coverage
+- Implement media validation
+- Add accessibility checks
+- Improve Schematron XSLT 2.0 support
+- Add CLI tool
+
 ## Next Steps
 
 1. ~~Implement schema validation infrastructure (libxml2-wasm)~~ ✅ Complete
-2. Add full XML DOM parsing for content validation
-3. Implement cross-reference validation
-4. Complete CSS validation
-5. ~~Add comprehensive integration tests~~ ✅ Integration tests added
+2. ~~Add comprehensive integration tests~~ ✅ Integration tests added
+3. ~~Fix lint/format configuration conflicts~~ ✅ Resolved
+4. Prepare for 0.0.1 release
+5. Add full XML DOM parsing for content validation
+6. Implement media validation
+7. Add accessibility checks
