@@ -6,6 +6,8 @@ A TypeScript port of [EPUBCheck](https://github.com/w3c/epubcheck) - the officia
 [![npm](https://img.shields.io/npm/v/%40likecoin%2Fepubcheck-ts)](https://www.npmjs.com/package/@likecoin/epubcheck-ts)
 [![License](https://img.shields.io/npm/l/%40likecoin%2Fepubcheck-ts)](./LICENSE)
 
+> **Note**: This library is primarily developed for internal use at [3ook.com](https://3ook.com/about) and is built with AI-assisted development. While it has comprehensive test coverage (208 tests) and ~65% feature parity with Java EPUBCheck, it may not be suitable for mission-critical production workloads. For production environments requiring full EPUB validation, consider using the official [Java EPUBCheck](https://github.com/w3c/epubcheck). Contributions and feedback are welcome!
+
 ## Features
 
 - **Cross-platform**: Works in Node.js (18+) and modern browsers
@@ -13,6 +15,10 @@ A TypeScript port of [EPUBCheck](https://github.com/w3c/epubcheck) - the officia
 - **Zero native dependencies**: Pure JavaScript/WebAssembly, no compilation required
 - **TypeScript first**: Full type definitions included
 - **Tree-shakable**: ESM with proper exports for optimal bundling
+
+## Try it Online
+
+Try the live demo at **[likecoin.github.io/epubcheck-ts](https://likecoin.github.io/epubcheck-ts/)** - validate your EPUB files directly in the browser without uploading to any server.
 
 ## Installation
 
@@ -331,6 +337,10 @@ This is an independent TypeScript implementation inspired by the Java-based [EPU
 - [W3C EPUBCheck](https://github.com/w3c/epubcheck) - The original Java implementation
 - [DAISY Consortium](https://daisy.org/) - Maintainers of EPUBCheck
 - [libxml2-wasm](https://github.com/jameslan/libxml2-wasm) - WebAssembly XML processing
+
+## Built by 3ook.com
+
+This project is built and maintained by the [3ook.com](https://3ook.com/about) team. 3ook is a Web3 eBook platform where authors can publish EPUB ebooks and readers can collect them as digital assets. If you're an author looking to publish your ebook, check out [3ook.com](https://3ook.com/about).
 
 ## Related Projects
 

@@ -344,6 +344,15 @@ footer {
   font-size: 0.875rem;
 }
 
+footer p {
+  margin-bottom: 0.5rem;
+}
+
+footer .footer-promo {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+}
+
 footer a {
   color: var(--color-primary);
   text-decoration: none;
