@@ -6,17 +6,17 @@ This document tracks the implementation progress compared to the original Java E
 
 | Category | Java EPUBCheck | TypeScript Port | Status |
 |----------|---------------|-----------------|--------|
-| OCF Validation | 100% | ~40% | 🟡 Partial |
-| OPF Validation | 100% | ~55% | 🟡 Partial |
-| Content (XHTML/SVG) | 100% | ~45% | 🟡 Partial |
-| CSS Validation | 100% | ~30% | 🟡 Partial |
+| OCF Validation | 100% | ~70% | 🟡 Partial |
+| OPF Validation | 100% | ~70% | 🟡 Partial |
+| Content (XHTML/SVG) | 100% | ~70% | 🟡 Partial |
+| CSS Validation | 100% | ~50% | 🟡 Partial |
 | Navigation (nav/NCX) | 100% | ~40% | 🟡 Partial |
 | Schema Validation | 100% | ~70% | 🟡 Partial |
 | Media Overlays | 100% | 0% | ❌ Not Started |
 | Accessibility | 100% | ~75% | 🟡 Partial |
-| Cross-reference | 100% | ~60% | 🟡 Partial |
+| Cross-reference | 100% | ~75% | 🟡 Partial |
 
-**Overall Completion: ~56%**
+**Overall Completion: ~65%**
 
 ---
 
@@ -28,7 +28,8 @@ This document tracks the implementation progress compared to the original Java E
 |---------|:----:|:--:|------------|-------|
 | ZIP file opening | ✅ | ✅ | PKG-001 | Basic validation |
 | Mimetype first entry | ✅ | ✅ | PKG-005 | Implemented (uses original ZIP order) |
-| Mimetype uncompressed | ✅ | ❌ | PKG-006 | Not implemented |
+| Mimetype uncompressed | ✅ | ✅ | PKG-006 | Implemented |
+| Mimetype extra field | ✅ | ✅ | PKG-005 | Implemented |
 | Mimetype content | ✅ | ✅ | PKG-007 | Implemented |
 | container.xml exists | ✅ | ✅ | PKG-003 | Implemented |
 | container.xml parsing | ✅ | ✅ | PKG-004 | Basic parsing |
@@ -39,7 +40,7 @@ This document tracks the implementation progress compared to the original Java E
 | metadata.xml | ✅ | ❌ | - | Multiple renditions |
 | Empty directories | ✅ | ✅ | PKG-014 | - |
 
-**Status: ~65% complete**
+**Status: ~70% complete**
 
 ---
 
@@ -94,18 +95,18 @@ This document tracks the implementation progress compared to the original Java E
 | head/title/body | ✅ | ✅ | HTM-002, HTM-003 | Implemented |
 | Unescaped ampersands | ✅ | ✅ | HTM-012 | Implemented |
 | Unescaped less-than | ✅ | ✅ | HTM-012 | Implemented |
-| Link validation | ✅ | ❌ | RSC-007, RSC-010-011 | Target validation |
+| Link validation | ✅ | ✅ | RSC-007, RSC-010-011 | Implemented |
 | Image validation | ✅ | ✅ | MED-001, OPF-051 | src, alt, media types |
 | Script detection | ✅ | ✅ | OPF-014 | Scripted property check |
-| MathML detection | ✅ | ❌ | OPF-014 | mathml property |
-| SVG validation | ✅ | ❌ | - | Separate schema |
+| MathML detection | ✅ | ✅ | OPF-014 | mathml property |
+| SVG detection | ✅ | ✅ | OPF-014 | svg property |
 | epub:type validation | ✅ | ✅ | OPF-088 | Vocabulary check |
 | Fixed-layout viewport | ✅ | ✅ | HTM-046-060 | Meta viewport |
-| img alt text | ✅ | ❌ | ACC-* | Accessibility |
-| MathML alt text | ✅ | ❌ | ACC-009 | - |
+| img alt text | ✅ | ✅ | ACC-005 | Accessibility |
+| MathML alt text | ✅ | ✅ | ACC-009 | Implemented |
 | Discouraged elements | ✅ | ✅ | HTM-055 | base, embed warnings |
 
-**Status: ~52% complete**
+**Status: ~70% complete**
 
 ---
 
@@ -303,8 +304,8 @@ This document tracks the implementation progress compared to the original Java E
 
 | Module | Tests | Status |
 |--------|-------|--------|
-| src/ocf/validator.ts | 14 | ✅ Passing |
-| src/ocf/zip.ts | 15 | ✅ Passing |
+| src/ocf/validator.ts | 18 | ✅ Passing |
+| src/ocf/zip.ts | 19 | ✅ Passing |
 | src/opf/parser.ts | 16 | ✅ Passing |
 | src/opf/validator.ts | 22 | ✅ Passing |
 | src/content/validator.ts | 43 | ✅ Passing |
@@ -314,7 +315,7 @@ This document tracks the implementation progress compared to the original Java E
 | src/nav/validator.ts | 7 | ✅ Passing |
 | src/schema/*.ts | 9 | ✅ Passing |
 | Integration tests | 4 | ✅ Passing |
-| **Total** | **203** | **✅ All passing** |
+| **Total** | **208** | **✅ All passing** |
 
 ---
 
@@ -398,9 +399,10 @@ This document tracks the implementation progress compared to the original Java E
 28. ~~Add fixed-layout viewport validation (HTM-046-060)~~
 29. ~~Add collections validation (OPF-071-084)~~
 30. ~~Add link validation in content documents (RSC-007, RSC-010-011)~~
+31. ~~Add mimetype uncompressed/extra field check (PKG-005, PKG-006)~~
 
 ### In Progress 🚧
 - None
 
 ### Upcoming 📋
-1. OCF mimetype uncompressed check (PKG-006) - Medium Priority
+None - all medium priority items completed!

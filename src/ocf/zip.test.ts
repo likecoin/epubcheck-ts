@@ -3,12 +3,28 @@ import { describe, expect, it } from 'vitest';
 import { ZipReader } from './zip.js';
 
 /**
- * Helper to create a test ZIP file
+ * Helper to create a test ZIP file (default: compressed)
  */
 function createTestZip(files: Record<string, string | Uint8Array>): Uint8Array {
   const zipFiles: Record<string, Uint8Array> = {};
   for (const [path, content] of Object.entries(files)) {
     zipFiles[path] = typeof content === 'string' ? strToU8(content) : content;
+  }
+  return zipSync(zipFiles);
+}
+
+/**
+ * Helper to create a test ZIP with uncompressed mimetype (level: 0)
+ */
+function createTestZipWithStoredMimetype(files: Record<string, string | Uint8Array>): Uint8Array {
+  const zipFiles: Record<string, Uint8Array | [Uint8Array, { level: 0 }]> = {};
+  for (const [path, content] of Object.entries(files)) {
+    const data = typeof content === 'string' ? strToU8(content) : content;
+    if (path === 'mimetype') {
+      zipFiles[path] = [data, { level: 0 as const }];
+    } else {
+      zipFiles[path] = data;
+    }
   }
   return zipSync(zipFiles);
 }
@@ -169,6 +185,56 @@ describe('ZipReader', () => {
 
       const zip = ZipReader.open(data);
       expect(zip.listDirectory('nonexistent')).toEqual([]);
+    });
+  });
+
+  describe('getMimetypeCompressionInfo', () => {
+    it('should return compression info for uncompressed mimetype', () => {
+      const data = createTestZipWithStoredMimetype({
+        mimetype: 'application/epub+zip',
+        'test.txt': 'content',
+      });
+
+      const zip = ZipReader.open(data);
+      const info = zip.getMimetypeCompressionInfo();
+
+      expect(info).not.toBeNull();
+      expect(info?.filename).toBe('mimetype');
+      expect(info?.compressionMethod).toBe(0);
+      expect(info?.filenameLength).toBe(8);
+    });
+
+    it('should return compression info for compressed first entry', () => {
+      const data = createTestZip({
+        mimetype: 'application/epub+zip',
+        'test.txt': 'content',
+      });
+
+      const zip = ZipReader.open(data);
+      const info = zip.getMimetypeCompressionInfo();
+
+      expect(info).not.toBeNull();
+      expect(info?.filename).toBe('mimetype');
+      expect(info?.compressionMethod).toBe(8);
+    });
+
+    it('should detect non-mimetype first file', () => {
+      const data = createTestZip({
+        'other.txt': 'first file',
+        mimetype: 'application/epub+zip',
+      });
+
+      const zip = ZipReader.open(data);
+      const info = zip.getMimetypeCompressionInfo();
+
+      expect(info).not.toBeNull();
+      expect(info?.filename).not.toBe('mimetype');
+    });
+
+    it('should return null for invalid ZIP header', () => {
+      const invalidData = new Uint8Array([0x00, 0x00, 0x00, 0x00]);
+
+      expect(() => ZipReader.open(invalidData)).toThrow();
     });
   });
 });

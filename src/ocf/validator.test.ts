@@ -5,11 +5,17 @@ import { OCFValidator } from './validator.js';
 
 /**
  * Helper to create a test EPUB ZIP file
+ * The mimetype file is stored uncompressed (level: 0) as required by EPUB spec
  */
 function createEpubZip(files: Record<string, string | Uint8Array>): Uint8Array {
-  const zipFiles: Record<string, Uint8Array> = {};
+  const zipFiles: Record<string, Uint8Array | [Uint8Array, { level: 0 }]> = {};
   for (const [path, content] of Object.entries(files)) {
-    zipFiles[path] = typeof content === 'string' ? strToU8(content) : content;
+    const data = typeof content === 'string' ? strToU8(content) : content;
+    if (path === 'mimetype') {
+      zipFiles[path] = [data, { level: 0 as const }];
+    } else {
+      zipFiles[path] = data;
+    }
   }
   return zipSync(zipFiles);
 }
@@ -141,6 +147,30 @@ describe('OCFValidator', () => {
       const warning = context.messages.find((m) => m.id === 'PKG-008');
       expect(warning).toBeDefined();
       expect(warning?.severity).toBe('warning');
+    });
+
+    it('should report error for compressed mimetype (PKG-006)', () => {
+      const zipFiles: Record<string, Uint8Array> = {
+        mimetype: strToU8('application/epub+zip'),
+        'META-INF/container.xml': strToU8(`<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>`),
+        'content.opf': strToU8('<package/>'),
+      };
+      const data = zipSync(zipFiles);
+      const context = createContext(data);
+      const validator = new OCFValidator();
+
+      validator.validate(context);
+
+      const error = context.messages.find(
+        (m) => m.id === 'PKG-006' && m.message.includes('uncompressed'),
+      );
+      expect(error).toBeDefined();
+      expect(error?.severity).toBe('error');
     });
   });
 

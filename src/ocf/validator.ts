@@ -62,11 +62,50 @@ export class OCFValidator {
    * Requirements:
    * - Must exist
    * - Must be first file in ZIP
-   * - Must be uncompressed
+   * - Must be uncompressed (compression method = 0)
+   * - Must have no extra field
    * - Must contain exactly "application/epub+zip"
    */
   private validateMimetype(zip: ZipReader, messages: ValidationMessage[]): void {
-    // Check if mimetype exists
+    const compressionInfo = zip.getMimetypeCompressionInfo();
+
+    if (compressionInfo === null) {
+      messages.push({
+        id: 'PKG-006',
+        severity: 'error',
+        message: 'Could not read ZIP header',
+        location: { path: 'mimetype' },
+      });
+      return;
+    }
+
+    if (compressionInfo.filename !== 'mimetype') {
+      messages.push({
+        id: 'PKG-006',
+        severity: 'error',
+        message: 'Mimetype file must be the first file in the ZIP archive',
+        location: { path: 'mimetype' },
+      });
+    }
+
+    if (compressionInfo.extraFieldLength !== 0) {
+      messages.push({
+        id: 'PKG-005',
+        severity: 'error',
+        message: `Mimetype entry must not have an extra field (found ${String(compressionInfo.extraFieldLength)} bytes)`,
+        location: { path: 'mimetype' },
+      });
+    }
+
+    if (compressionInfo.compressionMethod !== 0) {
+      messages.push({
+        id: 'PKG-006',
+        severity: 'error',
+        message: 'Mimetype file must be uncompressed',
+        location: { path: 'mimetype' },
+      });
+    }
+
     if (!zip.has('mimetype')) {
       messages.push({
         id: 'PKG-006',
@@ -77,18 +116,6 @@ export class OCFValidator {
       return;
     }
 
-    // Check if mimetype is first file
-    const originalOrder = zip.originalOrder;
-    if (originalOrder.length > 0 && originalOrder[0] !== 'mimetype') {
-      messages.push({
-        id: 'PKG-005',
-        severity: 'error',
-        message: 'The mimetype file must be the first file in the ZIP archive',
-        location: { path: 'mimetype' },
-      });
-    }
-
-    // Read and validate content
     const content = zip.readText('mimetype');
     if (content === undefined) {
       messages.push({
@@ -100,7 +127,6 @@ export class OCFValidator {
       return;
     }
 
-    // Check content
     const trimmed = content.trim();
     if (trimmed !== EPUB_MIMETYPE) {
       messages.push({
@@ -111,7 +137,6 @@ export class OCFValidator {
       });
     }
 
-    // Check for extra whitespace/newlines
     if (content !== EPUB_MIMETYPE) {
       messages.push({
         id: 'PKG-008',
