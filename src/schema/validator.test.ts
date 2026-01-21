@@ -72,15 +72,8 @@ describe('Schema Validation', () => {
       validator.dispose();
     });
 
-    it.skip('should validate valid XML against XSD schema', async () => {
-      // Skip XSD validation for now - no XSD schemas bundled
-      // XSD validation will be added when schemas are properly bundled
-    });
-
-    it.skip('should report error for invalid XML against XSD schema', async () => {
-      // Skip XSD validation for now - no XSD schemas bundled
-      // XSD validation will be added when schemas are properly bundled
-    });
+    // Note: EPUB uses RelaxNG and Schematron, not XSD schemas.
+    // XsdValidator is available but no EPUB schemas use it.
 
     it('should reject invalid schema path', async () => {
       const xml = '<?xml version="1.0"?><root></root>';
