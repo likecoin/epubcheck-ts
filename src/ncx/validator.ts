@@ -9,11 +9,7 @@ import type { ValidationContext } from '../types.js';
  * Validator for EPUB 2 NCX navigation documents
  */
 export class NCXValidator {
-  /**
-   * Validate NCX document
-   */
   validate(context: ValidationContext, ncxContent: string, ncxPath: string): void {
-    // Parse NCX with libxml2-wasm for structure validation
     let doc: XmlDocument | null = null;
     try {
       doc = XmlDocument.fromString(ncxContent);
@@ -32,7 +28,6 @@ export class NCXValidator {
     try {
       const root = doc.root;
 
-      // Check for correct root element and namespace
       if (root.name !== 'ncx') {
         context.messages.push({
           id: 'NCX-001',
@@ -53,34 +48,23 @@ export class NCXValidator {
         });
       }
 
-      // Check for uid element (unique identifier)
       this.checkUid(context, root, ncxPath);
-
-      // Check for navMap element
       this.checkNavMap(context, root, ncxPath);
+      this.checkContentSrc(context, root, ncxPath);
     } finally {
       doc.dispose();
     }
   }
 
-  /**
-   * Check for dtb:uid meta element and validate it
-   * Note: dtb:uid is recommended but not strictly required by the NCX spec.
-   * The original epubcheck does not report an error if it's missing.
-   */
   private checkUid(context: ValidationContext, root: XmlElement, path: string): void {
-    // Look for <meta name="dtb:uid" content="..."/> in head
     const uidMeta = root.get('.//ncx:head/ncx:meta[@name="dtb:uid"]', {
       ncx: 'http://www.daisy.org/z3986/2005/ncx/',
     });
 
     if (!uidMeta) {
-      // dtb:uid is recommended but not required - don't report an error
-      // to match original epubcheck behavior
       return;
     }
 
-    // Get content attribute
     const uidElement = uidMeta as XmlElement;
     const uidAttr = uidElement.attr('content');
     const uidContent = uidAttr?.value;
@@ -95,13 +79,9 @@ export class NCXValidator {
       return;
     }
 
-    // Store uid in context for comparison with OPF
     context.ncxUid = uidContent.trim();
   }
 
-  /**
-   * Check for navMap element
-   */
   private checkNavMap(context: ValidationContext, root: XmlElement, path: string): void {
     const navMapNode = root.get('.//ncx:navMap', { ncx: 'http://www.daisy.org/z3986/2005/ncx/' });
 
@@ -112,6 +92,49 @@ export class NCXValidator {
         message: 'NCX document must have a navMap element',
         location: { path },
       });
+    }
+  }
+
+  private checkContentSrc(context: ValidationContext, root: XmlElement, ncxPath: string): void {
+    const contentElements = root.find('.//ncx:content[@src]', {
+      ncx: 'http://www.daisy.org/z3986/2005/ncx/',
+    });
+
+    const ncxDir = ncxPath.includes('/') ? ncxPath.substring(0, ncxPath.lastIndexOf('/')) : '';
+
+    for (const contentElem of contentElements) {
+      const srcAttr = (contentElem as XmlElement).attr('src');
+      const src = srcAttr?.value;
+      if (!src) continue;
+
+      const srcBase = src.split('#')[0] ?? src;
+
+      let fullPath = srcBase;
+      if (ncxDir) {
+        if (srcBase.startsWith('/')) {
+          fullPath = srcBase.slice(1);
+        } else {
+          const parts = ncxDir.split('/');
+          const relParts = srcBase.split('/');
+          for (const part of relParts) {
+            if (part === '..') {
+              parts.pop();
+            } else if (part !== '.') {
+              parts.push(part);
+            }
+          }
+          fullPath = parts.join('/');
+        }
+      }
+
+      if (!context.files.has(fullPath) && !srcBase.startsWith('http://') && !srcBase.startsWith('https://')) {
+        context.messages.push({
+          id: 'NCX-006',
+          severity: 'error',
+          message: `NCX content src references missing file: ${src}`,
+          location: { path: ncxPath },
+        });
+      }
     }
   }
 }

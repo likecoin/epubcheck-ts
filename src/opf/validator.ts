@@ -51,7 +51,7 @@ export class OPFValidator {
       this.packageDoc = parseOPF(opfXml);
     } catch (error) {
       context.messages.push({
-        id: 'OPF-001',
+        id: 'OPF-002',
         severity: 'fatal',
         message: `Failed to parse package document: ${error instanceof Error ? error.message : 'Unknown error'}`,
         location: { path: opfPath },
@@ -102,6 +102,16 @@ export class OPFValidator {
    */
   private validatePackageAttributes(context: ValidationContext, opfPath: string): void {
     if (!this.packageDoc) return;
+
+    const validVersions = new Set(['2.0', '3.0', '3.1', '3.2', '3.3']);
+    if (!validVersions.has(this.packageDoc.version)) {
+      context.messages.push({
+        id: 'OPF-001',
+        severity: 'error',
+        message: `Invalid package version "${this.packageDoc.version}"; must be one of: ${Array.from(validVersions).join(', ')}`,
+        location: { path: opfPath },
+      });
+    }
 
     // Check unique-identifier
     if (!this.packageDoc.uniqueIdentifier) {
@@ -237,6 +247,33 @@ export class OPFValidator {
           id: 'OPF-010',
           severity: 'error',
           message: `Manifest item "${item.id}" references missing file: ${item.href}`,
+          location: { path: opfPath },
+        });
+      }
+
+      // Validate media type format (RFC4288)
+      if (!isValidMimeType(item.mediaType)) {
+        context.messages.push({
+          id: 'OPF-014',
+          severity: 'error',
+          message: `Invalid media-type format "${item.mediaType}" for item "${item.id}"`,
+          location: { path: opfPath },
+        });
+      }
+
+      // Check for deprecated media types (OEB 1.x)
+      const deprecatedTypes = new Map<string, string>([
+        ['text/x-oeb1-document', 'OPF-035'],
+        ['text/x-oeb1-css', 'OPF-037'],
+        ['application/x-oeb1-package', 'OPF-038'],
+        ['text/x-oeb1-html', 'OPF-037'],
+      ]);
+      const deprecatedId = deprecatedTypes.get(item.mediaType);
+      if (deprecatedId) {
+        context.messages.push({
+          id: deprecatedId,
+          severity: 'warning',
+          message: `Deprecated OEB 1.0 media-type "${item.mediaType}" should not be used`,
           location: { path: opfPath },
         });
       }
@@ -561,4 +598,27 @@ function resolvePath(basePath: string, relativePath: string): string {
   }
 
   return parts.join('/');
+}
+
+/**
+ * Validate MIME type format according to RFC4288
+ */
+function isValidMimeType(mediaType: string): boolean {
+  const mimeTypePattern = /^[a-zA-Z][a-zA-Z0-9!#$&\-^_]*\/[a-zA-Z0-9][a-zA-Z0-9!#$&\-^_+]*(?:\s*;\s*[a-zA-Z0-9-]+=[^;]+)?$/;
+
+  if (!mimeTypePattern.test(mediaType)) {
+    return false;
+  }
+
+  const [type, subtypeWithParams] = mediaType.split('/');
+  if (!type || !subtypeWithParams) return false;
+
+  const subtype = subtypeWithParams.split(';')[0]?.trim();
+  if (!subtype) return false;
+
+  if (type.length > 127 || subtype.length > 127) {
+    return false;
+  }
+
+  return true;
 }

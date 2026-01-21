@@ -7,16 +7,16 @@ This document tracks the implementation progress compared to the original Java E
 | Category | Java EPUBCheck | TypeScript Port | Status |
 |----------|---------------|-----------------|--------|
 | OCF Validation | 100% | ~40% | 🟡 Partial |
-| OPF Validation | 100% | ~45% | 🟡 Partial |
-| Content (XHTML/SVG) | 100% | ~40% | 🟡 Partial |
+| OPF Validation | 100% | ~50% | 🟡 Partial |
+| Content (XHTML/SVG) | 100% | ~45% | 🟡 Partial |
 | CSS Validation | 100% | ~30% | 🟡 Partial |
-| Navigation (nav/NCX) | 100% | ~30% | 🟡 Partial |
+| Navigation (nav/NCX) | 100% | ~40% | 🟡 Partial |
 | Schema Validation | 100% | ~70% | 🟡 Partial |
 | Media Overlays | 100% | 0% | ❌ Not Started |
-| Accessibility | 100% | ~60% | 🟡 Partial |
+| Accessibility | 100% | ~75% | 🟡 Partial |
 | Cross-reference | 100% | ~50% | 🟡 Partial |
 
-**Overall Completion: ~42%**
+**Overall Completion: ~45%**
 
 ---
 
@@ -49,7 +49,7 @@ This document tracks the implementation progress compared to the original Java E
 |---------|:----:|:--:|------------|-------|
 | Package schema | ✅ | 🟡 | RSC-005 | RelaxNG + Schematron available |
 | unique-identifier | ✅ | ✅ | OPF-030, OPF-048 | Implemented |
-| Package version | ✅ | ❌ | OPF-001 | Not validated |
+| Package version | ✅ | ✅ | OPF-001 | Implemented |
 | dc:identifier required | ✅ | ✅ | OPF-015 | Implemented |
 | dc:title required | ✅ | ✅ | OPF-016 | Implemented |
 | dc:language required | ✅ | ✅ | OPF-017 | Implemented |
@@ -59,8 +59,8 @@ This document tracks the implementation progress compared to the original Java E
 | Empty metadata | ✅ | ❌ | OPF-072 | - |
 | Manifest duplicates | ✅ | ✅ | OPF-074 | Implemented |
 | Manifest file exists | ✅ | ✅ | OPF-010 | Implemented |
-| Media type format | ✅ | ❌ | - | RFC4288 validation |
-| Deprecated types | ✅ | ❌ | OPF-035, OPF-037, OPF-038 | OEB 1.x |
+| Media type format | ✅ | ✅ | OPF-014 | RFC4288 validation |
+| Deprecated types | ✅ | ✅ | OPF-035, OPF-037, OPF-038 | OEB 1.x warnings |
 | Remote resources | ✅ | ❌ | RSC-006, RSC-006b | Property requirement |
 | Data URLs | ✅ | ❌ | RSC-029 | EPUB 3 |
 | META-INF items | ✅ | ❌ | PKG-025 | - |
@@ -79,7 +79,7 @@ This document tracks the implementation progress compared to the original Java E
 | Guide validation | ✅ | ✅ | OPF-031 | EPUB 2 |
 | Collections | ✅ | ❌ | OPF-071-084 | Dict, Index, Preview |
 
-**Status: ~40% complete**
+**Status: ~50% complete**
 
 ---
 
@@ -134,18 +134,18 @@ This document tracks the implementation progress compared to the original Java E
 | Nav doc schema | ✅ | 🟡 | RSC-005 | RelaxNG available |
 | epub:type="toc" | ✅ | ✅ | NAV-001 | Implemented |
 | ol element | ✅ | ✅ | NAV-002 | Implemented |
-| TOC link targets | ✅ | ❌ | NAV-010 | RSC-007 equivalent |
+| TOC link targets | ✅ | ✅ | NAV-010 | Remote links check |
 | Reading order | ✅ | ❌ | NAV-011 | - |
-| Page-list validation | ✅ | ❌ | NAV-010 | - |
-| Landmarks validation | ✅ | ❌ | NAV-010 | - |
+| Page-list validation | ✅ | ✅ | NAV-010 | Remote links check |
+| Landmarks validation | ✅ | ✅ | NAV-010 | Remote links check |
 | NCX schema | ✅ | 🟡 | RSC-005 | RelaxNG available |
 | NCX uid match | ✅ | ✅ | NCX-001 | Implemented |
 | NCX navMap required | ✅ | ✅ | NCX-002 | Implemented |
-| NCX content src | ✅ | ❌ | NCX-006 | - |
+| NCX content src | ✅ | ✅ | NCX-006 | Implemented |
 | EDUPub sections | ✅ | ❌ | NAV-004 | - |
 | EDUPub LOA/LOI/LOT/LOV | ✅ | ❌ | NAV-005-008 | - |
 
-**Status: ~30% complete**
+**Status: ~40% complete**
 
 ---
 
@@ -225,10 +225,10 @@ This document tracks the implementation progress compared to the original Java E
 |---------|:----:|:--:|------------|-------|
 | Empty links | ✅ | ✅ | ACC-004 | Anchors need text |
 | Image alt | ✅ | ✅ | ACC-005 | Alt text required |
-| MathML alt | ✅ | ❌ | ACC-009 | alttext/annotation |
+| MathML alt | ✅ | ✅ | ACC-009 | alttext/annotation |
 | SVG link title | ✅ | ✅ | ACC-011 | Accessible name |
 
-**Status: ~60% complete**
+**Status: ~75% complete**
 
 ---
 
@@ -343,5 +343,12 @@ This document tracks the implementation progress compared to the original Java E
 6. ~~Add discouraged element warnings (HTM-055)~~ ✅ Complete
 7. ~~Add accessibility validation (ACC-004, ACC-005, ACC-011)~~ ✅ Complete
 8. ~~Add undeclared resources check (RSC-008)~~ ✅ Complete
-9. Implement media validation
-10. Add MathML detection and accessibility
+9. ~~Add package version validation (OPF-001)~~ ✅ Complete
+10. ~~Add media type format validation (RFC4288)~~ ✅ Complete
+11. ~~Add deprecated media type warnings (OPF-035, OPF-037, OPF-038)~~ ✅ Complete
+12. ~~Add NCX content src validation (NCX-006)~~ ✅ Complete
+13. ~~Add MathML accessibility check (ACC-009)~~ ✅ Complete
+14. ~~Add nav remote link validation (NAV-010)~~ ✅ Complete
+15. Implement media validation
+16. Add dc:date format validation (OPF-053, OPF-054)
+17. Add remote resources property check (RSC-006)

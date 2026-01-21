@@ -8,6 +8,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- OPF validation enhancements:
+  - Package version attribute validation (OPF-001) - validates 2.0, 3.0, 3.1, 3.2, 3.3
+  - RFC4288 media type format validation (OPF-014)
+  - Deprecated OEB 1.0 media type warnings (OPF-035, OPF-037, OPF-038)
+- NCX validation enhancements:
+  - navPoint content src reference validation (NCX-006)
+- Content document validation enhancements:
+  - MathML detection and missing "mathml" property validation (OPF-014)
+  - SVG detection and missing "svg" property validation (OPF-014)
+  - Remote resources detection and missing "remote-resources" property validation (OPF-014)
+  - Script detection (script elements, event handlers, form elements)
+  - Missing "scripted" property validation (OPF-014) for EPUB 3
+  - Discouraged element warnings for base and embed (HTM-055)
+- Navigation validation:
+  - Remote link validation in toc, landmarks, and page-list navs (NAV-010)
+- Accessibility validation:
+  - Empty link detection (ACC-004)
+  - Image alt attribute validation (ACC-005)
+  - MathML alttext/annotation validation (ACC-009)
+  - SVG link accessible name validation (ACC-011)
 - CSS validation enhancements:
   - @font-face validation with font MIME type checking (CSS-007)
   - @font-face empty declaration warnings (CSS-019)
@@ -15,14 +35,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - @import URL extraction for cross-reference validation
   - Empty URI detection in CSS (CSS-002)
   - Font reference extraction for manifest validation
-- Content document validation enhancements:
-  - Script detection (script elements, event handlers, form elements)
-  - Missing "scripted" property validation (OPF-014) for EPUB 3
-  - Discouraged element warnings for base and embed (HTM-055)
-- Accessibility validation:
-  - Empty link detection (ACC-004)
-  - Image alt attribute validation (ACC-005)
-  - SVG link accessible name validation (ACC-011)
 - Cross-reference validation:
   - Undeclared resources detection (RSC-008) - files in container not in manifest
 - 24 new unit tests (151 total, up from 127)

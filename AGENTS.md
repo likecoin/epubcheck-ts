@@ -318,6 +318,10 @@ npm run clean        # Clean dist/
 
 ## Recently Resolved
 
+- ✅ **MathML property validation (OPF-014)** - Added MathML detection and required `mathml` property validation
+- ✅ **SVG property validation (OPF-014)** - Added SVG detection and required `svg` property validation
+- ✅ **Remote-resources property validation (OPF-014)** - Added remote resources detection (http/https links) and required `remote-resources` property validation
+- ✅ **Navigation remote link validation (NAV-010)** - Added validation to prevent remote links in toc, landmarks, and page-list nav elements
 - ✅ **RelaxNG Compact (.rnc) format** - Converted EPUB 3.x schemas from RNC to RNG format using jing-trang, then inlined all `<include>` elements for bundling
 - ✅ **EPUB 2.0 schema includes** - Added opf20.rng from Java source with proper `<start>` element
 - ✅ **Integration tests** - All EPUB 2.0 and 3.0 integration tests now passing

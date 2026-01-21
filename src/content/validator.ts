@@ -129,14 +129,46 @@ export class ContentValidator {
         this.checkNavDocument(context, path, doc, root);
       }
 
-      // Check for scripts and scripted property (EPUB 3 only)
       if (context.version.startsWith('3')) {
         const hasScripts = this.detectScripts(context, path, root);
         if (hasScripts && !manifestItem?.properties?.includes('scripted')) {
           context.messages.push({
             id: 'OPF-014',
             severity: 'error',
-            message: 'Content document contains scripts but manifest item is missing "scripted" property',
+            message:
+              'Content document contains scripts but manifest item is missing "scripted" property',
+            location: { path },
+          });
+        }
+
+        const hasMathML = this.detectMathML(context, path, root);
+        if (hasMathML && !manifestItem?.properties?.includes('mathml')) {
+          context.messages.push({
+            id: 'OPF-014',
+            severity: 'error',
+            message:
+              'Content document contains MathML but manifest item is missing "mathml" property',
+            location: { path },
+          });
+        }
+
+        const hasSVG = this.detectSVG(context, path, root);
+        if (hasSVG && !manifestItem?.properties?.includes('svg')) {
+          context.messages.push({
+            id: 'OPF-014',
+            severity: 'error',
+            message: 'Content document contains SVG but manifest item is missing "svg" property',
+            location: { path },
+          });
+        }
+
+        const hasRemoteResources = this.detectRemoteResources(context, path, root);
+        if (hasRemoteResources && !manifestItem?.properties?.includes('remote-resources')) {
+          context.messages.push({
+            id: 'OPF-014',
+            severity: 'error',
+            message:
+              'Content document references remote resources but manifest item is missing "remote-resources" property',
             location: { path },
           });
         }
@@ -245,7 +277,6 @@ export class ContentValidator {
       });
     }
 
-    // Check for ol element inside nav
     const ol = nav.get('.//html:ol', { html: 'http://www.w3.org/1999/xhtml' });
     if (!ol) {
       context.messages.push({
@@ -255,13 +286,41 @@ export class ContentValidator {
         location: { path },
       });
     }
+
+    this.checkNavRemoteLinks(context, path, root, epubTypeAttr?.value ?? '');
   }
 
-  private detectScripts(
-    _context: ValidationContext,
-    _path: string,
+  private checkNavRemoteLinks(
+    context: ValidationContext,
+    path: string,
     root: XmlElement,
-  ): boolean {
+    epubTypeValue: string,
+  ): void {
+    const navTypes = epubTypeValue.split(/\s+/);
+    const isToc = navTypes.includes('toc');
+    const isLandmarks = navTypes.includes('landmarks');
+    const isPageList = navTypes.includes('page-list');
+
+    if (!isToc && !isLandmarks && !isPageList) {
+      return;
+    }
+
+    const links = root.find('.//html:a[@href]', { html: 'http://www.w3.org/1999/xhtml' });
+    for (const link of links) {
+      const href = this.getAttribute(link as XmlElement, 'href');
+      if (href && (href.startsWith('http://') || href.startsWith('https://'))) {
+        const navType = isToc ? 'toc' : isLandmarks ? 'landmarks' : 'page-list';
+        context.messages.push({
+          id: 'NAV-010',
+          severity: 'error',
+          message: `"${navType}" nav must not link to remote resources; found link to "${href}"`,
+          location: { path },
+        });
+      }
+    }
+  }
+
+  private detectScripts(_context: ValidationContext, _path: string, root: XmlElement): boolean {
     // Check for script elements
     const htmlScript = root.get('.//html:script', { html: 'http://www.w3.org/1999/xhtml' });
     if (htmlScript) return true;
@@ -269,16 +328,68 @@ export class ContentValidator {
     const svgScript = root.get('.//svg:script', { svg: 'http://www.w3.org/2000/svg' });
     if (svgScript) return true;
 
-    // Check for form elements (require scripted property)
     const form = root.get('.//html:form', { html: 'http://www.w3.org/1999/xhtml' });
     if (form) return true;
 
-    // Check for event handler attributes via XPath
-    // This is a simplified check - look for common event handlers
     const elementsWithEvents = root.find(
       './/*[@onclick or @onload or @onmouseover or @onmouseout or @onchange or @onsubmit or @onfocus or @onblur]',
     );
     if (elementsWithEvents.length > 0) return true;
+
+    return false;
+  }
+
+  private detectMathML(_context: ValidationContext, _path: string, root: XmlElement): boolean {
+    const mathMLElements = root.find('.//math:*', { math: 'http://www.w3.org/1998/Math/MathML' });
+    return mathMLElements.length > 0;
+  }
+
+  private detectSVG(_context: ValidationContext, _path: string, root: XmlElement): boolean {
+    const svgElement = root.get('.//html:svg', { html: 'http://www.w3.org/1999/xhtml' });
+    if (svgElement) return true;
+
+    const rootSvg = root.get('.//svg:svg', { svg: 'http://www.w3.org/2000/svg' });
+    if (rootSvg) return true;
+
+    return false;
+  }
+
+  private detectRemoteResources(
+    _context: ValidationContext,
+    _path: string,
+    root: XmlElement,
+  ): boolean {
+    const links = root.find('.//html:a[@href]', { html: 'http://www.w3.org/1999/xhtml' });
+    for (const link of links) {
+      const href = this.getAttribute(link as XmlElement, 'href');
+      if (href && (href.startsWith('http://') || href.startsWith('https://'))) {
+        return true;
+      }
+    }
+
+    const images = root.find('.//html:img[@src]', { html: 'http://www.w3.org/1999/xhtml' });
+    for (const img of images) {
+      const src = this.getAttribute(img as XmlElement, 'src');
+      if (src && (src.startsWith('http://') || src.startsWith('https://'))) {
+        return true;
+      }
+    }
+
+    const scripts = root.find('.//html:script[@src]', { html: 'http://www.w3.org/1999/xhtml' });
+    for (const script of scripts) {
+      const src = this.getAttribute(script as XmlElement, 'src');
+      if (src && (src.startsWith('http://') || src.startsWith('https://'))) {
+        return true;
+      }
+    }
+
+    const linkElements = root.find('.//html:link[@href]', { html: 'http://www.w3.org/1999/xhtml' });
+    for (const linkElem of linkElements) {
+      const href = this.getAttribute(linkElem as XmlElement, 'href');
+      if (href && (href.startsWith('http://') || href.startsWith('https://'))) {
+        return true;
+      }
+    }
 
     return false;
   }
@@ -301,12 +412,7 @@ export class ContentValidator {
     }
   }
 
-  private checkAccessibility(
-    context: ValidationContext,
-    path: string,
-    root: XmlElement,
-  ): void {
-    // ACC-004: Check for empty links
+  private checkAccessibility(context: ValidationContext, path: string, root: XmlElement): void {
     const links = root.find('.//html:a', { html: 'http://www.w3.org/1999/xhtml' });
     for (const link of links) {
       if (!this.hasAccessibleContent(link as XmlElement)) {
@@ -319,7 +425,6 @@ export class ContentValidator {
       }
     }
 
-    // Check for images without alt attribute
     const images = root.find('.//html:img', { html: 'http://www.w3.org/1999/xhtml' });
     for (const img of images) {
       const altAttr = this.getAttribute(img as XmlElement, 'alt');
@@ -333,7 +438,6 @@ export class ContentValidator {
       }
     }
 
-    // ACC-011: Check for SVG links without accessible name
     const svgLinks = root.find('.//svg:a', { svg: 'http://www.w3.org/2000/svg' });
     for (const svgLink of svgLinks) {
       const svgElem = svgLink as XmlElement;
@@ -348,22 +452,38 @@ export class ContentValidator {
         });
       }
     }
+
+    const mathElements = root.find('.//math:math', { math: 'http://www.w3.org/1998/Math/MathML' });
+    for (const mathElem of mathElements) {
+      const elem = mathElem as XmlElement;
+      const alttext = elem.attr('alttext');
+      const annotation = elem.get('./math:annotation[@encoding="application/x-tex"]', {
+        math: 'http://www.w3.org/1998/Math/MathML',
+      });
+      const ariaLabel = this.getAttribute(elem, 'aria-label');
+
+      if (!alttext?.value && !annotation && !ariaLabel) {
+        context.messages.push({
+          id: 'ACC-009',
+          severity: 'warning',
+          message: 'MathML element should have alttext attribute or annotation for accessibility',
+          location: { path },
+        });
+      }
+    }
   }
 
   private hasAccessibleContent(element: XmlElement): boolean {
-    // Check if element has text content
     const textContent = element.content;
     if (textContent && textContent.trim().length > 0) {
       return true;
     }
 
-    // Check for aria-label
     const ariaLabel = this.getAttribute(element, 'aria-label');
     if (ariaLabel && ariaLabel.trim().length > 0) {
       return true;
     }
 
-    // Check for child img with alt
     const img = element.get('./html:img[@alt]', { html: 'http://www.w3.org/1999/xhtml' });
     if (img) {
       const alt = this.getAttribute(img as XmlElement, 'alt');
@@ -372,7 +492,6 @@ export class ContentValidator {
       }
     }
 
-    // Check for title attribute
     const title = this.getAttribute(element, 'title');
     if (title && title.trim().length > 0) {
       return true;
