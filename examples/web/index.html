@@ -3,14 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EPUBCheck-TS - Online EPUB Validator</title>
+  <title>Free Online EPUB Validator - Check Your eBook for Errors | EPUBCheck-TS</title>
+  <meta name="description" content="Free online EPUB validator that runs entirely in your browser. No file uploads, no server processing - your ebook stays private. Fast validation against official EPUB standards.">
+  <meta name="keywords" content="epub validator, epub checker, ebook validator, epub validation online, epubcheck online, epub error checker, ebook quality check, epub 3 validator, free epub validator">
+  <meta name="author" content="3ook.com">
+  <link rel="canonical" href="https://likecoin.github.io/epubcheck-ts/">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://likecoin.github.io/epubcheck-ts/">
+  <meta property="og:title" content="Free Online EPUB Validator - Check Your eBook for Errors">
+  <meta property="og:description" content="Validate your EPUB files instantly in your browser. 100% private - no uploads to any server. Based on the official EPUBCheck standard.">
+  <meta property="og:site_name" content="EPUBCheck-TS">
+
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
   <div class="container">
     <header>
       <h1>EPUBCheck-TS</h1>
-      <p class="subtitle">Online EPUB Validator</p>
+      <p class="subtitle">Free Online EPUB Validator</p>
     </header>
 
     <main>
@@ -59,6 +71,60 @@
       </section>
     </main>
 
+    <section class="about-section">
+      <h2>What is this tool?</h2>
+      <p>
+        EPUBCheck-TS is a <strong>free online EPUB validator</strong> that checks your ebook files for errors and compatibility issues.
+        Whether you're an author, publisher, or developer, this tool helps ensure your EPUB files meet the official
+        <a href="https://www.w3.org/publishing/epub3/" target="_blank">EPUB specification</a> before publishing.
+      </p>
+
+      <h3>100% Private - Your Files Stay on Your Computer</h3>
+      <p>
+        Unlike other online validators, <strong>your EPUB file is never uploaded to any server</strong>.
+        All validation happens entirely in your web browser using WebAssembly technology.
+        Your manuscript, your content, your data - it all stays on your computer. Nothing is transmitted over the internet.
+      </p>
+
+      <h3>Fast and Instant Results</h3>
+      <p>
+        Get validation results in seconds. No waiting for server processing or queue times.
+        The validator runs locally on your device, so it's as fast as your computer allows.
+      </p>
+
+      <h3>What does EPUB validation check?</h3>
+      <ul>
+        <li><strong>Structure</strong> - Verifies the EPUB container format and required files</li>
+        <li><strong>Metadata</strong> - Checks title, author, language, and other book information</li>
+        <li><strong>Content</strong> - Validates XHTML, CSS, and navigation documents</li>
+        <li><strong>Accessibility</strong> - Detects missing alt text, empty links, and other a11y issues</li>
+        <li><strong>Cross-references</strong> - Ensures all internal links and resources are valid</li>
+      </ul>
+
+      <h3>Supported EPUB Versions</h3>
+      <p>
+        This validator supports <strong>EPUB 2.0, EPUB 3.0, 3.1, 3.2, and 3.3</strong>.
+        It automatically detects the version of your ebook and applies the appropriate validation rules.
+      </p>
+
+      <h3>Current Limitations</h3>
+      <p>
+        This tool catches most common EPUB errors but doesn't cover everything yet.
+        It currently detects about 65% of the issues that the official
+        <a href="https://github.com/w3c/epubcheck" target="_blank">EPUBCheck</a> tool would find.
+        For final publishing, we recommend also checking with the official tool if you need comprehensive validation.
+        We're <a href="https://github.com/likecoin/epubcheck-ts" target="_blank">actively improving</a> coverage.
+      </p>
+
+      <h3>Who is this for?</h3>
+      <ul>
+        <li><strong>Authors</strong> - Check your ebook before publishing on <a href="https://3ook.com/about" target="_blank">3ook.com</a>, Amazon, Apple Books, or Kobo</li>
+        <li><strong>Publishers</strong> - Quality assurance for your publishing workflow</li>
+        <li><strong>Developers</strong> - Test EPUB generation in your applications</li>
+        <li><strong>Designers</strong> - Validate ebook layouts and styling</li>
+      </ul>
+    </section>
+
     <footer>
       <p>
         Powered by <a href="https://github.com/likecoin/epubcheck-ts" target="_blank">epubcheck-ts</a>
@@ -67,7 +133,7 @@
       </p>
       <p class="footer-promo">
         Built by the <a href="https://3ook.com/about" target="_blank">3ook.com</a> team.
-        Publish your EPUB ebooks on <a href="https://3ook.com/about" target="_blank">3ook</a> - a Web3 eBook platform.
+        Publish your EPUB ebooks on <a href="https://3ook.com/about" target="_blank">3ook.com</a> - a Web3 eBook platform.
       </p>
     </footer>
   </div>
