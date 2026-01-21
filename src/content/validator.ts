@@ -739,58 +739,71 @@ export class ContentValidator {
     manifestItem: { properties?: string[] } | undefined,
   ): void {
     const isFixedLayout = manifestItem?.properties?.includes('fixed-layout');
-    if (!isFixedLayout) {
-      return;
-    }
-
     const metaTags = root.find('.//html:meta[@name]', { html: 'http://www.w3.org/1999/xhtml' });
+
+    let hasViewportMeta = false;
 
     for (const meta of metaTags) {
       const nameAttr = this.getAttribute(meta as XmlElement, 'name');
       if (nameAttr === 'viewport') {
+        hasViewportMeta = true;
         const contentAttr = this.getAttribute(meta as XmlElement, 'content');
-        if (!contentAttr) {
+
+        if (isFixedLayout) {
+          // Fixed-layout viewport validation
+          if (!contentAttr) {
+            context.messages.push({
+              id: 'HTM-046',
+              severity: 'error',
+              message:
+                'Viewport meta element should have a content attribute in fixed-layout documents',
+              location: { path },
+            });
+            continue;
+          }
+
+          const contentLower = contentAttr.toLowerCase();
+
+          if (contentLower.includes('width=device-width')) {
+            context.messages.push({
+              id: 'HTM-047',
+              severity: 'error',
+              message:
+                'Viewport width should not be set to "device-width" in fixed-layout documents',
+              location: { path },
+            });
+          }
+
+          if (contentLower.includes('height=device-height')) {
+            context.messages.push({
+              id: 'HTM-048',
+              severity: 'error',
+              message:
+                'Viewport height should not be set to "device-height" in fixed-layout documents',
+              location: { path },
+            });
+          }
+        } else {
+          // Reflowable document viewport validation (HTM-060b)
           context.messages.push({
-            id: 'HTM-046',
-            severity: 'warning',
-            message:
-              'Viewport meta element should have a content attribute in fixed-layout documents',
+            id: 'HTM-060b',
+            severity: 'usage',
+            message: `EPUB reading systems must ignore viewport meta elements in reflowable documents; viewport declaration "${contentAttr ?? ''}" will be ignored`,
             location: { path },
           });
-          return;
         }
-
-        const contentLower = contentAttr.toLowerCase();
-
-        if (contentLower.includes('width=device-width')) {
-          context.messages.push({
-            id: 'HTM-047',
-            severity: 'warning',
-            message: 'Viewport width should not be set to "device-width" in fixed-layout documents',
-            location: { path },
-          });
-        }
-
-        if (contentLower.includes('height=device-height')) {
-          context.messages.push({
-            id: 'HTM-048',
-            severity: 'warning',
-            message:
-              'Viewport height should not be set to "device-height" in fixed-layout documents',
-            location: { path },
-          });
-        }
-
-        return;
       }
     }
 
-    context.messages.push({
-      id: 'HTM-049',
-      severity: 'info',
-      message: 'Fixed-layout document should include a viewport meta element',
-      location: { path },
-    });
+    // Only suggest viewport for fixed-layout documents
+    if (isFixedLayout && !hasViewportMeta) {
+      context.messages.push({
+        id: 'HTM-049',
+        severity: 'info',
+        message: 'Fixed-layout document should include a viewport meta element',
+        location: { path },
+      });
+    }
   }
 
   private extractAndRegisterIDs(path: string, root: XmlElement, registry: ResourceRegistry): void {
