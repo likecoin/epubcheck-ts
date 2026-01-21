@@ -1,12 +1,12 @@
 :root {
-  --color-bg: #0f0f0f;
+  --color-bg: #131313;
   --color-surface: #1a1a1a;
   --color-surface-hover: #252525;
   --color-border: #333;
-  --color-text: #e0e0e0;
+  --color-text: #f9f9f9;
   --color-text-muted: #888;
-  --color-primary: #6366f1;
-  --color-primary-hover: #818cf8;
+  --color-primary: #50e3c2;
+  --color-primary-hover: #49d1b3;
   --color-success: #22c55e;
   --color-error: #ef4444;
   --color-warning: #f59e0b;
@@ -110,7 +110,7 @@ header h1 {
 
 .btn-primary {
   background: var(--color-primary);
-  color: white;
+  color: #131313;
 }
 
 .btn-primary:hover {
@@ -250,7 +250,7 @@ header h1 {
 .filter-btn.active {
   background: var(--color-primary);
   border-color: var(--color-primary);
-  color: white;
+  color: #131313;
 }
 
 .messages-list {
@@ -402,6 +402,13 @@ footer p {
 footer .footer-promo {
   margin-top: 0.75rem;
   font-size: 0.8rem;
+}
+
+footer .footer-logo {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-right: 0.25rem;
 }
 
 footer a {
