@@ -247,28 +247,55 @@ This document tracks the implementation progress compared to the original Java E
 
 ## Implementation Priority
 
-### High Priority (for basic validation)
-1. **Schema Validation** - Required for many other validations
-   - RelaxNG via libxml2-wasm
-   - Schematron via fontoxpath
+### High Priority (for core validation)
 
-2. **Cross-Reference Validation** - High impact on validation quality
-   - Link target validation
-   - Fragment validation
+1. **Remote resources property (RSC-006, RSC-006b)**
+   - Check manifest items with remote resources have "remote-resources" property
+   - Required for EPUB 3 compliance
+   - Directly impacts validity of many EPUBs
 
-3. **Full XML Parsing** - Replace regex-based with proper DOM
-   - Better content validation
-   - Accurate error reporting
+2. **Image validation (MED-001, OPF-051)**
+   - Image src attribute validation
+   - Image alt text validation (partially done via ACC-005)
+   - Core to EPUB publications
 
-### Medium Priority
-4. **CSS Validation** - Straightforward, library already installed
-5. **Navigation Validation** - Complete nav and NCX validation
-6. **NCX Validation** - EPUB 2 support
+3. **epub:type validation (OPF-088)**
+   - Vocabulary/structure validation
+   - Important for specialized EPUBs (indexes, dictionaries)
 
-### Lower Priority
-7. **Media Validation** - Image/audio/video checks
-8. **Media Overlays** - EPUB 3 feature
-9. **Accessibility** - Nice to have
+4. **CSS alt stylesheet validation (CSS-005, CSS-015)**
+   - Alternate stylesheet conflict detection
+   - Title validation for alt stylesheets
+   - Straightforward to implement
+
+5. **dc:creator role validation (OPF-052)**
+   - MARC relator code validation
+   - Important for library/publishing workflows
+
+### Medium Priority (for completeness)
+
+6. **Link validation in content documents (RSC-007, RSC-010-011)**
+   - Target validation within XHTML/SVG content
+   - Hyperlink to non-spine detection in context
+   - Improve content document validation quality
+
+7. **Collections (OPF-071-084)**
+   - Dictionary, Index, Preview collection validation
+   - Specialized but important for certain EPUB types
+
+8. **OCF container improvements**
+   - Mimetype uncompressed check (PKG-006)
+   - Filename validation for special characters (PKG-009-012)
+   - Empty directory detection (PKG-014)
+
+9. **CSS media overlay classes (CSS-029, CSS-030)**
+   - EPUB 3 media overlays CSS support
+
+### Lower Priority (specialized features)
+
+10. **Media Validation** - Audio/video format checks
+11. **Media Overlays** - EPUB 3 synchronized text/audio
+12. **Advanced Accessibility** - ARIA, table headers, page breaks
 
 ---
 
@@ -294,19 +321,22 @@ This document tracks the implementation progress compared to the original Java E
 
 | Prefix | Category | Defined | Used | Progress |
 |--------|----------|---------|------|----------|
-| PKG | Package/Container | 15 | 8 | 53% |
-| OPF | Package Document | 15 | 14 | 93% |
-| RSC | Resources | 20 | 1 | 5% |
-| HTM | HTML/XHTML | 33 | 5 | 15% |
+| PKG | Package/Container | 15 | 10 | 67% |
+| OPF | Package Document | 15 | 27 | N/A* |
+| RSC | Resources | 20 | 13 | 65% |
+| HTM | HTML/XHTML | 33 | 6 | 18% |
 | CSS | CSS Validation | 19 | 6 | 32% |
-| NAV | Navigation | 9 | 2 | 22% |
-| NCX | NCX (EPUB 2) | 5 | 0 | 0% |
-| ACC | Accessibility | 17 | 3 | 18% |
+| NAV | Navigation | 9 | 3 | 33% |
+| NCX | NCX (EPUB 2) | 5 | 4 | 80% |
+| ACC | Accessibility | 17 | 4 | 24% |
 | MED | Media | 15 | 0 | 0% |
 | SCP | Scripting | 10 | 0 | 0% |
+| SCH | Schematron | 5 | 1 | 20% |
 | CHK | Internal Errors | 7 | 0 | 0% |
 
-**Total: ~165 defined, ~47 actively used (28%)**
+**Total: ~165 defined, ~74 actively used (45%)**
+
+*Note: OPF uses additional message IDs beyond those originally defined, covering extended validation scenarios.*
 
 ---
 
@@ -327,31 +357,43 @@ This document tracks the implementation progress compared to the original Java E
 - Undeclared resources detection (RSC-008)
 
 ### 📋 Post-Release Tasks
-- Add more validation coverage
+- Add remote resources property check (RSC-006, RSC-006b)
+- Add image validation (MED-001, OPF-051)
+- Add epub:type validation (OPF-088)
+- Add CSS alt stylesheet validation (CSS-005, CSS-015)
 - Implement media validation
-- Add MathML accessibility checks
-- Improve Schematron XSLT 2.0 support
 - Add CLI tool
 
 ## Next Steps
 
-1. ~~Implement schema validation infrastructure (libxml2-wasm)~~ ✅ Complete
-2. ~~Add comprehensive integration tests~~ ✅ Integration tests added
-3. ~~Fix lint/format configuration conflicts~~ ✅ Resolved
-4. ~~Enhance CSS validation (@font-face, @import)~~ ✅ Complete
-5. ~~Add script detection and OPF-014 validation~~ ✅ Complete
-6. ~~Add discouraged element warnings (HTM-055)~~ ✅ Complete
-7. ~~Add accessibility validation (ACC-004, ACC-005, ACC-011)~~ ✅ Complete
-8. ~~Add undeclared resources check (RSC-008)~~ ✅ Complete
-9. ~~Add package version validation (OPF-001)~~ ✅ Complete
-10. ~~Add media type format validation (RFC4288)~~ ✅ Complete
-11. ~~Add deprecated media type warnings (OPF-035, OPF-037, OPF-038)~~ ✅ Complete
-12. ~~Add NCX content src validation (NCX-006)~~ ✅ Complete
-13. ~~Add MathML accessibility check (ACC-009)~~ ✅ Complete
-14. ~~Add nav remote link validation (NAV-010)~~ ✅ Complete
-15. ~~Add fragment type mismatch validation (RSC-014)~~ ✅ Complete
-16. ~~Add data URL validation (RSC-029)~~ ✅ Complete
-17. ~~Add dc:date format validation (OPF-053, OPF-054)~~ ✅ Complete
-18. Implement media validation
-19. Add remote resources property check (RSC-006)
-20. Add dc:creator role validation (OPF-052)
+### Completed ✅
+1. ~~Implement schema validation infrastructure (libxml2-wasm)~~
+2. ~~Add comprehensive integration tests~~
+3. ~~Fix lint/format configuration conflicts~~
+4. ~~Enhance CSS validation (@font-face, @import)~~
+5. ~~Add script detection and OPF-014 validation~~
+6. ~~Add discouraged element warnings (HTM-055)~~
+7. ~~Add accessibility validation (ACC-004, ACC-005, ACC-009, ACC-011)~~
+8. ~~Add undeclared resources check (RSC-008)~~
+9. ~~Add package version validation (OPF-001)~~
+10. ~~Add media type format validation (RFC4288)~~
+11. ~~Add deprecated media type warnings (OPF-035, OPF-037, OPF-038)~~
+12. ~~Add NCX content src validation (NCX-006)~~
+13. ~~Add MathML accessibility check (ACC-009)~~
+14. ~~Add nav remote link validation (NAV-010)~~
+15. ~~Add fragment type mismatch validation (RSC-014)~~
+16. ~~Add data URL validation (RSC-029)~~
+17. ~~Add dc:date format validation (OPF-053, OPF-054)~~
+
+### In Progress 🚧
+- None
+
+### Upcoming 📋
+1. Remote resources property check (RSC-006, RSC-006b) - High Priority
+2. Image validation (MED-001, OPF-051) - High Priority
+3. epub:type validation (OPF-088) - High Priority
+4. CSS alt stylesheet validation (CSS-005, CSS-015) - High Priority
+5. dc:creator role validation (OPF-052) - High Priority
+6. Link validation in content documents (RSC-007, RSC-010-011) - Medium Priority
+7. Collections validation (OPF-071-084) - Medium Priority
+8. OCF container improvements (PKG-006, PKG-009-012, PKG-014) - Medium Priority
