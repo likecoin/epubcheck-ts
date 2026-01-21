@@ -9,7 +9,7 @@ This document tracks the implementation progress compared to the original Java E
 | OCF Validation | 100% | ~40% | 🟡 Partial |
 | OPF Validation | 100% | ~40% | 🟡 Partial |
 | Content (XHTML/SVG) | 100% | ~25% | 🟡 Partial |
-| CSS Validation | 100% | ~5% | 🔴 Basic |
+| CSS Validation | 100% | ~15% | 🔴 Basic |
 | Navigation (nav/NCX) | 100% | ~30% | 🟡 Partial |
 | Schema Validation | 100% | ~70% | 🟡 Partial |
 | Media Overlays | 100% | 0% | ❌ Not Started |
@@ -113,16 +113,17 @@ This document tracks the implementation progress compared to the original Java E
 
 | Feature | Java | TS | Message IDs | Notes |
 |---------|:----:|:--:|------------|-------|
-| CSS syntax parsing | ✅ | 🟡 | CSS-008 | css-tree integrated |
-| @font-face validation | ✅ | ❌ | CSS-007, CSS-019 | Font MIME types |
-| position: fixed | ✅ | ❌ | CSS-006 | Discouraged |
+| CSS syntax parsing | ✅ | ✅ | CSS-001 | css-tree integrated |
+| @font-face validation | ✅ | ❌ | CSS-007 | Font MIME types |
+| position: fixed | ✅ | ✅ | CSS-006 | Warning - discouraged |
+| position: absolute | ✅ | ✅ | CSS-019 | Warning - use caution |
 | Remote fonts | ✅ | ❌ | - | Property requirement |
 | Empty URIs | ✅ | ❌ | CSS-002 | - |
 | Alt stylesheet | ✅ | ❌ | CSS-005, CSS-015 | Conflict, title |
 | @import validation | ✅ | ❌ | - | - |
 | Media overlay classes | ✅ | ❌ | CSS-029, CSS-030 | - |
 
-**Status: ~5% complete** (parser available, validation minimal)
+**Status: ~15% complete** (parsing + position warnings)
 
 ---
 
@@ -279,8 +280,10 @@ This document tracks the implementation progress compared to the original Java E
 | src/ocf/zip.ts | 15 | ✅ Passing |
 | src/opf/parser.ts | 12 | ✅ Passing |
 | src/content/validator.ts | 21 | ✅ Passing |
+| src/references/validator.ts | 19 | ✅ Passing |
+| src/css/validator.ts | 6 | ✅ Passing |
 | Integration tests | 4 | ✅ Passing |
-| **Total** | **118** | **✅ All passing** |
+| **Total** | **127** | **✅ All passing** |
 
 ---
 
