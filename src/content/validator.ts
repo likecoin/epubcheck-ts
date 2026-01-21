@@ -44,13 +44,19 @@ export class ContentValidator {
       doc = XmlDocument.fromString(content);
     } catch (error) {
       if (error instanceof Error) {
-        // Normalize error message to match test expectations
-        const message = this.normalizeErrorMessage(error.message);
+        const { message, line, column } = this.parseLibxmlError(error.message);
+        const location: { path: string; line?: number; column?: number } = { path };
+        if (line !== undefined) {
+          location.line = line;
+        }
+        if (column !== undefined) {
+          location.column = column;
+        }
         context.messages.push({
           id: 'HTM-004',
           severity: 'error',
           message,
-          location: { path },
+          location,
         });
       }
       return;
@@ -122,15 +128,34 @@ export class ContentValidator {
     }
   }
 
-  private normalizeErrorMessage(error: string): string {
-    // Normalize libxml2-wasm error messages to match test expectations
+  private parseLibxmlError(error: string): {
+    message: string;
+    line: number | undefined;
+    column: number | undefined;
+  } {
+    // Extract line number from libxml2-wasm error message
+    // Format: "Entity: line 10: parser error : message"
+    const lineRegex = /(?:Entity:\s*)?line\s+(\d+):/;
+    const lineMatch = lineRegex.exec(error);
+    const line = lineMatch?.[1] ? Number.parseInt(lineMatch[1], 10) : undefined;
+
+    // Extract column if present
+    const columnRegex = /line\s+\d+:\s*(\d+):/;
+    const columnMatch = columnRegex.exec(error);
+    const column = columnMatch?.[1] ? Number.parseInt(columnMatch[1], 10) : undefined;
+
+    // Normalize error message
+    let message = error;
     if (error.includes('Opening and ending tag mismatch')) {
-      return `Mismatched closing tag: ${error.replace('Opening and ending tag mismatch: ', '')}`;
+      message = `Mismatched closing tag: ${error.replace('Opening and ending tag mismatch: ', '')}`;
+    } else if (error.includes('mismatch')) {
+      message = `Mismatched closing tag: ${error}`;
+    } else {
+      // Remove libxml2 prefix from other errors
+      message = error.replace(/^Entity:\s*line\s+\d+:\s*(parser\s+error\s*:)?\s*/, '');
     }
-    if (error.includes('mismatch')) {
-      return `Mismatched closing tag: ${error}`;
-    }
-    return error;
+
+    return { message, line, column };
   }
 
   private checkUnescapedAmpersands(
@@ -139,13 +164,20 @@ export class ContentValidator {
     content: string,
   ): void {
     // Find all ampersands that are not part of entity references
-    const ampersandPattern = /&(?!(?:[a-zA-Z][a-zA-Z0-9]*|#\d+|#x[0-9a-fA-F]+);)/g;
-    if (ampersandPattern.test(content)) {
+    const ampersandRegex = /&(?!(?:[a-zA-Z][a-zA-Z0-9]*|#\d+|#x[0-9a-fA-F]+);)/g;
+    let match;
+    while ((match = ampersandRegex.exec(content)) !== null) {
+      // Calculate line number
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      const index = match.index ?? 0;
+      const before = content.substring(0, index);
+      const line = before.split('\n').length;
+
       context.messages.push({
         id: 'HTM-012',
         severity: 'error',
         message: 'Unescaped ampersand',
-        location: { path },
+        location: { path, line },
       });
     }
   }
