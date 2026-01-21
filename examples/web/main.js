@@ -106,6 +106,10 @@ function displayResults(result, fileName) {
       <div class="count">${result.infoCount}</div>
       <div class="label">Info</div>
     </div>
+    <div class="stat-card usage">
+      <div class="count">${result.usageCount || 0}</div>
+      <div class="label">Usage</div>
+    </div>
   `;
 
   // Reset filter

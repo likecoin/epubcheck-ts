@@ -463,7 +463,7 @@ export class ContentValidator {
       if (element) {
         context.messages.push({
           id: 'HTM-055',
-          severity: 'warning',
+          severity: 'usage',
           message: `The "${elemName}" element is discouraged in EPUB`,
           location: { path },
         });
@@ -508,7 +508,7 @@ export class ContentValidator {
       if (!title && !ariaLabel) {
         context.messages.push({
           id: 'ACC-011',
-          severity: 'warning',
+          severity: 'usage',
           message: 'SVG hyperlink has no accessible name (missing title element or aria-label)',
           location: { path },
         });
@@ -527,7 +527,7 @@ export class ContentValidator {
       if (!alttext?.value && !annotation && !ariaLabel) {
         context.messages.push({
           id: 'ACC-009',
-          severity: 'warning',
+          severity: 'usage',
           message: 'MathML element should have alttext attribute or annotation for accessibility',
           location: { path },
         });
@@ -634,7 +634,7 @@ export class ContentValidator {
         ) {
           context.messages.push({
             id: 'OPF-088',
-            severity: 'warning',
+            severity: 'usage',
             message: `Unknown epub:type prefix "${prefix}": ${epubTypeValue}`,
             location: { path },
           });

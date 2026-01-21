@@ -219,6 +219,9 @@ header h1 {
 .stat-card.info .count {
   color: var(--color-info);
 }
+.stat-card.usage .count {
+  color: var(--color-text-muted);
+}
 
 /* Messages */
 .messages-filters {
