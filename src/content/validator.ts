@@ -2,7 +2,7 @@
  * Content document validation using libxml2-wasm for XML parsing
  */
 
-import { XmlDocument, type XmlElement } from 'libxml2-wasm';
+import { XmlDocument, type XmlElement, type XmlNode } from 'libxml2-wasm';
 import type { ResourceRegistry } from '../references/registry.js';
 import { ReferenceType } from '../references/types.js';
 import type { ReferenceValidator } from '../references/validator.js';
@@ -849,6 +849,8 @@ export class ContentValidator {
       const href = this.getAttribute(link as XmlElement, 'href');
       if (!href) continue;
 
+      const line = link.line;
+
       if (href.startsWith('http://') || href.startsWith('https://')) {
         continue;
       }
@@ -863,7 +865,7 @@ export class ContentValidator {
           targetResource,
           fragment,
           type: ReferenceType.HYPERLINK,
-          location: { path },
+          location: { path, line },
         });
         continue;
       }
@@ -877,7 +879,7 @@ export class ContentValidator {
         url: href,
         targetResource,
         type: ReferenceType.HYPERLINK,
-        location: { path },
+        location: { path, line },
       };
       if (fragmentPart) {
         ref.fragment = fragmentPart;
@@ -894,6 +896,8 @@ export class ContentValidator {
       const href = this.getAttribute(elem, 'xlink:href') ?? this.getAttribute(elem, 'href');
       if (!href) continue;
 
+      const line = link.line;
+
       if (href.startsWith('http://') || href.startsWith('https://')) {
         continue;
       }
@@ -905,7 +909,7 @@ export class ContentValidator {
           targetResource,
           fragment,
           type: ReferenceType.HYPERLINK,
-          location: { path },
+          location: { path, line },
         });
         continue;
       }
@@ -919,7 +923,7 @@ export class ContentValidator {
         url: href,
         targetResource,
         type: ReferenceType.HYPERLINK,
-        location: { path },
+        location: { path, line },
       };
       if (svgFragment) {
         svgRef.fragment = svgFragment;
@@ -942,6 +946,7 @@ export class ContentValidator {
       const rel = this.getAttribute(linkElem as XmlElement, 'rel');
       if (!href) continue;
 
+      const line = linkElem.line;
       const isStylesheet = rel?.toLowerCase().includes('stylesheet');
       const type = isStylesheet ? ReferenceType.STYLESHEET : ReferenceType.LINK;
 
@@ -951,7 +956,7 @@ export class ContentValidator {
           url: href,
           targetResource: href,
           type,
-          location: { path },
+          location: { path, line },
         });
         continue;
       }
@@ -964,7 +969,7 @@ export class ContentValidator {
         url: href,
         targetResource,
         type,
-        location: { path },
+        location: { path, line },
       });
     }
   }
@@ -992,13 +997,17 @@ export class ContentValidator {
       const importUrl = match[1];
       if (!importUrl) continue;
 
+      // Calculate line number from regex match position
+      const beforeMatch = cleanedCSS.substring(0, match.index);
+      const line = beforeMatch.split('\n').length;
+
       // Skip remote URLs
       if (importUrl.startsWith('http://') || importUrl.startsWith('https://')) {
         refValidator.addReference({
           url: importUrl,
           targetResource: importUrl,
           type: ReferenceType.STYLESHEET,
-          location: { path: cssPath },
+          location: { path: cssPath, line },
         });
         continue;
       }
@@ -1010,7 +1019,7 @@ export class ContentValidator {
         url: importUrl,
         targetResource: resolvedPath,
         type: ReferenceType.STYLESHEET,
-        location: { path: cssPath },
+        location: { path: cssPath, line },
       });
     }
   }
@@ -1028,13 +1037,15 @@ export class ContentValidator {
       const src = this.getAttribute(img as XmlElement, 'src');
       if (!src) continue;
 
+      const line = img.line;
+
       if (src.startsWith('http://') || src.startsWith('https://')) {
         // Still register remote resources
         refValidator.addReference({
           url: src,
           targetResource: src,
           type: ReferenceType.IMAGE,
-          location: { path },
+          location: { path, line },
         });
         continue;
       }
@@ -1044,7 +1055,7 @@ export class ContentValidator {
         url: src,
         targetResource: resolvedPath,
         type: ReferenceType.IMAGE,
-        location: { path },
+        location: { path, line },
       });
     }
 
@@ -1068,12 +1079,14 @@ export class ContentValidator {
       const href = this.getAttribute(elem, 'xlink:href') ?? this.getAttribute(elem, 'href');
       if (!href) continue;
 
+      const line = (svgImg as XmlNode).line;
+
       if (href.startsWith('http://') || href.startsWith('https://')) {
         refValidator.addReference({
           url: href,
           targetResource: href,
           type: ReferenceType.IMAGE,
-          location: { path },
+          location: { path, line },
         });
         continue;
       }
@@ -1083,7 +1096,7 @@ export class ContentValidator {
         url: href,
         targetResource: resolvedPath,
         type: ReferenceType.IMAGE,
-        location: { path },
+        location: { path, line },
       });
     }
 
@@ -1093,12 +1106,14 @@ export class ContentValidator {
       const poster = this.getAttribute(video as XmlElement, 'poster');
       if (!poster) continue;
 
+      const line = video.line;
+
       if (poster.startsWith('http://') || poster.startsWith('https://')) {
         refValidator.addReference({
           url: poster,
           targetResource: poster,
           type: ReferenceType.IMAGE,
-          location: { path },
+          location: { path, line },
         });
         continue;
       }
@@ -1108,7 +1123,7 @@ export class ContentValidator {
         url: poster,
         targetResource: resolvedPath,
         type: ReferenceType.IMAGE,
-        location: { path },
+        location: { path, line },
       });
     }
   }
