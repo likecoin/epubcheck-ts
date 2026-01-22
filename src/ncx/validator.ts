@@ -70,11 +70,12 @@ export class NCXValidator {
     const uidContent = uidAttr?.value;
 
     if (!uidContent || uidContent.trim() === '') {
+      const line = uidElement.line;
       context.messages.push({
         id: 'NCX-003',
         severity: 'warning',
         message: 'NCX dtb:uid meta content should not be empty',
-        location: { path },
+        location: { path, line },
       });
       return;
     }
@@ -132,11 +133,12 @@ export class NCXValidator {
         !srcBase.startsWith('http://') &&
         !srcBase.startsWith('https://')
       ) {
+        const line = contentElem.line;
         context.messages.push({
           id: 'NCX-006',
           severity: 'error',
           message: `NCX content src references missing file: ${src}`,
-          location: { path: ncxPath },
+          location: { path: ncxPath, line },
         });
       }
     }

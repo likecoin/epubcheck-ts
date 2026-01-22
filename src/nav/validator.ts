@@ -36,12 +36,19 @@ export class NavValidator {
    */
   private checkNavTypes(context: ValidationContext, content: string, path: string): void {
     // Check for toc nav
-    if (!/<nav[^>]*epub:type\s*=\s*["'][^"']*toc[^"']*["']/i.test(content)) {
+    const tocMatch = /<nav[^>]*epub:type\s*=\s*["'][^"']*toc[^"']*["']/i.exec(content);
+    if (!tocMatch) {
+      // Find first nav element for line number
+      const navMatch = /<nav/i.exec(content);
+      const location: { path: string; line?: number } = { path };
+      if (navMatch) {
+        location.line = content.substring(0, navMatch.index).split('\n').length;
+      }
       context.messages.push({
         id: 'NAV-001',
         severity: 'error',
         message: 'Navigation document must have a nav element with epub:type="toc"',
-        location: { path },
+        location,
       });
     }
   }
@@ -56,6 +63,7 @@ export class NavValidator {
 
     if (tocMatch?.[1]) {
       const navContent = tocMatch[1];
+      const line = content.substring(0, tocMatch.index).split('\n').length;
 
       // Check for ol element inside nav
       if (!/<ol[\s>]/i.test(navContent)) {
@@ -63,7 +71,7 @@ export class NavValidator {
           id: 'NAV-002',
           severity: 'error',
           message: 'Navigation document toc nav must contain an ol element',
-          location: { path },
+          location: { path, line },
         });
       }
     }
