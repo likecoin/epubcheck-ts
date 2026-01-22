@@ -14,7 +14,10 @@
     },
     "./package.json": "./package.json"
   },
-  "files": ["dist", "schemas"],
+  "bin": {
+    "epubcheck-ts": "./bin/epubcheck.js"
+  },
+  "files": ["dist", "bin", "schemas"],
   "sideEffects": false,
   "engines": {
     "node": ">=18"

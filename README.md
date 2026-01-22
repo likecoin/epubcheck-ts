@@ -10,6 +10,7 @@ A TypeScript port of [EPUBCheck](https://github.com/w3c/epubcheck) - the officia
 
 ## Features
 
+- **CLI and programmatic API**: Use as a command-line tool or integrate into your application
 - **Cross-platform**: Works in Node.js (18+) and modern browsers
 - **Partial EPUB validation**: Currently ~65% of EPUBCheck feature parity
 - **Zero native dependencies**: Pure JavaScript/WebAssembly, no compilation required
@@ -27,6 +28,49 @@ npm install @likecoin/epubcheck-ts
 ```
 
 ## Quick Start
+
+### Command Line Interface (CLI)
+
+**Quick validation:**
+```bash
+npx @likecoin/epubcheck-ts book.epub
+```
+
+**Or install globally:**
+```bash
+npm install -g @likecoin/epubcheck-ts
+epubcheck-ts book.epub
+```
+
+**CLI Options:**
+```bash
+epubcheck-ts <file.epub> [options]
+
+Options:
+  -j, --json <file>        Output JSON report to file (use '-' for stdout)
+  -q, --quiet              Suppress console output (errors only)
+  -p, --profile <name>     Validation profile (default|dict|edupub|idx|preview)
+  -w, --fail-on-warnings   Exit with code 1 if warnings are found
+  -v, --version            Show version information
+  -h, --help               Show this help message
+```
+
+**Examples:**
+```bash
+# Basic validation
+epubcheck-ts book.epub
+
+# Generate JSON report
+epubcheck-ts book.epub --json report.json
+
+# Quiet mode for CI/CD
+epubcheck-ts book.epub --quiet --fail-on-warnings
+
+# Validate with specific profile
+epubcheck-ts dictionary.epub --profile dict
+```
+
+**Note:** This CLI provides ~65% coverage of Java EPUBCheck features. For complete EPUB 3 conformance testing, use the [official Java EPUBCheck](https://github.com/w3c/epubcheck).
 
 ### ES Modules (recommended)
 

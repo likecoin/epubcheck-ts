@@ -35,6 +35,6 @@
     // Let tsup handle emission
     "noEmit": true
   },
-  "include": ["src/**/*", "test/**/*", "scripts/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*", "test/**/*", "scripts/**/*", "bin/**/*.ts"],
+  "exclude": ["node_modules", "dist", "bin/**/*.js"]
 }
