@@ -60,7 +60,7 @@ async function validateFile(file) {
     const arrayBuffer = await file.arrayBuffer();
     const data = new Uint8Array(arrayBuffer);
 
-    const result = await EpubCheck.validate(data);
+    const result = await EpubCheck.validate(data, { includeUsage: true });
 
     displayResults(result, file.name);
   } catch (error) {
