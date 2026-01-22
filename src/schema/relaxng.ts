@@ -62,11 +62,17 @@ export class RelaxNGValidator extends BaseSchemaValidator {
           try {
             validator.validate(doc);
           } catch (error) {
+            const parsed = this.parseLibxmlError(
+              error instanceof Error ? error.message : 'RelaxNG validation failed',
+            );
+            const location: { path: string; line?: number; column?: number } = { path: schemaPath };
+            if (parsed.line !== undefined) location.line = parsed.line;
+            if (parsed.column !== undefined) location.column = parsed.column;
             messages.push({
               id: 'RSC-005',
               severity: 'error',
-              message: error instanceof Error ? error.message : 'RelaxNG validation failed',
-              location: { path: schemaPath },
+              message: parsed.message,
+              location,
             });
           } finally {
             validator.dispose();
