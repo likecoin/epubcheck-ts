@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-01-22
+
+### Added
+
+- CLI `-u/--usage` flag to include usage messages (matches Java EPUBCheck `-u` option)
+
+### Fixed
+
+- Fix false positive errors for ZIP directory entries (PKG-009, PKG-025, RSC-008)
+- Fix NCX-001 UID comparison to use the correct unique-identifier reference
+- Fix NCX-001 severity from warning to error (matches Java EPUBCheck)
+- Fix RSC-008 severity from warning to error (matches Java EPUBCheck)
+- Fix CSS-028 severity from info to usage (matches Java EPUBCheck)
+- Filter usage/info messages based on options (usage messages no longer shown by default)
+
 ## [0.2.0] - 2026-01-22
 
 ### Added
@@ -153,6 +168,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - No media overlays validation
 - No script detection/validation
 
-[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/likecoin/epubcheck-ts/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/likecoin/epubcheck-ts/compare/v0.0.0...v0.1.0
