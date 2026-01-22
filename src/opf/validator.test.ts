@@ -410,31 +410,6 @@ describe('OPFValidator', () => {
       expect(errors[0]?.message).toContain('nav');
     });
 
-    it('should report error for undeclared resources (RSC-008)', () => {
-      const opf = `<?xml version="1.0" encoding="UTF-8"?>
-<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">
-  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
-    <dc:identifier id="uid">test-id</dc:identifier>
-    <dc:title>Test</dc:title>
-    <dc:language>en</dc:language>
-    <meta property="dcterms:modified">2024-01-01T00:00:00Z</meta>
-  </metadata>
-  <manifest>
-    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
-  </manifest>
-  <spine>
-    <itemref idref="nav"/>
-  </spine>
-</package>`;
-      const context = createContext(opf, { 'OEBPS/undeclared.css': 'body {}' });
-      validator.validate(context);
-
-      const errors = context.messages.filter((m) => m.id === 'RSC-008');
-      expect(errors).toHaveLength(1);
-      expect(errors[0]?.severity).toBe('error');
-      expect(errors[0]?.message).toContain('undeclared.css');
-    });
-
     it('should report error for duplicate manifest IDs (OPF-074)', () => {
       const opf = `<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">

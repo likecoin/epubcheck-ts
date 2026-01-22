@@ -109,6 +109,8 @@ export interface ValidationContext {
   packageDocument?: PackageDocument;
   /** NCX UID for validation against OPF identifier */
   ncxUid?: string;
+  /** Resources referenced in content but not declared in manifest */
+  referencedUndeclaredResources?: Set<string>;
 }
 
 /**

@@ -523,20 +523,6 @@ describe('OPFValidator', () => {
 
       expect(context.messages.some((m) => m.id === 'OPF-013')).toBe(true);
     });
-
-    it('should add RSC-008 error for undeclared resources', () => {
-      const context = createValidationContext();
-      const packageDoc = createMinimalPackage();
-      addFileToContext(context, 'OEBPS/nav.xhtml', '<html></html>');
-      addFileToContext(context, 'OEBPS/chapter1.xhtml', '<html></html>');
-      // Add an undeclared file
-      addFileToContext(context, 'OEBPS/undeclared.css', 'body {}');
-
-      validatorTest.packageDoc = packageDoc;
-      validatorTest.validateManifest(context, 'OEBPS/content.opf');
-
-      expect(context.messages.some((m) => m.id === 'RSC-008')).toBe(true);
-    });
   });
 
   describe('spine validation', () => {

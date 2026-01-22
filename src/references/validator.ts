@@ -148,10 +148,20 @@ export class ReferenceValidator {
 
     // Check if target resource exists in manifest
     if (!this.registry.hasResource(resourcePath)) {
-      // Check if file exists in container but not declared in manifest
-      // If so, RSC-008 (from OPF validator) will handle it
       const fileExistsInContainer = context.files.has(resourcePath);
-      if (!fileExistsInContainer) {
+      if (fileExistsInContainer) {
+        // File exists but not declared in manifest - report RSC-008
+        if (!context.referencedUndeclaredResources?.has(resourcePath)) {
+          context.messages.push({
+            id: 'RSC-008',
+            severity: 'error',
+            message: `Referenced resource "${resourcePath}" is not declared in the OPF manifest`,
+            location: reference.location,
+          });
+          context.referencedUndeclaredResources ??= new Set();
+          context.referencedUndeclaredResources.add(resourcePath);
+        }
+      } else {
         // File doesn't exist at all - report RSC-007
         const isLinkRef = reference.type === ReferenceType.LINK;
         context.messages.push({
