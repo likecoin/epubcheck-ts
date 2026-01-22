@@ -395,6 +395,16 @@ export class OPFValidator {
         });
       }
 
+      // EPUB 3: Check for publication resources in META-INF
+      if (this.packageDoc.version !== '2.0' && fullPath.startsWith('META-INF/')) {
+        context.messages.push({
+          id: 'PKG-025',
+          severity: 'error',
+          message: `Publication resource must not be located in META-INF: ${item.href}`,
+          location: { path: opfPath },
+        });
+      }
+
       // Validate media type format (RFC4288)
       if (!isValidMimeType(item.mediaType)) {
         context.messages.push({
@@ -862,8 +872,9 @@ function resolvePath(basePath: string, relativePath: string): string {
  * Validate MIME type format according to RFC4288
  */
 function isValidMimeType(mediaType: string): boolean {
+  // RFC 4288 allows: letters, digits, and !#$&-^_.+ in type/subtype
   const mimeTypePattern =
-    /^[a-zA-Z][a-zA-Z0-9!#$&\-^_]*\/[a-zA-Z0-9][a-zA-Z0-9!#$&\-^_+]*(?:\s*;\s*[a-zA-Z0-9-]+=[^;]+)?$/;
+    /^[a-zA-Z][a-zA-Z0-9!#$&\-^_.]*\/[a-zA-Z0-9][a-zA-Z0-9!#$&\-^_.+]*(?:\s*;\s*[a-zA-Z0-9-]+=[^;]+)?$/;
 
   if (!mimeTypePattern.test(mediaType)) {
     return false;

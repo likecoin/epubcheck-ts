@@ -236,6 +236,11 @@ export class OCFValidator {
 
   /**
    * Validate META-INF directory
+   *
+   * Note: PKG-025 is only reported when a manifest item references a file
+   * in META-INF (checked in OPFValidator), not for arbitrary files here.
+   * Files like calibre_bookmarks.txt are allowed as long as they're not
+   * listed as publication resources in the manifest.
    */
   private validateMetaInf(zip: ZipReader, messages: ValidationMessage[]): void {
     const metaInfFiles = zip.listDirectory('META-INF');
@@ -246,30 +251,9 @@ export class OCFValidator {
         message: 'Missing META-INF directory',
         location: { path: 'META-INF/' },
       });
-      return;
     }
-
-    const allowedFiles = new Set([
-      'container.xml',
-      'encryption.xml',
-      'signatures.xml',
-      'metadata.xml',
-    ]);
-
-    for (const file of metaInfFiles) {
-      // Skip directory entry itself
-      if (file === 'META-INF/') continue;
-
-      const filename = file.replace('META-INF/', '');
-      if (!allowedFiles.has(filename)) {
-        messages.push({
-          id: 'PKG-025',
-          severity: 'error',
-          message: `File not allowed in META-INF directory: ${filename}`,
-          location: { path: file },
-        });
-      }
-    }
+    // Note: We don't enforce a strict allowlist of files in META-INF.
+    // Java EPUBCheck only reports PKG-025 when manifest items reference META-INF paths.
   }
 
   /**

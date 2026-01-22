@@ -255,7 +255,9 @@ describe('OCFValidator', () => {
       expect(error).toBeDefined();
     });
 
-    it('should report error for non-allowed files in META-INF (PKG-025)', () => {
+    it('should allow arbitrary files in META-INF (like calibre_bookmarks.txt)', () => {
+      // PKG-025 is only reported when manifest items reference META-INF files,
+      // not for arbitrary files in META-INF (matching Java EPUBCheck behavior)
       const data = createEpubZip({
         mimetype: 'application/epub+zip',
         'META-INF/container.xml': `<?xml version="1.0"?>
@@ -264,6 +266,7 @@ describe('OCFValidator', () => {
     <rootfile full-path="content.opf" media-type="application/oebps-package+xml"/>
   </rootfiles>
 </container>`,
+        'META-INF/calibre_bookmarks.txt': 'bookmarks data',
         'META-INF/custom-file.xml': '<custom/>',
         'content.opf': '<package/>',
       });
@@ -272,9 +275,8 @@ describe('OCFValidator', () => {
 
       validator.validate(context);
 
-      const error = context.messages.find((m) => m.id === 'PKG-025');
-      expect(error).toBeDefined();
-      expect(error?.message).toContain('custom-file.xml');
+      const errors = context.messages.filter((m) => m.id === 'PKG-025');
+      expect(errors).toHaveLength(0);
     });
 
     it('should accept allowed files in META-INF', () => {
