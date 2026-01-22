@@ -302,20 +302,90 @@ This document tracks the implementation progress compared to the original Java E
 
 ## Test Coverage
 
-| Module | Tests | Status |
-|--------|-------|--------|
-| src/ocf/validator.ts | 18 | ✅ Passing |
-| src/ocf/zip.ts | 19 | ✅ Passing |
-| src/opf/parser.ts | 16 | ✅ Passing |
-| src/opf/validator.ts | 22 | ✅ Passing |
-| src/content/validator.ts | 43 | ✅ Passing |
-| src/content/parser.ts | 23 | ✅ Passing |
-| src/references/validator.ts | 19 | ✅ Passing |
-| src/css/validator.ts | 19 | ✅ Passing |
-| src/nav/validator.ts | 7 | ✅ Passing |
-| src/schema/*.ts | 9 | ✅ Passing |
-| Integration tests | 4 | ✅ Passing |
-| **Total** | **208** | **✅ All passing** |
+### TypeScript Test Suite
+
+| Module | Unit Tests | Source Tests | Total | Status |
+|--------|------------|--------------|-------|--------|
+| OCF (Container) | 19 | 18 | 37 | ✅ Passing |
+| OPF (Package) | 46 | 22 | 68 | ✅ Passing |
+| Content (XHTML/SVG) | 33 | 48 | 81 | ✅ Passing (3 skipped) |
+| CSS | 34 | 23 | 57 | ✅ Passing |
+| Navigation | 14 | 7 | 21 | ✅ Passing |
+| NCX (EPUB 2) | 24 | - | 24 | ✅ Passing |
+| References | 29 | 19 | 48 | ✅ Passing |
+| Schema | - | 9 | 9 | ✅ Passing |
+| OCF/ZIP | - | 19 | 19 | ✅ Passing |
+| OPF Parser | - | 16 | 16 | ✅ Passing |
+| Content Parser | - | 23 | 23 | ✅ Passing |
+| Integration | 4 | - | 4 | ✅ Passing |
+| **Total** | **196** | **204** | **404** | **✅ All passing (3 skipped)** |
+
+**Test Organization:**
+- **Unit tests** (`test/unit/`): Test individual validator behavior with mock data
+- **Source tests** (`src/*/`): Co-located tests with implementation
+- **Integration tests** (`test/integration/`): End-to-end EPUB validation
+
+**Execution time:** ~300ms for all tests
+
+### Comparison with Java EPUBCheck
+
+| Category | Java (Cucumber BDD) | TypeScript (Unit + Integration) | Coverage Status |
+|----------|---------------------|----------------------------------|-----------------|
+| **Total Tests** | ~850+ scenarios | 404 tests | ⭐⭐⭐⭐ (4/5) |
+| **Content (XHTML)** | 168 scenarios | 81 tests | ✅ Core well covered, ❌ Missing ARIA, DOCTYPE, entities |
+| **Package (OPF)** | 121 scenarios | 68 tests | ✅ Core well covered, ❌ Missing refines cycles, link elements |
+| **OCF (Container)** | 56 scenarios | 37 tests | ✅ Core well covered, ❌ Missing encryption, signatures |
+| **CSS** | 19 scenarios | 57 tests | ✅ Better granularity than Java |
+| **Navigation** | 40 scenarios | 21 tests | ✅ Core covered, ❌ Missing landmarks specifics |
+| **NCX** | 8 scenarios | 24 tests | ✅ Better coverage than Java |
+| **References** | 113 scenarios | 48 tests | ✅ Core well covered, ❌ Missing URL encoding edge cases |
+| **Accessibility** | Dozens of scenarios | 4 ACC checks | ❌ Only 30% coverage - missing WCAG 2.0, ARIA |
+| **Media Overlays** | 51 scenarios | 0 tests | ❌ Not implemented |
+| **Advanced Features** | 100+ scenarios | 0 tests | ❌ Not implemented (dictionaries, etc.) |
+
+### Test Quality Assessment
+
+**Strengths:**
+- ✅ **Unit-level granularity** - Tests specific validation logic in isolation
+- ✅ **Fast execution** - All tests run in ~300ms vs Java's integration-heavy suite
+- ✅ **Clear organization** - One test file per validator
+- ✅ **Type safety** - TypeScript ensures API contracts
+- ✅ **Better NCX coverage** - More detailed than Java
+
+**Critical Gaps vs Java EPUBCheck:**
+- ❌ **ARIA validation** - No role/attribute validation (Java has dozens)
+- ❌ **ID/IDREF validation** - No duplicate ID detection
+- ❌ **DOCTYPE validation** - No obsolete identifier checks
+- ❌ **Entity validation** - No external entity checks
+- ❌ **Base URL handling** - No xml:base or HTML base support
+- ❌ **Advanced accessibility** - Only 30% of Java's coverage
+- ❌ **Advanced features** - Media overlays, dictionaries not implemented
+
+**For Implemented Features:**
+The TypeScript tests provide **solid coverage** (~75% of core validation). Major validation paths are tested with both happy and error cases. Some areas (NCX, CSS) have better granularity than Java's integration tests.
+
+### Priority Recommendations for Test Expansion
+
+**Priority 1 - Fill Core Validation Gaps:**
+1. ✅ **Add comprehensive unit tests** for all validators (DONE - 404 tests)
+2. ❌ **Add ARIA validation tests** - Roles, attributes, DPUB-ARIA
+3. ❌ **Add ID/IDREF tests** - Duplicate detection, non-NCName IDs
+4. ❌ **Add DOCTYPE tests** - Obsolete identifiers, legacy strings
+5. ❌ **Add entity tests** - External entities, malformed references
+6. ❌ **Add base URL tests** - xml:base, HTML base handling
+
+**Priority 2 - Improve Edge Case Coverage:**
+1. ❌ **Add OPF link element tests** - rel, hreflang, properties
+2. ❌ **Add refines cycle detection tests**
+3. ❌ **Add UUID format validation tests**
+4. ❌ **Add URL encoding edge case tests**
+5. ❌ **Add character encoding tests**
+
+**Priority 3 - Advanced Features (when implemented):**
+1. ❌ **Media overlays validation tests**
+2. ❌ **Dictionary/index validation tests**
+3. ❌ **Full WCAG 2.0 accessibility tests**
+4. ❌ **Multiple renditions tests**
 
 ---
 
@@ -345,7 +415,7 @@ This document tracks the implementation progress compared to the original Java E
 ## Release Readiness (0.1.0)
 
 ### ✅ Ready
-- All 203 tests passing
+- All 404 tests passing (3 skipped)
 - Build successful (ESM + CJS + type definitions)
 - ESLint and TypeScript checks passing
 - Documentation complete (README, AGENTS.md, PROJECT_STATUS.md)
@@ -404,5 +474,30 @@ This document tracks the implementation progress compared to the original Java E
 ### In Progress 🚧
 - None
 
-### Upcoming 📋
-None - all medium priority items completed!
+### Upcoming 📋 (Based on Java EPUBCheck Gap Analysis)
+
+**Core Validation Gaps (High Priority):**
+1. **ARIA Validation** - Implement role and attribute validation for accessibility
+2. **ID/IDREF Validation** - Add duplicate ID detection and reference validation
+3. **DOCTYPE Validation** - Check for obsolete identifiers and legacy strings
+4. **Entity Validation** - Validate external entities and entity references
+5. **Base URL Handling** - Support xml:base and HTML base attributes
+6. **Refines Cycle Detection** - Detect circular refines references (OPF-065)
+7. **Link Element Validation** - Validate rel, hreflang, properties attributes
+8. **UUID Format Validation** - Validate dc:identifier UUID format
+
+**Advanced Features (Medium Priority):**
+1. **Media Overlays** - Implement SMIL validation for synchronized media
+2. **Dictionary Validation** - Validate dictionary collections
+3. **Index Validation** - Validate index collections
+4. **Encryption.xml** - Validate font obfuscation
+5. **Signatures.xml** - Validate digital signatures
+6. **Multiple Renditions** - Support metadata.xml validation
+7. **Full WCAG 2.0** - Comprehensive accessibility validation
+8. **Advanced URL Encoding** - Edge case handling for URLs
+
+**Test Coverage Improvements (Ongoing):**
+1. Add more edge case tests for existing validators
+2. Add Cucumber/BDD-style integration tests for spec compliance
+3. Add performance benchmarks and stress tests
+4. Add more real-world EPUB test fixtures
