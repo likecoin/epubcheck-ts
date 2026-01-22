@@ -122,46 +122,19 @@ export class SchemaValidator {
 
   /**
    * Validate manifest items (XHTML, SVG, etc.)
+   *
+   * NOTE: RelaxNG validation for XHTML/SVG/NAV is currently disabled due to
+   * libxml2-wasm limitations. The schemas use recursive "anything" patterns
+   * (common.elem.anything -> common.inner.anything) with interleave/attribute
+   * that libxml2 doesn't support ("Found forbidden pattern oneOrMore//interleave//attribute").
+   *
+   * Java EPUBCheck uses Jing (a more sophisticated RelaxNG validator) that handles these.
+   * Content validation still happens via Schematron and custom validators.
    */
-  private async validateManifestItems(schemas: Record<string, string>): Promise<void> {
-    if (!this.context.packageDocument) {
-      return;
-    }
-
-    for (const item of this.context.packageDocument.manifest) {
-      // Skip non-XML files and remote resources
-      if (item.href.startsWith('http') || !isXmlMediaType(item.mediaType)) {
-        continue;
-      }
-
-      const data = this.context.files.get(item.href);
-      if (!data) {
-        continue;
-      }
-
-      const xml = new TextDecoder().decode(data);
-
-      // Determine which schema to use
-      let schemaPath: string | undefined;
-      if (item.properties?.includes('nav') && schemas.nav) {
-        schemaPath = schemas.nav;
-      } else if (item.mediaType === 'image/svg+xml' && schemas.svg) {
-        schemaPath = schemas.svg;
-      } else if (item.mediaType === 'application/xhtml+xml' && schemas.xhtml) {
-        schemaPath = schemas.xhtml;
-      }
-
-      if (schemaPath) {
-        const validator = new RelaxNGValidator();
-        const messages = await validator.validate(xml, schemaPath);
-        for (const msg of messages) {
-          this.addMessage({
-            ...msg,
-            location: { ...msg.location, path: item.href },
-          });
-        }
-      }
-    }
+  private async validateManifestItems(_schemas: Record<string, string>): Promise<void> {
+    // RelaxNG validation disabled - see comment above
+    // Content is validated via Schematron (src/schema/schematron.ts) and
+    // custom validators (src/content/validator.ts)
   }
 
   /**
@@ -189,18 +162,4 @@ export class SchemaValidator {
 
     messages.push(message);
   }
-}
-
-/**
- * Check if a media type is XML-based
- */
-function isXmlMediaType(mediaType: string): boolean {
-  return (
-    mediaType === 'application/xhtml+xml' ||
-    mediaType === 'image/svg+xml' ||
-    mediaType === 'application/oebps-package+xml' ||
-    mediaType === 'application/x-dtbncx+xml' ||
-    mediaType === 'application/xml' ||
-    mediaType === 'text/xml'
-  );
 }

@@ -11,7 +11,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Content (XHTML/SVG) | ~70% | 🟡 Core done, missing ARIA/DOCTYPE/entities |
 | CSS Validation | ~50% | 🟡 Basic validation, missing vendor prefixes |
 | Navigation (nav/NCX) | ~40% | 🟡 Basic nav done, NCX strong |
-| Schema Validation | ~70% | 🟡 RelaxNG/XSD/Schematron working |
+| Schema Validation | ~50% | 🟡 RelaxNG for OPF/container; XHTML/SVG disabled (libxml2 limitation) |
 | Media Overlays | 0% | ❌ Not implemented |
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~75% | ✅ Strong implementation |
@@ -270,8 +270,8 @@ it('should report missing mimetype file (PKG-006)', async () => {
 - **Unreferenced resources** (OPF-097)
 
 ### 🟡 Partially Implemented
-- **Schema validation** - RelaxNG/XSD/Schematron work, but XPath has limitations
-- **Content validation** - Core structure good, missing ARIA/DOCTYPE/entities
+- **Schema validation** - RelaxNG for OPF/container works; XHTML/SVG RelaxNG disabled (libxml2-wasm doesn't support complex patterns)
+- **Content validation** - Core structure good, missing ARIA/DOCTYPE/entities; Schematron validation works
 - **Image validation** - MED-001/OPF-051 work, no format/size checks
 
 ### ❌ Not Implemented
@@ -292,8 +292,9 @@ it('should report missing mimetype file (PKG-006)', async () => {
 ## Known Issues
 
 1. **libxml2-wasm XPath limitations** - Queries for namespaced attributes don't work properly (affects 3 skipped tests)
-2. **Schematron XSLT 2.0** - Some XSLT 2.0 functions not fully supported by fontoxpath
-3. **RelaxNG deprecation** - libxml2 plans to remove RelaxNG support in future
+2. **libxml2-wasm RelaxNG limitations** - Cannot parse XHTML/SVG schemas due to complex recursive patterns (`oneOrMore//interleave//attribute`). Java uses Jing which handles these. XHTML/SVG RelaxNG validation disabled; content validated via Schematron instead.
+3. **Schematron XSLT 2.0** - Some XSLT 2.0 functions not fully supported by fontoxpath
+4. **RelaxNG deprecation** - libxml2 plans to remove RelaxNG support in future
 
 ---
 
