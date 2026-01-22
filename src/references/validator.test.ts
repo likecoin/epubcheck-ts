@@ -73,7 +73,7 @@ describe('ReferenceValidator', () => {
       validator.validate(context);
       const rscErrors = context.messages.filter((m) => m.id === 'RSC-007');
       expect(rscErrors).toHaveLength(1);
-      expect(rscErrors[0]?.message).toContain('not found in manifest');
+      expect(rscErrors[0]?.message).toContain('not found in EPUB');
     });
 
     it('should report missing LINK reference as warning (RSC-007w)', () => {

@@ -146,15 +146,22 @@ export class ReferenceValidator {
       });
     }
 
-    // Check if target resource exists
+    // Check if target resource exists in manifest
     if (!this.registry.hasResource(resourcePath)) {
-      const isLinkRef = reference.type === ReferenceType.LINK;
-      context.messages.push({
-        id: isLinkRef ? 'RSC-007w' : 'RSC-007',
-        severity: isLinkRef ? 'warning' : 'error',
-        message: `Referenced resource not found in manifest: ${resourcePath}`,
-        location: reference.location,
-      });
+      // Check if file exists in container but not declared in manifest
+      // If so, RSC-008 (from OPF validator) will handle it
+      const fileExistsInContainer = context.files.has(resourcePath);
+      if (!fileExistsInContainer) {
+        // File doesn't exist at all - report RSC-007
+        const isLinkRef = reference.type === ReferenceType.LINK;
+        context.messages.push({
+          id: isLinkRef ? 'RSC-007w' : 'RSC-007',
+          severity: isLinkRef ? 'warning' : 'error',
+          message: `Referenced resource not found in EPUB: ${resourcePath}`,
+          location: reference.location,
+        });
+      }
+      // Skip further validation since resource is not properly declared
       return;
     }
 

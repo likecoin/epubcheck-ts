@@ -596,12 +596,7 @@ export class ContentValidator {
         (item) => fullPath.endsWith(item.href) || item.href.endsWith(fullPath),
       );
       if (!manifestItem) {
-        context.messages.push({
-          id: 'MED-001',
-          severity: 'error',
-          message: `Image src references missing manifest item: ${src}`,
-          location: { path },
-        });
+        // Skip media type check - missing manifest item is reported by RSC-007/RSC-008
         continue;
       }
 

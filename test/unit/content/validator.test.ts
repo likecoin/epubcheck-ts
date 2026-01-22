@@ -443,25 +443,6 @@ describe('ContentValidator', () => {
   });
 
   describe('Image validation', () => {
-    it('should add MED-001 error for image not in manifest', () => {
-      const context = createValidationContext();
-      const packageDoc = createMinimalPackage();
-      context.packageDocument = packageDoc;
-      addXHTMLToContext(
-        context,
-        'OEBPS/nav.xhtml',
-        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><head><title>Nav</title></head><body><nav epub:type="toc"><ol><li><a href="chapter1.xhtml">Chapter 1</a></li></ol></nav></body></html>\n',
-      );
-      addXHTMLToContext(
-        context,
-        'OEBPS/chapter1.xhtml',
-        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Test</title></head><body><img src="missing-image.jpg" alt="Missing"/></body></html>\n',
-      );
-
-      validator.validate(context);
-      expect(context.messages.some((m) => m.id === 'MED-001')).toBe(true);
-    });
-
     it('should add OPF-051 error for image with invalid media type', () => {
       const context = createValidationContext();
       const packageDoc = createMinimalPackage({
