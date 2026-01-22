@@ -362,7 +362,7 @@ describe('OPFValidator', () => {
       expect(context.messages.some((m) => m.id === 'OPF-074')).toBe(true);
     });
 
-    it('should add OPF-010 error for missing manifest files', () => {
+    it('should add RSC-001 error for missing manifest files', () => {
       const context = createValidationContext();
       const packageDoc = createMinimalPackage({
         manifest: [
@@ -376,7 +376,8 @@ describe('OPFValidator', () => {
       validatorTest.packageDoc = packageDoc;
       validatorTest.validateManifest(context, 'OEBPS/content.opf');
 
-      expect(context.messages.some((m) => m.id === 'OPF-010')).toBe(true);
+      // RSC-001: Referenced resource could not be found (per Java EPUBCheck)
+      expect(context.messages.some((m) => m.id === 'RSC-001')).toBe(true);
     });
 
     it('should add OPF-014 error for invalid media type format', () => {

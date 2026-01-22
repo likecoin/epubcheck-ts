@@ -26,7 +26,7 @@ describe('Integration Tests - Real EPUB Files', () => {
 
   describe('Invalid EPUB Files', () => {
     it('should detect missing mimetype file', async () => {
-      const epubData = await loadEpub('invalid/ocf-mimetype-file-missing-error.epub');
+      const epubData = await loadEpub('invalid/ocf/ocf-mimetype-file-missing-error.epub');
       const result = await EpubCheck.validate(epubData);
 
       expect(result.valid).toBe(false);
@@ -35,7 +35,7 @@ describe('Integration Tests - Real EPUB Files', () => {
     });
 
     it('should detect forbidden characters in filename', async () => {
-      const epubData = await loadEpub('invalid/ocf-filename-character-forbidden-error.epub');
+      const epubData = await loadEpub('invalid/ocf/ocf-filename-character-forbidden-error.epub');
       const result = await EpubCheck.validate(epubData);
 
       expect(result.valid).toBe(false);

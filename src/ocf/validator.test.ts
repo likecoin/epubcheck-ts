@@ -128,7 +128,8 @@ describe('OCFValidator', () => {
       expect(error?.message).toContain('application/epub+zip');
     });
 
-    it('should warn about whitespace in mimetype', () => {
+    it('should report error for whitespace in mimetype (PKG-007)', () => {
+      // Per Java EPUBCheck, any deviation from exact "application/epub+zip" is PKG-007
       const data = createEpubZip({
         mimetype: 'application/epub+zip\n',
         'META-INF/container.xml': `<?xml version="1.0"?>
@@ -144,9 +145,9 @@ describe('OCFValidator', () => {
 
       validator.validate(context);
 
-      const warning = context.messages.find((m) => m.id === 'PKG-008');
-      expect(warning).toBeDefined();
-      expect(warning?.severity).toBe('warning');
+      const error = context.messages.find((m) => m.id === 'PKG-007');
+      expect(error).toBeDefined();
+      expect(error?.severity).toBe('error');
     });
 
     it('should report error for compressed mimetype (PKG-006)', () => {
@@ -175,7 +176,7 @@ describe('OCFValidator', () => {
   });
 
   describe('container.xml validation', () => {
-    it('should report error for missing container.xml', () => {
+    it('should report error for missing container.xml (RSC-002)', () => {
       const data = createEpubZip({
         mimetype: 'application/epub+zip',
       });
@@ -184,7 +185,8 @@ describe('OCFValidator', () => {
 
       validator.validate(context);
 
-      const error = context.messages.find((m) => m.id === 'PKG-003');
+      // RSC-002 is the correct ID for missing container.xml per Java EPUBCheck
+      const error = context.messages.find((m) => m.id === 'RSC-002');
       expect(error).toBeDefined();
       expect(error?.severity).toBe('fatal');
     });
@@ -320,7 +322,7 @@ describe('OCFValidator', () => {
       expect(errors).toHaveLength(0);
     });
 
-    it('should report error for filenames with special characters (PKG-011)', () => {
+    it('should report error for filenames with disallowed ASCII characters (PKG-009)', () => {
       const data = createEpubZip({
         mimetype: 'application/epub+zip',
         'META-INF/container.xml': `<?xml version="1.0"?>
@@ -337,9 +339,10 @@ describe('OCFValidator', () => {
 
       validator.validate(context);
 
-      const errors = context.messages.filter((m) => m.id === 'PKG-011');
+      // PKG-009 is reported for disallowed ASCII characters per Java EPUBCheck
+      const errors = context.messages.filter((m) => m.id === 'PKG-009');
       expect(errors).toHaveLength(1);
-      expect(errors[0]?.message).toContain('special character');
+      expect(errors[0]?.message).toContain('disallowed characters');
     });
 
     it('should report error for invalid filename like dot or double-dot (PKG-009)', () => {

@@ -127,21 +127,13 @@ export class OCFValidator {
       return;
     }
 
-    const trimmed = content.trim();
-    if (trimmed !== EPUB_MIMETYPE) {
+    // PKG-007: mimetype must exactly match "application/epub+zip" (no trimming)
+    // This matches Java EPUBCheck behavior - any whitespace/newlines are an error
+    if (content !== EPUB_MIMETYPE) {
       messages.push({
         id: 'PKG-007',
         severity: 'error',
-        message: `Mimetype file must contain "${EPUB_MIMETYPE}", found "${trimmed}"`,
-        location: { path: 'mimetype' },
-      });
-    }
-
-    if (content !== EPUB_MIMETYPE) {
-      messages.push({
-        id: 'PKG-008',
-        severity: 'warning',
-        message: 'Mimetype file should not contain leading/trailing whitespace or newlines',
+        message: `Mimetype file must contain exactly "${EPUB_MIMETYPE}"`,
         location: { path: 'mimetype' },
       });
     }
@@ -155,9 +147,9 @@ export class OCFValidator {
 
     if (!zip.has(containerPath)) {
       context.messages.push({
-        id: 'PKG-003',
+        id: 'RSC-002',
         severity: 'fatal',
-        message: 'Missing META-INF/container.xml',
+        message: 'Required file META-INF/container.xml was not found',
         location: { path: containerPath },
       });
       return;
@@ -166,7 +158,7 @@ export class OCFValidator {
     const content = zip.readText(containerPath);
     if (!content) {
       context.messages.push({
-        id: 'PKG-003',
+        id: 'RSC-002',
         severity: 'fatal',
         message: 'Could not read META-INF/container.xml',
         location: { path: containerPath },
@@ -258,8 +250,17 @@ export class OCFValidator {
 
   /**
    * Validate filenames for invalid characters
+   *
+   * Per EPUB 3.3 spec and Java EPUBCheck:
+   * - PKG-009: Disallowed characters (ASCII special chars, control chars, private use, etc.)
+   * - PKG-010: Whitespace characters (warning)
+   * - PKG-011: Filename ends with period
+   * - PKG-012: Non-ASCII characters (usage info)
    */
   private validateFilenames(zip: ZipReader, messages: ValidationMessage[]): void {
+    // Disallowed ASCII characters: " * : < > ? \ |
+    const DISALLOWED_ASCII = new Set([0x22, 0x2a, 0x3a, 0x3c, 0x3e, 0x3f, 0x5c, 0x7c]);
+
     for (const path of zip.paths) {
       if (path === 'mimetype') continue;
 
@@ -278,31 +279,64 @@ export class OCFValidator {
         continue;
       }
 
+      const disallowed: string[] = [];
+      let hasSpaces = false;
+
       for (let i = 0; i < filename.length; i++) {
         const code = filename.charCodeAt(i);
 
-        if (code < 32 || code === 127 || (code >= 128 && code <= 159)) {
-          messages.push({
-            id: 'PKG-010',
-            severity: 'error',
-            message: `Filename contains control character: "${path}"`,
-            location: { path },
-          });
-          break;
+        // Check for disallowed ASCII characters
+        if (DISALLOWED_ASCII.has(code)) {
+          const char = filename[i] ?? '';
+          disallowed.push(`U+${code.toString(16).toUpperCase().padStart(4, '0')} (${char})`);
+        }
+        // Check for control characters (C0: 0x00-0x1F, DEL: 0x7F, C1: 0x80-0x9F)
+        else if (code <= 0x1f || code === 0x7f || (code >= 0x80 && code <= 0x9f)) {
+          disallowed.push(`U+${code.toString(16).toUpperCase().padStart(4, '0')} (CONTROL)`);
+        }
+        // Check for private use area (0xE000-0xF8FF)
+        else if (code >= 0xe000 && code <= 0xf8ff) {
+          disallowed.push(`U+${code.toString(16).toUpperCase().padStart(4, '0')} (PRIVATE USE)`);
+        }
+        // Check for specials block (0xFFF0-0xFFFF)
+        else if (code >= 0xfff0 && code <= 0xffff) {
+          disallowed.push(`U+${code.toString(16).toUpperCase().padStart(4, '0')} (SPECIALS)`);
+        }
+
+        // Check for whitespace
+        if (code === 0x20 || code === 0x09 || code === 0x0a || code === 0x0d) {
+          hasSpaces = true;
         }
       }
 
-      const specialChars = '<>:"|?*';
-      for (const char of specialChars) {
-        if (filename.includes(char)) {
-          messages.push({
-            id: 'PKG-011',
-            severity: 'error',
-            message: `Filename contains special character: "${path}"`,
-            location: { path },
-          });
-          break;
-        }
+      // Check if filename ends with period
+      if (filename.endsWith('.')) {
+        messages.push({
+          id: 'PKG-011',
+          severity: 'error',
+          message: `Filename must not end with a period: "${path}"`,
+          location: { path },
+        });
+      }
+
+      // Report disallowed characters (PKG-009)
+      if (disallowed.length > 0) {
+        messages.push({
+          id: 'PKG-009',
+          severity: 'error',
+          message: `Filename "${path}" contains disallowed characters: ${disallowed.join(', ')}`,
+          location: { path },
+        });
+      }
+
+      // Report whitespace (PKG-010 - warning)
+      if (hasSpaces) {
+        messages.push({
+          id: 'PKG-010',
+          severity: 'warning',
+          message: `Filename "${path}" contains spaces`,
+          location: { path },
+        });
       }
     }
   }

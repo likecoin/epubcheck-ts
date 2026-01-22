@@ -384,13 +384,13 @@ export class OPFValidator {
       }
       seenHrefs.add(item.href);
 
-      // Check that referenced file exists
+      // Check that referenced file exists (RSC-001 per Java EPUBCheck)
       const fullPath = resolvePath(opfPath, item.href);
       if (!context.files.has(fullPath) && !item.href.startsWith('http')) {
         context.messages.push({
-          id: 'OPF-010',
+          id: 'RSC-001',
           severity: 'error',
-          message: `Manifest item "${item.id}" references missing file: ${item.href}`,
+          message: `Referenced resource "${item.href}" could not be found in the EPUB`,
           location: { path: opfPath },
         });
       }
