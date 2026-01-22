@@ -185,13 +185,15 @@ export class EpubCheck {
     ncxValidator.validate(context, ncxContent, ncxPath);
 
     // Check if NCX UID matches OPF unique identifier
-    if (context.ncxUid) {
-      const dcIdentifiers = context.packageDocument.dcElements.filter(
-        (dc) => dc.name === 'identifier',
+    if (context.ncxUid && context.packageDocument.uniqueIdentifier) {
+      // Find the dc:identifier whose id matches the package unique-identifier attribute
+      const uniqueIdRef = context.packageDocument.uniqueIdentifier;
+      const matchingIdentifier = context.packageDocument.dcElements.find(
+        (dc) => dc.name === 'identifier' && dc.id === uniqueIdRef,
       );
 
-      for (const dc of dcIdentifiers) {
-        const opfUid = dc.value.trim();
+      if (matchingIdentifier) {
+        const opfUid = matchingIdentifier.value.trim();
         if (context.ncxUid !== opfUid) {
           context.messages.push({
             id: 'NCX-001',
@@ -199,7 +201,6 @@ export class EpubCheck {
             message: `NCX uid "${context.ncxUid}" does not match OPF unique identifier "${opfUid}"`,
             location: { path: ncxPath },
           });
-          break;
         }
       }
     }

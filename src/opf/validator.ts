@@ -509,6 +509,9 @@ export class OPFValidator {
 
     // Check each file in the container
     for (const filePath of context.files.keys()) {
+      // Skip directory entries (paths ending with /)
+      if (filePath.endsWith('/')) continue;
+
       // Skip META-INF directory
       if (filePath.startsWith('META-INF/')) continue;
 

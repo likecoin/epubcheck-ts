@@ -257,6 +257,9 @@ export class OCFValidator {
     ]);
 
     for (const file of metaInfFiles) {
+      // Skip directory entry itself
+      if (file === 'META-INF/') continue;
+
       const filename = file.replace('META-INF/', '');
       if (!allowedFiles.has(filename)) {
         messages.push({
@@ -275,6 +278,9 @@ export class OCFValidator {
   private validateFilenames(zip: ZipReader, messages: ValidationMessage[]): void {
     for (const path of zip.paths) {
       if (path === 'mimetype') continue;
+
+      // Skip directory entries (paths ending with /)
+      if (path.endsWith('/')) continue;
 
       const filename = path.includes('/') ? (path.split('/').pop() ?? path) : path;
 
