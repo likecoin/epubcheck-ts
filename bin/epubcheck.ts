@@ -22,6 +22,7 @@ const { values, positionals } = parseArgs({
     json: { type: 'string', short: 'j' },
     quiet: { type: 'boolean', short: 'q', default: false },
     profile: { type: 'string', short: 'p' },
+    usage: { type: 'boolean', short: 'u', default: false },
     version: { type: 'boolean', short: 'v', default: false },
     help: { type: 'boolean', short: 'h', default: false },
     'fail-on-warnings': { type: 'boolean', short: 'w', default: false },
@@ -53,6 +54,7 @@ Options:
   -j, --json <file>        Output JSON report to file (use '-' for stdout)
   -q, --quiet              Suppress console output (errors only)
   -p, --profile <name>     Validation profile (default|dict|edupub|idx|preview)
+  -u, --usage              Include usage messages (best practices)
   -w, --fail-on-warnings   Exit with code 1 if warnings are found
   -v, --version            Show version information
   -h, --help               Show this help message
@@ -98,9 +100,15 @@ async function main(): Promise<void> {
 
     // Validate
     const startTime = Date.now();
-    const options: { profile?: 'default' | 'dict' | 'edupub' | 'idx' | 'preview' } = {};
+    const options: {
+      profile?: 'default' | 'dict' | 'edupub' | 'idx' | 'preview';
+      includeUsage?: boolean;
+    } = {};
     if (values.profile) {
       options.profile = values.profile as 'default' | 'dict' | 'edupub' | 'idx' | 'preview';
+    }
+    if (values.usage) {
+      options.includeUsage = true;
     }
     const result = await EpubCheck.validate(epubData, options);
     const elapsedMs = Date.now() - startTime;
@@ -133,6 +141,7 @@ async function main(): Promise<void> {
       const errors = result.messages.filter((m) => m.severity === 'error');
       const warnings = result.messages.filter((m) => m.severity === 'warning');
       const info = result.messages.filter((m) => m.severity === 'info');
+      const usage = result.messages.filter((m) => m.severity === 'usage');
 
       // Print messages with colors
       const printMessages = (
@@ -167,6 +176,9 @@ async function main(): Promise<void> {
         // Only show info if total messages is small
         printMessages(info, '\x1b[36m', 'INFO');
       }
+      if (usage.length > 0) {
+        printMessages(usage, '\x1b[90m', 'USAGE');
+      }
 
       // Summary
       console.log('─'.repeat(60));
@@ -180,6 +192,9 @@ async function main(): Promise<void> {
       console.log(`  Warnings: ${String(result.warningCount)}`);
       if (info.length > 0) {
         console.log(`  Info:     ${String(result.infoCount)}`);
+      }
+      if (usage.length > 0) {
+        console.log(`  Usages:   ${String(result.usageCount)}`);
       }
       console.log(`  Time:     ${String(elapsedMs)}ms`);
       console.log();

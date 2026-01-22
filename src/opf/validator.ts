@@ -523,7 +523,7 @@ export class OPFValidator {
 
       context.messages.push({
         id: 'RSC-008',
-        severity: 'warning',
+        severity: 'error',
         message: `File in container is not declared in manifest: ${filePath}`,
         location: { path: filePath },
       });

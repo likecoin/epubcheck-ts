@@ -524,7 +524,7 @@ describe('OPFValidator', () => {
       expect(context.messages.some((m) => m.id === 'OPF-013')).toBe(true);
     });
 
-    it('should add RSC-008 warning for undeclared resources', () => {
+    it('should add RSC-008 error for undeclared resources', () => {
       const context = createValidationContext();
       const packageDoc = createMinimalPackage();
       addFileToContext(context, 'OEBPS/nav.xhtml', '<html></html>');

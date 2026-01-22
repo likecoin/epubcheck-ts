@@ -429,9 +429,10 @@ describe('OPFValidator', () => {
       const context = createContext(opf, { 'OEBPS/undeclared.css': 'body {}' });
       validator.validate(context);
 
-      const warnings = context.messages.filter((m) => m.id === 'RSC-008');
-      expect(warnings).toHaveLength(1);
-      expect(warnings[0]?.message).toContain('undeclared.css');
+      const errors = context.messages.filter((m) => m.id === 'RSC-008');
+      expect(errors).toHaveLength(1);
+      expect(errors[0]?.severity).toBe('error');
+      expect(errors[0]?.message).toContain('undeclared.css');
     });
 
     it('should report error for duplicate manifest IDs (OPF-074)', () => {

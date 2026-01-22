@@ -125,8 +125,19 @@ export class EpubCheck {
 
     const elapsedMs = performance.now() - startTime;
 
+    // Filter messages based on options
+    const filteredMessages = context.messages.filter((msg) => {
+      if (!this.options.includeUsage && msg.severity === 'usage') {
+        return false;
+      }
+      if (!this.options.includeInfo && msg.severity === 'info') {
+        return false;
+      }
+      return true;
+    });
+
     // Build and return result
-    return buildReport(context.messages, context.version, elapsedMs);
+    return buildReport(filteredMessages, context.version, elapsedMs);
   }
 
   /**
@@ -197,7 +208,7 @@ export class EpubCheck {
         if (context.ncxUid !== opfUid) {
           context.messages.push({
             id: 'NCX-001',
-            severity: 'warning',
+            severity: 'error',
             message: `NCX uid "${context.ncxUid}" does not match OPF unique identifier "${opfUid}"`,
             location: { path: ncxPath },
           });

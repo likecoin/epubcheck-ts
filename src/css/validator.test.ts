@@ -15,11 +15,14 @@ describe('CSSValidator', () => {
     locale: 'en',
   };
 
-  const createContext = (includeInfo = false): ValidationContext => ({
+  const createContext = (options?: {
+    includeInfo?: boolean;
+    includeUsage?: boolean;
+  }): ValidationContext => ({
     messages: [],
     files: new Map(),
     data: new Uint8Array(),
-    options: { ...defaultOptions, includeInfo },
+    options: { ...defaultOptions, ...options },
     version: '3.0',
     rootfiles: [{ path: 'OEBPS/content.opf', mediaType: 'application/oebps-package+xml' }],
   });
@@ -149,13 +152,13 @@ describe('CSSValidator', () => {
       expect(errors).toHaveLength(1);
     });
 
-    it('should report info for @font-face when includeInfo is true (CSS-028)', () => {
-      context = createContext(true);
+    it('should report usage for @font-face when includeUsage is true (CSS-028)', () => {
+      context = createContext({ includeUsage: true });
       const css = '@font-face { font-family: "Test"; src: url("font.woff"); }';
       validator.validate(context, css, 'OEBPS/styles.css');
-      const infos = context.messages.filter((m) => m.id === 'CSS-028');
-      expect(infos).toHaveLength(1);
-      expect(infos[0]?.severity).toBe('info');
+      const usages = context.messages.filter((m) => m.id === 'CSS-028');
+      expect(usages).toHaveLength(1);
+      expect(usages[0]?.severity).toBe('usage');
     });
 
     it('should skip data: URLs in @font-face', () => {

@@ -279,11 +279,11 @@ export class CSSValidator {
       location.column = start.column;
     }
 
-    // Report font-face usage (info)
-    if (context.options.includeInfo) {
+    // Report font-face usage
+    if (context.options.includeUsage) {
       context.messages.push({
         id: 'CSS-028',
-        severity: 'info',
+        severity: 'usage',
         message: 'Use of @font-face declaration',
         location,
       });
