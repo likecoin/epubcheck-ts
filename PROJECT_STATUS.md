@@ -1,503 +1,390 @@
 # EPUBCheck-TS Project Status
 
-This document tracks the implementation progress compared to the original Java EPUBCheck.
+Quick reference for implementation progress vs Java EPUBCheck.
 
 ## Overview
 
-| Category | Java EPUBCheck | TypeScript Port | Status |
-|----------|---------------|-----------------|--------|
-| OCF Validation | 100% | ~70% | 🟡 Partial |
-| OPF Validation | 100% | ~70% | 🟡 Partial |
-| Content (XHTML/SVG) | 100% | ~70% | 🟡 Partial |
-| CSS Validation | 100% | ~50% | 🟡 Partial |
-| Navigation (nav/NCX) | 100% | ~40% | 🟡 Partial |
-| Schema Validation | 100% | ~70% | 🟡 Partial |
-| Media Overlays | 100% | 0% | ❌ Not Started |
-| Accessibility | 100% | ~75% | 🟡 Partial |
-| Cross-reference | 100% | ~75% | 🟡 Partial |
+| Category | Completion | Status |
+|----------|------------|--------|
+| OCF Validation | ~70% | 🟡 Core features done, missing encryption/signatures |
+| OPF Validation | ~70% | 🟡 Core features done, missing link elements/refines cycles |
+| Content (XHTML/SVG) | ~70% | 🟡 Core done, missing ARIA/DOCTYPE/entities |
+| CSS Validation | ~50% | 🟡 Basic validation, missing vendor prefixes |
+| Navigation (nav/NCX) | ~40% | 🟡 Basic nav done, NCX strong |
+| Schema Validation | ~70% | 🟡 RelaxNG/XSD/Schematron working |
+| Media Overlays | 0% | ❌ Not implemented |
+| Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
+| Cross-reference | ~75% | ✅ Strong implementation |
 
-**Overall Completion: ~65%**
-
----
-
-## Detailed Feature Comparison
-
-### 1. OCF (Container) Validation
-
-| Feature | Java | TS | Message IDs | Notes |
-|---------|:----:|:--:|------------|-------|
-| ZIP file opening | ✅ | ✅ | PKG-001 | Basic validation |
-| Mimetype first entry | ✅ | ✅ | PKG-005 | Implemented (uses original ZIP order) |
-| Mimetype uncompressed | ✅ | ✅ | PKG-006 | Implemented |
-| Mimetype extra field | ✅ | ✅ | PKG-005 | Implemented |
-| Mimetype content | ✅ | ✅ | PKG-007 | Implemented |
-| container.xml exists | ✅ | ✅ | PKG-003 | Implemented |
-| container.xml parsing | ✅ | ✅ | PKG-004 | Basic parsing |
-| container.xml schema | ✅ | 🟡 | RSC-005 | RelaxNG validation available |
-| Filename validation | ✅ | ✅ | PKG-009-012 | Special chars, Unicode |
-| encryption.xml | ✅ | ❌ | - | Font obfuscation |
-| signatures.xml | ✅ | ❌ | - | Digital signatures |
-| metadata.xml | ✅ | ❌ | - | Multiple renditions |
-| Empty directories | ✅ | ✅ | PKG-014 | - |
-
-**Status: ~70% complete**
+**Overall: ~65% complete (404 tests passing, 3 skipped)**
 
 ---
 
-### 2. OPF (Package Document) Validation
+## Test Coverage vs Java EPUBCheck
 
-| Feature | Java | TS | Message IDs | Notes |
-|---------|:----:|:--:|------------|-------|
-| Package schema | ✅ | 🟡 | RSC-005 | RelaxNG + Schematron available |
-| unique-identifier | ✅ | ✅ | OPF-030, OPF-048 | Implemented |
-| Package version | ✅ | ✅ | OPF-001 | Implemented |
-| dc:identifier required | ✅ | ✅ | OPF-015 | Implemented |
-| dc:title required | ✅ | ✅ | OPF-016 | Implemented |
-| dc:language required | ✅ | ✅ | OPF-017 | Implemented |
-| dc:date format | ✅ | ✅ | OPF-053, OPF-054 | W3C date validation (including partial dates like YYYY-MM) |
-| dcterms:modified | ✅ | ✅ | OPF-054 | EPUB 3 |
-| dc:creator role | ✅ | ✅ | OPF-052 | MARC relator codes |
-| Empty metadata | ✅ | ✅ | OPF-072 | - |
-| Manifest duplicates | ✅ | ✅ | OPF-074 | Implemented |
-| Manifest file exists | ✅ | ✅ | OPF-010 | Implemented |
-| Media type format | ✅ | ✅ | OPF-014 | RFC4288 validation |
-| Deprecated types | ✅ | ✅ | OPF-035, OPF-037, OPF-038 | OEB 1.x warnings |
-| Remote resources | ✅ | ✅ | RSC-006, RSC-006b | Property requirement (images, audio, video, stylesheets only; not hyperlinks) |
-| Data URLs | ✅ | ✅ | RSC-029 | EPUB 3 |
-| META-INF items | ✅ | ✅ | PKG-025 | - |
-| Item properties | ✅ | ✅ | OPF-012 | nav, cover-image, etc. |
-| Unknown properties | ✅ | ✅ | OPF-012 | Warning |
-| Invalid nav media type | ✅ | ✅ | OPF-012 | Implemented |
-| Fragment in href | ✅ | ✅ | OPF-091 | EPUB 3 |
-| Missing nav document | ✅ | ✅ | OPF-013 | EPUB 3 |
-| Spine exists | ✅ | ✅ | OPF-033 | Implemented |
-| Linear items | ✅ | ✅ | OPF-033 | Implemented |
-| Duplicate itemrefs | ✅ | ✅ | OPF-034 | EPUB 2 |
-| NCX reference | ✅ | ✅ | OPF-049, OPF-050 | Implemented |
-| Invalid itemref | ✅ | ✅ | OPF-049 | Implemented |
-| Invalid spine media type | ✅ | ✅ | OPF-043 | Implemented |
-| Fallback chains | ✅ | ✅ | OPF-040, OPF-045 | Implemented |
-| Guide validation | ✅ | ✅ | OPF-031 | EPUB 2 |
-| Collections | ✅ | ✅ | OPF-071-084 | Dict, Index, Preview |
+**Java**: 533 Cucumber scenarios across 15+ feature files, 712+ test resources (EPUBs, OPFs, XHTMLs)
+**TypeScript**: 404 tests (196 unit + 204 source + 4 integration)
 
-**Status: ~70% complete**
+### Quality: ⭐⭐⭐⭐ (4/5) for implemented features
 
----
+**Strong areas:**
+- NCX validation (24 tests - better than Java's 8 scenarios)
+- CSS validation (57 tests - better granularity than Java's 19)
+- Cross-reference validation (48 tests)
+- Fast execution (~300ms vs Java's integration-heavy suite)
 
-### 3. Content Document Validation
-
-| Feature | Java | TS | Message IDs | Notes |
-|---------|:----:|:--:|------------|-------|
-| NVDL/RNC schema | ✅ | 🟡 | RSC-005 | RelaxNG available |
-| Schematron rules | ✅ | 🟡 | SCH-* | Schematron validator implemented |
-| XML well-formedness | ✅ | ✅ | HTM-004 | DOM-based parsing |
-| XHTML namespace | ✅ | ✅ | HTM-001 | Implemented |
-| head/title/body | ✅ | ✅ | HTM-002, HTM-003 | Implemented |
-| Unescaped ampersands | ✅ | ✅ | HTM-012 | Implemented |
-| Unescaped less-than | ✅ | ✅ | HTM-012 | Implemented |
-| Link validation | ✅ | ✅ | RSC-007, RSC-010-011 | Implemented |
-| Image validation | ✅ | ✅ | MED-001, OPF-051 | src, alt, media types |
-| Script detection | ✅ | ✅ | OPF-014 | Scripted property check |
-| MathML detection | ✅ | ✅ | OPF-014 | mathml property |
-| SVG detection | ✅ | ✅ | OPF-014 | svg property |
-| epub:type validation | ✅ | ✅ | OPF-088 | Vocabulary check |
-| Fixed-layout viewport | ✅ | ✅ | HTM-046-060 | Meta viewport |
-| img alt text | ✅ | ✅ | ACC-005 | Accessibility |
-| MathML alt text | ✅ | ✅ | ACC-009 | Implemented |
-| Discouraged elements | ✅ | ✅ | HTM-055 | base, embed warnings |
-
-**Status: ~70% complete**
-
----
-
-### 4. CSS Validation
-
-| Feature | Java | TS | Message IDs | Notes |
-|---------|:----:|:--:|------------|-------|
-| CSS syntax parsing | ✅ | ✅ | CSS-008 | css-tree integrated |
-| @font-face validation | ✅ | ✅ | CSS-007, CSS-019, CSS-028 | Font MIME types, empty check, info |
-| position: fixed | ✅ | ✅ | CSS-006 | Warning - discouraged |
-| position: absolute | ✅ | ✅ | CSS-019 | Warning - use caution |
-| Remote fonts | ✅ | 🟡 | - | Font URLs extracted for validation |
-| Empty URIs | ✅ | ✅ | CSS-002 | Implemented |
-| Alt stylesheet | ✅ | ✅ | CSS-005, CSS-015 | Conflict, title |
-| @import validation | ✅ | ✅ | CSS-002 | Import URLs extracted |
-| Media overlay classes | ✅ | ✅ | CSS-029, CSS-030 | - |
-
-**Status: ~50% complete**
-
----
-
-### 5. Navigation Validation
-
-| Feature | Java | TS | Message IDs | Notes |
-|---------|:----:|:--:|------------|-------|
-| Nav doc schema | ✅ | 🟡 | RSC-005 | RelaxNG available |
-| epub:type="toc" | ✅ | ✅ | NAV-001 | Implemented |
-| ol element | ✅ | ✅ | NAV-002 | Implemented |
-| TOC link targets | ✅ | ✅ | NAV-010 | Remote links check |
-| Reading order | ✅ | ❌ | NAV-011 | - |
-| Page-list validation | ✅ | ✅ | NAV-010 | Remote links check |
-| Landmarks validation | ✅ | ✅ | NAV-010 | Remote links check |
-| NCX schema | ✅ | 🟡 | RSC-005 | RelaxNG available |
-| NCX uid match | ✅ | ✅ | NCX-001 | Implemented |
-| NCX navMap required | ✅ | ✅ | NCX-002 | Implemented |
-| NCX content src | ✅ | ✅ | NCX-006 | Implemented |
-| EDUPub sections | ✅ | ❌ | NAV-004 | - |
-| EDUPub LOA/LOI/LOT/LOV | ✅ | ❌ | NAV-005-008 | - |
-
-**Status: ~40% complete**
-
----
-
-### 6. Schema Validation
-
-| Feature | Java | TS | Message IDs | Notes |
-|---------|:----:|:--:|------------|-------|
-| RelaxNG (RNC/RNG) | ✅ | ✅ | RSC-005 | libxml2-wasm (RNC converted to RNG) |
-| XSD | ✅ | ✅ | RSC-005 | libxml2-wasm |
-| Schematron | ✅ | ✅ | SCH-* | fontoxpath + slimdom |
-| NVDL | ✅ | ❌ | - | Multi-namespace |
-| XML Catalog | ✅ | ❌ | - | Schema resolution |
-| Schema bundling | ✅ | ✅ | - | Gzip-compressed, lazy decompression |
-
-**Status: ~70% complete** (RelaxNG, XSD, Schematron implemented; schemas bundled)
-
----
-
-### 7. Cross-Reference Validation
-
-| Feature | Java | TS | Message IDs | Notes |
-|---------|:----:|:--:|------------|-------|
-| Missing targets | ✅ | ✅ | RSC-007, RSC-007w | Implemented |
-| Undeclared resources | ✅ | ✅ | RSC-008 | Files in container not in manifest |
-| Fragment validation | ✅ | ✅ | RSC-012 | ID existence check |
-| Fragment type mismatch | ✅ | ✅ | RSC-014 | SVG view fragments |
-| Hyperlink to non-spine | ✅ | ✅ | RSC-011 | Implemented |
-| Non-content hyperlink | ✅ | ✅ | RSC-010 | Implemented |
-| Stylesheet fragment | ✅ | ✅ | RSC-013 | Implemented |
-| Remote HTTPS | ✅ | ✅ | RSC-031 | Implemented |
-| Malformed URL | ✅ | ✅ | RSC-020 | Implemented |
-| File URL | ✅ | ✅ | RSC-026 | Implemented |
-| Leaking path | ✅ | ✅ | RSC-027, RSC-028 | Implemented |
-| Unused resources | ✅ | ✅ | OPF-097 | Implemented |
-
-**Status: ~75% complete** (content document link extraction integrated)
-
----
-
-### 8. Media Validation
-
-| Feature | Java | TS | Message IDs | Notes |
-|---------|:----:|:--:|------------|-------|
-| Audio media types | ✅ | ❌ | MED-005 | Core types only |
-| Video media types | ✅ | ❌ | MED-005 | - |
-| Image validation | ✅ | ❌ | OPF-029, OPF-051, OPF-057 | Magic, size, dims |
-| Format mismatch | ✅ | ❌ | PKG-022 | Ext vs content |
-| Corrupt images | ✅ | ❌ | PKG-021 | - |
-| Picture fallback | ✅ | ❌ | MED-003, MED-007 | - |
-| Track validation | ✅ | ❌ | - | - |
-| Object fallback | ✅ | ❌ | - | - |
-
-**Status: 0% complete**
-
----
-
-### 9. Media Overlay Validation
-
-| Feature | Java | TS | Message IDs | Notes |
-|---------|:----:|:--:|------------|-------|
-| SMIL schema | ✅ | ❌ | - | RNC/Schematron |
-| Clip times | ✅ | ❌ | MED-008, MED-009 | clipBegin < clipEnd |
-| Audio source | ✅ | ❌ | MED-005 | Blessed types |
-| Text src | ✅ | ❌ | MED-011, MED-017 | Reference content doc |
-| epub:textref | ✅ | ❌ | - | - |
-| SVG fragment | ✅ | ❌ | MED-018 | - |
-| Media overlay attr | ✅ | ❌ | MED-010-013 | Bidirectional |
-| Duration sum | ✅ | ❌ | MED-016 | Match total |
-
-**Status: 0% complete**
-
----
-
-### 10. Accessibility Validation
-
-| Feature | Java | TS | Message IDs | Notes |
-|---------|:----:|:--:|------------|-------|
-| Empty links | ✅ | ✅ | ACC-004 | Anchors need text |
-| Image alt | ✅ | ✅ | ACC-005 | Alt text required |
-| MathML alt | ✅ | ✅ | ACC-009 | alttext/annotation |
-| SVG link title | ✅ | ✅ | ACC-011 | Accessible name |
-
-**Status: ~75% complete**
-
----
-
-### 11. Scripting Validation
-
-| Feature | Java | TS | Message IDs | Notes |
-|---------|:----:|:--:|------------|-------|
-| Script detection | ✅ | ✅ | OPF-014 | script, svg:script elements |
-| Scripted property | ✅ | ✅ | OPF-014 | Required if scripts (EPUB 3) |
-| Script events | ✅ | ✅ | OPF-014 | onclick, onload, etc. |
-| Form detection | ✅ | ✅ | OPF-014 | form element detection |
-
-**Status: ~80% complete**
-
----
-
-## Implementation Priority
-
-### High Priority (for core validation)
-
-1. **Remote resources property (RSC-006, RSC-006b)**
-   - Check manifest items with remote resources have "remote-resources" property
-   - Required for EPUB 3 compliance
-   - Directly impacts validity of many EPUBs
-
-2. **Image validation (MED-001, OPF-051)**
-   - Image src attribute validation
-   - Image alt text validation (partially done via ACC-005)
-   - Core to EPUB publications
-
-3. **epub:type validation (OPF-088)**
-   - Vocabulary/structure validation
-   - Important for specialized EPUBs (indexes, dictionaries)
-
-4. **CSS alt stylesheet validation (CSS-005, CSS-015)**
-   - Alternate stylesheet conflict detection
-   - Title validation for alt stylesheets
-   - Straightforward to implement
-
-5. **dc:creator role validation (OPF-052)**
-   - MARC relator code validation
-   - Important for library/publishing workflows
-
-### Medium Priority (for completeness)
-
-6. **Link validation in content documents (RSC-007, RSC-010-011)**
-   - Target validation within XHTML/SVG content
-   - Hyperlink to non-spine detection in context
-   - Improve content document validation quality
-
-7. **Collections (OPF-071-084)**
-   - Dictionary, Index, Preview collection validation
-   - Specialized but important for certain EPUB types
-
-8. **OCF container improvements**
-   - Mimetype uncompressed check (PKG-006)
-   - Filename validation for special characters (PKG-009-012)
-   - Empty directory detection (PKG-014)
-
-9. **CSS media overlay classes (CSS-029, CSS-030)**
-   - EPUB 3 media overlays CSS support
-
-### Lower Priority (specialized features)
-
-10. **Media Validation** - Audio/video format checks
-11. **Media Overlays** - EPUB 3 synchronized text/audio
-12. **Advanced Accessibility** - ARIA, table headers, page breaks
-
----
-
-## Test Coverage
-
-### TypeScript Test Suite
-
-| Module | Unit Tests | Source Tests | Total | Status |
-|--------|------------|--------------|-------|--------|
-| OCF (Container) | 19 | 18 | 37 | ✅ Passing |
-| OPF (Package) | 46 | 22 | 68 | ✅ Passing |
-| Content (XHTML/SVG) | 33 | 48 | 81 | ✅ Passing (3 skipped) |
-| CSS | 34 | 23 | 57 | ✅ Passing |
-| Navigation | 14 | 7 | 21 | ✅ Passing |
-| NCX (EPUB 2) | 24 | - | 24 | ✅ Passing |
-| References | 29 | 19 | 48 | ✅ Passing |
-| Schema | - | 9 | 9 | ✅ Passing |
-| OCF/ZIP | - | 19 | 19 | ✅ Passing |
-| OPF Parser | - | 16 | 16 | ✅ Passing |
-| Content Parser | - | 23 | 23 | ✅ Passing |
-| Integration | 4 | - | 4 | ✅ Passing |
-| **Total** | **196** | **204** | **404** | **✅ All passing (3 skipped)** |
-
-**Test Organization:**
-- **Unit tests** (`test/unit/`): Test individual validator behavior with mock data
-- **Source tests** (`src/*/`): Co-located tests with implementation
-- **Integration tests** (`test/integration/`): End-to-end EPUB validation
-
-**Execution time:** ~300ms for all tests
-
-### Comparison with Java EPUBCheck
-
-| Category | Java (Cucumber BDD) | TypeScript (Unit + Integration) | Coverage Status |
-|----------|---------------------|----------------------------------|-----------------|
-| **Total Tests** | ~850+ scenarios | 404 tests | ⭐⭐⭐⭐ (4/5) |
-| **Content (XHTML)** | 168 scenarios | 81 tests | ✅ Core well covered, ❌ Missing ARIA, DOCTYPE, entities |
-| **Package (OPF)** | 121 scenarios | 68 tests | ✅ Core well covered, ❌ Missing refines cycles, link elements |
-| **OCF (Container)** | 56 scenarios | 37 tests | ✅ Core well covered, ❌ Missing encryption, signatures |
-| **CSS** | 19 scenarios | 57 tests | ✅ Better granularity than Java |
-| **Navigation** | 40 scenarios | 21 tests | ✅ Core covered, ❌ Missing landmarks specifics |
-| **NCX** | 8 scenarios | 24 tests | ✅ Better coverage than Java |
-| **References** | 113 scenarios | 48 tests | ✅ Core well covered, ❌ Missing URL encoding edge cases |
-| **Accessibility** | Dozens of scenarios | 4 ACC checks | ❌ Only 30% coverage - missing WCAG 2.0, ARIA |
-| **Media Overlays** | 51 scenarios | 0 tests | ❌ Not implemented |
-| **Advanced Features** | 100+ scenarios | 0 tests | ❌ Not implemented (dictionaries, etc.) |
-
-### Test Quality Assessment
-
-**Strengths:**
-- ✅ **Unit-level granularity** - Tests specific validation logic in isolation
-- ✅ **Fast execution** - All tests run in ~300ms vs Java's integration-heavy suite
-- ✅ **Clear organization** - One test file per validator
-- ✅ **Type safety** - TypeScript ensures API contracts
-- ✅ **Better NCX coverage** - More detailed than Java
-
-**Critical Gaps vs Java EPUBCheck:**
-- ❌ **ARIA validation** - No role/attribute validation (Java has dozens)
-- ❌ **ID/IDREF validation** - No duplicate ID detection
+**Critical gaps:**
+- ❌ **ARIA validation** - No role/attribute checks (Java has dozens)
+- ❌ **ID/IDREF validation** - No duplicate detection
 - ❌ **DOCTYPE validation** - No obsolete identifier checks
 - ❌ **Entity validation** - No external entity checks
-- ❌ **Base URL handling** - No xml:base or HTML base support
-- ❌ **Advanced accessibility** - Only 30% of Java's coverage
-- ❌ **Advanced features** - Media overlays, dictionaries not implemented
+- ❌ **Base URL** - No xml:base or HTML base support
+- ❌ **Advanced accessibility** - Only 30% of Java coverage
+- ❌ **Media overlays** - Not implemented
 
-**For Implemented Features:**
-The TypeScript tests provide **solid coverage** (~75% of core validation). Major validation paths are tested with both happy and error cases. Some areas (NCX, CSS) have better granularity than Java's integration tests.
+**Skipped tests (3):**
+All due to libxml2-wasm XPath limitations with namespaced attributes:
+- `test/unit/content/validator.test.ts:257` - OPF-014 inline event handlers
+- `test/unit/content/validator.test.ts:514` - CSS-005 conflicting stylesheets
+- `test/unit/content/validator.test.ts:655` - OPF-088 unknown epub:type prefix
 
-### Priority Recommendations for Test Expansion
-
-**Priority 1 - Fill Core Validation Gaps:**
-1. ✅ **Add comprehensive unit tests** for all validators (DONE - 404 tests)
-2. ❌ **Add ARIA validation tests** - Roles, attributes, DPUB-ARIA
-3. ❌ **Add ID/IDREF tests** - Duplicate detection, non-NCName IDs
-4. ❌ **Add DOCTYPE tests** - Obsolete identifiers, legacy strings
-5. ❌ **Add entity tests** - External entities, malformed references
-6. ❌ **Add base URL tests** - xml:base, HTML base handling
-
-**Priority 2 - Improve Edge Case Coverage:**
-1. ❌ **Add OPF link element tests** - rel, hreflang, properties
-2. ❌ **Add refines cycle detection tests**
-3. ❌ **Add UUID format validation tests**
-4. ❌ **Add URL encoding edge case tests**
-5. ❌ **Add character encoding tests**
-
-**Priority 3 - Advanced Features (when implemented):**
-1. ❌ **Media overlays validation tests**
-2. ❌ **Dictionary/index validation tests**
-3. ❌ **Full WCAG 2.0 accessibility tests**
-4. ❌ **Multiple renditions tests**
+*Implementations exist and are correct; skipped due to library limitations, not bugs.*
 
 ---
 
-## Message IDs Defined
+## E2E Test Integration Plan
 
-| Prefix | Category | Defined | Used | Progress |
-|--------|----------|---------|------|----------|
-| PKG | Package/Container | 15 | 10 | 67% |
-| OPF | Package Document | 15 | 27 | N/A* |
-| RSC | Resources | 20 | 13 | 65% |
-| HTM | HTML/XHTML | 33 | 6 | 18% |
-| CSS | CSS Validation | 19 | 6 | 32% |
-| NAV | Navigation | 9 | 3 | 33% |
-| NCX | NCX (EPUB 2) | 5 | 4 | 80% |
-| ACC | Accessibility | 17 | 4 | 24% |
-| MED | Media | 15 | 0 | 0% |
-| SCP | Scripting | 10 | 0 | 0% |
-| SCH | Schematron | 5 | 1 | 20% |
-| CHK | Internal Errors | 7 | 0 | 0% |
+### Quick Start
 
-**Total: ~165 defined, ~74 actively used (45%)**
+**Goal**: Increase integration test coverage from 4 → ~65 tests by importing Java EPUBCheck test resources.
 
-*Note: OPF uses additional message IDs beyond those originally defined, covering extended validation scenarios.*
+**Action Items**:
+1. Copy 40-50 EPUB test files from `/Users/william/epubcheck/src/test/resources/`
+2. Create 4 new integration test files (OCF, OPF, content, navigation)
+3. Write ~60 test scenarios aligned with 65% implementation status
+4. Mark known failures with `.skip()` for unimplemented features
+
+**Time Estimate**: 1-2 weeks for Tier 1 (essential core tests)
+
+### Java EPUBCheck Test Suite Analysis
+
+**Location**: `/Users/william/epubcheck/src/test/resources/`
+
+| Category | Scenarios | Test Files | Implementation Match |
+|----------|-----------|-----------|---------------------|
+| **EPUB 3 - Minimal** | 5 | 6 | 100% (baseline) |
+| **EPUB 3 - OCF** | 56 | 63 | ~70% (container, ZIP, filenames) |
+| **EPUB 3 - Package Document** | 121 | 163 | ~70% (metadata, manifest, spine) |
+| **EPUB 3 - Content Documents** | 215 | 120 | ~60% (XHTML/CSS/SVG) |
+| **EPUB 3 - Navigation** | 40 | 24 | ~65% (nav structure, NCX) |
+| **EPUB 2 - All** | 96 | 96 | ~40% (basic support) |
+| **TOTAL** | **533** | **472** | **~65% aligned** |
+
+### Recommended Test Imports (Priority Order)
+
+#### **Tier 1: Essential Core (25-30 EPUBs)**
+
+**Minimal & Valid Baseline:**
+- `epub3/00-minimal/files/minimal.epub` ✅ (already have)
+- `epub3/00-minimal/files/minimal/` (expanded EPUB)
+- `epub2/files/minimal-valid.epub` (EPUB 2.0)
+
+**OCF/Container (10 files):**
+- `ocf-mimetype-file-missing-error.epub` ✅ (PKG-006)
+- `ocf-mimetype-file-incorrect-value-error.epub` (PKG-007)
+- `ocf-container-file-missing-fatal.epub` (PKG-003 fatal)
+- `ocf-container-not-ocf-error.epub` ✅ (have)
+- `ocf-filename-character-forbidden-error.epub` ✅ (PKG-009)
+- `ocf-filename-character-space-warning/` (PKG-010)
+- `ocf-filename-duplicate-after-case-folding-error.epub` (OPF-060)
+- `ocf-url-leaking-in-opf-error/` (RSC-026)
+- `ocf-filename-not-utf8-error.epub` (PKG-027)
+- `ocf-filepath-utf8-valid.epub` (validation)
+
+**Package Document (10-12 files):**
+- `metadata-identifier-missing-error.opf` (OPF-017)
+- `metadata-title-missing-error.opf` (OPF-015)
+- `metadata-language-missing-error.opf` (OPF-016)
+- `metadata-modified-missing-error.opf` (RSC-005)
+- `manifest-item-missing-media-type-error.opf` (OPF-093)
+- `manifest-item-href-with-fragment-error.opf` (OPF-091)
+- `spine-empty-error.opf` (OPF-049)
+- `spine-itemref-idref-not-found-error.opf` (OPF-049)
+- `package-unique-identifier-unknown-error.opf` (RSC-005)
+- `properties-scripted-missing-error/` (OPF-014)
+- `properties-remote-resources-missing-error/` (OPF-014)
+
+**Content Documents (5-8 files):**
+- `xhtml-minimal-valid.xhtml` (baseline)
+- `xhtml-title-missing-error/` (HTM-003)
+- `xhtml-xmlns-missing-error/` (HTM-001)
+- `css-encoding-error/` (CSS-003/004)
+- `svg-minimal-valid.svg` (baseline SVG)
+
+**Navigation (3-5 files):**
+- `nav-minimal-valid/` (baseline)
+- `nav-missing-toc-error/` (NAV-001)
+- `nav-external-link-error/` (NAV-010)
+
+#### **Tier 2: Extended Coverage (10-15 EPUBs)**
+
+**Resource Validation:**
+- `resource-not-in-manifest-error/` (RSC-007)
+- `resource-undeclared-error/` (RSC-008)
+- `resource-missing-error/` (RSC-001)
+
+**Properties & Features:**
+- `properties-mathml-missing-error/` (OPF-014)
+- `properties-svg-missing-error/` (OPF-014)
+- `fallback-chain-circular-error/` (OPF-045)
+- `cover-image-property-error/` (OPF-012)
+
+**Warnings & Edge Cases:**
+- `filename-character-space-warning/` (PKG-010)
+- `metadata-identifier-uuid-invalid-warning.opf` (OPF-085)
+- Various non-ASCII filename tests (PKG-012)
+
+### Integration Test Structure
+
+```
+test/
+├── fixtures/
+│   ├── valid/
+│   │   ├── minimal-epub30.epub                 ✅ Have (2)
+│   │   ├── minimal-epub20.epub                 → Import
+│   │   └── minimal-expanded/                   → Import
+│   ├── invalid/
+│   │   ├── ocf/                                ✅ Have (3) → Add 7 more
+│   │   ├── opf/                                → Import 10-12
+│   │   ├── content/                            → Import 5-8
+│   │   └── nav/                                → Import 3-5
+│   └── warnings/                               → Import 5
+└── integration/
+    ├── epub.test.ts                            ✅ Have (4 tests)
+    ├── ocf.integration.test.ts                 → Create (~15 tests)
+    ├── opf.integration.test.ts                 → Create (~20 tests)
+    ├── content.integration.test.ts             → Create (~10 tests)
+    └── nav.integration.test.ts                 → Create (~8 tests)
+```
+
+### Target Test Growth
+
+**Current**: 4 integration tests with 5 EPUB files
+**Goal**: ~65 integration tests with 40-50 EPUB files
+
+**Phase 1** (Foundation): +35 tests (OCF, OPF)
+**Phase 2** (Content): +18 tests (XHTML, CSS, SVG, Nav)
+**Phase 3** (Edge Cases): +15 tests (warnings, properties)
+
+### Expected Test Results
+
+Given 65% implementation status:
+
+- ✅ **Will Pass**: OCF basics, OPF metadata/manifest/spine, basic XHTML/CSS, navigation structure
+- ⚠️ **May Fail**: Advanced properties, refines cycles, link elements, UUID validation
+- ❌ **Will Fail**: Media overlays, encryption, signatures, ARIA, DOCTYPE, entity validation
+
+**Recommendation**: Mark known failures with `.skip()` and track as implementation targets
+
+### Copy Commands
+
+```bash
+# Create test directory structure
+mkdir -p test/fixtures/valid
+mkdir -p test/fixtures/invalid/{ocf,opf,content,nav}
+mkdir -p test/fixtures/warnings
+
+# Copy essential valid cases
+cp /Users/william/epubcheck/src/test/resources/epub3/00-minimal/files/minimal.epub \
+   test/fixtures/valid/minimal-epub30.epub
+
+# Copy OCF test cases
+cp /Users/william/epubcheck/src/test/resources/epub3/04-ocf/files/ocf-mimetype-file-incorrect-value-error.epub \
+   test/fixtures/invalid/ocf/
+cp /Users/william/epubcheck/src/test/resources/epub3/04-ocf/files/ocf-container-file-missing-fatal.epub \
+   test/fixtures/invalid/ocf/
+cp /Users/william/epubcheck/src/test/resources/epub3/04-ocf/files/ocf-filename-not-utf8-error.epub \
+   test/fixtures/invalid/ocf/
+
+# Copy OPF test cases (directories need -r flag)
+cp /Users/william/epubcheck/src/test/resources/epub3/05-package-document/files/metadata-identifier-missing-error.opf \
+   test/fixtures/invalid/opf/
+cp /Users/william/epubcheck/src/test/resources/epub3/05-package-document/files/metadata-title-missing-error.opf \
+   test/fixtures/invalid/opf/
+
+# Note: Many Java test cases are expanded directories, not packed EPUBs
+# Use `cp -r` for directories and manually pack if needed
+```
+
+### Test Conversion Notes
+
+**Java Format** (Cucumber/Gherkin):
+```gherkin
+Scenario: Report missing mimetype file
+  When checking EPUB 'ocf-mimetype-file-missing-error.epub'
+  Then error PKG-006 is reported
+  And no other errors or warnings are reported
+```
+
+**TypeScript Format** (Vitest):
+```typescript
+it('should report missing mimetype file (PKG-006)', async () => {
+  const data = await loadEpub('invalid/ocf/ocf-mimetype-file-missing-error.epub');
+  const result = await EpubCheck.validate(data);
+
+  expect(result.valid).toBe(false);
+  expect(result.messages.some(m => m.id === 'PKG-006')).toBe(true);
+});
+```
+
+### License Compatibility
+
+- **Java EPUBCheck**: BSD-3-Clause License
+- **This Project**: GPL-3.0-only License
+- **Test Files**: Test data (factual, non-copyrightable)
+- ✅ **Safe to copy** test EPUB files with attribution
+- ⚠️ **Do not copy** Java source code (incompatible licenses)
 
 ---
 
-## Release Readiness (0.1.0)
+## What Works Well
 
-### ✅ Ready
-- All 404 tests passing (3 skipped)
-- Build successful (ESM + CJS + type definitions)
-- ESLint and TypeScript checks passing
-- Documentation complete (README, AGENTS.md, PROJECT_STATUS.md)
-- Integration tests with valid/invalid EPUB files
-- Schema infrastructure working (RelaxNG, XSD, Schematron)
-- Web demo functional
-- CI/CD workflows configured
-- CSS validation with @font-face, @import, empty URI detection
-- Content validation with script detection, discouraged elements
-- Accessibility validation with empty links, image alt, SVG titles
-- Undeclared resources detection (RSC-008)
+### ✅ Fully Implemented
+- **Mimetype validation** (PKG-005/006/007/008)
+- **Container.xml** (PKG-003/004/010)
+- **Package attributes** (OPF-001/030/048)
+- **Required metadata** (OPF-015/016/017)
+- **Manifest validation** (OPF-010/012/013/014/074/091)
+- **Spine validation** (OPF-033/034/043/049/050)
+- **Fallback chains** (OPF-040/045)
+- **Collections** (OPF-071-084)
+- **NCX validation** (NCX-001/002/003/006)
+- **CSS basics** (@font-face, @import, position, media overlays)
+- **Navigation** (NAV-001/002/010)
+- **Scripted property** (OPF-014)
+- **MathML/SVG properties** (OPF-014)
+- **Remote resources property** (OPF-014)
+- **Basic accessibility** (ACC-004/005/009/011)
+- **Cross-references** (RSC-006/007/010/011/012/013/014/020/026/027/028/029/031)
+- **Undeclared resources** (RSC-008)
+- **Unreferenced resources** (OPF-097)
 
-### 📋 Post-Release Tasks
-- Add remote resources property check (RSC-006, RSC-006b)
-- Add image validation (MED-001, OPF-051)
-- Add epub:type validation (OPF-088)
-- Add CSS alt stylesheet validation (CSS-005, CSS-015)
-- Implement media validation
-- Add CLI tool
+### 🟡 Partially Implemented
+- **Schema validation** - RelaxNG/XSD/Schematron work, but XPath has limitations
+- **Content validation** - Core structure good, missing ARIA/DOCTYPE/entities
+- **Image validation** - MED-001/OPF-051 work, no format/size checks
 
-## Next Steps
+### ❌ Not Implemented
+- Media overlays validation
+- Encryption.xml validation
+- Signatures.xml validation
+- Metadata.xml (multiple renditions)
+- Advanced accessibility (WCAG 2.0 comprehensive)
+- ARIA roles and attributes
+- DOCTYPE obsolete identifiers
+- External entity validation
+- Base URL handling (xml:base, HTML base)
+- Duplicate ID detection
+- Media format validation (image magic numbers, corrupt files)
 
-### Completed ✅
-1. ~~Implement schema validation infrastructure (libxml2-wasm)~~
-2. ~~Add comprehensive integration tests~~
-3. ~~Fix lint/format configuration conflicts~~
-4. ~~Enhance CSS validation (@font-face, @import)~~
-5. ~~Add script detection and OPF-014 validation~~
-6. ~~Add discouraged element warnings (HTM-055)~~
-7. ~~Add accessibility validation (ACC-004, ACC-005, ACC-009, ACC-011)~~
-8. ~~Add undeclared resources check (RSC-008)~~
-9. ~~Add package version validation (OPF-001)~~
-10. ~~Add media type format validation (RFC4288)~~
-11. ~~Add deprecated media type warnings (OPF-035, OPF-037, OPF-038)~~
-12. ~~Add NCX content src validation (NCX-006)~~
-13. ~~Add MathML accessibility check (ACC-009)~~
-14. ~~Add nav remote link validation (NAV-010)~~
-15. ~~Add fragment type mismatch validation (RSC-014)~~
-16. ~~Add data URL validation (RSC-029)~~
-17. ~~Add dc:date format validation (OPF-053, OPF-054)~~
-18. ~~Add remote resources property check (RSC-006, RSC-006b)~~
-19. ~~Add image validation (MED-001, OPF-051)~~
-20. ~~Add epub:type validation (OPF-088)~~
-21. ~~Add CSS alt stylesheet validation (CSS-005, CSS-015)~~
-22. ~~Add dc:creator role validation (OPF-052)~~
-23. ~~Add empty metadata check (OPF-072)~~
-24. ~~Add META-INF items validation (PKG-025)~~
-25. ~~Add filename validation (PKG-009-012)~~
-26. ~~Add empty directories check (PKG-014)~~
-27. ~~Add CSS media overlay classes validation (CSS-029, CSS-030)~~
-28. ~~Add fixed-layout viewport validation (HTM-046-060)~~
-29. ~~Add collections validation (OPF-071-084)~~
-30. ~~Add link validation in content documents (RSC-007, RSC-010-011)~~
-31. ~~Add mimetype uncompressed/extra field check (PKG-005, PKG-006)~~
+---
 
-### In Progress 🚧
-- None
+## Known Issues
 
-### Upcoming 📋 (Based on Java EPUBCheck Gap Analysis)
+1. **libxml2-wasm XPath limitations** - Queries for namespaced attributes don't work properly (affects 3 skipped tests)
+2. **Schematron XSLT 2.0** - Some XSLT 2.0 functions not fully supported by fontoxpath
+3. **RelaxNG deprecation** - libxml2 plans to remove RelaxNG support in future
 
-**Core Validation Gaps (High Priority):**
-1. **ARIA Validation** - Implement role and attribute validation for accessibility
-2. **ID/IDREF Validation** - Add duplicate ID detection and reference validation
-3. **DOCTYPE Validation** - Check for obsolete identifiers and legacy strings
-4. **Entity Validation** - Validate external entities and entity references
-5. **Base URL Handling** - Support xml:base and HTML base attributes
-6. **Refines Cycle Detection** - Detect circular refines references (OPF-065)
-7. **Link Element Validation** - Validate rel, hreflang, properties attributes
-8. **UUID Format Validation** - Validate dc:identifier UUID format
+---
 
-**Advanced Features (Medium Priority):**
-1. **Media Overlays** - Implement SMIL validation for synchronized media
-2. **Dictionary Validation** - Validate dictionary collections
-3. **Index Validation** - Validate index collections
-4. **Encryption.xml** - Validate font obfuscation
-5. **Signatures.xml** - Validate digital signatures
-6. **Multiple Renditions** - Support metadata.xml validation
-7. **Full WCAG 2.0** - Comprehensive accessibility validation
-8. **Advanced URL Encoding** - Edge case handling for URLs
+## Priority Next Steps
 
-**Test Coverage Improvements (Ongoing):**
-1. Add more edge case tests for existing validators
-2. Add Cucumber/BDD-style integration tests for spec compliance
-3. Add performance benchmarks and stress tests
-4. Add more real-world EPUB test fixtures
+### Critical Priority (Test Infrastructure)
+1. **E2E Test Integration** - Import 40-50 test EPUBs from Java suite
+   - Copy Tier 1 files (25-30 EPUBs): OCF, OPF, content, navigation
+   - Create integration test files: ocf, opf, content, nav
+   - Target: 65 integration tests (from current 4)
+   - Align test expectations with 65% implementation status
+
+### High Priority (Core Validation)
+1. **ARIA validation** - Role and attribute validation
+2. **ID/IDREF validation** - Duplicate ID detection
+3. **DOCTYPE validation** - Obsolete identifiers
+4. **Entity validation** - External entities
+5. **Base URL handling** - xml:base, HTML base
+6. **Refines cycles** - OPF-065 detection
+7. **Link elements** - rel, hreflang, properties
+8. **UUID format** - dc:identifier validation
+
+### Medium Priority (Completeness)
+1. **Media overlays** - SMIL validation
+2. **Encryption.xml** - Font obfuscation
+3. **Full WCAG 2.0** - Comprehensive accessibility
+4. **Advanced media** - Format validation, magic numbers
+5. **URL encoding** - Edge cases
+
+### Low Priority (Specialized)
+- Dictionary/index advanced validation
+- Multiple renditions (metadata.xml)
+- Signatures.xml validation
+
+---
+
+## Message IDs
+
+**Defined**: ~165 message IDs
+**Actively used**: ~74 (45%)
+
+Most-used prefixes: OPF (27), RSC (13), PKG (10), CSS (6), HTM (6), NAV (3), NCX (4), ACC (4)
+Unused: MED (0), SCP (0), CHK (0)
+
+---
+
+## Commands
+
+```bash
+npm test              # Run tests
+npm run test:run      # Run tests once
+npm run lint          # Check code quality
+npm run typecheck     # TypeScript checks
+npm run build         # Build for production
+```
+
+---
+
+## Java Reference
+
+Java EPUBCheck source: `/Users/william/epubcheck`
+
+### Source Code Mappings
+- `com.adobe.epubcheck.ocf` → `src/ocf/`
+- `com.adobe.epubcheck.opf` → `src/opf/`
+- `com.adobe.epubcheck.ops` → `src/content/`
+- `com.adobe.epubcheck.css` → `src/css/`
+- `com.adobe.epubcheck.nav` → `src/nav/`
+- `com.adobe.epubcheck.xml` → `src/schema/`
+
+### Test Suite Location
+- **Base**: `/Users/william/epubcheck/src/test/resources/`
+- **EPUB 3 Tests**: `epub3/` (437 scenarios, 8 categories)
+  - `00-minimal/` - Baseline valid EPUBs
+  - `04-ocf/` - Container/ZIP validation (56 scenarios)
+  - `05-package-document/` - OPF validation (121 scenarios)
+  - `06-content-document/` - XHTML/CSS/SVG (215 scenarios)
+  - `07-navigation-document/` - Nav/NCX (40 scenarios)
+- **EPUB 2 Tests**: `epub2/` (96 scenarios)
+
+### Finding Specific Tests
+```bash
+# Search for tests by message ID
+grep -r "PKG-006" /Users/william/epubcheck/src/test/resources/
+
+# List all test EPUBs
+find /Users/william/epubcheck/src/test/resources/ -name "*.epub"
+
+# View feature file scenarios
+cat /Users/william/epubcheck/src/test/resources/epub3/04-ocf/ocf.feature
+
+# Count scenarios in a category
+grep "Scenario:" /Users/william/epubcheck/src/test/resources/epub3/05-package-document/package-document.feature | wc -l
+```
