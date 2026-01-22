@@ -120,11 +120,20 @@ function displayResults(result, fileName) {
   renderMessages();
 }
 
+const SEVERITY_ORDER = { fatal: 0, error: 1, warning: 2, info: 3, usage: 4 };
+
 function renderMessages() {
-  const filtered =
+  let filtered =
     currentFilter === 'all'
       ? currentMessages
       : currentMessages.filter((m) => m.severity === currentFilter);
+
+  // Sort by severity when showing all messages
+  if (currentFilter === 'all') {
+    filtered = [...filtered].sort(
+      (a, b) => (SEVERITY_ORDER[a.severity] ?? 99) - (SEVERITY_ORDER[b.severity] ?? 99),
+    );
+  }
 
   if (filtered.length === 0) {
     messagesList.innerHTML = `<div class="no-messages">No messages to display</div>`;
