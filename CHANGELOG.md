@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-01-22
+
+### Added
+
+- Line/column numbers in error messages for content, nav, and NCX validators
+- Line/column numbers extracted from RelaxNG and XSD schema validation errors
+- Message sorting by severity in web UI "All" filter
+
+### Fixed
+
+- Fix duplicate error reporting for missing resources (RSC-007, RSC-008, MED-001)
+- RSC-007 now only reports when file doesn't exist in container (aligns with Java EPUBCheck)
+- RSC-008 reports files that exist in container but aren't declared in manifest
+- Removed MED-001 check (Java EPUBCheck suppresses this error ID)
+- Fix false positive PKG-025 errors for arbitrary files in META-INF directory
+- Fix OPF-014 to allow dots in MIME type subtypes (e.g., `application/vnd.ms-opentype`)
+
+### Changed
+
+- Disable RelaxNG validation for XHTML/SVG/NAV content due to libxml2-wasm limitations
+  (libxml2 doesn't support complex recursive patterns like `oneOrMore//interleave//attribute`)
+  Content validation still works via Schematron and custom validators
+
 ## [0.2.1] - 2026-01-22
 
 ### Added
@@ -168,7 +191,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - No media overlays validation
 - No script detection/validation
 
-[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/likecoin/epubcheck-ts/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/likecoin/epubcheck-ts/compare/v0.0.0...v0.1.0
