@@ -137,11 +137,13 @@ async function main(): Promise<void> {
     // Console output (unless quiet mode)
     if (!values.quiet) {
       // Group messages by severity
-      const fatal = result.messages.filter((m) => m.severity === 'fatal');
-      const errors = result.messages.filter((m) => m.severity === 'error');
-      const warnings = result.messages.filter((m) => m.severity === 'warning');
-      const info = result.messages.filter((m) => m.severity === 'info');
-      const usage = result.messages.filter((m) => m.severity === 'usage');
+      const fatal = result.messages.filter((m: { severity: string }) => m.severity === 'fatal');
+      const errors = result.messages.filter((m: { severity: string }) => m.severity === 'error');
+      const warnings = result.messages.filter(
+        (m: { severity: string }) => m.severity === 'warning',
+      );
+      const info = result.messages.filter((m: { severity: string }) => m.severity === 'info');
+      const usage = result.messages.filter((m: { severity: string }) => m.severity === 'usage');
 
       // Print messages with colors
       const printMessages = (
