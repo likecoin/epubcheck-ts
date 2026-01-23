@@ -52,6 +52,12 @@ export class OCFValidator {
     // Validate filenames
     this.validateFilenames(zip, context.messages);
 
+    // Check for duplicate filenames (case folding, Unicode normalization)
+    this.validateDuplicateFilenames(zip, context.messages);
+
+    // Check for non-UTF8 filenames
+    this.validateUtf8Filenames(zip, context.messages);
+
     // Validate empty directories
     this.validateEmptyDirectories(zip, context.messages);
   }
@@ -338,6 +344,132 @@ export class OCFValidator {
           location: { path },
         });
       }
+    }
+  }
+
+  /**
+   * Check for duplicate filenames after Unicode normalization and case folding
+   *
+   * Per EPUB spec, filenames must be unique after applying:
+   * - Unicode Canonical Case Fold Normalization (NFD + case folding)
+   *
+   * OPF-060: Duplicate filename after normalization
+   */
+  private validateDuplicateFilenames(zip: ZipReader, messages: ValidationMessage[]): void {
+    const seenPaths = new Set<string>(); // exact paths
+    const normalizedPaths = new Map<string, string>(); // normalized -> original
+
+    for (const path of zip.paths) {
+      // Skip directory entries
+      if (path.endsWith('/')) continue;
+
+      // First check for exact duplicate ZIP entries
+      if (seenPaths.has(path)) {
+        messages.push({
+          id: 'OPF-060',
+          severity: 'error',
+          message: `Duplicate ZIP entry: "${path}"`,
+          location: { path },
+        });
+        continue;
+      }
+      seenPaths.add(path);
+
+      // Apply Unicode Canonical Case Fold Normalization:
+      // 1. NFD (Canonical Decomposition)
+      // 2. Case folding (using full Unicode case folding)
+      const normalized = this.canonicalCaseFold(path);
+
+      const existing = normalizedPaths.get(normalized);
+      if (existing !== undefined) {
+        messages.push({
+          id: 'OPF-060',
+          severity: 'error',
+          message: `Duplicate filename after Unicode normalization: "${path}" conflicts with "${existing}"`,
+          location: { path },
+        });
+      } else {
+        normalizedPaths.set(normalized, path);
+      }
+    }
+  }
+
+  /**
+   * Apply Unicode Canonical Case Fold Normalization
+   *
+   * This applies:
+   * 1. NFD (Canonical Decomposition) - decomposes combined characters
+   * 2. Full Unicode case folding
+   *
+   * Based on Unicode case folding rules for filename comparison.
+   */
+  private canonicalCaseFold(str: string): string {
+    // NFD normalization first
+    let result = str.normalize('NFD');
+
+    // Apply full Unicode case folding
+    // This handles special cases like ß -> ss, ﬁ -> fi, etc.
+    result = this.unicodeCaseFold(result);
+
+    return result;
+  }
+
+  /**
+   * Perform Unicode full case folding
+   *
+   * Handles special Unicode case folding rules beyond simple toLowerCase:
+   * - ß (U+00DF) -> ss
+   * - ẞ (U+1E9E) -> ss (capital sharp s)
+   * - ﬁ (U+FB01) -> fi
+   * - ﬂ (U+FB02) -> fl
+   * - ﬀ (U+FB00) -> ff
+   * - ﬃ (U+FB03) -> ffi
+   * - ﬄ (U+FB04) -> ffl
+   * - ﬅ (U+FB05) -> st
+   * - ﬆ (U+FB06) -> st
+   * And other Unicode case folding rules
+   */
+  private unicodeCaseFold(str: string): string {
+    // Common full case folding mappings that toLowerCase doesn't handle
+    const caseFoldMap: Record<string, string> = {
+      '\u00DF': 'ss', // ß -> ss
+      '\u1E9E': 'ss', // ẞ -> ss (capital sharp s)
+      '\uFB00': 'ff', // ﬀ -> ff
+      '\uFB01': 'fi', // ﬁ -> fi
+      '\uFB02': 'fl', // ﬂ -> fl
+      '\uFB03': 'ffi', // ﬃ -> ffi
+      '\uFB04': 'ffl', // ﬄ -> ffl
+      '\uFB05': 'st', // ﬅ -> st
+      '\uFB06': 'st', // ﬆ -> st
+      '\u0130': 'i\u0307', // İ -> i + combining dot above
+    };
+
+    let result = '';
+    for (const char of str) {
+      const folded = caseFoldMap[char];
+      if (folded !== undefined) {
+        result += folded;
+      } else {
+        result += char.toLowerCase();
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Validate that filenames are encoded as UTF-8
+   *
+   * PKG-027: Filenames in EPUB ZIP archives must be UTF-8 encoded
+   */
+  private validateUtf8Filenames(zip: ZipReader, messages: ValidationMessage[]): void {
+    const invalidFilenames = zip.getInvalidUtf8Filenames();
+    for (const { filename, reason } of invalidFilenames) {
+      messages.push({
+        id: 'PKG-027',
+        severity: 'fatal',
+        message: `Filename is not valid UTF-8: "${filename}" (${reason})`,
+        location: { path: filename },
+      });
     }
   }
 

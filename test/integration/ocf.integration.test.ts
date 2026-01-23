@@ -177,8 +177,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       expectError(result, 'PKG-009');
     });
 
-    // Skip: Unicode case folding duplicate detection not implemented (OPF-060)
-    it.skip('should report duplicate filename after common case folding (OPF-060)', async () => {
+    it('should report duplicate filename after common case folding (OPF-060)', async () => {
       const data = await loadEpub(
         'invalid/ocf/ocf-filename-duplicate-after-common-case-folding-error.epub',
       );
@@ -188,8 +187,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       expectError(result, 'OPF-060');
     });
 
-    // Skip: Unicode case folding duplicate detection not implemented (OPF-060)
-    it.skip('should report duplicate filename after full case folding (OPF-060)', async () => {
+    it('should report duplicate filename after full case folding (OPF-060)', async () => {
       const data = await loadEpub(
         'invalid/ocf/ocf-filename-duplicate-after-full-case-folding-error.epub',
       );
@@ -199,8 +197,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       expectError(result, 'OPF-060');
     });
 
-    // Skip: Unicode NFC normalization duplicate detection not implemented (OPF-060)
-    it.skip('should report duplicate filename after canonical normalization NFC (OPF-060)', async () => {
+    it('should report duplicate filename after canonical normalization NFC (OPF-060)', async () => {
       const data = await loadEpub(
         'invalid/ocf/ocf-filename-duplicate-after-canonical-normalization-error.epub',
       );
@@ -210,7 +207,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       expectError(result, 'OPF-060');
     });
 
-    // Skip: Duplicate ZIP entry detection not implemented (OPF-060)
+    // Skip: fflate deduplicates ZIP entries, can't detect duplicates without raw ZIP parsing
     it.skip('should report duplicate ZIP entry for same file (OPF-060)', async () => {
       const data = await loadEpub('invalid/ocf/ocf-filename-duplicate-zip-entry-error.epub');
       const result = await EpubCheck.validate(data);
@@ -219,8 +216,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       expectError(result, 'OPF-060');
     });
 
-    // Skip: Non-UTF8 encoding detection not implemented (PKG-027)
-    it.skip('should report file names not encoded as UTF-8 (PKG-027 fatal)', async () => {
+    it('should report file names not encoded as UTF-8 (PKG-027 fatal)', async () => {
       const data = await loadEpub('invalid/ocf/ocf-filename-not-utf8-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -228,8 +224,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       expectError(result, 'PKG-027');
     });
 
-    // Skip: Non-UTF8 encoding detection not implemented (PKG-027)
-    it.skip('should report file paths not encoded as UTF-8 (PKG-027 fatal)', async () => {
+    it('should report file paths not encoded as UTF-8 (PKG-027 fatal)', async () => {
       const data = await loadEpub('invalid/ocf/ocf-filepath-not-utf8-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -257,8 +252,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       expectError(result, 'RSC-026');
     });
 
-    // Skip: cite attribute reference checking may need verification
-    it.skip('should report resource referenced from XHTML cite not in manifest (RSC-007)', async () => {
+    it('should report resource referenced from XHTML cite not in manifest (RSC-007)', async () => {
       const data = await loadEpub('invalid/ocf/url-xhtml-cite-missing-resource-error.epub');
       const result = await EpubCheck.validate(data);
 

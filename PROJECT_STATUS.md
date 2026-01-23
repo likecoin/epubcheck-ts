@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~75% | ✅ Strong implementation |
 
-**Overall: ~65% complete (447 tests passing, 23 skipped)**
+**Overall: ~67% complete (453 tests passing, 17 skipped)**
 
 ---
 
@@ -27,15 +27,15 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 422 | 419 | 3 |
-| **Integration Tests** | 48 | 28 | 20 |
-| **Total** | **470** | **447** | **23** |
+| **Integration Tests** | 48 | 34 | 14 |
+| **Total** | **470** | **453** | **17** |
 
 ### Integration Test Files
 
 ```
 test/integration/
 ├── epub.test.ts               # 4 tests  - Basic EPUB validation
-├── ocf.integration.test.ts    # 33 tests (21 pass, 12 skip) - OCF/ZIP/container
+├── ocf.integration.test.ts    # 33 tests (27 pass, 6 skip) - OCF/ZIP/container
 ├── opf.integration.test.ts    # 18 tests (13 pass, 5 skip)  - Package document
 ├── content.integration.test.ts # 11 tests (8 pass, 3 skip)  - XHTML/CSS/SVG
 └── nav.integration.test.ts    # 4 tests  (4 pass, 0 skip)   - Navigation
@@ -82,14 +82,14 @@ test/fixtures/
 - `test/unit/content/validator.test.ts:514` - CSS-005 conflicting stylesheets
 - `test/unit/content/validator.test.ts:655` - OPF-088 unknown epub:type prefix
 
-**Integration tests (26)** - Features not yet implemented:
-- OPF-060: Duplicate filename case folding (4 tests)
-- PKG-027: Non-UTF8 filename detection (2 tests)
-- CSS-001: Forbidden CSS properties (2 tests)
+**Integration tests (14)** - Features not yet implemented or library limitations:
+- OPF-060: Duplicate ZIP entry detection (1 test) - fflate deduplicates entries
+- Unicode compatibility normalization NFKC (2 tests)
 - CSS-008: CSS syntax error detection (1 test)
-- RSC-001/007: CSS resource validation (3 tests)
-- NAV-010/011: Navigation link validation (2 tests)
-- Various: Link, font, remote resource validation (12 tests)
+- RSC-026: URL leaking/path-absolute detection (2 tests)
+- Unicode character composition in filenames (1 test)
+- Percent-encoded URLs (1 test)
+- Various: Link, font, remote resource validation (6 tests)
 
 ---
 
@@ -112,7 +112,10 @@ test/fixtures/
 - **Remote resources property** (OPF-014)
 - **Basic accessibility** (ACC-004/005/009/011)
 - **Cross-references** (RSC-006/007/008/010/011/012/013/014/020/026/027/028/029/031)
-- **Filename validation** (PKG-009/010/011)
+- **Filename validation** (PKG-009/010/011/027)
+- **Duplicate filename detection** (OPF-060) - Unicode NFC normalization, case folding
+- **Non-UTF8 filename detection** (PKG-027)
+- **Cite attribute validation** (RSC-007 for blockquote/q/ins/del cite attributes)
 - **Unreferenced resources** (OPF-097)
 
 ### 🟡 Partially Implemented
@@ -227,6 +230,9 @@ Unused: MED (0), SCP (0), CHK (0)
 ### Recent Validation Improvements
 - `OPF-034` - Duplicate spine itemref (now works for EPUB 3, was EPUB 2 only)
 - `OPF-050` - Spine toc attribute validation (now works for EPUB 3)
+- `OPF-060` - Duplicate filename detection with Unicode NFD normalization and full case folding
+- `PKG-027` - Non-UTF8 filename detection (validates raw ZIP filename bytes)
+- `RSC-007` - Cite attribute validation for blockquote/q/ins/del elements
 - `CSS-001` - Forbidden CSS properties (direction, unicode-bidi)
 - `NAV-010` - Remote links in toc/landmarks/page-list navigation
 - `RSC-011` - Navigation links to items not in spine

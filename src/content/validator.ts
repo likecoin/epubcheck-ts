@@ -240,6 +240,7 @@ export class ContentValidator {
         this.extractAndRegisterHyperlinks(path, root, opfDir, refValidator);
         this.extractAndRegisterStylesheets(path, root, opfDir, refValidator);
         this.extractAndRegisterImages(path, root, opfDir, refValidator);
+        this.extractAndRegisterCiteAttributes(path, root, opfDir, refValidator);
       }
     } finally {
       doc.dispose();
@@ -1166,6 +1167,69 @@ export class ContentValidator {
         type: ReferenceType.IMAGE,
         location: { path, line },
       });
+    }
+  }
+
+  /**
+   * Extract cite attribute references from blockquote, q, ins, del elements
+   * These need to be validated as RSC-007 if the referenced resource is missing
+   */
+  private extractAndRegisterCiteAttributes(
+    path: string,
+    root: XmlElement,
+    opfDir: string,
+    refValidator: ReferenceValidator,
+  ): void {
+    const docDir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
+
+    // Elements that can have cite attribute: blockquote, q, ins, del
+    const citeElements = [
+      ...root.find('.//html:blockquote[@cite]', { html: 'http://www.w3.org/1999/xhtml' }),
+      ...root.find('.//html:q[@cite]', { html: 'http://www.w3.org/1999/xhtml' }),
+      ...root.find('.//html:ins[@cite]', { html: 'http://www.w3.org/1999/xhtml' }),
+      ...root.find('.//html:del[@cite]', { html: 'http://www.w3.org/1999/xhtml' }),
+    ];
+
+    for (const elem of citeElements) {
+      const cite = this.getAttribute(elem as XmlElement, 'cite');
+      if (!cite) continue;
+
+      const line = elem.line;
+
+      // Skip remote URLs - cite can reference remote resources
+      if (cite.startsWith('http://') || cite.startsWith('https://')) {
+        continue;
+      }
+
+      // Skip fragment-only references (refers to same document)
+      if (cite.startsWith('#')) {
+        const targetResource = path;
+        const fragment = cite.slice(1);
+        refValidator.addReference({
+          url: cite,
+          targetResource,
+          fragment,
+          type: ReferenceType.HYPERLINK,
+          location: { path, line },
+        });
+        continue;
+      }
+
+      const resolvedPath = this.resolveRelativePath(docDir, cite, opfDir);
+      const hashIndex = resolvedPath.indexOf('#');
+      const targetResource = hashIndex >= 0 ? resolvedPath.slice(0, hashIndex) : resolvedPath;
+      const fragment = hashIndex >= 0 ? resolvedPath.slice(hashIndex + 1) : undefined;
+
+      const ref: Parameters<typeof refValidator.addReference>[0] = {
+        url: cite,
+        targetResource,
+        type: ReferenceType.HYPERLINK,
+        location: { path, line },
+      };
+      if (fragment) {
+        ref.fragment = fragment;
+      }
+      refValidator.addReference(ref);
     }
   }
 

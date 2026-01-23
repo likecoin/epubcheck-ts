@@ -7,6 +7,13 @@ export interface MimetypeCompressionInfo {
   filename: string;
 }
 
+export interface InvalidUtf8Filename {
+  /** The filename as decoded (may be garbled) */
+  filename: string;
+  /** Description of the UTF-8 error */
+  reason: string;
+}
+
 /**
  * A simple ZIP reader for EPUB files using fflate
  */
@@ -132,5 +139,145 @@ export class ZipReader {
   listDirectory(dirPath: string): string[] {
     const prefix = dirPath.endsWith('/') ? dirPath : `${dirPath}/`;
     return this._paths.filter((p) => p.startsWith(prefix));
+  }
+
+  /**
+   * Check for filenames that are not valid UTF-8 by parsing raw ZIP data
+   *
+   * ZIP files store filenames as bytes. The EPUB spec requires filenames to be UTF-8.
+   * This method parses the ZIP central directory to find filenames with invalid UTF-8.
+   *
+   * @returns Array of filenames with invalid UTF-8 encoding
+   */
+  getInvalidUtf8Filenames(): InvalidUtf8Filename[] {
+    const invalid: InvalidUtf8Filename[] = [];
+    const data = this._rawData;
+
+    // Find the End of Central Directory record
+    // Signature: 0x06054b50, located at end of file (may have comment after)
+    let eocdOffset = -1;
+    for (let i = data.length - 22; i >= 0; i--) {
+      if (
+        data[i] === 0x50 &&
+        data[i + 1] === 0x4b &&
+        data[i + 2] === 0x05 &&
+        data[i + 3] === 0x06
+      ) {
+        eocdOffset = i;
+        break;
+      }
+    }
+
+    if (eocdOffset === -1) {
+      return invalid; // Can't find EOCD, fflate will handle this error
+    }
+
+    // Get offset to start of central directory
+    const cdOffset =
+      (data[eocdOffset + 16] ?? 0) |
+      ((data[eocdOffset + 17] ?? 0) << 8) |
+      ((data[eocdOffset + 18] ?? 0) << 16) |
+      ((data[eocdOffset + 19] ?? 0) << 24);
+
+    // Parse central directory file headers
+    // Signature: 0x02014b50
+    let offset = cdOffset;
+    while (offset < eocdOffset) {
+      if (
+        data[offset] !== 0x50 ||
+        data[offset + 1] !== 0x4b ||
+        data[offset + 2] !== 0x01 ||
+        data[offset + 3] !== 0x02
+      ) {
+        break; // Not a central directory header
+      }
+
+      const filenameLength = (data[offset + 28] ?? 0) | ((data[offset + 29] ?? 0) << 8);
+      const extraLength = (data[offset + 30] ?? 0) | ((data[offset + 31] ?? 0) << 8);
+      const commentLength = (data[offset + 32] ?? 0) | ((data[offset + 33] ?? 0) << 8);
+
+      // Extract raw filename bytes
+      const filenameBytes = data.slice(offset + 46, offset + 46 + filenameLength);
+
+      // Check if filename is valid UTF-8
+      const utf8Error = this.validateUtf8(filenameBytes);
+      if (utf8Error) {
+        // Decode filename as best we can for error reporting
+        const filename = strFromU8(filenameBytes);
+        invalid.push({ filename, reason: utf8Error });
+      }
+
+      // Move to next central directory entry
+      offset += 46 + filenameLength + extraLength + commentLength;
+    }
+
+    return invalid;
+  }
+
+  /**
+   * Validate that bytes form a valid UTF-8 sequence
+   *
+   * @returns Error description if invalid, undefined if valid
+   */
+  private validateUtf8(bytes: Uint8Array): string | undefined {
+    let i = 0;
+    while (i < bytes.length) {
+      const byte = bytes[i] ?? 0;
+
+      if (byte <= 0x7f) {
+        // ASCII (0xxxxxxx)
+        i++;
+      } else if ((byte & 0xe0) === 0xc0) {
+        // 2-byte sequence (110xxxxx 10xxxxxx)
+        if (byte < 0xc2) {
+          return `Overlong encoding at byte ${String(i)}`;
+        }
+        if (i + 1 >= bytes.length || ((bytes[i + 1] ?? 0) & 0xc0) !== 0x80) {
+          return `Invalid continuation byte at position ${String(i + 1)}`;
+        }
+        i += 2;
+      } else if ((byte & 0xf0) === 0xe0) {
+        // 3-byte sequence (1110xxxx 10xxxxxx 10xxxxxx)
+        if (
+          i + 2 >= bytes.length ||
+          ((bytes[i + 1] ?? 0) & 0xc0) !== 0x80 ||
+          ((bytes[i + 2] ?? 0) & 0xc0) !== 0x80
+        ) {
+          return `Invalid continuation byte in 3-byte sequence at position ${String(i)}`;
+        }
+        // Check for overlong encoding
+        if (byte === 0xe0 && (bytes[i + 1] ?? 0) < 0xa0) {
+          return `Overlong 3-byte encoding at byte ${String(i)}`;
+        }
+        // Check for surrogate pairs (0xD800-0xDFFF)
+        if (byte === 0xed && (bytes[i + 1] ?? 0) >= 0xa0) {
+          return `UTF-16 surrogate at byte ${String(i)}`;
+        }
+        i += 3;
+      } else if ((byte & 0xf8) === 0xf0) {
+        // 4-byte sequence (11110xxx 10xxxxxx 10xxxxxx 10xxxxxx)
+        if (
+          i + 3 >= bytes.length ||
+          ((bytes[i + 1] ?? 0) & 0xc0) !== 0x80 ||
+          ((bytes[i + 2] ?? 0) & 0xc0) !== 0x80 ||
+          ((bytes[i + 3] ?? 0) & 0xc0) !== 0x80
+        ) {
+          return `Invalid continuation byte in 4-byte sequence at position ${String(i)}`;
+        }
+        // Check for overlong encoding
+        if (byte === 0xf0 && (bytes[i + 1] ?? 0) < 0x90) {
+          return `Overlong 4-byte encoding at byte ${String(i)}`;
+        }
+        // Check for code points > U+10FFFF
+        if (byte > 0xf4 || (byte === 0xf4 && (bytes[i + 1] ?? 0) > 0x8f)) {
+          return `Code point exceeds U+10FFFF at byte ${String(i)}`;
+        }
+        i += 4;
+      } else {
+        // Invalid start byte (10xxxxxx or 11111xxx)
+        return `Invalid UTF-8 start byte 0x${byte.toString(16).toUpperCase()} at position ${String(i)}`;
+      }
+    }
+    return undefined;
   }
 }
