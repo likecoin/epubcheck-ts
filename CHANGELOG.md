@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-01-23
+
+### Added
+
+- **OPF-060: Duplicate filename detection**
+  - Detects filenames that conflict after Unicode NFD normalization
+  - Full Unicode case folding support (ß→ss, ẞ→ss, ligatures like ﬁ→fi, ﬂ→fl, etc.)
+- **PKG-027: Non-UTF8 filename detection**
+  - Validates raw ZIP filename bytes for valid UTF-8 sequences
+  - Detects overlong encodings, surrogates, and invalid byte sequences
+- **RSC-007: Cite attribute validation**
+  - Validates `cite` attribute references on `blockquote`, `q`, `ins`, `del` elements
+  - Reports missing resources referenced by cite attributes
+- **E2E integration tests**
+  - Ported additional test cases from Java EPUBCheck test suite
+  - Added tests for OPF-033/034/048/049/050, OPF-040/045, CSS-001, NAV-010, RSC-011
+
+### Fixed
+
+- OPF-034 (duplicate spine itemref) now works for EPUB 3 (was EPUB 2 only)
+- OPF-050 (spine toc attribute) validation now works for EPUB 3
+- CSS-001 forbidden properties detection (direction, unicode-bidi) now wired up
+- Script detection excludes non-JS script types (application/ld+json, application/json)
+
+### Changed
+
+- Test coverage improved from 447 to 453 tests passing (17 skipped, down from 23)
+- Overall completion improved from ~65% to ~67%
+
 ## [0.2.2] - 2026-01-22
 
 ### Added
@@ -191,7 +220,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - No media overlays validation
 - No script detection/validation
 
-[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/likecoin/epubcheck-ts/compare/v0.1.0...v0.2.0
