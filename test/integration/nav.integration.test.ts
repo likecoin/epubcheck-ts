@@ -32,8 +32,7 @@ describe('Integration Tests - Navigation Documents', () => {
   });
 
   describe('Link validation', () => {
-    // Skip: Remote link detection may not be fully implemented
-    it.skip('should report remote links in navigation (NAV-010)', async () => {
+    it('should report remote links in navigation (NAV-010)', async () => {
       const data = await loadEpub('invalid/nav/nav-links-remote-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -41,13 +40,12 @@ describe('Integration Tests - Navigation Documents', () => {
       expectError(result, 'NAV-010');
     });
 
-    // Skip: Out-of-spine link detection may not be fully implemented
-    it.skip('should report links to items not in spine (NAV-011)', async () => {
+    it('should report links to items not in spine (RSC-011)', async () => {
       const data = await loadEpub('invalid/nav/nav-links-out-of-spine-error.epub');
       const result = await EpubCheck.validate(data);
 
       expect(result.valid).toBe(false);
-      expectError(result, 'NAV-011');
+      expectError(result, 'RSC-011');
     });
   });
 });
@@ -69,11 +67,17 @@ async function loadEpub(path: string): Promise<Uint8Array> {
 /**
  * Assert that a specific error ID is present in the result
  */
-function expectError(result: Awaited<ReturnType<typeof EpubCheck.validate>>, errorId: string): void {
+function expectError(
+  result: Awaited<ReturnType<typeof EpubCheck.validate>>,
+  errorId: string,
+): void {
   const hasError = result.messages.some(
-    (m) => m.id === errorId && (m.severity === 'error' || m.severity === 'fatal')
+    (m) => m.id === errorId && (m.severity === 'error' || m.severity === 'fatal'),
   );
-  expect(hasError, `Expected error ${errorId} to be reported. Got: ${JSON.stringify(result.messages.map(m => m.id))}`).toBe(true);
+  expect(
+    hasError,
+    `Expected error ${errorId} to be reported. Got: ${JSON.stringify(result.messages.map((m) => m.id))}`,
+  ).toBe(true);
 }
 
 /**
@@ -81,7 +85,10 @@ function expectError(result: Awaited<ReturnType<typeof EpubCheck.validate>>, err
  */
 function expectNoErrorsOrWarnings(result: Awaited<ReturnType<typeof EpubCheck.validate>>): void {
   const errorsOrWarnings = result.messages.filter(
-    (m) => m.severity === 'error' || m.severity === 'fatal' || m.severity === 'warning'
+    (m) => m.severity === 'error' || m.severity === 'fatal' || m.severity === 'warning',
   );
-  expect(errorsOrWarnings, `Expected no errors or warnings. Got: ${JSON.stringify(errorsOrWarnings.map(m => ({ id: m.id, severity: m.severity })))}`).toHaveLength(0);
+  expect(
+    errorsOrWarnings,
+    `Expected no errors or warnings. Got: ${JSON.stringify(errorsOrWarnings.map((m) => ({ id: m.id, severity: m.severity })))}`,
+  ).toHaveLength(0);
 }

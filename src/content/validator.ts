@@ -3,6 +3,7 @@
  */
 
 import { XmlDocument, type XmlElement, type XmlNode } from 'libxml2-wasm';
+import { CSSValidator } from '../css/validator.js';
 import type { ResourceRegistry } from '../references/registry.js';
 import { ReferenceType } from '../references/types.js';
 import type { ReferenceValidator } from '../references/validator.js';
@@ -47,6 +48,10 @@ export class ContentValidator {
     }
 
     const cssContent = new TextDecoder().decode(cssData);
+
+    // Run CSS validation
+    const cssValidator = new CSSValidator();
+    cssValidator.validate(context, cssContent, path);
 
     // Extract @import statements and register as stylesheet references
     this.extractCSSImports(path, cssContent, opfDir, refValidator);
@@ -378,12 +383,21 @@ export class ContentValidator {
   }
 
   private detectScripts(_context: ValidationContext, _path: string, root: XmlElement): boolean {
-    // Check for script elements
-    const htmlScript = root.get('.//html:script', { html: 'http://www.w3.org/1999/xhtml' });
-    if (htmlScript) return true;
+    // Check for script elements with JavaScript types
+    // Non-JavaScript types like application/ld+json don't require "scripted" property
+    const htmlScripts = root.find('.//html:script', { html: 'http://www.w3.org/1999/xhtml' });
+    for (const script of htmlScripts) {
+      if (this.isScriptType(this.getAttribute(script as XmlElement, 'type'))) {
+        return true;
+      }
+    }
 
-    const svgScript = root.get('.//svg:script', { svg: 'http://www.w3.org/2000/svg' });
-    if (svgScript) return true;
+    const svgScripts = root.find('.//svg:script', { svg: 'http://www.w3.org/2000/svg' });
+    for (const script of svgScripts) {
+      if (this.isScriptType(this.getAttribute(script as XmlElement, 'type'))) {
+        return true;
+      }
+    }
 
     const form = root.get('.//html:form', { html: 'http://www.w3.org/1999/xhtml' });
     if (form) return true;
@@ -394,6 +408,38 @@ export class ContentValidator {
     if (elementsWithEvents.length > 0) return true;
 
     return false;
+  }
+
+  /**
+   * Check if the script type is a JavaScript type that requires "scripted" property.
+   * Per EPUB spec and Java EPUBCheck, only JavaScript types require it.
+   * Data block types like application/ld+json, application/json do NOT require it.
+   */
+  private isScriptType(type: string | null): boolean {
+    // No type attribute or empty = defaults to JavaScript
+    if (!type || type.trim() === '') return true;
+
+    const jsTypes = new Set([
+      'application/javascript',
+      'text/javascript',
+      'application/ecmascript',
+      'application/x-ecmascript',
+      'application/x-javascript',
+      'text/ecmascript',
+      'text/javascript1.0',
+      'text/javascript1.1',
+      'text/javascript1.2',
+      'text/javascript1.3',
+      'text/javascript1.4',
+      'text/javascript1.5',
+      'text/jscript',
+      'text/livescript',
+      'text/x-ecmascript',
+      'text/x-javascript',
+      'module', // ES modules
+    ]);
+
+    return jsTypes.has(type.toLowerCase());
   }
 
   private detectMathML(_context: ValidationContext, _path: string, root: XmlElement): boolean {

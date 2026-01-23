@@ -55,8 +55,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-001');
     });
 
-    // Skip: CSS direction property (CSS-001) not implemented
-    it.skip('should report forbidden CSS direction property (CSS-001)', async () => {
+    it('should report forbidden CSS direction property (CSS-001)', async () => {
       const data = await loadEpub('invalid/content/content-css-property-direction-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -64,8 +63,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'CSS-001');
     });
 
-    // Skip: CSS unicode-bidi property (CSS-001) not implemented
-    it.skip('should report forbidden CSS unicode-bidi property (CSS-001)', async () => {
+    it('should report forbidden CSS unicode-bidi property (CSS-001)', async () => {
       const data = await loadEpub('invalid/content/content-css-property-unicode-bidi-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -73,13 +71,12 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'CSS-001');
     });
 
-    // Skip: Empty @font-face detection
-    it.skip('should report empty @font-face rule (CSS-019)', async () => {
+    it('should warn about empty @font-face rule (CSS-019)', async () => {
       const data = await loadEpub('invalid/content/content-css-font-face-empty-error.epub');
       const result = await EpubCheck.validate(data);
 
-      expect(result.valid).toBe(false);
-      expectError(result, 'CSS-019');
+      // CSS-019 is a warning, not an error
+      expectWarning(result, 'CSS-019');
     });
   });
 
@@ -129,11 +126,31 @@ async function loadEpub(path: string): Promise<Uint8Array> {
 /**
  * Assert that a specific error ID is present in the result
  */
-function expectError(result: Awaited<ReturnType<typeof EpubCheck.validate>>, errorId: string): void {
+function expectError(
+  result: Awaited<ReturnType<typeof EpubCheck.validate>>,
+  errorId: string,
+): void {
   const hasError = result.messages.some(
-    (m) => m.id === errorId && (m.severity === 'error' || m.severity === 'fatal')
+    (m) => m.id === errorId && (m.severity === 'error' || m.severity === 'fatal'),
   );
-  expect(hasError, `Expected error ${errorId} to be reported. Got: ${JSON.stringify(result.messages.map(m => m.id))}`).toBe(true);
+  expect(
+    hasError,
+    `Expected error ${errorId} to be reported. Got: ${JSON.stringify(result.messages.map((m) => m.id))}`,
+  ).toBe(true);
+}
+
+/**
+ * Assert that a specific warning ID is present in the result
+ */
+function expectWarning(
+  result: Awaited<ReturnType<typeof EpubCheck.validate>>,
+  warningId: string,
+): void {
+  const hasWarning = result.messages.some((m) => m.id === warningId && m.severity === 'warning');
+  expect(
+    hasWarning,
+    `Expected warning ${warningId} to be reported. Got: ${JSON.stringify(result.messages.map((m) => m.id))}`,
+  ).toBe(true);
 }
 
 /**
@@ -141,7 +158,10 @@ function expectError(result: Awaited<ReturnType<typeof EpubCheck.validate>>, err
  */
 function expectNoErrorsOrWarnings(result: Awaited<ReturnType<typeof EpubCheck.validate>>): void {
   const errorsOrWarnings = result.messages.filter(
-    (m) => m.severity === 'error' || m.severity === 'fatal' || m.severity === 'warning'
+    (m) => m.severity === 'error' || m.severity === 'fatal' || m.severity === 'warning',
   );
-  expect(errorsOrWarnings, `Expected no errors or warnings. Got: ${JSON.stringify(errorsOrWarnings.map(m => ({ id: m.id, severity: m.severity, message: m.message })))}`).toHaveLength(0);
+  expect(
+    errorsOrWarnings,
+    `Expected no errors or warnings. Got: ${JSON.stringify(errorsOrWarnings.map((m) => ({ id: m.id, severity: m.severity, message: m.message })))}`,
+  ).toHaveLength(0);
 }

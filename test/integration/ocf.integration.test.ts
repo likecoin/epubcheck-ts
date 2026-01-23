@@ -64,7 +64,9 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
 
     // Skip: Unicode compatibility normalization (NFKC) not implemented
     it.skip('should allow duplicate filename after Unicode compatibility normalization (NFKC)', async () => {
-      const data = await loadEpub('valid/ocf-filename-duplicate-after-compatibility-normalization-valid.epub');
+      const data = await loadEpub(
+        'valid/ocf-filename-duplicate-after-compatibility-normalization-valid.epub',
+      );
       const result = await EpubCheck.validate(data);
 
       expectNoErrorsOrWarnings(result);
@@ -166,7 +168,9 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
     });
 
     it('should report forbidden characters even for non-publication resources (PKG-009)', async () => {
-      const data = await loadEpub('invalid/ocf/ocf-filename-character-forbidden-non-publication-resource-error.epub');
+      const data = await loadEpub(
+        'invalid/ocf/ocf-filename-character-forbidden-non-publication-resource-error.epub',
+      );
       const result = await EpubCheck.validate(data);
 
       expect(result.valid).toBe(false);
@@ -175,7 +179,9 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
 
     // Skip: Unicode case folding duplicate detection not implemented (OPF-060)
     it.skip('should report duplicate filename after common case folding (OPF-060)', async () => {
-      const data = await loadEpub('invalid/ocf/ocf-filename-duplicate-after-common-case-folding-error.epub');
+      const data = await loadEpub(
+        'invalid/ocf/ocf-filename-duplicate-after-common-case-folding-error.epub',
+      );
       const result = await EpubCheck.validate(data);
 
       expect(result.valid).toBe(false);
@@ -184,7 +190,9 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
 
     // Skip: Unicode case folding duplicate detection not implemented (OPF-060)
     it.skip('should report duplicate filename after full case folding (OPF-060)', async () => {
-      const data = await loadEpub('invalid/ocf/ocf-filename-duplicate-after-full-case-folding-error.epub');
+      const data = await loadEpub(
+        'invalid/ocf/ocf-filename-duplicate-after-full-case-folding-error.epub',
+      );
       const result = await EpubCheck.validate(data);
 
       expect(result.valid).toBe(false);
@@ -193,7 +201,9 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
 
     // Skip: Unicode NFC normalization duplicate detection not implemented (OPF-060)
     it.skip('should report duplicate filename after canonical normalization NFC (OPF-060)', async () => {
-      const data = await loadEpub('invalid/ocf/ocf-filename-duplicate-after-canonical-normalization-error.epub');
+      const data = await loadEpub(
+        'invalid/ocf/ocf-filename-duplicate-after-canonical-normalization-error.epub',
+      );
       const result = await EpubCheck.validate(data);
 
       expect(result.valid).toBe(false);
@@ -274,9 +284,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
 
       expect(result.valid).toBe(false);
       // Empty ZIP will trigger PKG-001 (failed to open) or similar
-      const hasFatalError = result.messages.some(
-        (m) => m.severity === 'fatal'
-      );
+      const hasFatalError = result.messages.some((m) => m.severity === 'fatal');
       expect(hasFatalError).toBe(true);
     });
 
@@ -285,20 +293,18 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       const result = await EpubCheck.validate(data);
 
       expect(result.valid).toBe(false);
-      const hasFatalError = result.messages.some(
-        (m) => m.severity === 'fatal'
-      );
+      const hasFatalError = result.messages.some((m) => m.severity === 'fatal');
       expect(hasFatalError).toBe(true);
     });
 
     it('should report unreadable ZIP file - image with .epub extension', async () => {
-      const data = await loadEpub('invalid/ocf/ocf-zip-unreadable-image-with-epub-extension-fatal.epub');
+      const data = await loadEpub(
+        'invalid/ocf/ocf-zip-unreadable-image-with-epub-extension-fatal.epub',
+      );
       const result = await EpubCheck.validate(data);
 
       expect(result.valid).toBe(false);
-      const hasFatalError = result.messages.some(
-        (m) => m.severity === 'fatal'
-      );
+      const hasFatalError = result.messages.some((m) => m.severity === 'fatal');
       expect(hasFatalError).toBe(true);
     });
   });
@@ -330,21 +336,31 @@ async function loadEpub(path: string): Promise<Uint8Array> {
 /**
  * Assert that a specific error ID is present in the result
  */
-function expectError(result: Awaited<ReturnType<typeof EpubCheck.validate>>, errorId: string): void {
+function expectError(
+  result: Awaited<ReturnType<typeof EpubCheck.validate>>,
+  errorId: string,
+): void {
   const hasError = result.messages.some(
-    (m) => m.id === errorId && (m.severity === 'error' || m.severity === 'fatal')
+    (m) => m.id === errorId && (m.severity === 'error' || m.severity === 'fatal'),
   );
-  expect(hasError, `Expected error ${errorId} to be reported. Got: ${JSON.stringify(result.messages.map(m => m.id))}`).toBe(true);
+  expect(
+    hasError,
+    `Expected error ${errorId} to be reported. Got: ${JSON.stringify(result.messages.map((m) => m.id))}`,
+  ).toBe(true);
 }
 
 /**
  * Assert that a specific warning ID is present in the result
  */
-function expectWarning(result: Awaited<ReturnType<typeof EpubCheck.validate>>, warningId: string): void {
-  const hasWarning = result.messages.some(
-    (m) => m.id === warningId && m.severity === 'warning'
-  );
-  expect(hasWarning, `Expected warning ${warningId} to be reported. Got: ${JSON.stringify(result.messages.map(m => m.id))}`).toBe(true);
+function expectWarning(
+  result: Awaited<ReturnType<typeof EpubCheck.validate>>,
+  warningId: string,
+): void {
+  const hasWarning = result.messages.some((m) => m.id === warningId && m.severity === 'warning');
+  expect(
+    hasWarning,
+    `Expected warning ${warningId} to be reported. Got: ${JSON.stringify(result.messages.map((m) => m.id))}`,
+  ).toBe(true);
 }
 
 /**
@@ -352,7 +368,10 @@ function expectWarning(result: Awaited<ReturnType<typeof EpubCheck.validate>>, w
  */
 function expectNoErrorsOrWarnings(result: Awaited<ReturnType<typeof EpubCheck.validate>>): void {
   const errorsOrWarnings = result.messages.filter(
-    (m) => m.severity === 'error' || m.severity === 'fatal' || m.severity === 'warning'
+    (m) => m.severity === 'error' || m.severity === 'fatal' || m.severity === 'warning',
   );
-  expect(errorsOrWarnings, `Expected no errors or warnings. Got: ${JSON.stringify(errorsOrWarnings.map(m => ({ id: m.id, severity: m.severity })))}`).toHaveLength(0);
+  expect(
+    errorsOrWarnings,
+    `Expected no errors or warnings. Got: ${JSON.stringify(errorsOrWarnings.map((m) => ({ id: m.id, severity: m.severity })))}`,
+  ).toHaveLength(0);
 }

@@ -111,7 +111,7 @@ export class CSSValidator {
   }
 
   /**
-   * Check for discouraged CSS properties in EPUB
+   * Check for forbidden and discouraged CSS properties in EPUB
    */
   private checkDiscouragedProperties(
     context: ValidationContext,
@@ -120,8 +120,39 @@ export class CSSValidator {
   ): void {
     walk(ast, (node) => {
       if (node.type === 'Declaration') {
+        this.checkForbiddenProperties(context, node, resourcePath);
         this.checkPositionProperty(context, node, resourcePath);
       }
+    });
+  }
+
+  /**
+   * Check for forbidden CSS properties (direction, unicode-bidi)
+   * These properties must not be used in EPUB content per EPUB spec
+   */
+  private checkForbiddenProperties(
+    context: ValidationContext,
+    node: Declaration,
+    resourcePath: string,
+  ): void {
+    const property = node.property.toLowerCase();
+    const forbiddenProperties = ['direction', 'unicode-bidi'];
+
+    if (!forbiddenProperties.includes(property)) return;
+
+    const loc = (node as CssNode & { loc?: CssLocation }).loc;
+    const start = loc?.start;
+    const location: { path: string; line?: number; column?: number } = { path: resourcePath };
+    if (start) {
+      location.line = start.line;
+      location.column = start.column;
+    }
+
+    context.messages.push({
+      id: 'CSS-001',
+      severity: 'error',
+      message: `CSS property "${property}" must not be included in an EPUB Style Sheet`,
+      location,
     });
   }
 

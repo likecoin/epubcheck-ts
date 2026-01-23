@@ -526,33 +526,33 @@ export class OPFValidator {
       });
     }
 
-    // EPUB 2: Check for NCX reference
-    if (this.packageDoc.version === '2.0') {
-      const ncxId = this.packageDoc.spineToc;
-      if (!ncxId) {
+    // Check for NCX reference (required in EPUB 2, optional in EPUB 3)
+    const ncxId = this.packageDoc.spineToc;
+    if (this.packageDoc.version === '2.0' && !ncxId) {
+      // EPUB 2 requires toc attribute
+      context.messages.push({
+        id: 'OPF-050',
+        severity: 'warning',
+        message: 'EPUB 2 spine should have a toc attribute referencing the NCX',
+        location: { path: opfPath },
+      });
+    } else if (ncxId) {
+      // If toc attribute is present (EPUB 2 or 3), validate it points to NCX
+      const ncxItem = this.manifestById.get(ncxId);
+      if (!ncxItem) {
         context.messages.push({
-          id: 'OPF-050',
-          severity: 'warning',
-          message: 'EPUB 2 spine should have a toc attribute referencing the NCX',
+          id: 'OPF-049',
+          severity: 'error',
+          message: `Spine toc attribute references non-existent item: "${ncxId}"`,
           location: { path: opfPath },
         });
-      } else {
-        const ncxItem = this.manifestById.get(ncxId);
-        if (!ncxItem) {
-          context.messages.push({
-            id: 'OPF-049',
-            severity: 'error',
-            message: `Spine toc attribute references non-existent item: "${ncxId}"`,
-            location: { path: opfPath },
-          });
-        } else if (ncxItem.mediaType !== 'application/x-dtbncx+xml') {
-          context.messages.push({
-            id: 'OPF-050',
-            severity: 'error',
-            message: `NCX item must have media-type "application/x-dtbncx+xml", found: "${ncxItem.mediaType}"`,
-            location: { path: opfPath },
-          });
-        }
+      } else if (ncxItem.mediaType !== 'application/x-dtbncx+xml') {
+        context.messages.push({
+          id: 'OPF-050',
+          severity: 'error',
+          message: `Spine toc attribute must reference an NCX document (media-type "application/x-dtbncx+xml"), found: "${ncxItem.mediaType}"`,
+          location: { path: opfPath },
+        });
       }
     }
 
@@ -571,8 +571,8 @@ export class OPFValidator {
         continue;
       }
 
-      // EPUB 2: Check for duplicate idrefs
-      if (this.packageDoc.version === '2.0' && seenIdrefs.has(itemref.idref)) {
+      // Check for duplicate idrefs (applies to both EPUB 2 and 3)
+      if (seenIdrefs.has(itemref.idref)) {
         context.messages.push({
           id: 'OPF-034',
           severity: 'error',

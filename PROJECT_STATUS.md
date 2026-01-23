@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~75% | ✅ Strong implementation |
 
-**Overall: ~65% complete (434 tests passing, 29 skipped)**
+**Overall: ~65% complete (447 tests passing, 23 skipped)**
 
 ---
 
@@ -26,9 +26,9 @@ Quick reference for implementation progress vs Java EPUBCheck.
 
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
-| **Unit Tests** | 375 | 372 | 3 |
-| **Integration Tests** | 63 | 62 | 26 |
-| **Total** | **463** | **434** | **29** |
+| **Unit Tests** | 422 | 419 | 3 |
+| **Integration Tests** | 48 | 28 | 20 |
+| **Total** | **470** | **447** | **23** |
 
 ### Integration Test Files
 
@@ -36,9 +36,9 @@ Quick reference for implementation progress vs Java EPUBCheck.
 test/integration/
 ├── epub.test.ts               # 4 tests  - Basic EPUB validation
 ├── ocf.integration.test.ts    # 33 tests (21 pass, 12 skip) - OCF/ZIP/container
-├── opf.integration.test.ts    # 11 tests (5 pass, 6 skip)   - Package document
-├── content.integration.test.ts # 11 tests (5 pass, 6 skip)  - XHTML/CSS/SVG
-└── nav.integration.test.ts    # 4 tests  (2 pass, 2 skip)   - Navigation
+├── opf.integration.test.ts    # 18 tests (13 pass, 5 skip)  - Package document
+├── content.integration.test.ts # 11 tests (8 pass, 3 skip)  - XHTML/CSS/SVG
+└── nav.integration.test.ts    # 4 tests  (4 pass, 0 skip)   - Navigation
 ```
 
 **Note**: Integration tests imported from Java EPUBCheck test suite (`/Users/william/epubcheck/src/test/resources/epub3/`).
@@ -50,13 +50,13 @@ test/fixtures/
 ├── valid/                 # 17 valid EPUBs
 ├── invalid/
 │   ├── ocf/              # 25 OCF error cases
-│   ├── opf/              # 8 OPF error cases
+│   ├── opf/              # 15 OPF error cases
 │   ├── content/          # 6 content error cases
 │   └── nav/              # 3 navigation error cases
 └── warnings/             # 2 warning cases
 ```
 
-**Total**: 61 EPUB test fixtures (imported from Java EPUBCheck)
+**Total**: 68 EPUB test fixtures (imported from Java EPUBCheck)
 
 ### Quality: ⭐⭐⭐⭐ (4/5) for implemented features
 
@@ -105,7 +105,7 @@ test/fixtures/
 - **Fallback chains** (OPF-040/045)
 - **Collections** (OPF-071-084)
 - **NCX validation** (NCX-001/002/003/006)
-- **CSS basics** (@font-face, @import, position, media overlays)
+- **CSS validation** (@font-face, @import, position, forbidden properties CSS-001)
 - **Navigation** (NAV-001/002/010)
 - **Scripted property** (OPF-014)
 - **MathML/SVG properties** (OPF-014)
@@ -132,7 +132,6 @@ test/fixtures/
 - Base URL handling (xml:base, HTML base)
 - Duplicate ID detection (OPF-060)
 - Non-UTF8 filename detection (PKG-027)
-- CSS direction/unicode-bidi validation (CSS-001)
 - Media format validation (image magic numbers, corrupt files)
 
 ---
@@ -143,6 +142,42 @@ test/fixtures/
 2. **libxml2-wasm RelaxNG limitations** - Cannot parse XHTML/SVG schemas due to complex recursive patterns (`oneOrMore//interleave//attribute`). Java uses Jing which handles these. XHTML/SVG RelaxNG validation disabled; content validated via Schematron instead.
 3. **Schematron XSLT 2.0** - Some XSLT 2.0 functions not fully supported by fontoxpath
 4. **RelaxNG deprecation** - libxml2 plans to remove RelaxNG support in future
+
+---
+
+## E2E Test Coverage vs Java
+
+### Current Coverage
+
+| Java Category | Java Scenarios | TS Ported | TS Passing | Coverage |
+|---------------|----------------|-----------|------------|----------|
+| 00-minimal | 5 | 4 | 4 | 80% |
+| 03-resources | 113 | 15 | ~10 | 9% |
+| 04-ocf | 61 | 33 | 21 | 34% |
+| 05-package-document | 121 | 18 | 13 | 11% |
+| 06-content-document | 215 | 11 | 8 | 4% |
+| 07-navigation-document | 40 | 4 | 4 | 10% |
+| 08-layout | 51 | 0 | 0 | 0% |
+| 09-media-overlays | 51 | 0 | 0 | 0% |
+| D-vocabularies (ARIA) | 56 | 0 | 0 | 0% |
+| Other | 6 | 0 | 0 | 0% |
+| **Total** | **719** | **70** | **50** | **7%** |
+
+### E2E Porting Priorities
+
+**High Priority** - Core validation parity:
+1. **05-package-document** (121 scenarios) - OPF is central to validation
+2. **04-ocf** (61 scenarios) - Already 34%, finish remaining
+3. **03-resources** (113 scenarios) - Cross-reference validation
+
+**Medium Priority** - Content completeness:
+4. **06-content-document** (215 scenarios) - Largest gap, needs ARIA/DOCTYPE
+5. **07-navigation-document** (40 scenarios) - Nav validation
+6. **D-vocabularies** (56 scenarios) - ARIA roles, epub:type
+
+**Low Priority** - Specialized features:
+7. **08-layout** (51 scenarios) - Rendition/viewport
+8. **09-media-overlays** (51 scenarios) - SMIL validation (not implemented)
 
 ---
 
@@ -164,8 +199,7 @@ test/fixtures/
 2. **Encryption.xml** - Font obfuscation
 3. **Full WCAG 2.0** - Comprehensive accessibility
 4. **Advanced media** - Format validation, magic numbers
-5. **CSS forbidden properties** - direction, unicode-bidi (CSS-001)
-6. **URL encoding** - Edge cases
+5. **URL encoding** - Edge cases (percent-encoded paths)
 
 ### Low Priority (Specialized)
 - Dictionary/index advanced validation
@@ -189,6 +223,14 @@ Unused: MED (0), SCP (0), CHK (0)
 - `PKG-007` - Mimetype content mismatch (now checks exact value, no trimming)
 - `PKG-009` - Disallowed characters in filenames (EPUB 3 spec compliance)
 - `PKG-010` - Whitespace in filenames (warning)
+
+### Recent Validation Improvements
+- `OPF-034` - Duplicate spine itemref (now works for EPUB 3, was EPUB 2 only)
+- `OPF-050` - Spine toc attribute validation (now works for EPUB 3)
+- `CSS-001` - Forbidden CSS properties (direction, unicode-bidi)
+- `NAV-010` - Remote links in toc/landmarks/page-list navigation
+- `RSC-011` - Navigation links to items not in spine
+- Script detection excludes non-JS types (application/ld+json, application/json)
 
 ---
 
@@ -218,10 +260,14 @@ Java EPUBCheck source: `/Users/william/epubcheck`
 
 ### Test Suite Location
 - **Base**: `/Users/william/epubcheck/src/test/resources/`
-- **EPUB 3 Tests**: `epub3/` (437 scenarios, 8 categories)
-  - `00-minimal/` - Baseline valid EPUBs
-  - `04-ocf/` - Container/ZIP validation (56 scenarios)
+- **EPUB 3 Tests**: `epub3/` (719 scenarios, 16 categories)
+  - `00-minimal/` - Baseline valid EPUBs (5 scenarios)
+  - `03-resources/` - Cross-reference validation (113 scenarios)
+  - `04-ocf/` - Container/ZIP validation (61 scenarios)
   - `05-package-document/` - OPF validation (121 scenarios)
   - `06-content-document/` - XHTML/CSS/SVG (215 scenarios)
   - `07-navigation-document/` - Nav/NCX (40 scenarios)
+  - `08-layout/` - Rendition/viewport (51 scenarios)
+  - `09-media-overlays/` - SMIL validation (51 scenarios)
+  - `D-vocabularies/` - ARIA, epub:type (56 scenarios)
 - **EPUB 2 Tests**: `epub2/` (96 scenarios)
