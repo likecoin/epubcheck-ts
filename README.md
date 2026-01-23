@@ -6,13 +6,13 @@ A TypeScript port of [EPUBCheck](https://github.com/w3c/epubcheck) - the officia
 [![npm](https://img.shields.io/npm/v/%40likecoin%2Fepubcheck-ts)](https://www.npmjs.com/package/@likecoin/epubcheck-ts)
 [![License](https://img.shields.io/npm/l/%40likecoin%2Fepubcheck-ts)](./LICENSE)
 
-> **Note**: This library is primarily developed for internal use at [3ook.com](https://3ook.com/about) and is built with AI-assisted development. While it has comprehensive test coverage (208 tests) and ~65% feature parity with Java EPUBCheck, it may not be suitable for mission-critical production workloads. For production environments requiring full EPUB validation, consider using the official [Java EPUBCheck](https://github.com/w3c/epubcheck). Contributions and feedback are welcome!
+> **Note**: This library is primarily developed for internal use at [3ook.com](https://3ook.com/about) and is built with AI-assisted development. While it has comprehensive test coverage (453 tests) and ~67% feature parity with Java EPUBCheck, it may not be suitable for mission-critical production workloads. For production environments requiring full EPUB validation, consider using the official [Java EPUBCheck](https://github.com/w3c/epubcheck). Contributions and feedback are welcome!
 
 ## Features
 
 - **CLI and programmatic API**: Use as a command-line tool or integrate into your application
 - **Cross-platform**: Works in Node.js (18+) and modern browsers
-- **Partial EPUB validation**: Currently ~65% of EPUBCheck feature parity
+- **Partial EPUB validation**: Currently ~67% of EPUBCheck feature parity
 - **Zero native dependencies**: Pure JavaScript/WebAssembly, no compilation required
 - **TypeScript first**: Full type definitions included
 - **Tree-shakable**: ESM with proper exports for optimal bundling
@@ -70,7 +70,7 @@ epubcheck-ts book.epub --quiet --fail-on-warnings
 epubcheck-ts dictionary.epub --profile dict
 ```
 
-**Note:** This CLI provides ~65% coverage of Java EPUBCheck features. For complete EPUB 3 conformance testing, use the [official Java EPUBCheck](https://github.com/w3c/epubcheck).
+**Note:** This CLI provides ~67% coverage of Java EPUBCheck features. For complete EPUB 3 conformance testing, use the [official Java EPUBCheck](https://github.com/w3c/epubcheck).
 
 ### ES Modules (recommended)
 
@@ -268,16 +268,16 @@ This library is a TypeScript port of the Java-based [EPUBCheck](https://github.c
 | Package Document (OPF) | 🟡 Partial | ~70% | Metadata, manifest, spine, collections, version/date validation |
 | Content Documents | 🟡 Partial | ~70% | XHTML structure, script/MathML/SVG detection, link validation |
 | Navigation Document | 🟡 Partial | ~40% | Nav structure, NCX validation, remote link validation |
-| Schema Validation | 🟡 Partial | ~70% | RelaxNG, XSD, Schematron working |
+| Schema Validation | 🟡 Partial | ~50% | RelaxNG for OPF/container; XHTML/SVG disabled (libxml2 limitation) |
 | CSS | 🟡 Partial | ~50% | @font-face, @import, media overlay classes, position warnings |
 | Cross-reference Validation | 🟡 Partial | ~75% | Reference tracking, fragment validation, undeclared resources |
-| Accessibility Checks | 🟡 Partial | ~75% | Empty links, image alt, SVG titles, MathML alttext |
+| Accessibility Checks | 🟡 Partial | ~30% | Basic checks only (empty links, image alt, SVG titles) |
 | Media Overlays | ❌ Not Started | 0% | Planned |
 | Media Validation | ❌ Not Started | 0% | Planned |
 
 Legend: 🟢 Complete | 🟡 Partial | 🔴 Basic | ❌ Not Started
 
-**Overall Progress: ~65% of Java EPUBCheck features**
+**Overall Progress: ~67% of Java EPUBCheck features**
 
 See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for detailed comparison.
 
@@ -357,8 +357,8 @@ Legend: ✅ Implemented
 | Aspect | epubcheck-ts | EPUBCheck (Java) |
 |--------|--------------|------------------|
 | Runtime | Node.js / Browser | JVM |
-| Feature Parity | ~65% | 100% |
-| Bundle Size | ~55KB JS + ~1.5MB WASM | ~15MB |
+| Feature Parity | ~67% | 100% |
+| Bundle Size | ~450KB JS + ~1.6MB WASM | ~15MB |
 | Installation | `npm install` | Download JAR |
 | Integration | Native JS/TS | CLI or Java API |
 | Performance | Comparable | Baseline |
