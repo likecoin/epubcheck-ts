@@ -17,7 +17,7 @@
   "bin": {
     "epubcheck-ts": "./bin/epubcheck.js"
   },
-  "files": ["dist", "bin", "schemas"],
+  "files": ["dist", "bin"],
   "sideEffects": false,
   "engines": {
     "node": ">=18"
