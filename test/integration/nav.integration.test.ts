@@ -47,6 +47,14 @@ describe('Integration Tests - Navigation Documents', () => {
       expect(result.valid).toBe(false);
       expectError(result, 'RSC-011');
     });
+
+    it('should report links to non-content document types (RSC-010)', async () => {
+      const data = await loadEpub('invalid/nav/nav-links-to-non-content-document-type-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-010');
+    });
   });
 });
 
