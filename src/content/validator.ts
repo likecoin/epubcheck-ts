@@ -148,11 +148,37 @@ export class ContentValidator {
 
     const cssContent = new TextDecoder().decode(cssData);
 
-    // Run CSS validation
+    // Run CSS validation and get references
     const cssValidator = new CSSValidator();
-    cssValidator.validate(context, cssContent, path);
+    const result = cssValidator.validate(context, cssContent, path);
 
-    // Extract @import statements and register as stylesheet references
+    const cssDir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
+    for (const ref of result.references) {
+      if (ref.type === 'font') {
+        const resolvedPath = this.resolveRelativePath(cssDir, ref.url, opfDir);
+        const hashIndex = resolvedPath.indexOf('#');
+        const targetResource = hashIndex >= 0 ? resolvedPath.slice(0, hashIndex) : resolvedPath;
+
+        refValidator.addReference({
+          url: ref.url,
+          targetResource,
+          type: ReferenceType.FONT,
+          location: { path },
+        });
+      } else if (ref.type === 'image') {
+        const resolvedPath = this.resolveRelativePath(cssDir, ref.url, opfDir);
+        const hashIndex = resolvedPath.indexOf('#');
+        const targetResource = hashIndex >= 0 ? resolvedPath.slice(0, hashIndex) : resolvedPath;
+
+        refValidator.addReference({
+          url: ref.url,
+          targetResource,
+          type: ReferenceType.IMAGE,
+          location: { path },
+        });
+      }
+    }
+
     this.extractCSSImports(path, cssContent, opfDir, refValidator);
   }
 
@@ -189,8 +215,10 @@ export class ContentValidator {
         // Skip errors for common HTML entities in EPUB 2 files
         // libxml2-wasm doesn't load external DTDs, so HTML entities like &nbsp; are not recognized
         // but they're valid in EPUB 2 (defined in the XHTML 1.1 DTD)
-        const entityMatch = error.message.match(/Entity '(\w+)' not defined/);
-        const isKnownHtmlEntity = entityMatch && HTML_ENTITIES.has(entityMatch[1]);
+        const entityPattern = /Entity '(\w+)' not defined/;
+        const entityExec = entityPattern.exec(error.message);
+        const entityName = entityExec?.[1];
+        const isKnownHtmlEntity = entityName !== undefined && HTML_ENTITIES.has(entityName);
         const isEpub2 = context.version === '2.0';
 
         if (!isEpub2 || !isKnownHtmlEntity) {

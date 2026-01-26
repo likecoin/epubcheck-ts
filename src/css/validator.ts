@@ -16,11 +16,11 @@ interface CssLocation {
 }
 
 /**
- * Reference found in CSS (for @import and @font-face src)
+ * Reference found in CSS (for @import, @font-face src, and url() declarations)
  */
 export interface CSSReference {
   url: string;
-  type: 'import' | 'font';
+  type: 'import' | 'font' | 'image' | 'resource';
   line?: number | undefined;
   column?: number | undefined;
 }
@@ -106,8 +106,84 @@ export class CSSValidator {
     this.checkDiscouragedProperties(context, ast, resourcePath);
     this.checkAtRules(context, ast, resourcePath, result);
     this.checkMediaOverlayClasses(context, ast, resourcePath);
+    this.extractUrlReferences(context, ast, resourcePath, result);
 
     return result;
+  }
+
+  private extractUrlReferences(
+    context: ValidationContext,
+    ast: CssNode,
+    resourcePath: string,
+    result: CSSValidationResult,
+  ): void {
+    walk(ast, (node) => {
+      if (node.type === 'Atrule') {
+        const atRule = node;
+        if (atRule.name === 'font-face') {
+          return;
+        }
+        if (atRule.block) {
+          walk(atRule.block, (blockNode) => {
+            if (blockNode.type === 'Declaration') {
+              this.processDeclarationForUrl(blockNode, resourcePath, result);
+            }
+          });
+        }
+      } else if (node.type === 'Rule') {
+        const rule = node;
+        walk(rule.block, (blockNode) => {
+          if (blockNode.type === 'Declaration') {
+            this.processDeclarationForUrl(blockNode, resourcePath, result);
+          }
+        });
+      }
+    });
+  }
+
+  private processDeclarationForUrl(
+    declaration: Declaration,
+    resourcePath: string,
+    result: CSSValidationResult,
+  ): void {
+    const property = declaration.property.toLowerCase();
+
+    walk(declaration.value, (valueNode) => {
+      if (valueNode.type === 'Url') {
+        const urlValue = this.extractUrlValue(valueNode);
+        if (urlValue && !urlValue.startsWith('data:')) {
+          const loc = (valueNode as CssNode & { loc?: CssLocation }).loc;
+          const start = loc?.start;
+          const location: { path: string; line?: number; column?: number } = {
+            path: resourcePath,
+          };
+          if (start) {
+            location.line = start.line;
+            location.column = start.column;
+          }
+
+          let refType: 'image' | 'font' | 'resource' = 'resource';
+          if (property.includes('font')) {
+            refType = 'font';
+          } else if (
+            property.includes('background') ||
+            property.includes('list-style') ||
+            property.includes('content') ||
+            property.includes('border-image') ||
+            property.includes('mask')
+          ) {
+            refType = 'image';
+          }
+
+          result.references.push({
+            url: urlValue,
+            type: refType,
+            line: start?.line,
+            column: start?.column,
+          });
+        }
+      }
+    });
   }
 
   /**

@@ -55,6 +55,7 @@ export enum MessageId {
   OPF_013 = 'OPF-013', // Remote resource not allowed
   OPF_014 = 'OPF-014', // Invalid manifest item media-type
   OPF_097 = 'OPF-097', // Resource not referenced
+  OPF_099 = 'OPF-099', // Manifest must not list the package document
   OPF_015 = 'OPF-015', // Invalid guide reference
 
   // Resource errors (RSC-001 to RSC-999)

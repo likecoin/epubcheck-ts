@@ -71,6 +71,7 @@ export class OPFValidator {
     // Run validations
     this.validatePackageAttributes(context, opfPath);
     this.validateMetadata(context, opfPath);
+    this.validateLinkElements(context, opfPath);
     this.validateManifest(context, opfPath);
     this.validateSpine(context, opfPath);
     this.validateFallbackChains(context, opfPath);
@@ -353,6 +354,46 @@ export class OPFValidator {
   }
 
   /**
+   * Validate EPUB 3 link elements in metadata
+   */
+  private validateLinkElements(context: ValidationContext, opfPath: string): void {
+    if (!this.packageDoc) return;
+
+    const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/')) : '';
+
+    for (const link of this.packageDoc.linkElements) {
+      const href = link.href;
+      const decodedHref = tryDecodeUriComponent(href);
+
+      const basePath = href.includes('#') ? href.substring(0, href.indexOf('#')) : href;
+      const basePathDecoded = decodedHref.includes('#')
+        ? decodedHref.substring(0, decodedHref.indexOf('#'))
+        : decodedHref;
+
+      if (href.startsWith('#')) {
+        continue;
+      }
+
+      const resolvedPath = resolvePath(opfDir, basePath);
+      const resolvedPathDecoded =
+        basePathDecoded !== basePath ? resolvePath(opfDir, basePathDecoded) : resolvedPath;
+
+      const fileExists = context.files.has(resolvedPath) || context.files.has(resolvedPathDecoded);
+      const inManifest =
+        this.manifestByHref.has(basePath) || this.manifestByHref.has(basePathDecoded);
+
+      if (!fileExists && !inManifest) {
+        context.messages.push({
+          id: 'RSC-007',
+          severity: 'warning',
+          message: `Referenced resource "${resolvedPath}" could not be found in the EPUB`,
+          location: { path: opfPath },
+        });
+      }
+    }
+  }
+
+  /**
    * Validate manifest section
    */
   private validateManifest(context: ValidationContext, opfPath: string): void {
@@ -384,12 +425,39 @@ export class OPFValidator {
       }
       seenHrefs.add(item.href);
 
-      // Check that referenced file exists (RSC-001 per Java EPUBCheck)
+      // Check for self-referencing manifest item (OPF-099)
+      // The manifest must not list the package document itself
       // Note: href may be URL-encoded (e.g., table%20us%202.png) but file paths are not
       const fullPath = resolvePath(opfPath, item.href);
+      if (fullPath === opfPath) {
+        context.messages.push({
+          id: 'OPF-099',
+          severity: 'error',
+          message: 'The manifest must not list the package document',
+          location: { path: opfPath },
+        });
+      }
+
+      // Check for URL leaking outside container (RSC-026)
+      // Using the same trick as Java EPUBCheck: resolve against two different test bases
+      // If the resolved URL doesn't start with both test base paths, it leaks outside the container
+      if (!item.href.startsWith('http') && !item.href.startsWith('mailto:')) {
+        const leaked = checkUrlLeaking(item.href);
+        if (leaked) {
+          context.messages.push({
+            id: 'RSC-026',
+            severity: 'error',
+            message: `URL "${item.href}" leaks outside the container (it is not a valid-relative-ocf-URL-with-fragment string)`,
+            location: { path: opfPath },
+          });
+        }
+      }
+
+      // Check that referenced file exists (RSC-001 per Java EPUBCheck)
       // Also try URL-decoded version for comparison
       const decodedHref = tryDecodeUriComponent(item.href);
-      const fullPathDecoded = decodedHref !== item.href ? resolvePath(opfPath, decodedHref) : fullPath;
+      const fullPathDecoded =
+        decodedHref !== item.href ? resolvePath(opfPath, decodedHref) : fullPath;
 
       if (
         !context.files.has(fullPath) &&
@@ -847,6 +915,31 @@ function tryDecodeUriComponent(encoded: string): string {
   } catch {
     // If decoding fails (e.g., invalid encoding), return original
     return encoded;
+  }
+}
+
+/**
+ * Check if a URL "leaks" outside the container
+ *
+ * Uses the same trick as Java EPUBCheck: resolve against two different test bases.
+ * If the resolved URL doesn't start with both test base paths, it "leaks" above root.
+ *
+ * Example: "../../../../EPUB/content.xhtml" would resolve to "/EPUB/content.xhtml"
+ * from base "A/" but to something outside from base "B/"
+ */
+function checkUrlLeaking(href: string): boolean {
+  const TEST_BASE_A = 'https://a.example.org/A/';
+  const TEST_BASE_B = 'https://b.example.org/B/';
+
+  try {
+    const urlA = new URL(href, TEST_BASE_A).toString();
+    const urlB = new URL(href, TEST_BASE_B).toString();
+
+    // If either resolved URL doesn't start with its test base path, the URL leaks
+    return !urlA.startsWith(TEST_BASE_A) || !urlB.startsWith(TEST_BASE_B);
+  } catch {
+    // Invalid URL, don't report as leaking (other validation will catch it)
+    return false;
   }
 }
 

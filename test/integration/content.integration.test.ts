@@ -37,8 +37,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'CSS-008');
     });
 
-    // Skip: CSS @import resource checking not implemented (RSC-001)
-    it.skip('should report missing CSS import (RSC-001)', async () => {
+    it('should report missing CSS import (RSC-001)', async () => {
       const data = await loadEpub('invalid/content/content-css-import-not-present-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -46,13 +45,12 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-001');
     });
 
-    // Skip: CSS url() resource checking not fully implemented
-    it.skip('should report missing CSS url() resource (RSC-001)', async () => {
+    it('should report missing CSS url() resource (RSC-007)', async () => {
       const data = await loadEpub('invalid/content/content-css-url-not-present-error.epub');
       const result = await EpubCheck.validate(data);
 
       expect(result.valid).toBe(false);
-      expectError(result, 'RSC-001');
+      expectError(result, 'RSC-007');
     });
 
     it('should report forbidden CSS direction property (CSS-001)', async () => {

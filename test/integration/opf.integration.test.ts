@@ -46,12 +46,12 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectError(result, 'OPF-074');
     });
 
-    // Skip: Self-referencing test file structure may not trigger the error
-    it.skip('should report self-referencing manifest item', async () => {
+    it('should report self-referencing manifest item', async () => {
       const data = await loadEpub('invalid/opf/manifest-self-referencing-error.epub');
       const result = await EpubCheck.validate(data);
 
       expect(result.valid).toBe(false);
+      expectError(result, 'OPF-099');
     });
   });
 
@@ -136,8 +136,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectError(result, 'OPF-014');
     });
 
-    // Skip: Remote resource property validation needs verification
-    it.skip('should report undeclared remote-resources property (OPF-014)', async () => {
+    it('should report undeclared remote-resources property (OPF-014)', async () => {
       const data = await loadEpub(
         'invalid/opf/package-manifest-prop-remote-resource-undeclared-error.epub',
       );
@@ -149,19 +148,16 @@ describe('Integration Tests - OPF (Package Document)', () => {
   });
 
   describe('Link validation', () => {
-    // Skip: Link validation not fully implemented
-    it.skip('should report missing resource referenced by link (RSC-007)', async () => {
+    it('should report missing resource referenced by link (RSC-007)', async () => {
       const data = await loadEpub('invalid/opf/package-link-missing-resource-error.epub');
       const result = await EpubCheck.validate(data);
 
-      expect(result.valid).toBe(false);
-      expectError(result, 'RSC-007');
+      expectWarning(result, 'RSC-007');
     });
   });
 
   describe('Font validation', () => {
-    // Skip: Font manifest validation needs verification
-    it.skip('should report missing fonts declared in CSS (RSC-001)', async () => {
+    it('should report missing fonts declared in CSS (RSC-001)', async () => {
       const data = await loadEpub('invalid/opf/package-manifest-fonts-missing-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -171,8 +167,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
   });
 
   describe('Warnings', () => {
-    // Skip: Item href space warning needs verification
-    it.skip('should warn about spaces in manifest item href (PKG-010)', async () => {
+    it('should warn about spaces in manifest item href (PKG-010)', async () => {
       const data = await loadEpub('warnings/package-manifest-item-with-spaces-warning.epub');
       const result = await EpubCheck.validate(data);
 

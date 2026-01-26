@@ -44,8 +44,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: percent-encoded URLs test file has issues with manifest references
-    it.skip('should allow percent-encoded URLs', async () => {
+    it('should allow percent-encoded URLs', async () => {
       const data = await loadEpub('valid/url-percent-encoded-valid.epub');
       const result = await EpubCheck.validate(data);
 
@@ -234,8 +233,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
   });
 
   describe('URL validation', () => {
-    // Skip: URL leaking detection is implemented but test file may have issues
-    it.skip('should report leaking URLs in package document (RSC-026)', async () => {
+    it('should report leaking URLs in package document (RSC-026)', async () => {
       const data = await loadEpub('invalid/ocf/ocf-url-leaking-in-opf-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -243,8 +241,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       expectError(result, 'RSC-026');
     });
 
-    // Skip: Path-absolute URL detection needs verification
-    it.skip('should report path-absolute URLs in package document (RSC-026)', async () => {
+    it('should report path-absolute URLs in package document (RSC-026)', async () => {
       const data = await loadEpub('invalid/ocf/ocf-url-path-absolute-error.epub');
       const result = await EpubCheck.validate(data);
 
