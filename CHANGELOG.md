@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-01-27
+
+### Added
+
+- **Link element validation (RSC-007)**
+  - Validates `<link>` element references in content documents
+  - Reports missing resources referenced by link elements
+- **OPF-099: Self-referencing manifest items**
+  - Detects manifest items that reference themselves
+- **RSC-026: URL leaking detection**
+  - Detects URLs that leak information via test base URL technique
+- **CSS url() reference extraction**
+  - Extracts and validates references from CSS `url()` declarations
+  - Supports background-image, list-style-image, and other CSS properties
+
+### Fixed
+
+- **RSC-001 false positives** for URL-encoded hrefs in OPF manifest
+  - Hrefs like `table%20us%202.png` are now properly decoded before file existence check
+- **HTM-004 false positives** for HTML entities in EPUB 2 files
+  - Common HTML entities (&nbsp;, &copy;, etc.) no longer cause errors
+  - Works around libxml2-wasm not loading external DTDs
+
+### Changed
+
+- Removed schemas from published package (smaller npm package size)
+- Test coverage improved from 453 to 467 tests passing (7 skipped, down from 17)
+- Overall completion improved from ~67% to ~70%
+- Web demo updated with library usage description and npm links
+
 ## [0.2.3] - 2026-01-23
 
 ### Added
@@ -220,7 +250,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - No media overlays validation
 - No script detection/validation
 
-[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.4...HEAD
+[0.2.4]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.0...v0.2.1
