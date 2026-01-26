@@ -435,6 +435,32 @@ describe('OPFValidator', () => {
       );
       expect(errors).toHaveLength(1);
     });
+
+    it('should not report RSC-001 for URL-encoded hrefs when file exists with spaces', () => {
+      const opf = `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:identifier id="uid">test-id</dc:identifier>
+    <dc:title>Test</dc:title>
+    <dc:language>en</dc:language>
+    <meta property="dcterms:modified">2024-01-01T00:00:00Z</meta>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+    <item id="img1" href="Images/table%20us%202.png" media-type="image/png"/>
+  </manifest>
+  <spine>
+    <itemref idref="nav"/>
+  </spine>
+</package>`;
+      const context = createContext(opf, {
+        'OEBPS/Images/table us 2.png': 'png-data',
+      });
+      validator.validate(context);
+
+      const rscErrors = context.messages.filter((m) => m.id === 'RSC-001');
+      expect(rscErrors).toHaveLength(0);
+    });
   });
 
   describe('spine validation', () => {

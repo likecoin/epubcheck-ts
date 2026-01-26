@@ -11,6 +11,105 @@ import type { ValidationContext } from '../types.js';
 
 const DISCOURAGED_ELEMENTS = new Set(['base', 'embed']);
 
+const HTML_ENTITIES = new Set([
+  'nbsp',
+  'iexcl',
+  'cent',
+  'pound',
+  'curren',
+  'yen',
+  'brvbar',
+  'sect',
+  'uml',
+  'copy',
+  'ordf',
+  'laquo',
+  'not',
+  'shy',
+  'reg',
+  'macr',
+  'deg',
+  'plusmn',
+  'sup2',
+  'sup3',
+  'acute',
+  'micro',
+  'para',
+  'middot',
+  'cedil',
+  'sup1',
+  'ordm',
+  'raquo',
+  'frac14',
+  'frac12',
+  'frac34',
+  'iquest',
+  'Agrave',
+  'Aacute',
+  'Acirc',
+  'Atilde',
+  'Auml',
+  'Aring',
+  'AElig',
+  'Ccedil',
+  'Egrave',
+  'Eacute',
+  'Ecirc',
+  'Euml',
+  'Igrave',
+  'Iacute',
+  'Icirc',
+  'Iuml',
+  'ETH',
+  'Ntilde',
+  'Ograve',
+  'Oacute',
+  'Ocirc',
+  'Otilde',
+  'Ouml',
+  'times',
+  'Oslash',
+  'Ugrave',
+  'Uacute',
+  'Ucirc',
+  'Uuml',
+  'Yacute',
+  'THORN',
+  'szlig',
+  'agrave',
+  'aacute',
+  'acirc',
+  'atilde',
+  'auml',
+  'aring',
+  'aelig',
+  'ccedil',
+  'egrave',
+  'eacute',
+  'ecirc',
+  'euml',
+  'igrave',
+  'iacute',
+  'icirc',
+  'iuml',
+  'eth',
+  'ntilde',
+  'ograve',
+  'oacute',
+  'ocirc',
+  'otilde',
+  'ouml',
+  'divide',
+  'oslash',
+  'ugrave',
+  'uacute',
+  'ucirc',
+  'uuml',
+  'yacute',
+  'thorn',
+  'yuml',
+]);
+
 export class ContentValidator {
   validate(
     context: ValidationContext,
@@ -86,19 +185,29 @@ export class ContentValidator {
     } catch (error) {
       if (error instanceof Error) {
         const { message, line, column } = this.parseLibxmlError(error.message);
-        const location: { path: string; line?: number; column?: number } = { path };
-        if (line !== undefined) {
-          location.line = line;
+
+        // Skip errors for common HTML entities in EPUB 2 files
+        // libxml2-wasm doesn't load external DTDs, so HTML entities like &nbsp; are not recognized
+        // but they're valid in EPUB 2 (defined in the XHTML 1.1 DTD)
+        const entityMatch = error.message.match(/Entity '(\w+)' not defined/);
+        const isKnownHtmlEntity = entityMatch && HTML_ENTITIES.has(entityMatch[1]);
+        const isEpub2 = context.version === '2.0';
+
+        if (!isEpub2 || !isKnownHtmlEntity) {
+          const location: { path: string; line?: number; column?: number } = { path };
+          if (line !== undefined) {
+            location.line = line;
+          }
+          if (column !== undefined) {
+            location.column = column;
+          }
+          context.messages.push({
+            id: 'HTM-004',
+            severity: 'error',
+            message,
+            location,
+          });
         }
-        if (column !== undefined) {
-          location.column = column;
-        }
-        context.messages.push({
-          id: 'HTM-004',
-          severity: 'error',
-          message,
-          location,
-        });
       }
       return;
     }

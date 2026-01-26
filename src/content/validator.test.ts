@@ -289,6 +289,53 @@ describe('ContentValidator', () => {
       const htmErrors = context.messages.filter((m) => m.id === 'HTM-004');
       expect(htmErrors).toHaveLength(0);
     });
+
+    it('should allow common HTML entities in EPUB 2 files', () => {
+      const epub2XHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <p>Non-breaking space:&nbsp;and copy:&copy; and euro:&euro;</p>
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(epub2XHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' },
+      ]);
+      context = createContext(files, packageDoc);
+      context.version = '2.0';
+      validator.validate(context);
+
+      const htmErrors = context.messages.filter((m) => m.id === 'HTM-004');
+      expect(htmErrors).toHaveLength(0);
+    });
+
+    it('should report unknown entity errors in EPUB 2 files', () => {
+      const epub2XHTML = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <p>Unknown entity:&unknownentity;</p>
+  </body>
+</html>`;
+      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(epub2XHTML)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' },
+      ]);
+      context = createContext(files, packageDoc);
+      context.version = '2.0';
+      validator.validate(context);
+
+      const htmErrors = context.messages.filter((m) => m.id === 'HTM-004');
+      expect(htmErrors.length).toBeGreaterThan(0);
+      expect(htmErrors[0]?.message).toContain('unknownentity');
+    });
   });
 
   describe('XHTML structure', () => {

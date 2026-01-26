@@ -385,8 +385,17 @@ export class OPFValidator {
       seenHrefs.add(item.href);
 
       // Check that referenced file exists (RSC-001 per Java EPUBCheck)
+      // Note: href may be URL-encoded (e.g., table%20us%202.png) but file paths are not
       const fullPath = resolvePath(opfPath, item.href);
-      if (!context.files.has(fullPath) && !item.href.startsWith('http')) {
+      // Also try URL-decoded version for comparison
+      const decodedHref = tryDecodeUriComponent(item.href);
+      const fullPathDecoded = decodedHref !== item.href ? resolvePath(opfPath, decodedHref) : fullPath;
+
+      if (
+        !context.files.has(fullPath) &&
+        !context.files.has(fullPathDecoded) &&
+        !item.href.startsWith('http')
+      ) {
         context.messages.push({
           id: 'RSC-001',
           severity: 'error',
@@ -824,6 +833,21 @@ function resolvePath(basePath: string, relativePath: string): string {
   }
 
   return parts.join('/');
+}
+
+/**
+ * Safely decode a URI component, returning the original if decoding fails
+ *
+ * This is needed because OPF hrefs may be URL-encoded (e.g., "table%20us%202.png")
+ * but the actual file paths in the ZIP are not encoded (e.g., "table us 2.png").
+ */
+function tryDecodeUriComponent(encoded: string): string {
+  try {
+    return decodeURIComponent(encoded);
+  } catch {
+    // If decoding fails (e.g., invalid encoding), return original
+    return encoded;
+  }
 }
 
 /**
