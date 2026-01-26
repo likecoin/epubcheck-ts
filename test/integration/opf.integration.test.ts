@@ -166,6 +166,50 @@ describe('Integration Tests - OPF (Package Document)', () => {
     });
   });
 
+  describe('Remote resource validation', () => {
+    it('should report remote audio missing remote-resources property (OPF-014)', async () => {
+      const data = await loadEpub('invalid/opf/package-remote-audio-missing-property-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'OPF-014');
+    });
+
+    it('should report undeclared remote audio resource (RSC-008)', async () => {
+      const data = await loadEpub('invalid/opf/package-remote-audio-undeclared-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-008');
+    });
+
+    it('should report remote font in CSS missing remote-resources property (OPF-014)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/package-remote-font-in-css-missing-property-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'OPF-014');
+    });
+
+    it('should report undeclared remote font resource (RSC-008)', async () => {
+      const data = await loadEpub('invalid/opf/package-remote-font-undeclared-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-008');
+    });
+
+    it('should validate EPUB with remote resource and inline CSS', async () => {
+      const data = await loadEpub('valid/package-remote-resource-and-inline-css-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(true);
+      expectNoErrorsOrWarnings(result);
+    });
+  });
+
   describe('Warnings', () => {
     it('should warn about spaces in manifest item href (PKG-010)', async () => {
       const data = await loadEpub('warnings/package-manifest-item-with-spaces-warning.epub');

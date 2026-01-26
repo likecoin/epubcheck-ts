@@ -254,7 +254,8 @@ export class EpubCheck {
     const spineIdrefs = new Set(packageDoc.spine.map((item) => item.idref));
 
     for (const item of packageDoc.manifest) {
-      const fullPath = opfDir ? `${opfDir}/${item.href}` : item.href;
+      const isRemoteURL = item.href.startsWith('http://') || item.href.startsWith('https://');
+      const fullPath = isRemoteURL || !opfDir ? item.href : `${opfDir}/${item.href}`;
       registry.registerResource({
         url: fullPath,
         mimeType: item.mediaType,

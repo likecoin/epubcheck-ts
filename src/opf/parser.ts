@@ -135,13 +135,21 @@ function parsePrefixes(xml: string): Record<string, string> {
 }
 
 /**
+ * Strip XML comments from a string
+ */
+function stripXmlComments(xml: string): string {
+  return xml.replace(/<!--[\s\S]*?-->/g, '');
+}
+
+/**
  * Extract a section from XML by tag name (returns content between tags)
  */
 function extractSection(xml: string, tagName: string): string {
   // Handle both prefixed and non-prefixed tags
   const regex = new RegExp(`<(?:opf:)?${tagName}[^>]*>([\\s\\S]*?)</(?:opf:)?${tagName}>`, 'i');
   const match = regex.exec(xml);
-  return match?.[1] ?? '';
+  // Strip XML comments to avoid parsing commented-out elements
+  return stripXmlComments(match?.[1] ?? '');
 }
 
 /**

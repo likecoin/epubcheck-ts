@@ -149,6 +149,7 @@ export class ReferenceValidator {
     // Check if target resource exists in manifest
     if (!this.registry.hasResource(resourcePath)) {
       const fileExistsInContainer = context.files.has(resourcePath);
+
       if (fileExistsInContainer) {
         // File exists but not declared in manifest - report RSC-008
         if (!context.referencedUndeclaredResources?.has(resourcePath)) {
@@ -239,6 +240,17 @@ export class ReferenceValidator {
           id: 'RSC-006',
           severity: 'error',
           message: 'Remote resources are only allowed for audio, video, and fonts',
+          location: reference.location,
+        });
+        return;
+      }
+
+      const targetResource = reference.targetResource || url;
+      if (!this.registry.hasResource(targetResource)) {
+        context.messages.push({
+          id: 'RSC-008',
+          severity: 'error',
+          message: `Referenced resource "${targetResource}" is not declared in the OPF manifest`,
           location: reference.location,
         });
       }

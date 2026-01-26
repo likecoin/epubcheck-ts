@@ -545,12 +545,14 @@ export class OPFValidator {
         });
       }
 
-      // EPUB 3: Check for remote resources require remote-resources property (RSC-006b)
+      // EPUB 3: Check for remote resources in spine require remote-resources property (RSC-006)
+      // Per Java EPUBCheck, this check only applies to spine items, not all manifest items
       if (
         this.packageDoc.version !== '2.0' &&
         (item.href.startsWith('http://') || item.href.startsWith('https://'))
       ) {
-        if (!item.properties?.includes('remote-resources')) {
+        const inSpine = this.packageDoc.spine.some((s) => s.idref === item.id);
+        if (inSpine && !item.properties?.includes('remote-resources')) {
           context.messages.push({
             id: 'RSC-006',
             severity: 'error',

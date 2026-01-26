@@ -496,13 +496,18 @@ describe('OPFValidator', () => {
       expect(context.messages.some((m) => m.id === 'OPF-091')).toBe(true);
     });
 
-    it('should add RSC-006 error for remote resource without remote-resources property', () => {
+    it('should add RSC-006 error for remote spine item without remote-resources property', () => {
       const context = createValidationContext();
       const packageDoc = createMinimalPackage({
         manifest: [
           { id: 'nav', href: 'nav.xhtml', mediaType: 'application/xhtml+xml', properties: ['nav'] },
-          { id: 'font1', href: 'http://example.com/font.woff', mediaType: 'font/woff' },
+          {
+            id: 'chapter1',
+            href: 'https://example.com/chapter1.xhtml',
+            mediaType: 'application/xhtml+xml',
+          },
         ],
+        spine: [{ idref: 'chapter1', linear: true }],
       });
       addFileToContext(context, 'OEBPS/nav.xhtml', '<html></html>');
 

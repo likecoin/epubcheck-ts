@@ -227,7 +227,14 @@ describe('ReferenceValidator', () => {
       expect(context.messages.some((m) => m.id === 'RSC-006')).toBe(true);
     });
 
-    it('should allow remote audio resources', () => {
+    it('should allow remote audio resources when declared in manifest', () => {
+      registry.registerResource({
+        url: 'https://example.com/audio.mp3',
+        mimeType: 'audio/mpeg',
+        inSpine: false,
+        ids: new Set(),
+      });
+
       validator.addReference({
         url: 'https://example.com/audio.mp3',
         targetResource: 'https://example.com/audio.mp3',
@@ -239,7 +246,14 @@ describe('ReferenceValidator', () => {
       expect(context.messages.filter((m) => m.severity === 'error')).toHaveLength(0);
     });
 
-    it('should allow remote video resources', () => {
+    it('should allow remote video resources when declared in manifest', () => {
+      registry.registerResource({
+        url: 'https://example.com/video.mp4',
+        mimeType: 'video/mp4',
+        inSpine: false,
+        ids: new Set(),
+      });
+
       validator.addReference({
         url: 'https://example.com/video.mp4',
         targetResource: 'https://example.com/video.mp4',
@@ -251,7 +265,14 @@ describe('ReferenceValidator', () => {
       expect(context.messages.filter((m) => m.severity === 'error')).toHaveLength(0);
     });
 
-    it('should allow remote font resources', () => {
+    it('should allow remote font resources when declared in manifest', () => {
+      registry.registerResource({
+        url: 'https://example.com/font.woff',
+        mimeType: 'font/woff',
+        inSpine: false,
+        ids: new Set(),
+      });
+
       validator.addReference({
         url: 'https://example.com/font.woff',
         targetResource: 'https://example.com/font.woff',

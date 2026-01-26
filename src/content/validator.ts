@@ -152,30 +152,71 @@ export class ContentValidator {
     const cssValidator = new CSSValidator();
     const result = cssValidator.validate(context, cssContent, path);
 
+    // Check if CSS has remote resources and report OPF-014 if needed
+    const hasRemoteResources = result.references.some(
+      (ref) => ref.url.startsWith('http://') || ref.url.startsWith('https://'),
+    );
+    if (hasRemoteResources) {
+      const packageDoc = context.packageDocument;
+      if (packageDoc) {
+        // Find manifest item by checking if path ends with the href
+        const manifestItem = packageDoc.manifest.find(
+          (item) => path.endsWith(`/${item.href}`) || path === item.href,
+        );
+        if (manifestItem && !manifestItem.properties?.includes('remote-resources')) {
+          context.messages.push({
+            id: 'OPF-014',
+            severity: 'error',
+            message:
+              'CSS document references remote resources but manifest item is missing "remote-resources" property',
+            location: { path },
+          });
+        }
+      }
+    }
+
     const cssDir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
     for (const ref of result.references) {
       if (ref.type === 'font') {
-        const resolvedPath = this.resolveRelativePath(cssDir, ref.url, opfDir);
-        const hashIndex = resolvedPath.indexOf('#');
-        const targetResource = hashIndex >= 0 ? resolvedPath.slice(0, hashIndex) : resolvedPath;
+        if (ref.url.startsWith('http://') || ref.url.startsWith('https://')) {
+          refValidator.addReference({
+            url: ref.url,
+            targetResource: ref.url,
+            type: ReferenceType.FONT,
+            location: { path },
+          });
+        } else {
+          const resolvedPath = this.resolveRelativePath(cssDir, ref.url, opfDir);
+          const hashIndex = resolvedPath.indexOf('#');
+          const targetResource = hashIndex >= 0 ? resolvedPath.slice(0, hashIndex) : resolvedPath;
 
-        refValidator.addReference({
-          url: ref.url,
-          targetResource,
-          type: ReferenceType.FONT,
-          location: { path },
-        });
+          refValidator.addReference({
+            url: ref.url,
+            targetResource,
+            type: ReferenceType.FONT,
+            location: { path },
+          });
+        }
       } else if (ref.type === 'image') {
-        const resolvedPath = this.resolveRelativePath(cssDir, ref.url, opfDir);
-        const hashIndex = resolvedPath.indexOf('#');
-        const targetResource = hashIndex >= 0 ? resolvedPath.slice(0, hashIndex) : resolvedPath;
+        if (ref.url.startsWith('http://') || ref.url.startsWith('https://')) {
+          refValidator.addReference({
+            url: ref.url,
+            targetResource: ref.url,
+            type: ReferenceType.IMAGE,
+            location: { path },
+          });
+        } else {
+          const resolvedPath = this.resolveRelativePath(cssDir, ref.url, opfDir);
+          const hashIndex = resolvedPath.indexOf('#');
+          const targetResource = hashIndex >= 0 ? resolvedPath.slice(0, hashIndex) : resolvedPath;
 
-        refValidator.addReference({
-          url: ref.url,
-          targetResource,
-          type: ReferenceType.IMAGE,
-          location: { path },
-        });
+          refValidator.addReference({
+            url: ref.url,
+            targetResource,
+            type: ReferenceType.IMAGE,
+            location: { path },
+          });
+        }
       }
     }
 
@@ -378,6 +419,7 @@ export class ContentValidator {
         this.extractAndRegisterStylesheets(path, root, opfDir, refValidator);
         this.extractAndRegisterImages(path, root, opfDir, refValidator);
         this.extractAndRegisterCiteAttributes(path, root, opfDir, refValidator);
+        this.extractAndRegisterMediaElements(path, root, opfDir, refValidator);
       }
     } finally {
       doc.dispose();
@@ -1367,6 +1409,132 @@ export class ContentValidator {
         ref.fragment = fragment;
       }
       refValidator.addReference(ref);
+    }
+  }
+
+  private extractAndRegisterMediaElements(
+    path: string,
+    root: XmlElement,
+    opfDir: string,
+    refValidator: ReferenceValidator,
+  ): void {
+    const docDir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
+
+    // Extract audio elements with src attribute
+    const audioElements = root.find('.//html:audio[@src]', {
+      html: 'http://www.w3.org/1999/xhtml',
+    });
+    for (const audio of audioElements) {
+      const src = this.getAttribute(audio as XmlElement, 'src');
+      if (!src) continue;
+
+      const line = (audio as unknown as { line?: number }).line;
+
+      if (src.startsWith('http://') || src.startsWith('https://')) {
+        refValidator.addReference({
+          url: src,
+          targetResource: src,
+          type: ReferenceType.AUDIO,
+          location: line !== undefined ? { path, line } : { path },
+        });
+      } else {
+        const resolvedPath = this.resolveRelativePath(docDir, src, opfDir);
+        refValidator.addReference({
+          url: src,
+          targetResource: resolvedPath,
+          type: ReferenceType.AUDIO,
+          location: line !== undefined ? { path, line } : { path },
+        });
+      }
+    }
+
+    // Extract video elements with src attribute
+    const videoElements = root.find('.//html:video[@src]', {
+      html: 'http://www.w3.org/1999/xhtml',
+    });
+    for (const video of videoElements) {
+      const src = this.getAttribute(video as XmlElement, 'src');
+      if (!src) continue;
+
+      const line = (video as unknown as { line?: number }).line;
+
+      if (src.startsWith('http://') || src.startsWith('https://')) {
+        refValidator.addReference({
+          url: src,
+          targetResource: src,
+          type: ReferenceType.VIDEO,
+          location: line !== undefined ? { path, line } : { path },
+        });
+      } else {
+        const resolvedPath = this.resolveRelativePath(docDir, src, opfDir);
+        refValidator.addReference({
+          url: src,
+          targetResource: resolvedPath,
+          type: ReferenceType.VIDEO,
+          location: line !== undefined ? { path, line } : { path },
+        });
+      }
+    }
+
+    // Extract source elements (child of audio/video) with src attribute
+    const sourceElements = root.find('.//html:source[@src]', {
+      html: 'http://www.w3.org/1999/xhtml',
+    });
+    for (const source of sourceElements) {
+      const src = this.getAttribute(source as XmlElement, 'src');
+      if (!src) continue;
+
+      const parent = source.parent as unknown as { name?: string } | undefined;
+      const parentName = parent?.name ?? '';
+      const isAudioChild = parentName === 'audio';
+      const type = isAudioChild ? ReferenceType.AUDIO : ReferenceType.VIDEO;
+
+      const line = (source as unknown as { line?: number }).line;
+
+      if (src.startsWith('http://') || src.startsWith('https://')) {
+        refValidator.addReference({
+          url: src,
+          targetResource: src,
+          type,
+          location: line !== undefined ? { path, line } : { path },
+        });
+      } else {
+        const resolvedPath = this.resolveRelativePath(docDir, src, opfDir);
+        refValidator.addReference({
+          url: src,
+          targetResource: resolvedPath,
+          type,
+          location: line !== undefined ? { path, line } : { path },
+        });
+      }
+    }
+
+    // Extract track elements with src attribute
+    const trackElements = root.find('.//html:track[@src]', {
+      html: 'http://www.w3.org/1999/xhtml',
+    });
+    for (const track of trackElements) {
+      const src = this.getAttribute(track as XmlElement, 'src');
+      if (!src) continue;
+
+      const line = (track as unknown as { line?: number }).line;
+
+      if (src.startsWith('http://') || src.startsWith('https://')) {
+        refValidator.addReference({
+          url: src,
+          targetResource: src,
+          type: ReferenceType.TRACK,
+          location: line !== undefined ? { path, line } : { path },
+        });
+      } else {
+        const resolvedPath = this.resolveRelativePath(docDir, src, opfDir);
+        refValidator.addReference({
+          url: src,
+          targetResource: resolvedPath,
+          type: ReferenceType.TRACK,
+          location: line !== undefined ? { path, line } : { path },
+        });
+      }
     }
   }
 
