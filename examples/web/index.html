@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Free Online EPUB Validator - Check Your eBook for Errors | EPUBCheck-TS</title>
-  <meta name="description" content="Free online EPUB validator that runs entirely in your browser. No file uploads, no server processing - your ebook stays private. Fast validation against official EPUB standards.">
-  <meta name="keywords" content="epub validator, epub checker, ebook validator, epub validation online, epubcheck online, epub error checker, ebook quality check, epub 3 validator, free epub validator">
+  <meta name="description" content="Free online EPUB validator that runs entirely in your browser. EPUBCheck-TS is an open-source JavaScript/TypeScript EPUB validation library for Node.js and browsers. No file uploads, no server - your ebook stays private.">
+  <meta name="keywords" content="epub validator, epub checker, ebook validator, epub validation online, epubcheck online, epub error checker, ebook quality check, epub 3 validator, free epub validator, javascript epub validator, typescript epub checker, epub validation library, npm epub checker, browser epub validator, web epub validation, epubcheck javascript, epub parser javascript">
   <meta name="author" content="3ook.com">
   <link rel="canonical" href="https://likecoin.github.io/epubcheck-ts/">
 
@@ -73,11 +73,12 @@
     </main>
 
     <section class="about-section">
-      <h2>What is this tool?</h2>
+      <h2>About This Online Validator</h2>
       <p>
-        EPUBCheck-TS is a <strong>free online EPUB validator</strong> that checks your ebook files for errors and compatibility issues.
-        Whether you're an author, publisher, or developer, this tool helps ensure your EPUB files meet the official
+        This is a <strong>free online EPUB validator</strong> that checks your ebook files for errors and compatibility issues.
+        Whether you're an author, publisher, or designer, this tool helps ensure your EPUB files meet the official
         <a href="https://www.w3.org/publishing/epub3/" target="_blank">EPUB specification</a> before publishing.
+        It's powered by <a href="#for-developers">EPUBCheck-TS</a>, an open-source JavaScript library.
       </p>
 
       <h3>100% Private - Your Files Stay on Your Computer</h3>
@@ -93,7 +94,7 @@
         The validator runs locally on your device, so it's as fast as your computer allows.
       </p>
 
-      <h3>What does EPUB validation check?</h3>
+      <h3>What Does It Check?</h3>
       <ul>
         <li><strong>Structure</strong> - Verifies the EPUB container format and required files</li>
         <li><strong>Metadata</strong> - Checks title, author, language, and other book information</li>
@@ -117,13 +118,56 @@
         We're <a href="https://github.com/likecoin/epubcheck-ts" target="_blank">actively improving</a> coverage.
       </p>
 
-      <h3>Who is this for?</h3>
+      <h3>Who Is This For?</h3>
       <ul>
         <li><strong>Authors</strong> - Check your ebook before publishing on <a href="https://3ook.com/about?utm_source=epubcheck-ts&utm_medium=web&utm_campaign=demo" target="_blank">3ook.com</a>, Amazon, Apple Books, or Kobo</li>
         <li><strong>Publishers</strong> - Quality assurance for your publishing workflow</li>
-        <li><strong>Developers</strong> - Test EPUB generation in your applications</li>
         <li><strong>Designers</strong> - Validate ebook layouts and styling</li>
       </ul>
+    </section>
+
+    <section class="about-section">
+      <h2 id="for-developers">For Developers: EPUBCheck-TS Library</h2>
+      <p>
+        This online validator is powered by <strong><a href="https://www.npmjs.com/package/@likecoin/epubcheck-ts" target="_blank">EPUBCheck-TS</a></strong>, an open-source EPUB validation library for JavaScript and TypeScript.
+        If you're a developer looking to integrate EPUB validation into your own applications, you can use the same library directly.
+      </p>
+
+      <h3>Why a JavaScript EPUB Validator?</h3>
+      <p>
+        The official <a href="https://github.com/w3c/epubcheck" target="_blank">EPUBCheck</a> tool is written in Java, which makes it difficult to integrate into
+        JavaScript/TypeScript projects or run directly in web browsers. <a href="https://www.npmjs.com/package/@likecoin/epubcheck-ts" target="_blank">EPUBCheck-TS</a> solves this by
+        providing a <strong>native JavaScript EPUB validator</strong> that you can import like any other npm package.
+        No Java runtime required, no command-line wrappers, no server-side processing needed.
+      </p>
+
+      <h3>Install via npm</h3>
+      <pre><code>npm install @likecoin/epubcheck-ts</code></pre>
+
+      <h3>Key Features</h3>
+      <ul>
+        <li><strong>TypeScript-first</strong> - Full type definitions included, great IDE support and autocompletion</li>
+        <li><strong>Browser &amp; Node.js</strong> - Works in any JavaScript environment, no native dependencies required</li>
+        <li><strong>WebAssembly-powered</strong> - Uses libxml2-wasm for fast, accurate XML/RelaxNG/XSD validation</li>
+        <li><strong>Zero native deps</strong> - Pure JavaScript/WASM, no compilation needed, works on any platform</li>
+        <li><strong>Same message IDs</strong> - Compatible error codes with official EPUBCheck (PKG-*, OPF-*, CSS-*, HTM-*, etc.)</li>
+      </ul>
+
+      <h3>Use Cases</h3>
+      <ul>
+        <li><strong>EPUB generation tools</strong> - Validate EPUBs created by your application before delivery</li>
+        <li><strong>Publishing platforms</strong> - Check uploaded ebooks for errors on the server or client-side</li>
+        <li><strong>CI/CD pipelines</strong> - Automate EPUB quality checks in your build process</li>
+        <li><strong>Electron apps</strong> - Build desktop EPUB editors with built-in validation</li>
+        <li><strong>Browser extensions</strong> - Create tools that validate EPUBs without server round-trips</li>
+      </ul>
+
+      <h3>Open Source</h3>
+      <p>
+        EPUBCheck-TS is open source and available on <a href="https://github.com/likecoin/epubcheck-ts" target="_blank">GitHub</a>.
+        Contributions are welcome! Check out the <a href="https://www.npmjs.com/package/@likecoin/epubcheck-ts" target="_blank">npm package</a>
+        for installation instructions and API documentation.
+      </p>
     </section>
 
     <footer>
