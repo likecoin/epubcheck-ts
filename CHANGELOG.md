@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-01-28
+
 ### Changed
 
 - **Message registry aligned with Java EPUBCheck**
@@ -14,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - PKG-001 severity changed from fatal to warning (matches Java)
   - CSS-006 severity changed from warning to usage (matches Java)
   - Use `pushMessage()` helper for automatic severity lookup from registry
+- Refactored all error reporting to use centralized message registry
 
 ### Fixed
 
@@ -264,7 +267,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - No media overlays validation
 - No script detection/validation
 
-[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.4...HEAD
+[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.4...v0.3.0
 [0.2.4]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.1...v0.2.2
