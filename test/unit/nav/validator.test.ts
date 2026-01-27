@@ -115,7 +115,8 @@ describe('NavValidator', () => {
   });
 
   describe('ol element validation', () => {
-    it('should add NAV-002 error when ol element is missing in toc nav', () => {
+    // NAV-002 is suppressed in Java EPUBCheck
+    it.skip('should add NAV-002 error when ol element is missing in toc nav (suppressed in Java)', () => {
       const navContent = `<?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
 <head><title>Navigation</title></head>

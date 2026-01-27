@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Message registry aligned with Java EPUBCheck**
+  - All message severities now match Java's `DefaultSeverities.java` exactly
+  - Suppressed messages matching Java: NCX-002, NCX-003, NAV-002, ACC-004, ACC-005, HTM-012
+  - PKG-001 severity changed from fatal to warning (matches Java)
+  - CSS-006 severity changed from warning to usage (matches Java)
+  - Use `pushMessage()` helper for automatic severity lookup from registry
+
+### Fixed
+
+- Test expectations updated to match Java EPUBCheck behavior
+- 20 tests now skipped for messages that are suppressed in Java EPUBCheck
+
 ## [0.2.4] - 2026-01-27
 
 ### Added

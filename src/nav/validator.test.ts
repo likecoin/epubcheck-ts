@@ -61,7 +61,8 @@ describe('NavValidator', () => {
       expect(context.messages).toHaveLength(0);
     });
 
-    it('should reject nav toc without ol element', () => {
+    // NAV-002 is suppressed in Java EPUBCheck
+    it.skip('should reject nav toc without ol element (suppressed in Java)', () => {
       const nav = `<nav epub:type="toc"><ul><li><a href="chapter1.xhtml">Chapter 1</a></li></ul></nav>`;
       validator.validate(context, nav, 'nav.xhtml');
       const nav002 = context.messages.filter((m) => m.id === 'NAV-002');

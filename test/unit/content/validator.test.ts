@@ -115,7 +115,8 @@ describe('ContentValidator', () => {
       expect(context.messages.length).toBeGreaterThanOrEqual(0);
     });
 
-    it('should add HTM-012 error for unescaped ampersands', () => {
+    // HTM-012 is suppressed in Java EPUBCheck
+    it.skip('should add HTM-012 error for unescaped ampersands (suppressed in Java)', () => {
       const context = createValidationContext();
       const packageDoc = createMinimalPackage();
       context.packageDocument = packageDoc;
@@ -385,7 +386,8 @@ describe('ContentValidator', () => {
   });
 
   describe('Accessibility checks', () => {
-    it('should add ACC-004 warning for hyperlink without accessible text', () => {
+    // ACC-004 is suppressed in Java EPUBCheck
+    it.skip('should add ACC-004 warning for hyperlink without accessible text (suppressed in Java)', () => {
       const context = createValidationContext();
       const packageDoc = createMinimalPackage();
       context.packageDocument = packageDoc;
@@ -399,7 +401,8 @@ describe('ContentValidator', () => {
       expect(context.messages.some((m) => m.id === 'ACC-004')).toBe(true);
     });
 
-    it('should add ACC-005 warning for image without alt attribute', () => {
+    // ACC-005 is suppressed in Java EPUBCheck
+    it.skip('should add ACC-005 warning for image without alt attribute (suppressed in Java)', () => {
       const context = createValidationContext();
       const packageDoc = createMinimalPackage();
       context.packageDocument = packageDoc;

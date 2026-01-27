@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~80% | 🟢 URL leaking, CSS references, link elements done |
 
-**Overall: ~70% complete (467 tests passing, 7 skipped)**
+**Overall: ~70% complete (459 tests passing, 20 skipped)**
 
 ---
 
@@ -26,9 +26,9 @@ Quick reference for implementation progress vs Java EPUBCheck.
 
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
-| **Unit Tests** | 425 | 425 | 0 |
-| **Integration Tests** | 49 | 42 | 7 |
-| **Total** | **474** | **467** | **7** |
+| **Unit Tests** | 425 | 412 | 13 |
+| **Integration Tests** | 54 | 47 | 7 |
+| **Total** | **479** | **459** | **20** |
 
 ### Integration Test Files
 
@@ -77,10 +77,18 @@ test/fixtures/
 
 ### Skipped Tests
 
-**Unit tests (3)** - libxml2-wasm XPath limitations with namespaced attributes:
-- `test/unit/content/validator.test.ts:257` - OPF-014 inline event handlers
-- `test/unit/content/validator.test.ts:514` - CSS-005 conflicting stylesheets
-- `test/unit/content/validator.test.ts:655` - OPF-088 unknown epub:type prefix
+**Unit tests (13)** - Various reasons:
+- **libxml2-wasm XPath limitations (3)**:
+  - `test/unit/content/validator.test.ts:257` - OPF-014 inline event handlers
+  - `test/unit/content/validator.test.ts:514` - CSS-005 conflicting stylesheets
+  - `test/unit/content/validator.test.ts:655` - OPF-088 unknown epub:type prefix
+- **Messages suppressed in Java EPUBCheck (10)**:
+  - NCX-002 (2 tests) - Invalid NCX reference
+  - NCX-003 (2 tests) - NavPoint missing text content
+  - NAV-002 (3 tests) - Missing toc nav ol element
+  - ACC-004 (1 test) - Anchor element must have text
+  - ACC-005 (1 test) - Image missing alt attribute
+  - HTM-012 (1 test) - Unescaped ampersands
 
 **Integration tests (7)** - Library limitations:
 - **CSS-008**: CSS syntax error detection (1 test) - css-tree is forgiving, parses invalid CSS successfully
@@ -111,7 +119,7 @@ test/fixtures/
 - **Scripted property** (OPF-014)
 - **MathML/SVG properties** (OPF-014)
 - **Remote resources property** (OPF-014)
-- **Basic accessibility** (ACC-004/005/009/011)
+- **Basic accessibility** (ACC-009/011 active; ACC-004/005 suppressed in Java)
 - **Cross-references** (RSC-006/007/008/009/010/011/012/013/014/020/026/027/028/029/031)
 - **Filename validation** (PKG-009/010/011/027)
 - **Duplicate filename detection** (OPF-060) - Unicode NFC normalization, case folding

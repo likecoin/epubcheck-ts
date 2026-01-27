@@ -378,7 +378,8 @@ describe('OCFValidator', () => {
   });
 
   describe('ZIP handling', () => {
-    it('should report fatal error for invalid ZIP', () => {
+    // PKG-001 is 'warning' severity in Java EPUBCheck
+    it('should report warning for invalid ZIP', () => {
       const invalidData = new Uint8Array([1, 2, 3, 4, 5]);
       const context = createContext(invalidData);
       const validator = new OCFValidator();
@@ -387,7 +388,7 @@ describe('OCFValidator', () => {
 
       const error = context.messages.find((m) => m.id === 'PKG-001');
       expect(error).toBeDefined();
-      expect(error?.severity).toBe('fatal');
+      expect(error?.severity).toBe('warning');
     });
 
     it('should populate files map from ZIP', () => {

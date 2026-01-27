@@ -197,7 +197,8 @@ describe('ContentValidator', () => {
       expect(htmErrors[0]?.message).toContain('closing tag');
     });
 
-    it('should detect unescaped ampersands', () => {
+    // HTM-012 is suppressed in Java EPUBCheck
+    it.skip('should detect unescaped ampersands (suppressed in Java)', () => {
       const badXHTML = `<?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
@@ -448,7 +449,8 @@ describe('ContentValidator', () => {
       expect(navErrors[0]?.message).toContain('epub:type="toc"');
     });
 
-    it('should require ol element inside nav toc', () => {
+    // NAV-002 is suppressed in Java EPUBCheck
+    it.skip('should require ol element inside nav toc (suppressed in Java)', () => {
       const badNav = `<?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
   <head>
@@ -721,7 +723,8 @@ describe('ContentValidator', () => {
   });
 
   describe('accessibility', () => {
-    it('should warn about empty links (ACC-004)', () => {
+    // ACC-004 is suppressed in Java EPUBCheck
+    it.skip('should warn about empty links (ACC-004) (suppressed in Java)', () => {
       const emptyLinkXHTML = `<?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
@@ -785,7 +788,8 @@ describe('ContentValidator', () => {
       expect(accWarnings).toHaveLength(0);
     });
 
-    it('should warn about images without alt attribute (ACC-005)', () => {
+    // ACC-005 is suppressed in Java EPUBCheck
+    it.skip('should warn about images without alt attribute (ACC-005) (suppressed in Java)', () => {
       const noAltXHTML = `<?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>

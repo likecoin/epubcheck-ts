@@ -51,13 +51,14 @@ describe('CSSValidator', () => {
   });
 
   describe('discouraged properties', () => {
-    it('should warn about position: fixed (CSS-006)', () => {
+    // CSS-006 is 'usage' severity in Java EPUBCheck (informational)
+    it('should report position: fixed (CSS-006)', () => {
       const css = '.fixed-header { position: fixed; top: 0; }';
       validator.validate(context, css, 'OEBPS/styles.css');
-      const warnings = context.messages.filter((m) => m.id === 'CSS-006');
-      expect(warnings).toHaveLength(1);
-      expect(warnings[0]?.severity).toBe('warning');
-      expect(warnings[0]?.message).toContain('position: fixed');
+      const messages = context.messages.filter((m) => m.id === 'CSS-006');
+      expect(messages).toHaveLength(1);
+      expect(messages[0]?.severity).toBe('usage');
+      expect(messages[0]?.message).toContain('position: fixed');
     });
 
     it('should warn about position: absolute (CSS-019)', () => {

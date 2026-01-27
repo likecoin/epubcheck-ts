@@ -2,7 +2,7 @@
  * Message Registry - Maps message IDs to their default severities
  *
  * This registry defines the default severity for each message ID,
- * matching the Java EPUBCheck behavior.
+ * matching the Java EPUBCheck behavior exactly.
  *
  * Severity levels:
  * - FATAL: Unrecoverable errors that prevent validation
@@ -11,6 +11,8 @@
  * - INFO: Informational messages
  * - USAGE: Feature usage information (off by default)
  * - SUPPRESSED: Disabled by default (can be enabled via customMessages)
+ *
+ * Reference: Java EPUBCheck DefaultSeverities.java
  */
 
 import type { Severity, ValidationMessage, EPUBLocation } from '../types.js';
@@ -26,12 +28,13 @@ export interface MessageInfo {
 
 /**
  * Registry of all message IDs with their default severities and descriptions
+ * Severities match Java EPUBCheck DefaultSeverities.java
  */
 export const MESSAGE_REGISTRY: MessageInfo[] = [
-  // Package/Container errors (PKG-*)
-  { id: MessageId.PKG_001, severity: 'fatal', description: 'Unable to read EPUB file' },
+  // Package/Container errors (PKG-*) - matches Java DefaultSeverities.java
+  { id: MessageId.PKG_001, severity: 'warning', description: 'Unable to read EPUB file' },
   { id: MessageId.PKG_002, severity: 'error', description: 'Missing META-INF directory' },
-  { id: MessageId.PKG_003, severity: 'fatal', description: 'Missing container.xml' },
+  { id: MessageId.PKG_003, severity: 'error', description: 'Missing container.xml' },
   { id: MessageId.PKG_004, severity: 'fatal', description: 'No rootfile in container.xml' },
   {
     id: MessageId.PKG_005,
@@ -40,58 +43,42 @@ export const MESSAGE_REGISTRY: MessageInfo[] = [
   },
   { id: MessageId.PKG_006, severity: 'error', description: 'Missing mimetype file' },
   { id: MessageId.PKG_007, severity: 'error', description: 'Invalid mimetype content' },
-  { id: MessageId.PKG_008, severity: 'warning', description: 'Mimetype has extra whitespace' },
+  { id: MessageId.PKG_008, severity: 'fatal', description: 'Mimetype has extra field length' },
   { id: MessageId.PKG_009, severity: 'error', description: 'Mimetype file must be uncompressed' },
-  { id: MessageId.PKG_010, severity: 'fatal', description: 'Rootfile not found' },
-  {
-    id: MessageId.PKG_011,
-    severity: 'warning',
-    description: 'Filename contains non-ASCII characters',
-  },
-  {
-    id: MessageId.PKG_012,
-    severity: 'error',
-    description: 'Duplicate filename with different case',
-  },
-  { id: MessageId.PKG_020, severity: 'fatal', description: 'OPF file not found' },
-  { id: MessageId.PKG_021, severity: 'warning', description: 'Unexpected file in META-INF' },
-  { id: MessageId.PKG_022, severity: 'info', description: 'Cannot decrypt encrypted file' },
-  {
-    id: MessageId.PKG_023,
-    severity: 'error',
-    description: 'Encrypted file without encryption.xml',
-  },
-  {
-    id: MessageId.PKG_024,
-    severity: 'warning',
-    description: 'Obfuscated resource without encryption.xml',
-  },
-  { id: MessageId.PKG_025, severity: 'fatal', description: 'Fatal error during validation' },
+  { id: MessageId.PKG_010, severity: 'warning', description: 'Filename contains spaces' },
+  { id: MessageId.PKG_011, severity: 'error', description: 'Filename contains invalid characters' },
+  { id: MessageId.PKG_012, severity: 'usage', description: 'Non-ASCII filename' },
+  { id: MessageId.PKG_020, severity: 'error', description: 'OPF file not found' },
+  { id: MessageId.PKG_021, severity: 'error', description: 'Unexpected file in META-INF' },
+  { id: MessageId.PKG_022, severity: 'warning', description: 'Cannot decrypt encrypted file' },
+  { id: MessageId.PKG_023, severity: 'usage', description: 'Encrypted file' },
+  { id: MessageId.PKG_024, severity: 'usage', description: 'Obfuscated resource' },
+  { id: MessageId.PKG_025, severity: 'error', description: 'Error during validation' },
 
-  // OPF errors (OPF-*)
-  { id: MessageId.OPF_001, severity: 'error', description: 'Missing unique-identifier attribute' },
-  { id: MessageId.OPF_002, severity: 'error', description: 'Missing dc:title element' },
-  { id: MessageId.OPF_003, severity: 'error', description: 'Missing dc:language element' },
-  { id: MessageId.OPF_004, severity: 'error', description: 'Item referenced but not in manifest' },
+  // OPF errors (OPF-*) - matches Java DefaultSeverities.java
+  { id: MessageId.OPF_001, severity: 'error', description: 'Invalid EPUB version' },
+  { id: MessageId.OPF_002, severity: 'fatal', description: 'Package document parse error' },
+  { id: MessageId.OPF_003, severity: 'usage', description: 'Item not in spine' },
+  {
+    id: MessageId.OPF_004,
+    severity: 'warning',
+    description: 'Item referenced but not in manifest',
+  },
   { id: MessageId.OPF_005, severity: 'error', description: 'Manifest item href not found' },
   {
     id: MessageId.OPF_006,
     severity: 'error',
     description: 'Spine itemref references missing manifest item',
   },
-  { id: MessageId.OPF_007, severity: 'error', description: 'Duplicate manifest item ID' },
-  { id: MessageId.OPF_008, severity: 'error', description: 'Duplicate manifest item href' },
-  { id: MessageId.OPF_009, severity: 'error', description: 'Invalid spine toc reference' },
+  { id: MessageId.OPF_007, severity: 'warning', description: 'Redirected resource' },
+  { id: MessageId.OPF_008, severity: 'suppressed', description: 'Duplicate manifest item href' },
+  { id: MessageId.OPF_009, severity: 'suppressed', description: 'Duplicate manifest item ID' },
   { id: MessageId.OPF_010, severity: 'error', description: 'EPUB 3 must have navigation document' },
-  { id: MessageId.OPF_011, severity: 'warning', description: 'Invalid date format' },
-  { id: MessageId.OPF_012, severity: 'error', description: 'Missing dc:identifier' },
-  {
-    id: MessageId.OPF_013,
-    severity: 'error',
-    description: 'Remote resource not allowed without fallback',
-  },
+  { id: MessageId.OPF_011, severity: 'error', description: 'Itemref spine refers to auxiliary' },
+  { id: MessageId.OPF_012, severity: 'error', description: 'Unknown property' },
+  { id: MessageId.OPF_013, severity: 'warning', description: 'Remote resource not allowed' },
   { id: MessageId.OPF_014, severity: 'error', description: 'Missing required manifest property' },
-  { id: MessageId.OPF_015, severity: 'warning', description: 'Invalid guide reference type' },
+  { id: MessageId.OPF_015, severity: 'error', description: 'Invalid guide reference type' },
   { id: MessageId.OPF_035, severity: 'warning', description: 'Deprecated OEB 1.0 media type' },
   { id: MessageId.OPF_097, severity: 'usage', description: 'Resource in manifest not referenced' },
   {
@@ -100,13 +87,13 @@ export const MESSAGE_REGISTRY: MessageInfo[] = [
     description: 'Package document must not be listed in manifest',
   },
 
-  // Resource errors (RSC-*)
+  // Resource errors (RSC-*) - matches Java DefaultSeverities.java
   { id: MessageId.RSC_001, severity: 'error', description: 'Could not read resource' },
-  { id: MessageId.RSC_002, severity: 'fatal', description: 'Resource missing from manifest' },
+  { id: MessageId.RSC_002, severity: 'fatal', description: 'Required resource missing' },
   { id: MessageId.RSC_003, severity: 'error', description: 'Resource not found' },
-  { id: MessageId.RSC_004, severity: 'error', description: 'Fragment identifier not found' },
+  { id: MessageId.RSC_004, severity: 'info', description: 'Fragment identifier not found' },
   { id: MessageId.RSC_005, severity: 'error', description: 'Schema validation error' },
-  { id: MessageId.RSC_006, severity: 'usage', description: 'Remote resource reference' },
+  { id: MessageId.RSC_006, severity: 'error', description: 'Remote resource not allowed' },
   {
     id: MessageId.RSC_007,
     severity: 'error',
@@ -118,7 +105,7 @@ export const MESSAGE_REGISTRY: MessageInfo[] = [
     description: 'LINK reference not declared in manifest',
   },
   { id: MessageId.RSC_008, severity: 'error', description: 'Undeclared resource in package' },
-  { id: MessageId.RSC_009, severity: 'error', description: 'Non-content document in spine' },
+  { id: MessageId.RSC_009, severity: 'warning', description: 'Non-content document in spine' },
   { id: MessageId.RSC_010, severity: 'error', description: 'Hyperlink to non-spine resource' },
   {
     id: MessageId.RSC_011,
@@ -130,109 +117,121 @@ export const MESSAGE_REGISTRY: MessageInfo[] = [
     severity: 'error',
     description: 'Fragment identifier not found in target',
   },
-  { id: MessageId.RSC_013, severity: 'warning', description: 'Invalid language tag' },
-  { id: MessageId.RSC_014, severity: 'warning', description: 'Invalid link relation' },
+  { id: MessageId.RSC_013, severity: 'error', description: 'Invalid language tag' },
+  { id: MessageId.RSC_014, severity: 'error', description: 'Invalid link relation' },
   { id: MessageId.RSC_015, severity: 'error', description: 'Resource not reachable' },
   { id: MessageId.RSC_016, severity: 'fatal', description: 'Fatal error reading resource' },
   { id: MessageId.RSC_017, severity: 'warning', description: 'Resource warning' },
-  { id: MessageId.RSC_018, severity: 'usage', description: 'Unused resource in package' },
-  { id: MessageId.RSC_019, severity: 'error', description: 'Fallback cycle detected' },
+  { id: MessageId.RSC_018, severity: 'suppressed', description: 'Unused resource in package' },
+  { id: MessageId.RSC_019, severity: 'warning', description: 'Fallback cycle detected' },
   { id: MessageId.RSC_020, severity: 'error', description: 'Malformed URL' },
   { id: MessageId.RSC_026, severity: 'error', description: 'File URL not allowed in EPUB' },
-  { id: MessageId.RSC_027, severity: 'error', description: 'Absolute path not allowed' },
+  { id: MessageId.RSC_027, severity: 'warning', description: 'Absolute path not allowed' },
   {
     id: MessageId.RSC_028,
     severity: 'error',
     description: 'Parent directory reference not allowed',
   },
   { id: MessageId.RSC_029, severity: 'error', description: 'Data URL not allowed in EPUB 3' },
-  { id: MessageId.RSC_031, severity: 'error', description: 'HTTPS required for remote resources' },
+  { id: MessageId.RSC_031, severity: 'warning', description: 'Remote resource warning' },
 
-  // HTML/XHTML errors (HTM-*)
+  // HTML/XHTML errors (HTM-*) - matches Java DefaultSeverities.java
   { id: MessageId.HTM_001, severity: 'error', description: 'Invalid XHTML document' },
   { id: MessageId.HTM_002, severity: 'warning', description: 'Deprecated HTML element' },
   { id: MessageId.HTM_003, severity: 'error', description: 'Entity not declared' },
   { id: MessageId.HTM_004, severity: 'error', description: 'External entity reference' },
-  { id: MessageId.HTM_005, severity: 'error', description: 'Element not allowed in this context' },
-  { id: MessageId.HTM_006, severity: 'error', description: 'Required attribute missing' },
-  { id: MessageId.HTM_007, severity: 'error', description: 'Duplicate ID' },
-  { id: MessageId.HTM_008, severity: 'error', description: 'Invalid ID value' },
-  { id: MessageId.HTM_009, severity: 'warning', description: 'HTML5 element in EPUB 2 document' },
-  { id: MessageId.HTM_010, severity: 'error', description: 'Namespace error' },
+  { id: MessageId.HTM_005, severity: 'usage', description: 'Element not allowed in this context' },
+  { id: MessageId.HTM_006, severity: 'suppressed', description: 'Required attribute missing' },
+  { id: MessageId.HTM_007, severity: 'warning', description: 'Duplicate ID' },
+  { id: MessageId.HTM_008, severity: 'suppressed', description: 'Invalid ID value' },
+  { id: MessageId.HTM_009, severity: 'error', description: 'HTML5 element in EPUB 2 document' },
+  { id: MessageId.HTM_010, severity: 'usage', description: 'Namespace error' },
   { id: MessageId.HTM_011, severity: 'error', description: 'Text content not allowed' },
-  { id: MessageId.HTM_012, severity: 'warning', description: 'Missing DOCTYPE declaration' },
-  { id: MessageId.HTM_013, severity: 'error', description: 'Invalid DOCTYPE' },
-  { id: MessageId.HTM_014, severity: 'error', description: 'Invalid content' },
-  { id: MessageId.HTM_015, severity: 'error', description: 'Attribute not allowed' },
-  { id: MessageId.HTM_016, severity: 'error', description: 'Invalid attribute value' },
-  { id: MessageId.HTM_017, severity: 'usage', description: 'Heading hierarchy not sequential' },
-  { id: MessageId.HTM_018, severity: 'warning', description: 'Empty heading element' },
-  { id: MessageId.HTM_019, severity: 'usage', description: 'Anchors linking within same file' },
-  { id: MessageId.HTM_020, severity: 'usage', description: 'SSML phoneme attribute' },
-  { id: MessageId.HTM_021, severity: 'error', description: 'Invalid hyperlink target' },
-  { id: MessageId.HTM_022, severity: 'warning', description: 'Empty href attribute' },
-  { id: MessageId.HTM_023, severity: 'usage', description: 'External hyperlink' },
-  { id: MessageId.HTM_024, severity: 'warning', description: 'Hyperlink to non-document resource' },
-  { id: MessageId.HTM_025, severity: 'usage', description: 'Non-registered data attribute' },
+  { id: MessageId.HTM_012, severity: 'suppressed', description: 'Missing DOCTYPE declaration' },
+  { id: MessageId.HTM_013, severity: 'suppressed', description: 'Invalid DOCTYPE' },
+  { id: MessageId.HTM_014, severity: 'suppressed', description: 'Invalid content' },
+  { id: MessageId.HTM_015, severity: 'suppressed', description: 'Attribute not allowed' },
+  { id: MessageId.HTM_016, severity: 'suppressed', description: 'Invalid attribute value' },
+  {
+    id: MessageId.HTM_017,
+    severity: 'suppressed',
+    description: 'Heading hierarchy not sequential',
+  },
+  { id: MessageId.HTM_018, severity: 'suppressed', description: 'Empty heading element' },
+  {
+    id: MessageId.HTM_019,
+    severity: 'suppressed',
+    description: 'Anchors linking within same file',
+  },
+  { id: MessageId.HTM_020, severity: 'suppressed', description: 'SSML phoneme attribute' },
+  { id: MessageId.HTM_021, severity: 'suppressed', description: 'Invalid hyperlink target' },
+  { id: MessageId.HTM_022, severity: 'suppressed', description: 'Empty href attribute' },
+  { id: MessageId.HTM_023, severity: 'suppressed', description: 'External hyperlink' },
+  {
+    id: MessageId.HTM_024,
+    severity: 'suppressed',
+    description: 'Hyperlink to non-document resource',
+  },
+  { id: MessageId.HTM_025, severity: 'warning', description: 'Non-registered data attribute' },
   { id: MessageId.HTM_026, severity: 'warning', description: 'SVG font-face-src reference' },
-  { id: MessageId.HTM_027, severity: 'usage', description: 'SVG switch element' },
-  { id: MessageId.HTM_028, severity: 'warning', description: 'Invalid lang attribute value' },
-  { id: MessageId.HTM_029, severity: 'error', description: 'Invalid character reference' },
+  { id: MessageId.HTM_027, severity: 'suppressed', description: 'SVG switch element' },
+  { id: MessageId.HTM_028, severity: 'suppressed', description: 'Invalid lang attribute value' },
+  { id: MessageId.HTM_029, severity: 'suppressed', description: 'Invalid character reference' },
   { id: MessageId.HTM_030, severity: 'error', description: 'Unescaped character' },
   { id: MessageId.HTM_031, severity: 'error', description: 'Duplicate attribute' },
   { id: MessageId.HTM_032, severity: 'error', description: 'Namespace not declared' },
-  { id: MessageId.HTM_033, severity: 'warning', description: 'Invalid attribute for element' },
+  { id: MessageId.HTM_033, severity: 'suppressed', description: 'Invalid attribute for element' },
 
-  // CSS errors (CSS-*)
+  // CSS errors (CSS-*) - matches Java DefaultSeverities.java
   { id: MessageId.CSS_001, severity: 'error', description: 'CSS parse error' },
-  { id: MessageId.CSS_002, severity: 'warning', description: 'Unknown CSS property' },
-  { id: MessageId.CSS_003, severity: 'warning', description: 'Invalid CSS property value' },
-  { id: MessageId.CSS_004, severity: 'warning', description: 'CSS syntax warning' },
-  { id: MessageId.CSS_005, severity: 'error', description: '@font-face missing src descriptor' },
-  { id: MessageId.CSS_006, severity: 'warning', description: 'CSS position: fixed is not allowed' },
-  { id: MessageId.CSS_007, severity: 'warning', description: '@import not recommended in EPUB' },
-  { id: MessageId.CSS_008, severity: 'warning', description: '@charset not needed in EPUB' },
-  { id: MessageId.CSS_009, severity: 'warning', description: 'Invalid CSS for fixed layout' },
-  { id: MessageId.CSS_010, severity: 'warning', description: 'CSS property not allowed in EPUB' },
-  { id: MessageId.CSS_011, severity: 'usage', description: 'Viewport dimensions in CSS' },
-  { id: MessageId.CSS_012, severity: 'warning', description: 'Invalid font-face src format' },
-  { id: MessageId.CSS_015, severity: 'usage', description: 'Deprecated font property' },
-  { id: MessageId.CSS_016, severity: 'usage', description: 'Vendor-specific CSS property' },
-  { id: MessageId.CSS_017, severity: 'usage', description: 'Non-standard pseudo element' },
-  { id: MessageId.CSS_019, severity: 'warning', description: 'Absolute positioning in CSS' },
-  { id: MessageId.CSS_020, severity: 'usage', description: 'Embedded font resource' },
-  { id: MessageId.CSS_021, severity: 'usage', description: 'Unusual font reference' },
-  { id: MessageId.CSS_022, severity: 'usage', description: 'OpenType font feature' },
-  { id: MessageId.CSS_023, severity: 'warning', description: 'Invalid @font-face rule' },
-  { id: MessageId.CSS_028, severity: 'usage', description: 'Font reference usage' },
+  { id: MessageId.CSS_002, severity: 'error', description: 'CSS error' },
+  { id: MessageId.CSS_003, severity: 'warning', description: 'CSS warning' },
+  { id: MessageId.CSS_004, severity: 'error', description: 'CSS syntax error' },
+  { id: MessageId.CSS_005, severity: 'usage', description: '@font-face declaration' },
+  { id: MessageId.CSS_006, severity: 'usage', description: 'CSS position: fixed' },
+  { id: MessageId.CSS_007, severity: 'info', description: '@import statement' },
+  { id: MessageId.CSS_008, severity: 'error', description: '@charset error' },
+  { id: MessageId.CSS_009, severity: 'suppressed', description: 'Invalid CSS for fixed layout' },
+  { id: MessageId.CSS_010, severity: 'suppressed', description: 'CSS property not allowed' },
+  { id: MessageId.CSS_011, severity: 'suppressed', description: 'Viewport dimensions in CSS' },
+  { id: MessageId.CSS_012, severity: 'suppressed', description: 'Invalid font-face src format' },
+  { id: MessageId.CSS_015, severity: 'error', description: 'Alternate stylesheet error' },
+  { id: MessageId.CSS_016, severity: 'suppressed', description: 'Vendor-specific CSS property' },
+  { id: MessageId.CSS_017, severity: 'suppressed', description: 'Non-standard pseudo element' },
+  { id: MessageId.CSS_019, severity: 'warning', description: 'Empty @font-face rule' },
+  { id: MessageId.CSS_020, severity: 'suppressed', description: 'Embedded font resource' },
+  { id: MessageId.CSS_021, severity: 'suppressed', description: 'Unusual font reference' },
+  { id: MessageId.CSS_022, severity: 'suppressed', description: 'OpenType font feature' },
+  { id: MessageId.CSS_023, severity: 'suppressed', description: 'Invalid @font-face rule' },
+  { id: MessageId.CSS_028, severity: 'usage', description: 'Font reference' },
 
-  // Navigation errors (NAV-*)
+  // Navigation errors (NAV-*) - matches Java DefaultSeverities.java
   { id: MessageId.NAV_001, severity: 'error', description: 'Invalid nav element type' },
-  { id: MessageId.NAV_002, severity: 'error', description: 'Missing toc nav element' },
-  { id: MessageId.NAV_003, severity: 'warning', description: 'Navigation heading order incorrect' },
+  { id: MessageId.NAV_002, severity: 'suppressed', description: 'Missing toc nav element' },
+  { id: MessageId.NAV_003, severity: 'error', description: 'Navigation heading order incorrect' },
   {
     id: MessageId.NAV_004,
-    severity: 'error',
+    severity: 'usage',
     description: 'Navigation reference to external resource',
   },
   {
     id: MessageId.NAV_005,
-    severity: 'error',
+    severity: 'usage',
     description: 'Navigation reference target not found',
   },
-  { id: MessageId.NAV_006, severity: 'error', description: 'Invalid navigation structure' },
-  { id: MessageId.NAV_007, severity: 'error', description: 'Navigation element not found' },
-  { id: MessageId.NAV_008, severity: 'warning', description: 'Empty navigation link text' },
-  { id: MessageId.NAV_009, severity: 'warning', description: 'Nested list without heading' },
+  { id: MessageId.NAV_006, severity: 'usage', description: 'Invalid navigation structure' },
+  { id: MessageId.NAV_007, severity: 'usage', description: 'Navigation element not found' },
+  { id: MessageId.NAV_008, severity: 'usage', description: 'Empty navigation link text' },
+  { id: MessageId.NAV_009, severity: 'error', description: 'Nested list without heading' },
 
-  // NCX errors (NCX-*)
+  // NCX errors (NCX-*) - matches Java DefaultSeverities.java
   { id: MessageId.NCX_001, severity: 'error', description: 'NCX parse error' },
-  { id: MessageId.NCX_002, severity: 'error', description: 'Invalid NCX reference' },
-  { id: MessageId.NCX_003, severity: 'warning', description: 'NavPoint missing text content' },
-  { id: MessageId.NCX_004, severity: 'error', description: 'NCX reference not found' },
-  { id: MessageId.NCX_005, severity: 'error', description: 'NCX required for EPUB 2' },
+  { id: MessageId.NCX_002, severity: 'suppressed', description: 'Invalid NCX reference' },
+  { id: MessageId.NCX_003, severity: 'suppressed', description: 'NavPoint missing text content' },
+  { id: MessageId.NCX_004, severity: 'usage', description: 'NCX reference not found' },
+  { id: MessageId.NCX_005, severity: 'suppressed', description: 'NCX required for EPUB 2' },
 
-  // Accessibility errors (ACC-*) - Most suppressed by default
+  // Accessibility errors (ACC-*) - matches Java DefaultSeverities.java (all SUPPRESSED except ACC-009, ACC-011)
   { id: MessageId.ACC_001, severity: 'suppressed', description: 'Image missing alt text' },
   {
     id: MessageId.ACC_002,
@@ -240,8 +239,8 @@ export const MESSAGE_REGISTRY: MessageInfo[] = [
     description: 'Missing schema:accessibilityFeature metadata',
   },
   { id: MessageId.ACC_003, severity: 'suppressed', description: 'Missing accessibility metadata' },
-  { id: MessageId.ACC_004, severity: 'warning', description: 'Anchor element must have text' },
-  { id: MessageId.ACC_005, severity: 'warning', description: 'Image missing alt attribute' },
+  { id: MessageId.ACC_004, severity: 'suppressed', description: 'Anchor element must have text' },
+  { id: MessageId.ACC_005, severity: 'suppressed', description: 'Image missing alt attribute' },
   {
     id: MessageId.ACC_006,
     severity: 'suppressed',
@@ -279,51 +278,59 @@ export const MESSAGE_REGISTRY: MessageInfo[] = [
   { id: MessageId.ACC_016, severity: 'suppressed', description: 'Visual adjustments not allowed' },
   { id: MessageId.ACC_017, severity: 'suppressed', description: 'Missing schema.org accessMode' },
 
-  // Media errors (MED-*)
-  { id: MessageId.MED_001, severity: 'error', description: 'Invalid media type' },
-  { id: MessageId.MED_002, severity: 'error', description: 'Media overlay error' },
-  { id: MessageId.MED_003, severity: 'warning', description: 'Audio codec may not be supported' },
-  { id: MessageId.MED_004, severity: 'warning', description: 'Video codec may not be supported' },
+  // Media errors (MED-*) - matches Java DefaultSeverities.java
+  { id: MessageId.MED_001, severity: 'suppressed', description: 'Invalid media type' },
+  { id: MessageId.MED_002, severity: 'suppressed', description: 'Media overlay error' },
+  { id: MessageId.MED_003, severity: 'error', description: 'Audio codec may not be supported' },
+  { id: MessageId.MED_004, severity: 'error', description: 'Video codec may not be supported' },
   {
     id: MessageId.MED_005,
     severity: 'error',
     description: 'Non-core media type requires fallback',
   },
-  { id: MessageId.MED_006, severity: 'error', description: 'Invalid media fallback chain' },
+  { id: MessageId.MED_006, severity: 'suppressed', description: 'Invalid media fallback chain' },
   { id: MessageId.MED_007, severity: 'error', description: 'Foreign resource without fallback' },
-  { id: MessageId.MED_008, severity: 'warning', description: 'Invalid image format' },
-  { id: MessageId.MED_009, severity: 'usage', description: 'Video should have poster image' },
+  { id: MessageId.MED_008, severity: 'error', description: 'Invalid image format' },
+  { id: MessageId.MED_009, severity: 'error', description: 'Video missing poster' },
   { id: MessageId.MED_010, severity: 'error', description: 'Audio element missing source' },
-  { id: MessageId.MED_011, severity: 'usage', description: 'Video dimensions not specified' },
-  { id: MessageId.MED_012, severity: 'usage', description: 'Media duration not specified' },
-  { id: MessageId.MED_013, severity: 'warning', description: 'Invalid cover image' },
-  { id: MessageId.MED_014, severity: 'usage', description: 'Cover image dimensions suboptimal' },
-  { id: MessageId.MED_015, severity: 'error', description: 'SMIL file not found' },
+  { id: MessageId.MED_011, severity: 'error', description: 'Video dimensions not specified' },
+  { id: MessageId.MED_012, severity: 'error', description: 'Media duration not specified' },
+  { id: MessageId.MED_013, severity: 'error', description: 'Invalid cover image' },
+  { id: MessageId.MED_014, severity: 'error', description: 'Cover image dimensions error' },
+  { id: MessageId.MED_015, severity: 'usage', description: 'SMIL file not found' },
 
-  // Scripting errors (SCP-*)
-  { id: MessageId.SCP_001, severity: 'usage', description: 'Scripting used in publication' },
-  { id: MessageId.SCP_002, severity: 'usage', description: 'Script in spine content document' },
-  { id: MessageId.SCP_003, severity: 'usage', description: 'Inline script element' },
-  { id: MessageId.SCP_004, severity: 'usage', description: 'Event handler attribute detected' },
-  { id: MessageId.SCP_005, severity: 'error', description: 'Script not declared in manifest' },
-  { id: MessageId.SCP_006, severity: 'error', description: 'JavaScript URL not allowed' },
-  { id: MessageId.SCP_007, severity: 'usage', description: 'Container-constrained script' },
+  // Scripting errors (SCP-*) - matches Java DefaultSeverities.java (all SUPPRESSED)
+  { id: MessageId.SCP_001, severity: 'suppressed', description: 'Scripting used in publication' },
+  {
+    id: MessageId.SCP_002,
+    severity: 'suppressed',
+    description: 'Script in spine content document',
+  },
+  { id: MessageId.SCP_003, severity: 'suppressed', description: 'Inline script element' },
+  {
+    id: MessageId.SCP_004,
+    severity: 'suppressed',
+    description: 'Event handler attribute detected',
+  },
+  { id: MessageId.SCP_005, severity: 'suppressed', description: 'Script not declared in manifest' },
+  { id: MessageId.SCP_006, severity: 'suppressed', description: 'JavaScript URL not allowed' },
+  { id: MessageId.SCP_007, severity: 'suppressed', description: 'Container-constrained script' },
   {
     id: MessageId.SCP_008,
-    severity: 'warning',
+    severity: 'suppressed',
     description: 'Scripted content missing properties',
   },
-  { id: MessageId.SCP_009, severity: 'error', description: 'Script execution error' },
-  { id: MessageId.SCP_010, severity: 'usage', description: 'EPUB CFI URL detected' },
+  { id: MessageId.SCP_009, severity: 'suppressed', description: 'Script execution error' },
+  { id: MessageId.SCP_010, severity: 'suppressed', description: 'EPUB CFI URL detected' },
 
-  // Internal checker errors (CHK-*)
-  { id: MessageId.CHK_001, severity: 'fatal', description: 'Internal checker error' },
+  // Internal checker errors (CHK-*) - matches Java DefaultSeverities.java
+  { id: MessageId.CHK_001, severity: 'error', description: 'Internal checker error' },
   { id: MessageId.CHK_002, severity: 'error', description: 'XML/HTML parser error' },
   { id: MessageId.CHK_003, severity: 'error', description: 'Schema validation error' },
   { id: MessageId.CHK_004, severity: 'error', description: 'Resource read error' },
-  { id: MessageId.CHK_005, severity: 'fatal', description: 'Validation timeout' },
-  { id: MessageId.CHK_006, severity: 'fatal', description: 'Memory limit exceeded' },
-  { id: MessageId.CHK_007, severity: 'fatal', description: 'Unknown error' },
+  { id: MessageId.CHK_005, severity: 'error', description: 'Validation timeout' },
+  { id: MessageId.CHK_006, severity: 'error', description: 'Memory limit exceeded' },
+  { id: MessageId.CHK_007, severity: 'error', description: 'Unknown error' },
 ];
 
 /**

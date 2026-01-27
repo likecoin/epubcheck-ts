@@ -62,7 +62,8 @@ describe('OCFValidator', () => {
       validator.validate(context);
 
       expect(context.messages.some((m) => m.id === 'PKG-001')).toBe(true);
-      expect(context.messages[0]!.severity).toBe('fatal');
+      // Java EPUBCheck has PKG-001 as warning severity
+      expect(context.messages[0]!.severity).toBe('warning');
     });
   });
 
