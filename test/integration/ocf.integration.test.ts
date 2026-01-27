@@ -148,12 +148,12 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       expectError(result, 'RSC-005');
     });
 
-    it('should report missing OPF document (OPF-002 fatal)', async () => {
+    it('should report missing OPF document (PKG-010 fatal)', async () => {
       const data = await loadEpub('invalid/ocf/ocf-package-document-missing-fatal.epub');
       const result = await EpubCheck.validate(data);
 
       expect(result.valid).toBe(false);
-      expectError(result, 'OPF-002');
+      expectError(result, 'PKG-010');
     });
   });
 

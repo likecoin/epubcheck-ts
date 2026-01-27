@@ -1,5 +1,6 @@
 import { ContentValidator } from './content/index.js';
 import { buildReport } from './core/report.js';
+import { pushMessage } from './messages/message-registry.js';
 import { NCXValidator } from './nav/index.js';
 import { OCFValidator } from './ocf/index.js';
 import { OPFValidator } from './opf/index.js';
@@ -116,9 +117,8 @@ export class EpubCheck {
       await schemaValidator.validate();
     } catch (error) {
       // Add fatal error for unexpected exceptions
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'PKG-025',
-        severity: 'fatal',
         message: error instanceof Error ? error.message : 'Unknown validation error',
       });
     }
@@ -206,9 +206,8 @@ export class EpubCheck {
       if (matchingIdentifier) {
         const opfUid = matchingIdentifier.value.trim();
         if (context.ncxUid !== opfUid) {
-          context.messages.push({
+          pushMessage(context.messages, {
             id: 'NCX-001',
-            severity: 'error',
             message: `NCX uid "${context.ncxUid}" does not match OPF unique identifier "${opfUid}"`,
             location: { path: ncxPath },
           });

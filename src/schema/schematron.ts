@@ -9,6 +9,7 @@
 import { evaluateXPathToBoolean, evaluateXPathToNodes } from 'fontoxpath';
 import type { Document, Element } from 'slimdom';
 import { sync as parseXmlDocument } from 'slimdom-sax-parser';
+import { pushMessage } from '../messages/message-registry.js';
 import type { ValidationMessage } from '../types.js';
 import { getSchema } from './schemas.generated.js';
 
@@ -91,9 +92,8 @@ export class SchematronValidator {
         messages.push(...ruleMessages);
       }
     } catch (error) {
-      messages.push({
+      pushMessage(messages, {
         id: 'RSC-005',
-        severity: 'error',
         message: `Schematron validation error: ${error instanceof Error ? error.message : 'Unknown error'}`,
         location: { path: filePath },
       });
@@ -248,9 +248,8 @@ export class SchematronValidator {
             );
 
             if (!result) {
-              messages.push({
+              pushMessage(messages, {
                 id: assertion.id ? `SCH-${assertion.id}` : 'SCH-001',
-                severity: 'error',
                 message: assertion.message,
                 location: { path: filePath },
               });
@@ -278,11 +277,11 @@ export class SchematronValidator {
             if (result) {
               // Report is triggered when test is true
               const isWarning = report.message.toUpperCase().startsWith('WARNING');
-              messages.push({
+              pushMessage(messages, {
                 id: report.id ? `SCH-${report.id}` : 'SCH-002',
-                severity: isWarning ? 'warning' : 'error',
                 message: report.message,
                 location: { path: filePath },
+                severityOverride: isWarning ? 'warning' : 'error',
               });
             }
           } catch (evalError) {

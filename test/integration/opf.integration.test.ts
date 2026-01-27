@@ -148,11 +148,11 @@ describe('Integration Tests - OPF (Package Document)', () => {
   });
 
   describe('Link validation', () => {
-    it('should report missing resource referenced by link (RSC-007)', async () => {
+    it('should report missing resource referenced by link (RSC-007w)', async () => {
       const data = await loadEpub('invalid/opf/package-link-missing-resource-error.epub');
       const result = await EpubCheck.validate(data);
 
-      expectWarning(result, 'RSC-007');
+      expectWarning(result, 'RSC-007w');
     });
   });
 

@@ -53,6 +53,7 @@ export enum MessageId {
   OPF_011 = 'OPF-011', // Invalid date format
   OPF_012 = 'OPF-012', // Missing dc:identifier
   OPF_013 = 'OPF-013', // Remote resource not allowed
+  OPF_035 = 'OPF-035', // Deprecated OEB 1.0 media type
   OPF_014 = 'OPF-014', // Invalid manifest item media-type
   OPF_097 = 'OPF-097', // Resource not referenced
   OPF_099 = 'OPF-099', // Manifest must not list the package document
@@ -142,6 +143,7 @@ export enum MessageId {
   CSS_021 = 'CSS-021', // CSS unusual font
   CSS_022 = 'CSS-022', // CSS font OpenType
   CSS_023 = 'CSS-023', // Invalid font-face
+  CSS_028 = 'CSS-028', // Font reference usage
 
   // Navigation errors (NAV-001 to NAV-999)
   NAV_001 = 'NAV-001', // Invalid nav element

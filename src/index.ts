@@ -28,8 +28,21 @@ export {
   toJSONReport,
 } from './core/report.js';
 
-// Message IDs
+// Message IDs and registry
 export { MessageId } from './messages/message-id.js';
+export {
+  MESSAGE_REGISTRY,
+  MESSAGE_MAP,
+  getDefaultSeverity,
+  formatMessageList,
+  createMessage,
+  pushMessage,
+} from './messages/message-registry.js';
+export type {
+  MessageInfo,
+  MessageSeverity,
+  CreateMessageOptions,
+} from './messages/message-registry.js';
 
 // Schema validation
 export type { SchemaValidator } from './schema/index.js';

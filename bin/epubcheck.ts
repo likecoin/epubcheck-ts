@@ -26,6 +26,7 @@ const { values, positionals } = parseArgs({
     version: { type: 'boolean', short: 'v', default: false },
     help: { type: 'boolean', short: 'h', default: false },
     'fail-on-warnings': { type: 'boolean', short: 'w', default: false },
+    listChecks: { type: 'boolean', short: 'l', default: false },
   },
   allowPositionals: true,
   strict: false,
@@ -38,6 +39,14 @@ if (values.version) {
   console.log();
   console.log('Note: This is ~70% feature-complete compared to Java EPUBCheck.');
   console.log('For production validation: https://github.com/w3c/epubcheck');
+  process.exit(0);
+}
+
+// List checks
+if (values.listChecks) {
+  const { formatMessageList } = await import('../dist/index.js');
+  const output = formatMessageList();
+  console.log(output);
   process.exit(0);
 }
 
@@ -56,6 +65,7 @@ Options:
   -p, --profile <name>     Validation profile (default|dict|edupub|idx|preview)
   -u, --usage              Include usage messages (best practices)
   -w, --fail-on-warnings   Exit with code 1 if warnings are found
+  -l, --listChecks         List all message IDs and severities
   -v, --version            Show version information
   -h, --help               Show this help message
 

@@ -3,6 +3,7 @@
  */
 
 import { type Atrule, type CssNode, type Declaration, type Url, parse, walk } from 'css-tree';
+import { pushMessage } from '../messages/message-registry.js';
 import type { ValidationContext } from '../types.js';
 
 interface ParseErrorWithLocation {
@@ -84,18 +85,16 @@ export class CSSValidator {
           if (err.line !== undefined) location.line = err.line;
           if (err.column !== undefined) location.column = err.column;
 
-          context.messages.push({
+          pushMessage(context.messages, {
             id: 'CSS-008',
-            severity: 'error',
             message: `CSS parse error: ${error.formattedMessage}`,
             location,
           });
         },
       });
     } catch (error) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'CSS-008',
-        severity: 'error',
         message: `CSS parse error: ${error instanceof Error ? error.message : 'Unknown error'}`,
         location: { path: resourcePath },
       });
@@ -224,9 +223,8 @@ export class CSSValidator {
       location.column = start.column;
     }
 
-    context.messages.push({
+    pushMessage(context.messages, {
       id: 'CSS-001',
-      severity: 'error',
       message: `CSS property "${property}" must not be included in an EPUB Style Sheet`,
       location,
     });
@@ -254,9 +252,8 @@ export class CSSValidator {
 
     // CSS-006: position: fixed is discouraged
     if (value === 'fixed') {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'CSS-006',
-        severity: 'warning',
         message: 'CSS property "position: fixed" is discouraged in EPUB',
         location,
       });
@@ -264,9 +261,8 @@ export class CSSValidator {
 
     // CSS-019: position: absolute is discouraged
     if (value === 'absolute') {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'CSS-019',
-        severity: 'warning',
         message: 'CSS property "position: absolute" should be used with caution in EPUB',
         location,
       });
@@ -329,9 +325,8 @@ export class CSSValidator {
 
     // Extract URL from @import prelude
     if (!atRule.prelude) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'CSS-002',
-        severity: 'error',
         message: 'Empty @import rule',
         location,
       });
@@ -351,9 +346,8 @@ export class CSSValidator {
     });
 
     if (!importUrl || importUrl.trim() === '') {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'CSS-002',
-        severity: 'error',
         message: 'Empty or NULL reference found in @import',
         location,
       });
@@ -388,9 +382,8 @@ export class CSSValidator {
 
     // Report font-face usage
     if (context.options.includeUsage) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'CSS-028',
-        severity: 'usage',
         message: 'Use of @font-face declaration',
         location,
       });
@@ -398,9 +391,8 @@ export class CSSValidator {
 
     // Check if @font-face has any declarations
     if (!atRule.block || atRule.block.children.isEmpty) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'CSS-019',
-        severity: 'warning',
         message: '@font-face declaration has no attributes',
         location,
       });
@@ -427,9 +419,8 @@ export class CSSValidator {
     }
 
     if (!state.hasSrc) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'CSS-019',
-        severity: 'warning',
         message: '@font-face declaration is missing src property',
         location,
       });
@@ -460,9 +451,8 @@ export class CSSValidator {
         const urlValue = this.extractUrlValue(urlNode);
 
         if (!urlValue || urlValue.trim() === '') {
-          context.messages.push({
+          pushMessage(context.messages, {
             id: 'CSS-002',
-            severity: 'error',
             message: 'Empty or NULL reference found in @font-face src',
             location,
           });
@@ -506,9 +496,8 @@ export class CSSValidator {
     const mimeType = FONT_EXTENSION_TO_TYPE[ext];
 
     if (mimeType && !BLESSED_FONT_TYPES.has(mimeType)) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'CSS-007',
-        severity: 'error',
         message: `Font-face reference "${fontUrl}" refers to non-standard font type "${mimeType}"`,
         location,
       });
@@ -525,9 +514,8 @@ export class CSSValidator {
 
       const manifestItem = packageDoc.manifest.find((item) => item.href === resolvedPath);
       if (manifestItem && !BLESSED_FONT_TYPES.has(manifestItem.mediaType)) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'CSS-007',
-          severity: 'error',
           message: `Font-face reference "${fontUrl}" has non-standard media type "${manifestItem.mediaType}" in manifest`,
           location,
         });
@@ -618,9 +606,8 @@ export class CSSValidator {
             location.column = start.column;
           }
 
-          context.messages.push({
+          pushMessage(context.messages, {
             id: 'CSS-029',
-            severity: 'error',
             message: `Class name "${className}" is reserved for media overlays`,
             location,
           });
@@ -635,9 +622,8 @@ export class CSSValidator {
             location.column = start.column;
           }
 
-          context.messages.push({
+          pushMessage(context.messages, {
             id: 'CSS-030',
-            severity: 'warning',
             message: `Class names starting with "-epub-media-overlay-" are reserved for future use`,
             location,
           });

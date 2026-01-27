@@ -2,6 +2,7 @@
  * Cross-reference validator for EPUB resources
  */
 
+import { pushMessage } from '../messages/message-registry.js';
 import type { ValidationContext, EPUBVersion } from '../types.js';
 import type { ResourceRegistry } from './registry.js';
 import type { Reference } from './types.js';
@@ -57,9 +58,8 @@ export class ReferenceValidator {
 
     // Check for malformed URLs
     if (isMalformedURL(url)) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'RSC-020',
-        severity: 'error',
         message: `Malformed URL: ${url}`,
         location: reference.location,
       });
@@ -69,9 +69,8 @@ export class ReferenceValidator {
     // Skip data URLs
     if (isDataURL(url)) {
       if (this.version.startsWith('3.')) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'RSC-029',
-          severity: 'error',
           message: 'Data URLs are not allowed in EPUB 3',
           location: reference.location,
         });
@@ -81,9 +80,8 @@ export class ReferenceValidator {
 
     // Check for file URLs
     if (isFileURL(url)) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'RSC-026',
-        severity: 'error',
         message: 'File URLs are not allowed',
         location: reference.location,
       });
@@ -118,9 +116,8 @@ export class ReferenceValidator {
   ): void {
     // Check for absolute paths
     if (hasAbsolutePath(resourcePath)) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'RSC-027',
-        severity: 'error',
         message: 'Absolute paths are not allowed in EPUB',
         location: reference.location,
       });
@@ -138,9 +135,8 @@ export class ReferenceValidator {
       hasParentDirectoryReference(reference.url) &&
       forbiddenParentDirTypes.includes(reference.type)
     ) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'RSC-028',
-        severity: 'error',
         message: 'Parent directory references (..) are not allowed',
         location: reference.location,
       });
@@ -153,9 +149,8 @@ export class ReferenceValidator {
       if (fileExistsInContainer) {
         // File exists but not declared in manifest - report RSC-008
         if (!context.referencedUndeclaredResources?.has(resourcePath)) {
-          context.messages.push({
+          pushMessage(context.messages, {
             id: 'RSC-008',
-            severity: 'error',
             message: `Referenced resource "${resourcePath}" is not declared in the OPF manifest`,
             location: reference.location,
           });
@@ -165,9 +160,8 @@ export class ReferenceValidator {
       } else {
         // File doesn't exist at all - report RSC-007
         const isLinkRef = reference.type === ReferenceType.LINK;
-        context.messages.push({
+        pushMessage(context.messages, {
           id: isLinkRef ? 'RSC-007w' : 'RSC-007',
-          severity: isLinkRef ? 'warning' : 'error',
           message: `Referenced resource not found in EPUB: ${resourcePath}`,
           location: reference.location,
         });
@@ -180,9 +174,8 @@ export class ReferenceValidator {
 
     // Check if hyperlinks point to spine items
     if (reference.type === ReferenceType.HYPERLINK && !resource?.inSpine) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'RSC-011',
-        severity: 'error',
         message: 'Hyperlinks must reference spine items',
         location: reference.location,
       });
@@ -201,9 +194,8 @@ export class ReferenceValidator {
         !this.isDeprecatedBlessedItemType(targetMimeType) &&
         !resource.hasCoreMediaTypeFallback
       ) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'RSC-010',
-          severity: 'error',
           message: 'Publication resource references must point to content documents',
           location: reference.location,
         });
@@ -219,9 +211,8 @@ export class ReferenceValidator {
 
     // Check if using HTTPS
     if (isHTTP(url) && !isHTTPS(url)) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'RSC-031',
-        severity: 'error',
         message: 'Remote resources must use HTTPS',
         location: reference.location,
       });
@@ -236,9 +227,8 @@ export class ReferenceValidator {
       ]);
 
       if (!allowedRemoteTypes.has(reference.type)) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'RSC-006',
-          severity: 'error',
           message: 'Remote resources are only allowed for audio, video, and fonts',
           location: reference.location,
         });
@@ -247,9 +237,8 @@ export class ReferenceValidator {
 
       const targetResource = reference.targetResource || url;
       if (!this.registry.hasResource(targetResource)) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'RSC-008',
-          severity: 'error',
           message: `Referenced resource "${targetResource}" is not declared in the OPF manifest`,
           location: reference.location,
         });
@@ -274,9 +263,8 @@ export class ReferenceValidator {
 
     // RSC-013: Stylesheets should not have fragment identifiers
     if (reference.type === ReferenceType.STYLESHEET) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'RSC-013',
-        severity: 'error',
         message: 'Stylesheet references must not have fragment identifiers',
         location: reference.location,
       });
@@ -289,9 +277,8 @@ export class ReferenceValidator {
       const hasSVGView = fragment.includes('svgView(') || fragment.includes('viewBox(');
 
       if (hasSVGView && reference.type === ReferenceType.HYPERLINK) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'RSC-014',
-          severity: 'error',
           message: 'SVG view fragments can only be referenced from SVG documents',
           location: reference.location,
         });
@@ -300,9 +287,8 @@ export class ReferenceValidator {
 
     // Check if fragment target exists
     if (!this.registry.hasID(resourcePath, fragment)) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'RSC-012',
-        severity: 'error',
         message: `Fragment identifier not found: #${fragment}`,
         location: reference.location,
       });
@@ -336,9 +322,8 @@ export class ReferenceValidator {
       if (resource.url.includes('toc.ncx') || resource.url.includes('.ncx')) continue;
       if (resource.url.includes('cover-image')) continue;
 
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'OPF-097',
-        severity: 'usage',
         message: `Resource declared in manifest but not referenced: ${resource.url}`,
         location: { path: resource.url },
       });

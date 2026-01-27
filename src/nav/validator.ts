@@ -2,6 +2,7 @@
  * Navigation document validation
  */
 
+import { pushMessage } from '../messages/message-registry.js';
 import type { ValidationContext } from '../types.js';
 
 /**
@@ -22,9 +23,8 @@ export class NavValidator {
    */
   private checkNavElement(context: ValidationContext, content: string, path: string): void {
     if (!/<nav/i.test(content)) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'NAV-001',
-        severity: 'error',
         message: 'Navigation document must contain a nav element',
         location: { path },
       });
@@ -44,9 +44,8 @@ export class NavValidator {
       if (navMatch) {
         location.line = content.substring(0, navMatch.index).split('\n').length;
       }
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'NAV-001',
-        severity: 'error',
         message: 'Navigation document must have a nav element with epub:type="toc"',
         location,
       });
@@ -67,9 +66,8 @@ export class NavValidator {
 
       // Check for ol element inside nav
       if (!/<ol[\s>]/i.test(navContent)) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'NAV-002',
-          severity: 'error',
           message: 'Navigation document toc nav must contain an ol element',
           location: { path, line },
         });

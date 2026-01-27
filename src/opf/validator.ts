@@ -1,3 +1,4 @@
+import { pushMessage } from '../messages/message-registry.js';
 import type { ValidationContext } from '../types.js';
 import { parseOPF } from './parser.js';
 import type { ManifestItem, PackageDocument } from './types.js';
@@ -24,9 +25,8 @@ export class OPFValidator {
   validate(context: ValidationContext): void {
     const opfPath = context.opfPath;
     if (!opfPath) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'OPF-002',
-        severity: 'fatal',
         message: 'No package document (OPF) path found in container.xml',
       });
       return;
@@ -35,9 +35,8 @@ export class OPFValidator {
     // Read OPF content
     const opfData = context.files.get(opfPath);
     if (!opfData) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'OPF-002',
-        severity: 'fatal',
         message: `Package document not found: ${opfPath}`,
         location: { path: opfPath },
       });
@@ -50,9 +49,8 @@ export class OPFValidator {
     try {
       this.packageDoc = parseOPF(opfXml);
     } catch (error) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'OPF-002',
-        severity: 'fatal',
         message: `Failed to parse package document: ${error instanceof Error ? error.message : 'Unknown error'}`,
         location: { path: opfPath },
       });
@@ -110,9 +108,8 @@ export class OPFValidator {
 
     const validVersions = new Set(['2.0', '3.0', '3.1', '3.2', '3.3']);
     if (!validVersions.has(this.packageDoc.version)) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'OPF-001',
-        severity: 'error',
         message: `Invalid package version "${this.packageDoc.version}"; must be one of: ${Array.from(validVersions).join(', ')}`,
         location: { path: opfPath },
       });
@@ -120,9 +117,8 @@ export class OPFValidator {
 
     // Check unique-identifier
     if (!this.packageDoc.uniqueIdentifier) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'OPF-048',
-        severity: 'error',
         message: 'Package element is missing required unique-identifier attribute',
         location: { path: opfPath },
       });
@@ -133,9 +129,8 @@ export class OPFValidator {
         (dc) => dc.name === 'identifier' && dc.id === refId,
       );
       if (!matchingDc) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'OPF-030',
-          severity: 'error',
           message: `unique-identifier "${refId}" does not reference an existing dc:identifier`,
           location: { path: opfPath },
         });
@@ -152,9 +147,8 @@ export class OPFValidator {
     const dcElements = this.packageDoc.dcElements;
 
     if (dcElements.length === 0 && this.packageDoc.metaElements.length === 0) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'OPF-072',
-        severity: 'error',
         message: 'Metadata section is empty',
         location: { path: opfPath },
       });
@@ -167,27 +161,24 @@ export class OPFValidator {
     const hasLanguage = dcElements.some((dc) => dc.name === 'language');
 
     if (!hasIdentifier) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'OPF-015',
-        severity: 'error',
         message: 'Metadata must include at least one dc:identifier element',
         location: { path: opfPath },
       });
     }
 
     if (!hasTitle) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'OPF-016',
-        severity: 'error',
         message: 'Metadata must include at least one dc:title element',
         location: { path: opfPath },
       });
     }
 
     if (!hasLanguage) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'OPF-017',
-        severity: 'error',
         message: 'Metadata must include at least one dc:language element',
         location: { path: opfPath },
       });
@@ -197,9 +188,8 @@ export class OPFValidator {
     for (const dc of dcElements) {
       if (dc.name === 'language' && dc.value) {
         if (!isValidLanguageTag(dc.value)) {
-          context.messages.push({
+          pushMessage(context.messages, {
             id: 'OPF-092',
-            severity: 'error',
             message: `Invalid language tag: "${dc.value}"`,
             location: { path: opfPath },
           });
@@ -209,9 +199,8 @@ export class OPFValidator {
       // Validate dc:date format (OPF-053)
       if (dc.name === 'date' && dc.value) {
         if (!isValidW3CDateFormat(dc.value)) {
-          context.messages.push({
+          pushMessage(context.messages, {
             id: 'OPF-053',
-            severity: 'error',
             message: `Invalid date format "${dc.value}"; must be W3C date format (ISO 8601)`,
             location: { path: opfPath },
           });
@@ -319,9 +308,8 @@ export class OPFValidator {
             'wdc',
           ]);
           if (!validRelatorCodes.has(relatorCode)) {
-            context.messages.push({
+            pushMessage(context.messages, {
               id: 'OPF-052',
-              severity: 'error',
               message: `Unknown MARC relator code "${relatorCode}" in dc:creator`,
               location: { path: opfPath },
             });
@@ -336,16 +324,14 @@ export class OPFValidator {
         (meta) => meta.property === 'dcterms:modified',
       );
       if (!modifiedMeta) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'OPF-054',
-          severity: 'error',
           message: 'EPUB 3 metadata must include a dcterms:modified meta element',
           location: { path: opfPath },
         });
       } else if (modifiedMeta.value && !isValidW3CDateFormat(modifiedMeta.value)) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'OPF-054',
-          severity: 'error',
           message: `Invalid dcterms:modified date format "${modifiedMeta.value}"; must be W3C date format (ISO 8601)`,
           location: { path: opfPath },
         });
@@ -383,9 +369,9 @@ export class OPFValidator {
         this.manifestByHref.has(basePath) || this.manifestByHref.has(basePathDecoded);
 
       if (!fileExists && !inManifest) {
-        context.messages.push({
-          id: 'RSC-007',
-          severity: 'warning',
+        // OPF link elements use RSC-007w (warning) since they're metadata references
+        pushMessage(context.messages, {
+          id: 'RSC-007w',
           message: `Referenced resource "${resolvedPath}" could not be found in the EPUB`,
           location: { path: opfPath },
         });
@@ -405,9 +391,8 @@ export class OPFValidator {
     for (const item of this.packageDoc.manifest) {
       // Check for duplicate IDs
       if (seenIds.has(item.id)) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'OPF-074',
-          severity: 'error',
           message: `Duplicate manifest item id: "${item.id}"`,
           location: { path: opfPath },
         });
@@ -416,9 +401,8 @@ export class OPFValidator {
 
       // Check for duplicate hrefs
       if (seenHrefs.has(item.href)) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'OPF-074',
-          severity: 'error',
           message: `Duplicate manifest item href: "${item.href}"`,
           location: { path: opfPath },
         });
@@ -430,9 +414,8 @@ export class OPFValidator {
       // Note: href may be URL-encoded (e.g., table%20us%202.png) but file paths are not
       const fullPath = resolvePath(opfPath, item.href);
       if (fullPath === opfPath) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'OPF-099',
-          severity: 'error',
           message: 'The manifest must not list the package document',
           location: { path: opfPath },
         });
@@ -444,9 +427,8 @@ export class OPFValidator {
       if (!item.href.startsWith('http') && !item.href.startsWith('mailto:')) {
         const leaked = checkUrlLeaking(item.href);
         if (leaked) {
-          context.messages.push({
+          pushMessage(context.messages, {
             id: 'RSC-026',
-            severity: 'error',
             message: `URL "${item.href}" leaks outside the container (it is not a valid-relative-ocf-URL-with-fragment string)`,
             location: { path: opfPath },
           });
@@ -464,9 +446,8 @@ export class OPFValidator {
         !context.files.has(fullPathDecoded) &&
         !item.href.startsWith('http')
       ) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'RSC-001',
-          severity: 'error',
           message: `Referenced resource "${item.href}" could not be found in the EPUB`,
           location: { path: opfPath },
         });
@@ -474,9 +455,8 @@ export class OPFValidator {
 
       // EPUB 3: Check for publication resources in META-INF
       if (this.packageDoc.version !== '2.0' && fullPath.startsWith('META-INF/')) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'PKG-025',
-          severity: 'error',
           message: `Publication resource must not be located in META-INF: ${item.href}`,
           location: { path: opfPath },
         });
@@ -484,26 +464,23 @@ export class OPFValidator {
 
       // Validate media type format (RFC4288)
       if (!isValidMimeType(item.mediaType)) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'OPF-014',
-          severity: 'error',
           message: `Invalid media-type format "${item.mediaType}" for item "${item.id}"`,
           location: { path: opfPath },
         });
       }
 
       // Check for deprecated media types (OEB 1.x)
-      const deprecatedTypes = new Map<string, string>([
-        ['text/x-oeb1-document', 'OPF-035'],
-        ['text/x-oeb1-css', 'OPF-037'],
-        ['application/x-oeb1-package', 'OPF-038'],
-        ['text/x-oeb1-html', 'OPF-037'],
+      const deprecatedTypes = new Set<string>([
+        'text/x-oeb1-document',
+        'text/x-oeb1-css',
+        'application/x-oeb1-package',
+        'text/x-oeb1-html',
       ]);
-      const deprecatedId = deprecatedTypes.get(item.mediaType);
-      if (deprecatedId) {
-        context.messages.push({
-          id: deprecatedId,
-          severity: 'warning',
+      if (deprecatedTypes.has(item.mediaType)) {
+        pushMessage(context.messages, {
+          id: 'OPF-035',
           message: `Deprecated OEB 1.0 media-type "${item.mediaType}" should not be used`,
           location: { path: opfPath },
         });
@@ -513,9 +490,8 @@ export class OPFValidator {
       if (this.packageDoc.version !== '2.0' && item.properties) {
         for (const prop of item.properties) {
           if (!ITEM_PROPERTIES.has(prop) && !prop.includes(':')) {
-            context.messages.push({
+            pushMessage(context.messages, {
               id: 'OPF-012',
-              severity: 'warning',
               message: `Unknown item property: "${prop}" on item "${item.id}"`,
               location: { path: opfPath },
             });
@@ -525,9 +501,8 @@ export class OPFValidator {
         // Check nav property requirements
         if (item.properties.includes('nav')) {
           if (item.mediaType !== 'application/xhtml+xml') {
-            context.messages.push({
+            pushMessage(context.messages, {
               id: 'OPF-012',
-              severity: 'error',
               message: `Item with "nav" property must be XHTML, found: ${item.mediaType}`,
               location: { path: opfPath },
             });
@@ -537,9 +512,8 @@ export class OPFValidator {
 
       // Check for href fragment (EPUB 3)
       if (this.packageDoc.version !== '2.0' && item.href.includes('#')) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'OPF-091',
-          severity: 'error',
           message: `Manifest item href must not contain fragment identifier: "${item.href}"`,
           location: { path: opfPath },
         });
@@ -553,9 +527,8 @@ export class OPFValidator {
       ) {
         const inSpine = this.packageDoc.spine.some((s) => s.idref === item.id);
         if (inSpine && !item.properties?.includes('remote-resources')) {
-          context.messages.push({
+          pushMessage(context.messages, {
             id: 'RSC-006',
-            severity: 'error',
             message: `Manifest item "${item.id}" references remote resource but is missing "remote-resources" property`,
             location: { path: opfPath },
           });
@@ -567,9 +540,8 @@ export class OPFValidator {
     if (this.packageDoc.version !== '2.0') {
       const hasNav = this.packageDoc.manifest.some((item) => item.properties?.includes('nav'));
       if (!hasNav) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'OPF-013',
-          severity: 'error',
           message: 'EPUB 3 must have exactly one manifest item with the "nav" property',
           location: { path: opfPath },
         });
@@ -585,9 +557,8 @@ export class OPFValidator {
 
     // Check that spine has items
     if (this.packageDoc.spine.length === 0) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'OPF-033',
-        severity: 'error',
         message: 'Spine must contain at least one itemref',
         location: { path: opfPath },
       });
@@ -597,9 +568,8 @@ export class OPFValidator {
     // Check for at least one linear item
     const hasLinear = this.packageDoc.spine.some((ref) => ref.linear);
     if (!hasLinear) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'OPF-033',
-        severity: 'error',
         message: 'Spine must contain at least one linear itemref',
         location: { path: opfPath },
       });
@@ -609,9 +579,8 @@ export class OPFValidator {
     const ncxId = this.packageDoc.spineToc;
     if (this.packageDoc.version === '2.0' && !ncxId) {
       // EPUB 2 requires toc attribute
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'OPF-050',
-        severity: 'warning',
         message: 'EPUB 2 spine should have a toc attribute referencing the NCX',
         location: { path: opfPath },
       });
@@ -619,16 +588,14 @@ export class OPFValidator {
       // If toc attribute is present (EPUB 2 or 3), validate it points to NCX
       const ncxItem = this.manifestById.get(ncxId);
       if (!ncxItem) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'OPF-049',
-          severity: 'error',
           message: `Spine toc attribute references non-existent item: "${ncxId}"`,
           location: { path: opfPath },
         });
       } else if (ncxItem.mediaType !== 'application/x-dtbncx+xml') {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'OPF-050',
-          severity: 'error',
           message: `Spine toc attribute must reference an NCX document (media-type "application/x-dtbncx+xml"), found: "${ncxItem.mediaType}"`,
           location: { path: opfPath },
         });
@@ -641,9 +608,8 @@ export class OPFValidator {
       // Check that idref references a manifest item
       const item = this.manifestById.get(itemref.idref);
       if (!item) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'OPF-049',
-          severity: 'error',
           message: `Spine itemref references non-existent manifest item: "${itemref.idref}"`,
           location: { path: opfPath },
         });
@@ -652,9 +618,8 @@ export class OPFValidator {
 
       // Check for duplicate idrefs (applies to both EPUB 2 and 3)
       if (seenIdrefs.has(itemref.idref)) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'OPF-034',
-          severity: 'error',
           message: `Duplicate spine itemref: "${itemref.idref}"`,
           location: { path: opfPath },
         });
@@ -663,9 +628,8 @@ export class OPFValidator {
 
       // Check that spine items have appropriate media types
       if (!isSpineMediaType(item.mediaType) && !item.fallback) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'OPF-043',
-          severity: 'error',
           message: `Spine item "${item.id}" has non-standard media type "${item.mediaType}" without fallback`,
           location: { path: opfPath },
         });
@@ -675,9 +639,8 @@ export class OPFValidator {
       if (this.packageDoc.version !== '2.0' && itemref.properties) {
         for (const prop of itemref.properties) {
           if (!SPINE_PROPERTIES.has(prop) && !prop.includes(':')) {
-            context.messages.push({
+            pushMessage(context.messages, {
               id: 'OPF-012',
-              severity: 'warning',
               message: `Unknown spine itemref property: "${prop}"`,
               location: { path: opfPath },
             });
@@ -700,9 +663,8 @@ export class OPFValidator {
 
         while (currentFallback) {
           if (visited.has(currentFallback)) {
-            context.messages.push({
+            pushMessage(context.messages, {
               id: 'OPF-045',
-              severity: 'error',
               message: `Circular fallback chain detected starting from item "${item.id}"`,
               location: { path: opfPath },
             });
@@ -713,9 +675,8 @@ export class OPFValidator {
           const fallbackItem = this.manifestById.get(currentFallback);
 
           if (!fallbackItem) {
-            context.messages.push({
+            pushMessage(context.messages, {
               id: 'OPF-040',
-              severity: 'error',
               message: `Fallback item "${currentFallback}" not found in manifest`,
               location: { path: opfPath },
             });
@@ -746,9 +707,8 @@ export class OPFValidator {
       });
 
       if (!found) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'OPF-031',
-          severity: 'error',
           message: `Guide reference "${ref.type}" references item not in manifest: ${ref.href}`,
           location: { path: opfPath },
         });
@@ -768,9 +728,8 @@ export class OPFValidator {
 
     for (const collection of collections) {
       if (!validRoles.has(collection.role)) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'OPF-071',
-          severity: 'warning',
           message: `Unknown collection role: "${collection.role}"`,
           location: { path: opfPath },
         });
@@ -778,9 +737,8 @@ export class OPFValidator {
 
       if (collection.role === 'dictionary') {
         if (!collection.name || collection.name.trim() === '') {
-          context.messages.push({
+          pushMessage(context.messages, {
             id: 'OPF-072',
-            severity: 'error',
             message: 'Dictionary collection must have a name attribute',
             location: { path: opfPath },
           });
@@ -789,9 +747,8 @@ export class OPFValidator {
         for (const linkHref of collection.links) {
           const manifestItem = this.manifestByHref.get(linkHref);
           if (!manifestItem) {
-            context.messages.push({
+            pushMessage(context.messages, {
               id: 'OPF-073',
-              severity: 'error',
               message: `Collection link "${linkHref}" references non-existent manifest item`,
               location: { path: opfPath },
             });
@@ -802,9 +759,8 @@ export class OPFValidator {
             manifestItem.mediaType !== 'application/xhtml+xml' &&
             manifestItem.mediaType !== 'image/svg+xml'
           ) {
-            context.messages.push({
+            pushMessage(context.messages, {
               id: 'OPF-074',
-              severity: 'error',
               message: `Dictionary collection item "${linkHref}" must be an XHTML or SVG document`,
               location: { path: opfPath },
             });
@@ -816,9 +772,8 @@ export class OPFValidator {
         for (const linkHref of collection.links) {
           const manifestItem = this.manifestByHref.get(linkHref);
           if (!manifestItem) {
-            context.messages.push({
+            pushMessage(context.messages, {
               id: 'OPF-073',
-              severity: 'error',
               message: `Collection link "${linkHref}" references non-existent manifest item`,
               location: { path: opfPath },
             });
@@ -826,9 +781,8 @@ export class OPFValidator {
           }
 
           if (manifestItem.mediaType !== 'application/xhtml+xml') {
-            context.messages.push({
+            pushMessage(context.messages, {
               id: 'OPF-075',
-              severity: 'error',
               message: `Index collection item "${linkHref}" must be an XHTML document`,
               location: { path: opfPath },
             });
@@ -840,9 +794,8 @@ export class OPFValidator {
         for (const linkHref of collection.links) {
           const manifestItem = this.manifestByHref.get(linkHref);
           if (!manifestItem) {
-            context.messages.push({
+            pushMessage(context.messages, {
               id: 'OPF-073',
-              severity: 'error',
               message: `Collection link "${linkHref}" references non-existent manifest item`,
               location: { path: opfPath },
             });

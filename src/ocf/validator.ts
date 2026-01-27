@@ -1,4 +1,5 @@
 import type { ValidationContext, ValidationMessage } from '../types.js';
+import { pushMessage } from '../messages/message-registry.js';
 import { ZipReader } from './zip.js';
 
 /**
@@ -24,9 +25,8 @@ export class OCFValidator {
     try {
       zip = ZipReader.open(context.data);
     } catch (error) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'PKG-001',
-        severity: 'fatal',
         message: `Failed to open EPUB file: ${error instanceof Error ? error.message : 'Unknown error'}`,
       });
       return;
@@ -76,9 +76,8 @@ export class OCFValidator {
     const compressionInfo = zip.getMimetypeCompressionInfo();
 
     if (compressionInfo === null) {
-      messages.push({
+      pushMessage(messages, {
         id: 'PKG-006',
-        severity: 'error',
         message: 'Could not read ZIP header',
         location: { path: 'mimetype' },
       });
@@ -86,36 +85,32 @@ export class OCFValidator {
     }
 
     if (compressionInfo.filename !== 'mimetype') {
-      messages.push({
+      pushMessage(messages, {
         id: 'PKG-006',
-        severity: 'error',
         message: 'Mimetype file must be the first file in the ZIP archive',
         location: { path: 'mimetype' },
       });
     }
 
     if (compressionInfo.extraFieldLength !== 0) {
-      messages.push({
+      pushMessage(messages, {
         id: 'PKG-005',
-        severity: 'error',
         message: `Mimetype entry must not have an extra field (found ${String(compressionInfo.extraFieldLength)} bytes)`,
         location: { path: 'mimetype' },
       });
     }
 
     if (compressionInfo.compressionMethod !== 0) {
-      messages.push({
+      pushMessage(messages, {
         id: 'PKG-006',
-        severity: 'error',
         message: 'Mimetype file must be uncompressed',
         location: { path: 'mimetype' },
       });
     }
 
     if (!zip.has('mimetype')) {
-      messages.push({
+      pushMessage(messages, {
         id: 'PKG-006',
-        severity: 'error',
         message: 'Missing mimetype file',
         location: { path: 'mimetype' },
       });
@@ -124,9 +119,8 @@ export class OCFValidator {
 
     const content = zip.readText('mimetype');
     if (content === undefined) {
-      messages.push({
+      pushMessage(messages, {
         id: 'PKG-006',
-        severity: 'error',
         message: 'Could not read mimetype file',
         location: { path: 'mimetype' },
       });
@@ -136,9 +130,8 @@ export class OCFValidator {
     // PKG-007: mimetype must exactly match "application/epub+zip" (no trimming)
     // This matches Java EPUBCheck behavior - any whitespace/newlines are an error
     if (content !== EPUB_MIMETYPE) {
-      messages.push({
+      pushMessage(messages, {
         id: 'PKG-007',
-        severity: 'error',
         message: `Mimetype file must contain exactly "${EPUB_MIMETYPE}"`,
         location: { path: 'mimetype' },
       });
@@ -152,9 +145,8 @@ export class OCFValidator {
     const containerPath = 'META-INF/container.xml';
 
     if (!zip.has(containerPath)) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'RSC-002',
-        severity: 'fatal',
         message: 'Required file META-INF/container.xml was not found',
         location: { path: containerPath },
       });
@@ -163,9 +155,8 @@ export class OCFValidator {
 
     const content = zip.readText(containerPath);
     if (!content) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'RSC-002',
-        severity: 'fatal',
         message: 'Could not read META-INF/container.xml',
         location: { path: containerPath },
       });
@@ -211,9 +202,8 @@ export class OCFValidator {
     }
 
     if (context.rootfiles.length === 0) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'PKG-004',
-        severity: 'fatal',
         message: 'No rootfile found in container.xml',
         location: { path: containerPath },
       });
@@ -222,9 +212,8 @@ export class OCFValidator {
     // Verify rootfile paths exist
     for (const rootfile of context.rootfiles) {
       if (!zip.has(rootfile.path)) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'PKG-010',
-          severity: 'error',
           message: `Rootfile "${rootfile.path}" not found in EPUB`,
           location: { path: containerPath },
         });
@@ -243,9 +232,8 @@ export class OCFValidator {
   private validateMetaInf(zip: ZipReader, messages: ValidationMessage[]): void {
     const metaInfFiles = zip.listDirectory('META-INF');
     if (metaInfFiles.length === 0) {
-      messages.push({
+      pushMessage(messages, {
         id: 'PKG-002',
-        severity: 'error',
         message: 'Missing META-INF directory',
         location: { path: 'META-INF/' },
       });
@@ -276,9 +264,8 @@ export class OCFValidator {
       const filename = path.includes('/') ? (path.split('/').pop() ?? path) : path;
 
       if (filename === '' || filename === '.' || filename === '..') {
-        messages.push({
+        pushMessage(messages, {
           id: 'PKG-009',
-          severity: 'error',
           message: `Invalid filename: "${path}"`,
           location: { path },
         });
@@ -317,9 +304,8 @@ export class OCFValidator {
 
       // Check if filename ends with period
       if (filename.endsWith('.')) {
-        messages.push({
+        pushMessage(messages, {
           id: 'PKG-011',
-          severity: 'error',
           message: `Filename must not end with a period: "${path}"`,
           location: { path },
         });
@@ -327,9 +313,8 @@ export class OCFValidator {
 
       // Report disallowed characters (PKG-009)
       if (disallowed.length > 0) {
-        messages.push({
+        pushMessage(messages, {
           id: 'PKG-009',
-          severity: 'error',
           message: `Filename "${path}" contains disallowed characters: ${disallowed.join(', ')}`,
           location: { path },
         });
@@ -337,11 +322,11 @@ export class OCFValidator {
 
       // Report whitespace (PKG-010 - warning)
       if (hasSpaces) {
-        messages.push({
+        pushMessage(messages, {
           id: 'PKG-010',
-          severity: 'warning',
           message: `Filename "${path}" contains spaces`,
           location: { path },
+          severityOverride: 'warning',
         });
       }
     }
@@ -365,9 +350,8 @@ export class OCFValidator {
 
       // First check for exact duplicate ZIP entries
       if (seenPaths.has(path)) {
-        messages.push({
+        pushMessage(messages, {
           id: 'OPF-060',
-          severity: 'error',
           message: `Duplicate ZIP entry: "${path}"`,
           location: { path },
         });
@@ -382,9 +366,8 @@ export class OCFValidator {
 
       const existing = normalizedPaths.get(normalized);
       if (existing !== undefined) {
-        messages.push({
+        pushMessage(messages, {
           id: 'OPF-060',
-          severity: 'error',
           message: `Duplicate filename after Unicode normalization: "${path}" conflicts with "${existing}"`,
           location: { path },
         });
@@ -464,9 +447,8 @@ export class OCFValidator {
   private validateUtf8Filenames(zip: ZipReader, messages: ValidationMessage[]): void {
     const invalidFilenames = zip.getInvalidUtf8Filenames();
     for (const { filename, reason } of invalidFilenames) {
-      messages.push({
+      pushMessage(messages, {
         id: 'PKG-027',
-        severity: 'fatal',
         message: `Filename is not valid UTF-8: "${filename}" (${reason})`,
         location: { path: filename },
       });
@@ -491,9 +473,8 @@ export class OCFValidator {
       if (dir !== 'META-INF/' && dir !== 'OEBPS/' && dir !== 'OPS/') {
         const filesInDir = zip.paths.filter((p) => p.startsWith(dir) && p !== dir);
         if (filesInDir.length === 0) {
-          messages.push({
+          pushMessage(messages, {
             id: 'PKG-014',
-            severity: 'warning',
             message: `Empty directory found: ${dir}`,
             location: { path: dir },
           });

@@ -3,6 +3,7 @@
  */
 
 import { XmlDocument, type XmlElement } from 'libxml2-wasm';
+import { pushMessage } from '../messages/message-registry.js';
 import type { ValidationContext } from '../types.js';
 
 /**
@@ -15,9 +16,8 @@ export class NCXValidator {
       doc = XmlDocument.fromString(ncxContent);
     } catch (error) {
       if (error instanceof Error) {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'NCX-002',
-          severity: 'error',
           message: `NCX document is not well-formed: ${error.message}`,
           location: { path: ncxPath },
         });
@@ -29,9 +29,8 @@ export class NCXValidator {
       const root = doc.root;
 
       if (root.name !== 'ncx') {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'NCX-001',
-          severity: 'error',
           message: 'NCX document must have ncx as root element',
           location: { path: ncxPath },
         });
@@ -40,9 +39,8 @@ export class NCXValidator {
 
       const ns = root.nsDeclarations[''];
       if (ns !== 'http://www.daisy.org/z3986/2005/ncx/') {
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'NCX-001',
-          severity: 'error',
           message: 'NCX document must use namespace http://www.daisy.org/z3986/2005/ncx/',
           location: { path: ncxPath },
         });
@@ -71,9 +69,8 @@ export class NCXValidator {
 
     if (!uidContent || uidContent.trim() === '') {
       const line = uidElement.line;
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'NCX-003',
-        severity: 'warning',
         message: 'NCX dtb:uid meta content should not be empty',
         location: { path, line },
       });
@@ -87,9 +84,8 @@ export class NCXValidator {
     const navMapNode = root.get('.//ncx:navMap', { ncx: 'http://www.daisy.org/z3986/2005/ncx/' });
 
     if (!navMapNode) {
-      context.messages.push({
+      pushMessage(context.messages, {
         id: 'NCX-001',
-        severity: 'error',
         message: 'NCX document must have a navMap element',
         location: { path },
       });
@@ -134,9 +130,8 @@ export class NCXValidator {
         !srcBase.startsWith('https://')
       ) {
         const line = contentElem.line;
-        context.messages.push({
+        pushMessage(context.messages, {
           id: 'NCX-006',
-          severity: 'error',
           message: `NCX content src references missing file: ${src}`,
           location: { path: ncxPath, line },
         });
