@@ -1,3 +1,4 @@
+import { MessageId } from '../messages/message-id.js';
 import { pushMessage } from '../messages/message-registry.js';
 import type { ValidationMessage } from '../types.js';
 import { getSchema } from './schemas.generated.js';
@@ -62,7 +63,7 @@ export class XsdValidator extends BaseSchemaValidator {
             if (parsed.line !== undefined) location.line = parsed.line;
             if (parsed.column !== undefined) location.column = parsed.column;
             pushMessage(messages, {
-              id: 'RSC-005',
+              id: MessageId.RSC_005,
               message: parsed.message,
               location,
             });
@@ -77,7 +78,7 @@ export class XsdValidator extends BaseSchemaValidator {
       }
     } catch (error) {
       pushMessage(messages, {
-        id: 'RSC-001',
+        id: MessageId.RSC_001,
         message: `Failed to initialize XSD validator: ${error instanceof Error ? error.message : 'Unknown error'}`,
       });
     }

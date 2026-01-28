@@ -3,6 +3,7 @@
  */
 
 import { XmlDocument, type XmlElement } from 'libxml2-wasm';
+import { MessageId } from '../messages/message-id.js';
 import { pushMessage } from '../messages/message-registry.js';
 import type { ValidationContext } from '../types.js';
 
@@ -17,7 +18,7 @@ export class NCXValidator {
     } catch (error) {
       if (error instanceof Error) {
         pushMessage(context.messages, {
-          id: 'NCX-002',
+          id: MessageId.NCX_002,
           message: `NCX document is not well-formed: ${error.message}`,
           location: { path: ncxPath },
         });
@@ -30,7 +31,7 @@ export class NCXValidator {
 
       if (root.name !== 'ncx') {
         pushMessage(context.messages, {
-          id: 'NCX-001',
+          id: MessageId.NCX_001,
           message: 'NCX document must have ncx as root element',
           location: { path: ncxPath },
         });
@@ -40,7 +41,7 @@ export class NCXValidator {
       const ns = root.nsDeclarations[''];
       if (ns !== 'http://www.daisy.org/z3986/2005/ncx/') {
         pushMessage(context.messages, {
-          id: 'NCX-001',
+          id: MessageId.NCX_001,
           message: 'NCX document must use namespace http://www.daisy.org/z3986/2005/ncx/',
           location: { path: ncxPath },
         });
@@ -70,7 +71,7 @@ export class NCXValidator {
     if (!uidContent || uidContent.trim() === '') {
       const line = uidElement.line;
       pushMessage(context.messages, {
-        id: 'NCX-003',
+        id: MessageId.NCX_003,
         message: 'NCX dtb:uid meta content should not be empty',
         location: { path, line },
       });
@@ -85,7 +86,7 @@ export class NCXValidator {
 
     if (!navMapNode) {
       pushMessage(context.messages, {
-        id: 'NCX-001',
+        id: MessageId.NCX_001,
         message: 'NCX document must have a navMap element',
         location: { path },
       });
@@ -131,7 +132,7 @@ export class NCXValidator {
       ) {
         const line = contentElem.line;
         pushMessage(context.messages, {
-          id: 'NCX-006',
+          id: MessageId.NCX_006,
           message: `NCX content src references missing file: ${src}`,
           location: { path: ncxPath, line },
         });

@@ -2,6 +2,7 @@
  * Cross-reference validator for EPUB resources
  */
 
+import { MessageId } from '../messages/message-id.js';
 import { pushMessage } from '../messages/message-registry.js';
 import type { ValidationContext, EPUBVersion } from '../types.js';
 import type { ResourceRegistry } from './registry.js';
@@ -59,7 +60,7 @@ export class ReferenceValidator {
     // Check for malformed URLs
     if (isMalformedURL(url)) {
       pushMessage(context.messages, {
-        id: 'RSC-020',
+        id: MessageId.RSC_020,
         message: `Malformed URL: ${url}`,
         location: reference.location,
       });
@@ -70,7 +71,7 @@ export class ReferenceValidator {
     if (isDataURL(url)) {
       if (this.version.startsWith('3.')) {
         pushMessage(context.messages, {
-          id: 'RSC-029',
+          id: MessageId.RSC_029,
           message: 'Data URLs are not allowed in EPUB 3',
           location: reference.location,
         });
@@ -81,7 +82,7 @@ export class ReferenceValidator {
     // Check for file URLs
     if (isFileURL(url)) {
       pushMessage(context.messages, {
-        id: 'RSC-026',
+        id: MessageId.RSC_026,
         message: 'File URLs are not allowed',
         location: reference.location,
       });
@@ -117,7 +118,7 @@ export class ReferenceValidator {
     // Check for absolute paths
     if (hasAbsolutePath(resourcePath)) {
       pushMessage(context.messages, {
-        id: 'RSC-027',
+        id: MessageId.RSC_027,
         message: 'Absolute paths are not allowed in EPUB',
         location: reference.location,
       });
@@ -136,7 +137,7 @@ export class ReferenceValidator {
       forbiddenParentDirTypes.includes(reference.type)
     ) {
       pushMessage(context.messages, {
-        id: 'RSC-028',
+        id: MessageId.RSC_028,
         message: 'Parent directory references (..) are not allowed',
         location: reference.location,
       });
@@ -150,7 +151,7 @@ export class ReferenceValidator {
         // File exists but not declared in manifest - report RSC-008
         if (!context.referencedUndeclaredResources?.has(resourcePath)) {
           pushMessage(context.messages, {
-            id: 'RSC-008',
+            id: MessageId.RSC_008,
             message: `Referenced resource "${resourcePath}" is not declared in the OPF manifest`,
             location: reference.location,
           });
@@ -161,7 +162,7 @@ export class ReferenceValidator {
         // File doesn't exist at all - report RSC-007
         const isLinkRef = reference.type === ReferenceType.LINK;
         pushMessage(context.messages, {
-          id: isLinkRef ? 'RSC-007w' : 'RSC-007',
+          id: isLinkRef ? MessageId.RSC_007w : MessageId.RSC_007,
           message: `Referenced resource not found in EPUB: ${resourcePath}`,
           location: reference.location,
         });
@@ -175,7 +176,7 @@ export class ReferenceValidator {
     // Check if hyperlinks point to spine items
     if (reference.type === ReferenceType.HYPERLINK && !resource?.inSpine) {
       pushMessage(context.messages, {
-        id: 'RSC-011',
+        id: MessageId.RSC_011,
         message: 'Hyperlinks must reference spine items',
         location: reference.location,
       });
@@ -195,7 +196,7 @@ export class ReferenceValidator {
         !resource.hasCoreMediaTypeFallback
       ) {
         pushMessage(context.messages, {
-          id: 'RSC-010',
+          id: MessageId.RSC_010,
           message: 'Publication resource references must point to content documents',
           location: reference.location,
         });
@@ -212,7 +213,7 @@ export class ReferenceValidator {
     // Check if using HTTPS
     if (isHTTP(url) && !isHTTPS(url)) {
       pushMessage(context.messages, {
-        id: 'RSC-031',
+        id: MessageId.RSC_031,
         message: 'Remote resources must use HTTPS',
         location: reference.location,
       });
@@ -228,7 +229,7 @@ export class ReferenceValidator {
 
       if (!allowedRemoteTypes.has(reference.type)) {
         pushMessage(context.messages, {
-          id: 'RSC-006',
+          id: MessageId.RSC_006,
           message: 'Remote resources are only allowed for audio, video, and fonts',
           location: reference.location,
         });
@@ -238,7 +239,7 @@ export class ReferenceValidator {
       const targetResource = reference.targetResource || url;
       if (!this.registry.hasResource(targetResource)) {
         pushMessage(context.messages, {
-          id: 'RSC-008',
+          id: MessageId.RSC_008,
           message: `Referenced resource "${targetResource}" is not declared in the OPF manifest`,
           location: reference.location,
         });
@@ -264,7 +265,7 @@ export class ReferenceValidator {
     // RSC-013: Stylesheets should not have fragment identifiers
     if (reference.type === ReferenceType.STYLESHEET) {
       pushMessage(context.messages, {
-        id: 'RSC-013',
+        id: MessageId.RSC_013,
         message: 'Stylesheet references must not have fragment identifiers',
         location: reference.location,
       });
@@ -278,7 +279,7 @@ export class ReferenceValidator {
 
       if (hasSVGView && reference.type === ReferenceType.HYPERLINK) {
         pushMessage(context.messages, {
-          id: 'RSC-014',
+          id: MessageId.RSC_014,
           message: 'SVG view fragments can only be referenced from SVG documents',
           location: reference.location,
         });
@@ -288,7 +289,7 @@ export class ReferenceValidator {
     // Check if fragment target exists
     if (!this.registry.hasID(resourcePath, fragment)) {
       pushMessage(context.messages, {
-        id: 'RSC-012',
+        id: MessageId.RSC_012,
         message: `Fragment identifier not found: #${fragment}`,
         location: reference.location,
       });
@@ -323,7 +324,7 @@ export class ReferenceValidator {
       if (resource.url.includes('cover-image')) continue;
 
       pushMessage(context.messages, {
-        id: 'OPF-097',
+        id: MessageId.OPF_097,
         message: `Resource declared in manifest but not referenced: ${resource.url}`,
         location: { path: resource.url },
       });

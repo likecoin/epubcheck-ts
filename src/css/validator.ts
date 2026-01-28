@@ -3,6 +3,7 @@
  */
 
 import { type Atrule, type CssNode, type Declaration, type Url, parse, walk } from 'css-tree';
+import { MessageId } from '../messages/message-id.js';
 import { pushMessage } from '../messages/message-registry.js';
 import type { ValidationContext } from '../types.js';
 
@@ -86,7 +87,7 @@ export class CSSValidator {
           if (err.column !== undefined) location.column = err.column;
 
           pushMessage(context.messages, {
-            id: 'CSS-008',
+            id: MessageId.CSS_008,
             message: `CSS parse error: ${error.formattedMessage}`,
             location,
           });
@@ -94,7 +95,7 @@ export class CSSValidator {
       });
     } catch (error) {
       pushMessage(context.messages, {
-        id: 'CSS-008',
+        id: MessageId.CSS_008,
         message: `CSS parse error: ${error instanceof Error ? error.message : 'Unknown error'}`,
         location: { path: resourcePath },
       });
@@ -224,7 +225,7 @@ export class CSSValidator {
     }
 
     pushMessage(context.messages, {
-      id: 'CSS-001',
+      id: MessageId.CSS_001,
       message: `CSS property "${property}" must not be included in an EPUB Style Sheet`,
       location,
     });
@@ -253,7 +254,7 @@ export class CSSValidator {
     // CSS-006: position: fixed is discouraged
     if (value === 'fixed') {
       pushMessage(context.messages, {
-        id: 'CSS-006',
+        id: MessageId.CSS_006,
         message: 'CSS property "position: fixed" is discouraged in EPUB',
         location,
       });
@@ -262,7 +263,7 @@ export class CSSValidator {
     // CSS-019: position: absolute is discouraged
     if (value === 'absolute') {
       pushMessage(context.messages, {
-        id: 'CSS-019',
+        id: MessageId.CSS_019,
         message: 'CSS property "position: absolute" should be used with caution in EPUB',
         location,
       });
@@ -326,7 +327,7 @@ export class CSSValidator {
     // Extract URL from @import prelude
     if (!atRule.prelude) {
       pushMessage(context.messages, {
-        id: 'CSS-002',
+        id: MessageId.CSS_002,
         message: 'Empty @import rule',
         location,
       });
@@ -347,7 +348,7 @@ export class CSSValidator {
 
     if (!importUrl || importUrl.trim() === '') {
       pushMessage(context.messages, {
-        id: 'CSS-002',
+        id: MessageId.CSS_002,
         message: 'Empty or NULL reference found in @import',
         location,
       });
@@ -383,7 +384,7 @@ export class CSSValidator {
     // Report font-face usage
     if (context.options.includeUsage) {
       pushMessage(context.messages, {
-        id: 'CSS-028',
+        id: MessageId.CSS_028,
         message: 'Use of @font-face declaration',
         location,
       });
@@ -392,7 +393,7 @@ export class CSSValidator {
     // Check if @font-face has any declarations
     if (!atRule.block || atRule.block.children.isEmpty) {
       pushMessage(context.messages, {
-        id: 'CSS-019',
+        id: MessageId.CSS_019,
         message: '@font-face declaration has no attributes',
         location,
       });
@@ -420,7 +421,7 @@ export class CSSValidator {
 
     if (!state.hasSrc) {
       pushMessage(context.messages, {
-        id: 'CSS-019',
+        id: MessageId.CSS_019,
         message: '@font-face declaration is missing src property',
         location,
       });
@@ -452,7 +453,7 @@ export class CSSValidator {
 
         if (!urlValue || urlValue.trim() === '') {
           pushMessage(context.messages, {
-            id: 'CSS-002',
+            id: MessageId.CSS_002,
             message: 'Empty or NULL reference found in @font-face src',
             location,
           });
@@ -497,7 +498,7 @@ export class CSSValidator {
 
     if (mimeType && !BLESSED_FONT_TYPES.has(mimeType)) {
       pushMessage(context.messages, {
-        id: 'CSS-007',
+        id: MessageId.CSS_007,
         message: `Font-face reference "${fontUrl}" refers to non-standard font type "${mimeType}"`,
         location,
       });
@@ -515,7 +516,7 @@ export class CSSValidator {
       const manifestItem = packageDoc.manifest.find((item) => item.href === resolvedPath);
       if (manifestItem && !BLESSED_FONT_TYPES.has(manifestItem.mediaType)) {
         pushMessage(context.messages, {
-          id: 'CSS-007',
+          id: MessageId.CSS_007,
           message: `Font-face reference "${fontUrl}" has non-standard media type "${manifestItem.mediaType}" in manifest`,
           location,
         });
@@ -607,7 +608,7 @@ export class CSSValidator {
           }
 
           pushMessage(context.messages, {
-            id: 'CSS-029',
+            id: MessageId.CSS_029,
             message: `Class name "${className}" is reserved for media overlays`,
             location,
           });
@@ -623,7 +624,7 @@ export class CSSValidator {
           }
 
           pushMessage(context.messages, {
-            id: 'CSS-030',
+            id: MessageId.CSS_030,
             message: `Class names starting with "-epub-media-overlay-" are reserved for future use`,
             location,
           });

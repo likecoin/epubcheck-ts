@@ -4,6 +4,7 @@
 
 import { XmlDocument, type XmlElement, type XmlNode } from 'libxml2-wasm';
 import { CSSValidator } from '../css/validator.js';
+import { MessageId } from '../messages/message-id.js';
 import { pushMessage } from '../messages/message-registry.js';
 import type { ResourceRegistry } from '../references/registry.js';
 import { ReferenceType } from '../references/types.js';
@@ -166,7 +167,7 @@ export class ContentValidator {
         );
         if (manifestItem && !manifestItem.properties?.includes('remote-resources')) {
           pushMessage(context.messages, {
-            id: 'OPF-014',
+            id: MessageId.OPF_014,
             message:
               'CSS document references remote resources but manifest item is missing "remote-resources" property',
             location: { path },
@@ -271,7 +272,7 @@ export class ContentValidator {
             location.column = column;
           }
           pushMessage(context.messages, {
-            id: 'HTM-004',
+            id: MessageId.HTM_004,
             message,
             location,
           });
@@ -291,7 +292,7 @@ export class ContentValidator {
 
       if (!hasXhtmlNamespace) {
         pushMessage(context.messages, {
-          id: 'HTM-001',
+          id: MessageId.HTM_001,
           message:
             'XHTML document must have html element with xmlns="http://www.w3.org/1999/xhtml"',
           location: { path },
@@ -302,7 +303,7 @@ export class ContentValidator {
       const head = root.get('.//html:head', { html: 'http://www.w3.org/1999/xhtml' });
       if (!head) {
         pushMessage(context.messages, {
-          id: 'HTM-002',
+          id: MessageId.HTM_002,
           message: 'XHTML document must have a head element',
           location: { path },
         });
@@ -312,7 +313,7 @@ export class ContentValidator {
       const title = root.get('.//html:title', { html: 'http://www.w3.org/1999/xhtml' });
       if (!title) {
         pushMessage(context.messages, {
-          id: 'HTM-003',
+          id: MessageId.HTM_003,
           message: 'XHTML document must have a title element',
           location: { path },
         });
@@ -322,7 +323,7 @@ export class ContentValidator {
       const body = root.get('.//html:body', { html: 'http://www.w3.org/1999/xhtml' });
       if (!body) {
         pushMessage(context.messages, {
-          id: 'HTM-002',
+          id: MessageId.HTM_002,
           message: 'XHTML document must have a body element',
           location: { path },
         });
@@ -342,7 +343,7 @@ export class ContentValidator {
         const hasScripts = this.detectScripts(context, path, root);
         if (hasScripts && !manifestItem?.properties?.includes('scripted')) {
           pushMessage(context.messages, {
-            id: 'OPF-014',
+            id: MessageId.OPF_014,
             message:
               'Content document contains scripts but manifest item is missing "scripted" property',
             location: { path },
@@ -352,7 +353,7 @@ export class ContentValidator {
         const hasMathML = this.detectMathML(context, path, root);
         if (hasMathML && !manifestItem?.properties?.includes('mathml')) {
           pushMessage(context.messages, {
-            id: 'OPF-014',
+            id: MessageId.OPF_014,
             message:
               'Content document contains MathML but manifest item is missing "mathml" property',
             location: { path },
@@ -362,7 +363,7 @@ export class ContentValidator {
         const hasSVG = this.detectSVG(context, path, root);
         if (hasSVG && !manifestItem?.properties?.includes('svg')) {
           pushMessage(context.messages, {
-            id: 'OPF-014',
+            id: MessageId.OPF_014,
             message: 'Content document contains SVG but manifest item is missing "svg" property',
             location: { path },
           });
@@ -371,7 +372,7 @@ export class ContentValidator {
         const hasRemoteResources = this.detectRemoteResources(context, path, root);
         if (hasRemoteResources && !manifestItem?.properties?.includes('remote-resources')) {
           pushMessage(context.messages, {
-            id: 'OPF-014',
+            id: MessageId.OPF_014,
             message:
               'Content document references remote resources but manifest item is missing "remote-resources" property',
             location: { path },
@@ -463,7 +464,7 @@ export class ContentValidator {
       const line = before.split('\n').length;
 
       pushMessage(context.messages, {
-        id: 'HTM-012',
+        id: MessageId.HTM_012,
         message: 'Unescaped ampersand',
         location: { path, line },
       });
@@ -479,7 +480,7 @@ export class ContentValidator {
     const nav = root.get('.//html:nav', { html: 'http://www.w3.org/1999/xhtml' });
     if (!nav) {
       pushMessage(context.messages, {
-        id: 'NAV-001',
+        id: MessageId.NAV_001,
         message: 'Navigation document must have a nav element',
         location: { path },
       });
@@ -501,7 +502,7 @@ export class ContentValidator {
 
     if (!epubTypeAttr?.value.includes('toc')) {
       pushMessage(context.messages, {
-        id: 'NAV-001',
+        id: MessageId.NAV_001,
         message: 'Navigation document nav element must have epub:type="toc"',
         location: { path },
       });
@@ -510,7 +511,7 @@ export class ContentValidator {
     const ol = nav.get('.//html:ol', { html: 'http://www.w3.org/1999/xhtml' });
     if (!ol) {
       pushMessage(context.messages, {
-        id: 'NAV-002',
+        id: MessageId.NAV_002,
         message: 'Navigation document toc nav must contain an ol element',
         location: { path },
       });
@@ -540,7 +541,7 @@ export class ContentValidator {
       if (href && (href.startsWith('http://') || href.startsWith('https://'))) {
         const navType = isToc ? 'toc' : isLandmarks ? 'landmarks' : 'page-list';
         pushMessage(context.messages, {
-          id: 'NAV-010',
+          id: MessageId.NAV_010,
           message: `"${navType}" nav must not link to remote resources; found link to "${href}"`,
           location: { path },
         });
@@ -694,7 +695,7 @@ export class ContentValidator {
       const element = root.get(`.//html:${elemName}`, { html: 'http://www.w3.org/1999/xhtml' });
       if (element) {
         pushMessage(context.messages, {
-          id: 'HTM-055',
+          id: MessageId.HTM_055,
           message: `The "${elemName}" element is discouraged in EPUB`,
           location: { path },
         });
@@ -707,7 +708,7 @@ export class ContentValidator {
     for (const link of links) {
       if (!this.hasAccessibleContent(link as XmlElement)) {
         pushMessage(context.messages, {
-          id: 'ACC-004',
+          id: MessageId.ACC_004,
           message: 'Hyperlink has no accessible text content',
           location: { path },
         });
@@ -719,7 +720,7 @@ export class ContentValidator {
       const altAttr = this.getAttribute(img as XmlElement, 'alt');
       if (altAttr === null) {
         pushMessage(context.messages, {
-          id: 'ACC-005',
+          id: MessageId.ACC_005,
           message: 'Image is missing alt attribute',
           location: { path },
         });
@@ -736,7 +737,7 @@ export class ContentValidator {
       const ariaLabel = this.getAttribute(svgElem, 'aria-label');
       if (!title && !ariaLabel) {
         pushMessage(context.messages, {
-          id: 'ACC-011',
+          id: MessageId.ACC_011,
           message: 'SVG hyperlink has no accessible name (missing title element or aria-label)',
           location: { path },
         });
@@ -754,7 +755,7 @@ export class ContentValidator {
 
       if (!alttext?.value && !annotation && !ariaLabel) {
         pushMessage(context.messages, {
-          id: 'ACC-009',
+          id: MessageId.ACC_009,
           message: 'MathML element should have alttext attribute or annotation for accessibility',
           location: { path },
         });
@@ -818,7 +819,7 @@ export class ContentValidator {
 
       if (!imageMediaTypes.has(manifestItem.mediaType)) {
         pushMessage(context.messages, {
-          id: 'OPF-051',
+          id: MessageId.OPF_051,
           message: `Image has invalid media type "${manifestItem.mediaType}": ${src}`,
           location: { path },
         });
@@ -854,7 +855,7 @@ export class ContentValidator {
           !prefix.startsWith('https://')
         ) {
           pushMessage(context.messages, {
-            id: 'OPF-088',
+            id: MessageId.OPF_088,
             message: `Unknown epub:type prefix "${prefix}": ${epubTypeValue}`,
             location: { path },
           });
@@ -888,7 +889,7 @@ export class ContentValidator {
 
         if (isAlternate && !titleAttr) {
           pushMessage(context.messages, {
-            id: 'CSS-015',
+            id: MessageId.CSS_015,
             message: 'Alternate stylesheet must have a title attribute',
             location: { path },
           });
@@ -902,7 +903,7 @@ export class ContentValidator {
           if (existing) {
             if (!existing.has(expectedRel)) {
               pushMessage(context.messages, {
-                id: 'CSS-005',
+                id: MessageId.CSS_005,
                 message: `Stylesheet with title "${titleAttr}" conflicts with another stylesheet with same title`,
                 location: { path },
               });
@@ -971,7 +972,7 @@ export class ContentValidator {
           // Fixed-layout viewport validation
           if (!contentAttr) {
             pushMessage(context.messages, {
-              id: 'HTM-046',
+              id: MessageId.HTM_046,
               message:
                 'Viewport meta element should have a content attribute in fixed-layout documents',
               location: { path },
@@ -983,7 +984,7 @@ export class ContentValidator {
 
           if (contentLower.includes('width=device-width')) {
             pushMessage(context.messages, {
-              id: 'HTM-047',
+              id: MessageId.HTM_047,
               message:
                 'Viewport width should not be set to "device-width" in fixed-layout documents',
               location: { path },
@@ -992,7 +993,7 @@ export class ContentValidator {
 
           if (contentLower.includes('height=device-height')) {
             pushMessage(context.messages, {
-              id: 'HTM-048',
+              id: MessageId.HTM_048,
               message:
                 'Viewport height should not be set to "device-height" in fixed-layout documents',
               location: { path },
@@ -1001,7 +1002,7 @@ export class ContentValidator {
         } else {
           // Reflowable document viewport validation (HTM-060b)
           pushMessage(context.messages, {
-            id: 'HTM-060b',
+            id: MessageId.HTM_060b,
             message: `EPUB reading systems must ignore viewport meta elements in reflowable documents; viewport declaration "${contentAttr ?? ''}" will be ignored`,
             location: { path },
           });
@@ -1012,7 +1013,7 @@ export class ContentValidator {
     // Only suggest viewport for fixed-layout documents
     if (isFixedLayout && !hasViewportMeta) {
       pushMessage(context.messages, {
-        id: 'HTM-049',
+        id: MessageId.HTM_049,
         message: 'Fixed-layout document should include a viewport meta element',
         location: { path },
       });

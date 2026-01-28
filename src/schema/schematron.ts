@@ -7,9 +7,10 @@
  */
 
 import { evaluateXPathToBoolean, evaluateXPathToNodes } from 'fontoxpath';
+import { MessageId } from '../messages/message-id.js';
+import { pushMessage } from '../messages/message-registry.js';
 import type { Document, Element } from 'slimdom';
 import { sync as parseXmlDocument } from 'slimdom-sax-parser';
-import { pushMessage } from '../messages/message-registry.js';
 import type { ValidationMessage } from '../types.js';
 import { getSchema } from './schemas.generated.js';
 
@@ -93,7 +94,7 @@ export class SchematronValidator {
       }
     } catch (error) {
       pushMessage(messages, {
-        id: 'RSC-005',
+        id: MessageId.RSC_005,
         message: `Schematron validation error: ${error instanceof Error ? error.message : 'Unknown error'}`,
         location: { path: filePath },
       });
