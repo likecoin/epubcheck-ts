@@ -1,7 +1,6 @@
 import { ContentValidator } from './content/index.js';
 import { buildReport } from './core/report.js';
-import { MessageId } from './messages/message-id.js';
-import { pushMessage } from './messages/message-registry.js';
+import { MessageId, pushMessage } from './messages/index.js';
 import { NCXValidator } from './nav/index.js';
 import { OCFValidator } from './ocf/index.js';
 import { OPFValidator } from './opf/index.js';

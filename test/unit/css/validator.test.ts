@@ -282,20 +282,11 @@ describe('CSSValidator', () => {
       expect(context.messages.some((m) => m.id === 'CSS-029')).toBe(true);
     });
 
-    it('should add CSS-030 warning for -epub-media-overlay- prefix', () => {
-      const css = '.-epub-media-overlay-test { color: red; }';
-      validator.validate(context, css, 'styles/test.css');
-
-      expect(context.messages.some((m) => m.id === 'CSS-030')).toBe(true);
-    });
-
     it('should validate non-reserved class names', () => {
       const css = '.my-class { color: red; } .overlay { background: blue; }';
       validator.validate(context, css, 'styles/test.css');
 
-      expect(
-        context.messages.filter((m) => m.id.startsWith('CSS-029') || m.id.startsWith('CSS-030')),
-      ).toHaveLength(0);
+      expect(context.messages.filter((m) => m.id.startsWith('CSS-029'))).toHaveLength(0);
     });
   });
 

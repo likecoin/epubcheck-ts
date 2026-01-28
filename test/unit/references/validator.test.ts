@@ -74,7 +74,7 @@ describe('ReferenceValidator', () => {
       expect(context.messages.some((m) => m.id === 'RSC-020')).toBe(true);
     });
 
-    it('should add RSC-026 error for file URLs', () => {
+    it('should add RSC-030 error for file URLs', () => {
       validator.addReference({
         url: 'file:///path/to/file.html',
         targetResource: 'file:///path/to/file.html',
@@ -83,7 +83,7 @@ describe('ReferenceValidator', () => {
       });
 
       validator.validate(context);
-      expect(context.messages.some((m) => m.id === 'RSC-026')).toBe(true);
+      expect(context.messages.some((m) => m.id === 'RSC-030')).toBe(true);
     });
 
     it('should add RSC-029 error for data URLs in EPUB 3', () => {

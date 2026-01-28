@@ -2,8 +2,7 @@
  * Navigation document validation
  */
 
-import { MessageId } from '../messages/message-id.js';
-import { pushMessage } from '../messages/message-registry.js';
+import { MessageId, pushMessage } from '../messages/index.js';
 import type { ValidationContext } from '../types.js';
 
 /**

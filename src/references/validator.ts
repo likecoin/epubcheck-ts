@@ -2,8 +2,7 @@
  * Cross-reference validator for EPUB resources
  */
 
-import { MessageId } from '../messages/message-id.js';
-import { pushMessage } from '../messages/message-registry.js';
+import { MessageId, pushMessage } from '../messages/index.js';
 import type { ValidationContext, EPUBVersion } from '../types.js';
 import type { ResourceRegistry } from './registry.js';
 import type { Reference } from './types.js';
@@ -79,11 +78,10 @@ export class ReferenceValidator {
       return;
     }
 
-    // Check for file URLs
     if (isFileURL(url)) {
       pushMessage(context.messages, {
-        id: MessageId.RSC_026,
-        message: 'File URLs are not allowed',
+        id: MessageId.RSC_030,
+        message: `File URLs are not allowed in EPUB, but found "${url}"`,
         location: reference.location,
       });
       return;

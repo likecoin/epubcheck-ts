@@ -1,5 +1,4 @@
-import { MessageId } from '../messages/message-id.js';
-import { pushMessage } from '../messages/message-registry.js';
+import { MessageId, pushMessage } from '../messages/index.js';
 import type { ValidationContext } from '../types.js';
 import { parseOPF } from './parser.js';
 import type { ManifestItem, PackageDocument } from './types.js';
@@ -481,8 +480,8 @@ export class OPFValidator {
       ]);
       if (deprecatedTypes.has(item.mediaType)) {
         pushMessage(context.messages, {
-          id: MessageId.OPF_035,
-          message: `Deprecated OEB 1.0 media-type "${item.mediaType}" should not be used`,
+          id: MessageId.OPF_037,
+          message: `Found deprecated media-type "${item.mediaType}"`,
           location: { path: opfPath },
         });
       }
@@ -537,13 +536,13 @@ export class OPFValidator {
       }
     }
 
-    // EPUB 3: Check for required nav document
+    // EPUB 3: Check for required nav document (Schematron in Java, reports RSC-005)
     if (this.packageDoc.version !== '2.0') {
       const hasNav = this.packageDoc.manifest.some((item) => item.properties?.includes('nav'));
       if (!hasNav) {
         pushMessage(context.messages, {
-          id: MessageId.OPF_013,
-          message: 'EPUB 3 must have exactly one manifest item with the "nav" property',
+          id: MessageId.RSC_005,
+          message: 'Exactly one manifest item must declare the "nav" property',
           location: { path: opfPath },
         });
       }

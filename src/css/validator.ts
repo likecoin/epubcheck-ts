@@ -3,8 +3,7 @@
  */
 
 import { type Atrule, type CssNode, type Declaration, type Url, parse, walk } from 'css-tree';
-import { MessageId } from '../messages/message-id.js';
-import { pushMessage } from '../messages/message-registry.js';
+import { MessageId, pushMessage } from '../messages/index.js';
 import type { ValidationContext } from '../types.js';
 
 interface ParseErrorWithLocation {
@@ -610,22 +609,6 @@ export class CSSValidator {
           pushMessage(context.messages, {
             id: MessageId.CSS_029,
             message: `Class name "${className}" is reserved for media overlays`,
-            location,
-          });
-        }
-
-        if (className.startsWith('-epub-media-overlay-')) {
-          const loc = (node as CssNode & { loc?: CssLocation }).loc;
-          const start = loc?.start;
-          const location: { path: string; line?: number; column?: number } = { path: resourcePath };
-          if (start) {
-            location.line = start.line;
-            location.column = start.column;
-          }
-
-          pushMessage(context.messages, {
-            id: MessageId.CSS_030,
-            message: `Class names starting with "-epub-media-overlay-" are reserved for future use`,
             location,
           });
         }

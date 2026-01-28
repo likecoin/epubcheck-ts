@@ -7,8 +7,7 @@
  */
 
 import { evaluateXPathToBoolean, evaluateXPathToNodes } from 'fontoxpath';
-import { MessageId } from '../messages/message-id.js';
-import { pushMessage } from '../messages/message-registry.js';
+import { MessageId, pushMessage } from '../messages/index.js';
 import type { Document, Element } from 'slimdom';
 import { sync as parseXmlDocument } from 'slimdom-sax-parser';
 import type { ValidationMessage } from '../types.js';
@@ -250,7 +249,7 @@ export class SchematronValidator {
 
             if (!result) {
               pushMessage(messages, {
-                id: assertion.id ? `SCH-${assertion.id}` : 'SCH-001',
+                id: MessageId.RSC_005,
                 message: assertion.message,
                 location: { path: filePath },
               });
@@ -279,10 +278,9 @@ export class SchematronValidator {
               // Report is triggered when test is true
               const isWarning = report.message.toUpperCase().startsWith('WARNING');
               pushMessage(messages, {
-                id: report.id ? `SCH-${report.id}` : 'SCH-002',
+                id: isWarning ? MessageId.RSC_017 : MessageId.RSC_005,
                 message: report.message,
                 location: { path: filePath },
-                severityOverride: isWarning ? 'warning' : 'error',
               });
             }
           } catch (evalError) {

@@ -3,8 +3,7 @@
  */
 
 import { XmlDocument, type XmlElement } from 'libxml2-wasm';
-import { MessageId } from '../messages/message-id.js';
-import { pushMessage } from '../messages/message-registry.js';
+import { MessageId, pushMessage } from '../messages/index.js';
 import type { ValidationContext } from '../types.js';
 
 /**
@@ -31,7 +30,7 @@ export class NCXValidator {
 
       if (root.name !== 'ncx') {
         pushMessage(context.messages, {
-          id: MessageId.NCX_001,
+          id: MessageId.RSC_005,
           message: 'NCX document must have ncx as root element',
           location: { path: ncxPath },
         });
@@ -41,7 +40,7 @@ export class NCXValidator {
       const ns = root.nsDeclarations[''];
       if (ns !== 'http://www.daisy.org/z3986/2005/ncx/') {
         pushMessage(context.messages, {
-          id: MessageId.NCX_001,
+          id: MessageId.RSC_005,
           message: 'NCX document must use namespace http://www.daisy.org/z3986/2005/ncx/',
           location: { path: ncxPath },
         });
@@ -71,7 +70,7 @@ export class NCXValidator {
     if (!uidContent || uidContent.trim() === '') {
       const line = uidElement.line;
       pushMessage(context.messages, {
-        id: MessageId.NCX_003,
+        id: MessageId.NCX_006,
         message: 'NCX dtb:uid meta content should not be empty',
         location: { path, line },
       });
@@ -86,7 +85,7 @@ export class NCXValidator {
 
     if (!navMapNode) {
       pushMessage(context.messages, {
-        id: MessageId.NCX_001,
+        id: MessageId.RSC_005,
         message: 'NCX document must have a navMap element',
         location: { path },
       });

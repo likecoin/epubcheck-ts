@@ -1,5 +1,4 @@
-import { MessageId } from '../messages/message-id.js';
-import { pushMessage } from '../messages/message-registry.js';
+import { MessageId, pushMessage } from '../messages/index.js';
 import type { ValidationMessage } from '../types.js';
 import { getSchema, getSchemaNames } from './schemas.generated.js';
 import { BaseSchemaValidator } from './validator.js';
@@ -86,7 +85,7 @@ export class RelaxNGValidator extends BaseSchemaValidator {
       }
     } catch (error) {
       pushMessage(messages, {
-        id: MessageId.RSC_001,
+        id: MessageId.RSC_005,
         message: `Failed to initialize RelaxNG validator: ${error instanceof Error ? error.message : 'Unknown error'}`,
       });
     }

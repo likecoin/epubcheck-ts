@@ -1133,62 +1133,6 @@ describe('ContentValidator', () => {
       expect(warnings).toHaveLength(1);
     });
 
-    it('should warn about device-width in fixed-layout viewport (HTM-047)', () => {
-      const fixedXHTML = `<?xml version="1.0" encoding="UTF-8"?>
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <title>Test</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-  </head>
-  <body>
-    <p>Fixed layout content</p>
-  </body>
-</html>`;
-      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(fixedXHTML)]]);
-      const packageDoc = createPackageDoc([
-        {
-          id: 'ch1',
-          href: 'chapter1.xhtml',
-          mediaType: 'application/xhtml+xml',
-          properties: ['fixed-layout'],
-        },
-      ]);
-      context = createContext(files, packageDoc);
-      validator.validate(context);
-
-      const warnings = context.messages.filter((m) => m.id === 'HTM-047');
-      expect(warnings).toHaveLength(1);
-      expect(warnings[0]?.message).toContain('device-width');
-    });
-
-    it('should warn about device-height in fixed-layout viewport (HTM-048)', () => {
-      const fixedXHTML = `<?xml version="1.0" encoding="UTF-8"?>
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <title>Test</title>
-    <meta name="viewport" content="width=1024, height=device-height" />
-  </head>
-  <body>
-    <p>Fixed layout content</p>
-  </body>
-</html>`;
-      const files = new Map([['OEBPS/chapter1.xhtml', toBytes(fixedXHTML)]]);
-      const packageDoc = createPackageDoc([
-        {
-          id: 'ch1',
-          href: 'chapter1.xhtml',
-          mediaType: 'application/xhtml+xml',
-          properties: ['fixed-layout'],
-        },
-      ]);
-      context = createContext(files, packageDoc);
-      validator.validate(context);
-
-      const warnings = context.messages.filter((m) => m.id === 'HTM-048');
-      expect(warnings).toHaveLength(1);
-      expect(warnings[0]?.message).toContain('device-height');
-    });
-
     it('should accept proper viewport in fixed-layout', () => {
       const fixedXHTML = `<?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml">

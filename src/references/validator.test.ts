@@ -144,7 +144,7 @@ describe('ReferenceValidator', () => {
         createReference('file:///path/to/file', ReferenceType.HYPERLINK, 'OEBPS/nav.xhtml'),
       );
       validator.validate(context);
-      const rscErrors = context.messages.filter((m) => m.id === 'RSC-026');
+      const rscErrors = context.messages.filter((m) => m.id === 'RSC-030');
       expect(rscErrors).toHaveLength(1);
     });
 

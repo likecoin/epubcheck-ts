@@ -386,7 +386,7 @@ describe('OPFValidator', () => {
   });
 
   describe('manifest validation', () => {
-    it('should report error for missing nav document in EPUB 3 (OPF-013)', () => {
+    it('should report error for missing nav document in EPUB 3 (RSC-005)', () => {
       const opf = `<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
@@ -405,7 +405,7 @@ describe('OPFValidator', () => {
       const context = createContext(opf, { 'OEBPS/chapter1.xhtml': '<html/>' });
       validator.validate(context);
 
-      const errors = context.messages.filter((m) => m.id === 'OPF-013');
+      const errors = context.messages.filter((m) => m.id === 'RSC-005');
       expect(errors).toHaveLength(1);
       expect(errors[0]?.message).toContain('nav');
     });

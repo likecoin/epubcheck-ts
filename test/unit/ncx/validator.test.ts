@@ -81,26 +81,26 @@ describe('NCXValidator', () => {
   });
 
   describe('Root element validation', () => {
-    it('should add NCX-001 error when root element is not ncx', () => {
+    it('should add RSC-005 error when root element is not ncx', () => {
       const invalidNCX = '<?xml version="1.0" encoding="UTF-8"?><html><body></body></html>';
       validator.validate(context, invalidNCX, 'OEBPS/toc.ncx');
 
-      expect(context.messages.some((m) => m.id === 'NCX-001')).toBe(true);
+      expect(context.messages.some((m) => m.id === 'RSC-005')).toBe(true);
     });
 
-    it('should add NCX-001 error for wrong namespace', () => {
+    it('should add RSC-005 error for wrong namespace', () => {
       const wrongNamespace =
         '<?xml version="1.0" encoding="UTF-8"?><ncx xmlns="http://wrong.namespace/"></ncx>';
       validator.validate(context, wrongNamespace, 'OEBPS/toc.ncx');
 
-      expect(context.messages.some((m) => m.id === 'NCX-001')).toBe(true);
+      expect(context.messages.some((m) => m.id === 'RSC-005')).toBe(true);
     });
 
-    it('should add NCX-001 error for missing namespace', () => {
+    it('should add RSC-005 error for missing namespace', () => {
       const noNamespace = '<?xml version="1.0" encoding="UTF-8"?><ncx></ncx>';
       validator.validate(context, noNamespace, 'OEBPS/toc.ncx');
 
-      expect(context.messages.some((m) => m.id === 'NCX-001')).toBe(true);
+      expect(context.messages.some((m) => m.id === 'RSC-005')).toBe(true);
     });
   });
 
@@ -138,7 +138,7 @@ describe('NCXValidator', () => {
   });
 
   describe('navMap validation', () => {
-    it('should add NCX-001 error when navMap is missing', () => {
+    it('should add RSC-005 error when navMap is missing', () => {
       const noNavMap = `<?xml version="1.0" encoding="UTF-8"?>
 <ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
 <head>
@@ -148,7 +148,7 @@ describe('NCXValidator', () => {
 </ncx>`;
       validator.validate(context, noNavMap, 'OEBPS/toc.ncx');
 
-      expect(context.messages.some((m) => m.id === 'NCX-001' && m.message.includes('navMap'))).toBe(
+      expect(context.messages.some((m) => m.id === 'RSC-005' && m.message.includes('navMap'))).toBe(
         true,
       );
     });

@@ -29,20 +29,20 @@ export {
 } from './core/report.js';
 
 // Message IDs and registry
-export { MessageId } from './messages/message-id.js';
 export {
-  MESSAGE_REGISTRY,
-  MESSAGE_MAP,
+  MessageId,
   getDefaultSeverity,
+  getMessageInfo,
+  getAllMessages,
   formatMessageList,
   createMessage,
   pushMessage,
-} from './messages/message-registry.js';
+} from './messages/index.js';
 export type {
   MessageInfo,
   MessageSeverity,
   CreateMessageOptions,
-} from './messages/message-registry.js';
+} from './messages/index.js';
 
 // Schema validation
 export type { SchemaValidator } from './schema/index.js';

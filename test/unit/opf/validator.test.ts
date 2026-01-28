@@ -517,7 +517,7 @@ describe('OPFValidator', () => {
       expect(context.messages.some((m) => m.id === 'RSC-006')).toBe(true);
     });
 
-    it('should add OPF-013 error when nav property is missing in EPUB 3', () => {
+    it('should add RSC-005 error when nav property is missing in EPUB 3', () => {
       const context = createValidationContext();
       const packageDoc = createMinimalPackage({
         manifest: [{ id: 'chapter1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' }],
@@ -527,7 +527,7 @@ describe('OPFValidator', () => {
       validatorTest.packageDoc = packageDoc;
       validatorTest.validateManifest(context, 'OEBPS/content.opf');
 
-      expect(context.messages.some((m) => m.id === 'OPF-013')).toBe(true);
+      expect(context.messages.some((m) => m.id === 'RSC-005')).toBe(true);
     });
   });
 

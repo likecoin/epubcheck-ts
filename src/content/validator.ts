@@ -4,8 +4,7 @@
 
 import { XmlDocument, type XmlElement, type XmlNode } from 'libxml2-wasm';
 import { CSSValidator } from '../css/validator.js';
-import { MessageId } from '../messages/message-id.js';
-import { pushMessage } from '../messages/message-registry.js';
+import { MessageId, pushMessage } from '../messages/index.js';
 import type { ResourceRegistry } from '../references/registry.js';
 import { ReferenceType } from '../references/types.js';
 import type { ReferenceValidator } from '../references/validator.js';
@@ -980,25 +979,7 @@ export class ContentValidator {
             continue;
           }
 
-          const contentLower = contentAttr.toLowerCase();
-
-          if (contentLower.includes('width=device-width')) {
-            pushMessage(context.messages, {
-              id: MessageId.HTM_047,
-              message:
-                'Viewport width should not be set to "device-width" in fixed-layout documents',
-              location: { path },
-            });
-          }
-
-          if (contentLower.includes('height=device-height')) {
-            pushMessage(context.messages, {
-              id: MessageId.HTM_048,
-              message:
-                'Viewport height should not be set to "device-height" in fixed-layout documents',
-              location: { path },
-            });
-          }
+          void contentAttr;
         } else {
           // Reflowable document viewport validation (HTM-060b)
           pushMessage(context.messages, {

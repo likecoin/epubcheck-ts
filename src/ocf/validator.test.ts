@@ -244,7 +244,8 @@ describe('OCFValidator', () => {
   });
 
   describe('META-INF validation', () => {
-    it('should report error for missing META-INF directory', () => {
+    it('should report error for missing META-INF directory (via RSC-002 for missing container.xml)', () => {
+      // Java EPUBCheck doesn't have PKG-002; missing META-INF means missing container.xml (RSC-002)
       const data = createEpubZip({
         mimetype: 'application/epub+zip',
       });
@@ -253,7 +254,7 @@ describe('OCFValidator', () => {
 
       validator.validate(context);
 
-      const error = context.messages.find((m) => m.id === 'PKG-002');
+      const error = context.messages.find((m) => m.id === 'RSC-002');
       expect(error).toBeDefined();
     });
 

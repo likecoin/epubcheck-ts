@@ -240,16 +240,6 @@ describe('CSSValidator', () => {
       expect(errors[0]?.message).toContain('media-overlay-playing');
     });
 
-    it('should warn about custom -epub-media-overlay- prefixed classes (CSS-030)', () => {
-      const css = `
-        .-epub-media-overlay-custom { opacity: 0.5; }
-      `;
-      validator.validate(context, css, 'OEBPS/styles.css');
-      const warnings = context.messages.filter((m) => m.id === 'CSS-030');
-      expect(warnings).toHaveLength(1);
-      expect(warnings[0]?.message).toContain('-epub-media-overlay-');
-    });
-
     it('should not report error for regular class names', () => {
       const css = `
         .highlight { background: yellow; }
@@ -257,7 +247,7 @@ describe('CSSValidator', () => {
         .media-item { padding: 10px; }
       `;
       validator.validate(context, css, 'OEBPS/styles.css');
-      const errors = context.messages.filter((m) => m.id === 'CSS-029' || m.id === 'CSS-030');
+      const errors = context.messages.filter((m) => m.id === 'CSS-029');
       expect(errors).toHaveLength(0);
     });
   });
