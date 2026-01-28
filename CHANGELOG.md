@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-01-29
+
+### Changed
+
+- **Refactored message system to use MessageId enum**
+  - Consolidated message definitions into a single enum (`MessageId`)
+  - All message IDs now use enum references instead of string literals
+  - Aligns internal code structure with Java EPUBCheck's approach
+
+### Fixed
+
+- Code formatting cleanup via npm pkg fix
+
 ## [0.3.0] - 2026-01-28
 
 ### Changed
@@ -267,7 +280,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - No media overlays validation
 - No script detection/validation
 
-[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.4...v0.3.0
 [0.2.4]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.2...v0.2.3

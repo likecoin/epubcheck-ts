@@ -14,7 +14,7 @@ import { basename } from 'node:path';
 // Dynamic import to support both ESM and CJS builds
 const { EpubCheck, toJSONReport } = await import('../dist/index.js');
 
-const VERSION = '0.3.0';
+const VERSION = '0.3.1';
 
 // Parse command line arguments
 const { values, positionals } = parseArgs({
