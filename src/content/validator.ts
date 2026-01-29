@@ -132,7 +132,35 @@ export class ContentValidator {
       } else if (item.mediaType === 'text/css' && refValidator) {
         const fullPath = opfDir ? `${opfDir}/${item.href}` : item.href;
         this.validateCSSDocument(context, fullPath, opfDir, refValidator);
+      } else if (item.mediaType === 'image/svg+xml' && registry) {
+        // Extract IDs from SVG documents for fragment validation
+        const fullPath = opfDir ? `${opfDir}/${item.href}` : item.href;
+        this.extractSVGIDs(context, fullPath, registry);
       }
+    }
+  }
+
+  private extractSVGIDs(
+    context: ValidationContext,
+    path: string,
+    registry: ResourceRegistry,
+  ): void {
+    const svgData = context.files.get(path);
+    if (!svgData) {
+      return;
+    }
+
+    const svgContent = new TextDecoder().decode(svgData);
+    let doc: XmlDocument | undefined;
+
+    try {
+      doc = XmlDocument.fromString(svgContent);
+      // Extract IDs using XPath
+      this.extractAndRegisterIDs(path, doc.root, registry);
+    } catch {
+      // SVG parsing failed, skip ID extraction
+    } finally {
+      doc?.dispose();
     }
   }
 
@@ -1226,12 +1254,19 @@ export class ContentValidator {
       }
 
       const resolvedPath = this.resolveRelativePath(docDir, src, opfDir);
-      refValidator.addReference({
+      const hashIndex = resolvedPath.indexOf('#');
+      const targetResource = hashIndex >= 0 ? resolvedPath.slice(0, hashIndex) : resolvedPath;
+      const fragment = hashIndex >= 0 ? resolvedPath.slice(hashIndex + 1) : undefined;
+      const ref: Parameters<typeof refValidator.addReference>[0] = {
         url: src,
-        targetResource: resolvedPath,
+        targetResource,
         type: ReferenceType.IMAGE,
         location: { path, line },
-      });
+      };
+      if (fragment) {
+        ref.fragment = fragment;
+      }
+      refValidator.addReference(ref);
     }
 
     // Also check for images in SVG - use separate queries to avoid XPath 'or' issues
@@ -1267,12 +1302,19 @@ export class ContentValidator {
       }
 
       const resolvedPath = this.resolveRelativePath(docDir, href, opfDir);
-      refValidator.addReference({
+      const hashIndex = resolvedPath.indexOf('#');
+      const targetResource = hashIndex >= 0 ? resolvedPath.slice(0, hashIndex) : resolvedPath;
+      const fragment = hashIndex >= 0 ? resolvedPath.slice(hashIndex + 1) : undefined;
+      const svgImgRef: Parameters<typeof refValidator.addReference>[0] = {
         url: href,
-        targetResource: resolvedPath,
+        targetResource,
         type: ReferenceType.IMAGE,
         location: { path, line },
-      });
+      };
+      if (fragment) {
+        svgImgRef.fragment = fragment;
+      }
+      refValidator.addReference(svgImgRef);
     }
 
     // Check for poster images on video elements

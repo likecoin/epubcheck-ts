@@ -66,14 +66,26 @@ export class ReferenceValidator {
       return;
     }
 
-    // Skip data URLs
+    // Validate data URLs
+    // Data URLs are allowed for images/audio/video/fonts with CMT or intrinsic fallback
+    // but forbidden for hyperlinks (a href, area href), nav links, and cite references
     if (isDataURL(url)) {
       if (this.version.startsWith('3.')) {
-        pushMessage(context.messages, {
-          id: MessageId.RSC_029,
-          message: 'Data URLs are not allowed in EPUB 3',
-          location: reference.location,
-        });
+        const forbiddenDataUrlTypes = [
+          ReferenceType.HYPERLINK,
+          ReferenceType.NAV_TOC_LINK,
+          ReferenceType.NAV_PAGELIST_LINK,
+          ReferenceType.CITE,
+        ];
+        if (forbiddenDataUrlTypes.includes(reference.type)) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_029,
+            message: 'Data URLs are not allowed in this context',
+            location: reference.location,
+          });
+        }
+        // Data URLs with allowed reference types (IMAGE, AUDIO, VIDEO, FONT, etc.)
+        // don't need further validation
       }
       return;
     }

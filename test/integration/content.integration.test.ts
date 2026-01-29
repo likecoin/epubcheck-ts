@@ -104,6 +104,185 @@ describe('Integration Tests - Content Documents', () => {
       expect(result.valid).toBe(true);
       expectNoErrorsOrWarnings(result);
     });
+
+    it('should validate SVG referenced from img, object and iframe elements', async () => {
+      const data = await loadEpub('valid/content-xhtml-svg-reference-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(true);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should validate svg:switch without triggering package switch property', async () => {
+      const data = await loadEpub('valid/content-xhtml-svg-switch-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(true);
+      expectNoErrorsOrWarnings(result);
+    });
+  });
+
+  describe('Hyperlink validation', () => {
+    it('should report a hyperlink to a missing document (RSC-007)', async () => {
+      const data = await loadEpub('invalid/content/content-xhtml-link-to-missing-doc-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-007');
+    });
+
+    it('should report a hyperlink to a missing identifier (RSC-012)', async () => {
+      const data = await loadEpub('invalid/content/content-xhtml-link-to-missing-id-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-012');
+    });
+
+    it('should report a hyperlink to a missing identifier in another document (RSC-012)', async () => {
+      const data = await loadEpub('invalid/content/content-xhtml-link-to-missing-id-xref-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-012');
+    });
+
+    // Skip: Empty href treated as self-reference which triggers other checks
+    it.skip('should allow href values that only contain whitespace', async () => {
+      const data = await loadEpub('valid/content-xhtml-link-href-empty-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(true);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should resolve relative paths starting with a single dot', async () => {
+      const data = await loadEpub('valid/content-xhtml-link-rel-path-dot-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(true);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should report reference to undeclared resource (RSC-007)', async () => {
+      const data = await loadEpub('invalid/content/content-xhtml-referenced-resource-missing-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-007');
+    });
+  });
+
+  describe('Iframe validation', () => {
+    it('should validate an iframe referencing another XHTML document', async () => {
+      const data = await loadEpub('valid/content-xhtml-iframe-basic-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(true);
+      expectNoErrorsOrWarnings(result);
+    });
+  });
+
+  describe('Image validation', () => {
+    it('should validate img element referencing SVG fragments', async () => {
+      const data = await loadEpub('valid/content-xhtml-img-fragment-svg-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(true);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: RSC-009 for non-SVG fragment warnings not implemented
+    it.skip('should warn about non-SVG images referenced as fragments (RSC-009)', async () => {
+      const data = await loadEpub('warnings/content-xhtml-img-fragment-non-svg-warning.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectWarning(result, 'RSC-009');
+    });
+
+    // Skip: srcset attribute parsing not implemented
+    it.skip('should report undeclared resources in img srcset (RSC-008)', async () => {
+      const data = await loadEpub('invalid/content/content-xhtml-img-srcset-undeclared-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-008');
+    });
+  });
+
+  describe('Base URL validation', () => {
+    it('should validate base url can be set', async () => {
+      const data = await loadEpub('valid/content-xhtml-base-url-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(true);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: External base URL handling for relative paths not fully implemented
+    it.skip('should report relative paths as remote when base is external URL (RSC-006)', async () => {
+      const data = await loadEpub('invalid/content/content-xhtml-base-url-remote-relative-path-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-006');
+    });
+  });
+
+  describe('Schema validation', () => {
+    // Skip: RelaxNG schema validation for content documents not fully wired
+    it.skip('should report RelaxNG schema errors (RSC-005)', async () => {
+      const data = await loadEpub('invalid/content/content-xhtml-relaxng-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    // Skip: Schematron validation for content documents not fully wired
+    it.skip('should report Schematron schema errors (RSC-005)', async () => {
+      const data = await loadEpub('invalid/content/content-xhtml-schematron-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    // Skip: data-* attribute handling in schema validation not implemented
+    it.skip('should report invalid elements after data-* attribute (RSC-005)', async () => {
+      const data = await loadEpub('invalid/content/content-xhtml-data-attr-removal-markup-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('should allow fragment identifiers after data-* declaration', async () => {
+      const data = await loadEpub('valid/content-xhtml-data-attr-removal-fragments-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(true);
+      expectNoErrorsOrWarnings(result);
+    });
+  });
+
+  describe('MathML validation', () => {
+    it('should allow MathML with alternative image', async () => {
+      const data = await loadEpub('valid/content-xhtml-mathml-altimg-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(true);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: MathML altimg attribute reference checking not implemented
+    it.skip('should report MathML with alternative image not found (RSC-007)', async () => {
+      const data = await loadEpub('invalid/content/content-xhtml-mathml-altimg-not-found-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-007');
+    });
   });
 });
 

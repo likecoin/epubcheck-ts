@@ -86,7 +86,21 @@ describe('ReferenceValidator', () => {
       expect(context.messages.some((m) => m.id === 'RSC-030')).toBe(true);
     });
 
-    it('should add RSC-029 error for data URLs in EPUB 3', () => {
+    it('should add RSC-029 error for data URLs in hyperlinks (EPUB 3)', () => {
+      // Data URLs are forbidden in hyperlinks (a href, area href)
+      validator.addReference({
+        url: 'data:text/plain,Hello',
+        targetResource: 'data:text/plain,Hello',
+        type: ReferenceType.HYPERLINK,
+        location: { path: 'OEBPS/chapter1.xhtml' },
+      });
+
+      validator.validate(context);
+      expect(context.messages.some((m) => m.id === 'RSC-029')).toBe(true);
+    });
+
+    it('should allow data URLs for images (EPUB 3)', () => {
+      // Data URLs are allowed for images with core media types
       validator.addReference({
         url: 'data:image/png;base64,iVBORw0KG...',
         targetResource: 'data:image/png;base64,iVBORw0KG...',
@@ -95,7 +109,7 @@ describe('ReferenceValidator', () => {
       });
 
       validator.validate(context);
-      expect(context.messages.some((m) => m.id === 'RSC-029')).toBe(true);
+      expect(context.messages.filter((m) => m.id === 'RSC-029')).toHaveLength(0);
     });
 
     it('should not warn for data URLs in EPUB 2', () => {
@@ -505,24 +519,24 @@ describe('ReferenceValidator', () => {
     });
 
     it('should handle EPUB 2 vs EPUB 3 differences', () => {
-      // Data URL should error in EPUB 3
+      // Data URL in hyperlink should error in EPUB 3
       validator.addReference({
         url: 'data:text/plain,hello',
         targetResource: 'data:text/plain,hello',
-        type: ReferenceType.IMAGE,
+        type: ReferenceType.HYPERLINK,
         location: { path: 'OEBPS/chapter1.xhtml' },
       });
 
       validator.validate(context);
       expect(context.messages.some((m) => m.id === 'RSC-029')).toBe(true);
 
-      // Clear and try EPUB 2
+      // Clear and try EPUB 2 - data URLs not checked in EPUB 2
       context.messages = [];
       const epub2Validator = new ReferenceValidator(registry, '2.0');
       epub2Validator.addReference({
         url: 'data:text/plain,hello',
         targetResource: 'data:text/plain,hello',
-        type: ReferenceType.IMAGE,
+        type: ReferenceType.HYPERLINK,
         location: { path: 'OEBPS/chapter1.xhtml' },
       });
 
