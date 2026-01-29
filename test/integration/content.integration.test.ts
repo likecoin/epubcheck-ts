@@ -147,8 +147,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-012');
     });
 
-    // Skip: Empty href treated as self-reference which triggers other checks
-    it.skip('should allow href values that only contain whitespace', async () => {
+    it('should allow href values that only contain whitespace', async () => {
       const data = await loadEpub('valid/content-xhtml-link-href-empty-valid.epub');
       const result = await EpubCheck.validate(data);
 
@@ -192,16 +191,14 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: RSC-009 for non-SVG fragment warnings not implemented
-    it.skip('should warn about non-SVG images referenced as fragments (RSC-009)', async () => {
+    it('should warn about non-SVG images referenced as fragments (RSC-009)', async () => {
       const data = await loadEpub('warnings/content-xhtml-img-fragment-non-svg-warning.epub');
       const result = await EpubCheck.validate(data);
 
       expectWarning(result, 'RSC-009');
     });
 
-    // Skip: srcset attribute parsing not implemented
-    it.skip('should report undeclared resources in img srcset (RSC-008)', async () => {
+    it('should report undeclared resources in img srcset (RSC-008)', async () => {
       const data = await loadEpub('invalid/content/content-xhtml-img-srcset-undeclared-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -275,8 +272,7 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: MathML altimg attribute reference checking not implemented
-    it.skip('should report MathML with alternative image not found (RSC-007)', async () => {
+    it('should report MathML with alternative image not found (RSC-007)', async () => {
       const data = await loadEpub('invalid/content/content-xhtml-mathml-altimg-not-found-error.epub');
       const result = await EpubCheck.validate(data);
 

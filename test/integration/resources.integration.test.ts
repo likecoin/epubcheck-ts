@@ -71,8 +71,7 @@ describe('Integration Tests - Resources', () => {
       expectError(result, 'RSC-006');
     });
 
-    // Skip: Remote script detection via src attribute not implemented
-    it.skip('should report remote script (RSC-006)', async () => {
+    it('should report remote script (RSC-006)', async () => {
       const data = await loadEpub('invalid/content/resources-remote-script-error.epub');
       const result = await EpubCheck.validate(data);
 

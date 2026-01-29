@@ -437,6 +437,8 @@ export class ContentValidator {
         this.extractAndRegisterHyperlinks(path, root, opfDir, refValidator);
         this.extractAndRegisterStylesheets(path, root, opfDir, refValidator);
         this.extractAndRegisterImages(path, root, opfDir, refValidator);
+        this.extractAndRegisterMathMLAltimg(path, root, opfDir, refValidator);
+        this.extractAndRegisterScripts(path, root, opfDir, refValidator);
         this.extractAndRegisterCiteAttributes(path, root, opfDir, refValidator);
         this.extractAndRegisterMediaElements(path, root, opfDir, refValidator);
       }
@@ -1050,7 +1052,7 @@ export class ContentValidator {
     const links = root.find('.//html:a[@href]', { html: 'http://www.w3.org/1999/xhtml' });
     for (const link of links) {
       const href = this.getAttribute(link as XmlElement, 'href');
-      if (!href) continue;
+      if (!href || href.trim() === '') continue;
 
       const line = link.line;
 
@@ -1237,7 +1239,8 @@ export class ContentValidator {
 
     const images = root.find('.//html:img[@src]', { html: 'http://www.w3.org/1999/xhtml' });
     for (const img of images) {
-      const src = this.getAttribute(img as XmlElement, 'src');
+      const imgElem = img as XmlElement;
+      const src = this.getAttribute(imgElem, 'src');
       if (!src) continue;
 
       const line = img.line;
@@ -1250,23 +1253,28 @@ export class ContentValidator {
           type: ReferenceType.IMAGE,
           location: { path, line },
         });
-        continue;
+      } else {
+        const resolvedPath = this.resolveRelativePath(docDir, src, opfDir);
+        const hashIndex = resolvedPath.indexOf('#');
+        const targetResource = hashIndex >= 0 ? resolvedPath.slice(0, hashIndex) : resolvedPath;
+        const fragment = hashIndex >= 0 ? resolvedPath.slice(hashIndex + 1) : undefined;
+        const ref: Parameters<typeof refValidator.addReference>[0] = {
+          url: src,
+          targetResource,
+          type: ReferenceType.IMAGE,
+          location: { path, line },
+        };
+        if (fragment) {
+          ref.fragment = fragment;
+        }
+        refValidator.addReference(ref);
       }
 
-      const resolvedPath = this.resolveRelativePath(docDir, src, opfDir);
-      const hashIndex = resolvedPath.indexOf('#');
-      const targetResource = hashIndex >= 0 ? resolvedPath.slice(0, hashIndex) : resolvedPath;
-      const fragment = hashIndex >= 0 ? resolvedPath.slice(hashIndex + 1) : undefined;
-      const ref: Parameters<typeof refValidator.addReference>[0] = {
-        url: src,
-        targetResource,
-        type: ReferenceType.IMAGE,
-        location: { path, line },
-      };
-      if (fragment) {
-        ref.fragment = fragment;
+      // Parse srcset attribute
+      const srcset = this.getAttribute(imgElem, 'srcset');
+      if (srcset) {
+        this.parseSrcset(srcset, docDir, opfDir, path, line, refValidator);
       }
-      refValidator.addReference(ref);
     }
 
     // Also check for images in SVG - use separate queries to avoid XPath 'or' issues
@@ -1340,6 +1348,78 @@ export class ContentValidator {
         url: poster,
         targetResource: resolvedPath,
         type: ReferenceType.IMAGE,
+        location: { path, line },
+      });
+    }
+  }
+
+  private extractAndRegisterMathMLAltimg(
+    path: string,
+    root: XmlElement,
+    opfDir: string,
+    refValidator: ReferenceValidator,
+  ): void {
+    const docDir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
+
+    const mathElements = root.find('.//math:math[@altimg]', {
+      math: 'http://www.w3.org/1998/Math/MathML',
+    });
+    for (const mathElem of mathElements) {
+      const altimg = this.getAttribute(mathElem as XmlElement, 'altimg');
+      if (!altimg) continue;
+
+      const line = mathElem.line;
+
+      if (altimg.startsWith('http://') || altimg.startsWith('https://')) {
+        refValidator.addReference({
+          url: altimg,
+          targetResource: altimg,
+          type: ReferenceType.IMAGE,
+          location: { path, line },
+        });
+        continue;
+      }
+
+      const resolvedPath = this.resolveRelativePath(docDir, altimg, opfDir);
+      refValidator.addReference({
+        url: altimg,
+        targetResource: resolvedPath,
+        type: ReferenceType.IMAGE,
+        location: { path, line },
+      });
+    }
+  }
+
+  private extractAndRegisterScripts(
+    path: string,
+    root: XmlElement,
+    opfDir: string,
+    refValidator: ReferenceValidator,
+  ): void {
+    const docDir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
+
+    const scripts = root.find('.//html:script[@src]', { html: 'http://www.w3.org/1999/xhtml' });
+    for (const script of scripts) {
+      const src = this.getAttribute(script as XmlElement, 'src');
+      if (!src) continue;
+
+      const line = script.line;
+
+      if (src.startsWith('http://') || src.startsWith('https://')) {
+        refValidator.addReference({
+          url: src,
+          targetResource: src,
+          type: ReferenceType.GENERIC,
+          location: { path, line },
+        });
+        continue;
+      }
+
+      const resolvedPath = this.resolveRelativePath(docDir, src, opfDir);
+      refValidator.addReference({
+        url: src,
+        targetResource: resolvedPath,
+        type: ReferenceType.GENERIC,
         location: { path, line },
       });
     }
@@ -1529,6 +1609,44 @@ export class ContentValidator {
           targetResource: resolvedPath,
           type: ReferenceType.TRACK,
           location: line !== undefined ? { path, line } : { path },
+        });
+      }
+    }
+  }
+
+  private parseSrcset(
+    srcset: string,
+    docDir: string,
+    opfDir: string,
+    path: string,
+    line: number | undefined,
+    refValidator: ReferenceValidator,
+  ): void {
+    // srcset format: "url [descriptor], url [descriptor], ..."
+    const entries = srcset.split(',');
+    for (const entry of entries) {
+      const trimmed = entry.trim();
+      if (!trimmed) continue;
+      // First token is the URL, rest are descriptors (e.g., "2x", "300w")
+      const url = trimmed.split(/\s+/)[0];
+      if (!url) continue;
+
+      const location = line !== undefined ? { path, line } : { path };
+
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        refValidator.addReference({
+          url,
+          targetResource: url,
+          type: ReferenceType.IMAGE,
+          location,
+        });
+      } else {
+        const resolvedPath = this.resolveRelativePath(docDir, url, opfDir);
+        refValidator.addReference({
+          url,
+          targetResource: resolvedPath,
+          type: ReferenceType.IMAGE,
+          location,
         });
       }
     }

@@ -282,6 +282,16 @@ export class ReferenceValidator {
       return;
     }
 
+    // RSC-009: Non-SVG image resources should not have fragment identifiers
+    if (reference.type === ReferenceType.IMAGE && resource?.mimeType !== 'image/svg+xml') {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_009,
+        message: `Fragment identifier used on a non-SVG image resource: ${resourcePath}#${fragment}`,
+        location: reference.location,
+      });
+      return;
+    }
+
     // RSC-014: SVG fragment type mismatch
     // SVG views (svgView(...) or viewBox(...)) can only be referenced from SVG documents
     if (resource?.mimeType === 'image/svg+xml') {
