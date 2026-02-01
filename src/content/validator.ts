@@ -434,7 +434,7 @@ export class ContentValidator {
 
       // Extract hyperlinks and register with reference validator
       if (refValidator && opfDir !== undefined) {
-        this.extractAndRegisterHyperlinks(path, root, opfDir, refValidator);
+        this.extractAndRegisterHyperlinks(context, path, root, opfDir, refValidator);
         this.extractAndRegisterStylesheets(path, root, opfDir, refValidator);
         this.extractAndRegisterImages(path, root, opfDir, refValidator);
         this.extractAndRegisterMathMLAltimg(path, root, opfDir, refValidator);
@@ -1042,6 +1042,7 @@ export class ContentValidator {
   }
 
   private extractAndRegisterHyperlinks(
+    context: ValidationContext,
     path: string,
     root: XmlElement,
     opfDir: string,
@@ -1052,7 +1053,15 @@ export class ContentValidator {
     const links = root.find('.//html:a[@href]', { html: 'http://www.w3.org/1999/xhtml' });
     for (const link of links) {
       const href = this.getAttribute(link as XmlElement, 'href');
-      if (!href || href.trim() === '') continue;
+      if (href === null) continue;
+      if (href.trim() === '') {
+        pushMessage(context.messages, {
+          id: MessageId.HTM_045,
+          message: 'Encountered empty href',
+          location: { path, line: link.line },
+        });
+        continue;
+      }
 
       const line = link.line;
 
