@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-02-02
+
+### Added
+
+- **20+ new integration tests** ported from Java EPUBCheck
+  - Hyperlink validation (RSC-007, RSC-012)
+  - Image validation (SVG fragments, srcset)
+  - Iframe, base URL, MathML, and SVG reference tests
+  - Remote resources tests (audio, video, fonts, stylesheets, scripts)
+- **MathML altimg reference validation** (RSC-007)
+  - Extracts `altimg` attributes from `<math>` elements
+  - Validates referenced images exist in EPUB
+- **Non-SVG fragment warning** (RSC-009)
+  - Warns when non-SVG images are referenced with fragment identifiers
+- **Remote script detection** (RSC-006)
+  - Extracts `<script src>` attributes
+  - Reports remote scripts as forbidden resources
+- **Img srcset parsing** (RSC-008)
+  - Parses `srcset` attribute and validates all referenced images
+  - Detects undeclared resources in srcset
+- **HTM-045 message** for empty href attributes (USAGE severity)
+
+### Fixed
+
+- **Data URL handling** - No longer rejects all data URLs in EPUB 3
+  - Data URLs now allowed for images, audio, video, fonts
+  - Only forbidden in hyperlinks, nav links, and cite references (per spec)
+- **SVG fragment validation** - Fragments stripped before resource lookup
+- **SVG ID extraction** - SVG documents now parsed for ID registration
+  - Enables fragment validation like `image.svg#rect`
+
 ## [0.3.1] - 2026-01-29
 
 ### Changed
@@ -280,7 +311,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - No media overlays validation
 - No script detection/validation
 
-[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.2...HEAD
+[0.3.2]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.4...v0.3.0
 [0.2.4]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.3...v0.2.4

@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~80% | 🟢 URL leaking, CSS references, link elements done |
 
-**Overall: ~70% complete (459 tests passing, 20 skipped)**
+**Overall: ~70% complete (476 tests passing, 28 skipped)**
 
 ---
 
@@ -26,19 +26,20 @@ Quick reference for implementation progress vs Java EPUBCheck.
 
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
-| **Unit Tests** | 425 | 412 | 13 |
-| **Integration Tests** | 54 | 47 | 7 |
-| **Total** | **479** | **459** | **20** |
+| **Unit Tests** | 408 | 391 | 17 |
+| **Integration Tests** | 96 | 85 | 11 |
+| **Total** | **504** | **476** | **28** |
 
 ### Integration Test Files
 
 ```
 test/integration/
-├── epub.test.ts               # 4 tests  - Basic EPUB validation
-├── ocf.integration.test.ts    # 33 tests (30 pass, 3 skip) - OCF/ZIP/container
-├── opf.integration.test.ts    # 18 tests (18 pass, 0 skip)  - Package document
-├── content.integration.test.ts # 11 tests (10 pass, 1 skip) - XHTML/CSS/SVG
-└── nav.integration.test.ts    # 5 tests  (5 pass, 0 skip)   - Navigation
+├── epub.test.ts                 # 4 tests  - Basic EPUB validation
+├── ocf.integration.test.ts      # 30 tests (27 pass, 3 skip) - OCF/ZIP/container
+├── opf.integration.test.ts      # 23 tests (23 pass, 0 skip) - Package document
+├── content.integration.test.ts  # 26 tests (21 pass, 5 skip) - XHTML/CSS/SVG
+├── nav.integration.test.ts      # 5 tests  (5 pass, 0 skip)  - Navigation
+└── resources.integration.test.ts # 8 tests  (6 pass, 2 skip)  - Remote resources
 ```
 
 **Note**: Integration tests imported from Java EPUBCheck test suite (`/Users/william/epubcheck/src/test/resources/epub3/`).
@@ -47,16 +48,16 @@ test/integration/
 
 ```
 test/fixtures/
-├── valid/                 # 18 valid EPUBs
+├── valid/                 # 33 valid EPUBs
 ├── invalid/
 │   ├── ocf/              # 25 OCF error cases
 │   ├── opf/              # 15 OPF error cases
-│   ├── content/          # 6 content error cases
+│   ├── content/          # 16 content error cases
 │   └── nav/              # 4 navigation error cases
-└── warnings/             # 2 warning cases
+└── warnings/             # 8 warning cases
 ```
 
-**Total**: 70 EPUB test fixtures (imported from Java EPUBCheck)
+**Total**: 101 EPUB test fixtures (imported from Java EPUBCheck)
 
 ### Quality: ⭐⭐⭐⭐ (4/5) for implemented features
 
@@ -442,6 +443,13 @@ Unused: MED (0), SCP (0), CHK (0)
 - `NAV-010` - Remote links in toc/landmarks/page-list navigation
 - `RSC-011` - Navigation links to items not in spine
 - Script detection excludes non-JS types (application/ld+json, application/json)
+- `RSC-009` - Non-SVG image fragment identifiers (warning)
+- `HTM-045` - Empty href attribute handling (USAGE severity)
+- MathML altimg reference validation
+- Img srcset attribute parsing
+- Remote script src detection (RSC-006)
+- SVG ID extraction for fragment validation
+- Data URL handling aligned with EPUB 3 spec (allowed for images/audio/video/fonts)
 
 ---
 
