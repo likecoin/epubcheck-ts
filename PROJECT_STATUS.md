@@ -42,7 +42,7 @@ test/integration/
 └── resources.integration.test.ts # 8 tests  (6 pass, 2 skip)  - Remote resources
 ```
 
-**Note**: Integration tests imported from Java EPUBCheck test suite (`/Users/william/epubcheck/src/test/resources/epub3/`).
+**Note**: Integration tests imported from Java EPUBCheck test suite (`../epubcheck/src/test/resources/epub3/`).
 
 ### Test Fixtures
 
@@ -144,8 +144,6 @@ test/fixtures/
 - DOCTYPE obsolete identifiers
 - External entity validation
 - Base URL handling (xml:base, HTML base)
-- Duplicate ID detection (OPF-060)
-- Non-UTF8 filename detection (PKG-027)
 - Media format validation (image magic numbers, corrupt files)
 
 ---
@@ -403,11 +401,14 @@ The following tests from Java EPUBCheck can be added immediately without new imp
 9. **Non-UTF8 detection** - PKG-027 for filenames
 
 ### Medium Priority (Completeness)
-1. **Media overlays** - SMIL validation
-2. **Encryption.xml** - Font obfuscation
-3. **Full WCAG 2.0** - Comprehensive accessibility
-4. **Advanced media** - Format validation, magic numbers
-5. **URL encoding** - Edge cases (percent-encoded paths)
+
+Ordered by severity impact (number of active error/warning messages not yet emitted):
+
+1. **Media overlays** - SMIL validation (10 errors: MED-003/005/007/008/009/010/011/012/013/014, 3 warnings: MED-016/017/018, 1 usage: MED-015, 3 suppressed: MED-001/002/006). Highest impact — 51 Java test scenarios, 0% implemented.
+2. **Encryption.xml** - Font obfuscation (1 error: PKG-026, 1 info: RSC-004). Small scope, quick win.
+3. **Advanced media** - Format validation, magic numbers (3 errors: MED-003/004, PKG-021, 1 warning: PKG-022, 2 suppressed: OPF-051/057).
+4. **URL encoding** - Edge cases (percent-encoded paths). Correctness improvement for existing RSC-* reference resolution, no new message IDs.
+5. **Full WCAG 2.0** - Comprehensive accessibility. Lowest real-world impact — all 15 unimplemented ACC messages (ACC-001/002/003/005/006/007/008/010/012/013/014/015/016/017) are **suppressed** by default. Only fires if user explicitly enables via customMessages. ACC-009 and ACC-011 (usage) are already implemented.
 
 ### Low Priority (Specialized)
 - Dictionary/index advanced validation
@@ -453,40 +454,4 @@ Unused: MED (0), SCP (0), CHK (0)
 
 ---
 
-## Commands
-
-```bash
-npm test              # Run tests in watch mode
-npm run test:run      # Run tests once
-npm run lint          # Check code quality
-npm run typecheck     # TypeScript checks
-npm run build         # Build for production
-```
-
----
-
-## Java Reference
-
-Java EPUBCheck source: `/Users/william/epubcheck`
-
-### Source Code Mappings
-- `com.adobe.epubcheck.ocf` → `src/ocf/`
-- `com.adobe.epubcheck.opf` → `src/opf/`
-- `com.adobe.epubcheck.ops` → `src/content/`
-- `com.adobe.epubcheck.css` → `src/css/`
-- `com.adobe.epubcheck.nav` → `src/nav/`
-- `com.adobe.epubcheck.xml` → `src/schema/`
-
-### Test Suite Location
-- **Base**: `/Users/william/epubcheck/src/test/resources/`
-- **EPUB 3 Tests**: `epub3/` (719 scenarios, 16 categories)
-  - `00-minimal/` - Baseline valid EPUBs (5 scenarios)
-  - `03-resources/` - Cross-reference validation (113 scenarios)
-  - `04-ocf/` - Container/ZIP validation (61 scenarios)
-  - `05-package-document/` - OPF validation (121 scenarios)
-  - `06-content-document/` - XHTML/CSS/SVG (215 scenarios)
-  - `07-navigation-document/` - Nav/NCX (40 scenarios)
-  - `08-layout/` - Rendition/viewport (51 scenarios)
-  - `09-media-overlays/` - SMIL validation (51 scenarios)
-  - `D-vocabularies/` - ARIA, epub:type (56 scenarios)
-- **EPUB 2 Tests**: `epub2/` (96 scenarios)
+See `AGENTS.md` for commands, coding standards, architecture, and Java source mappings.
