@@ -28,8 +28,7 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: CSS syntax error detection (CSS-008) uses css-tree which handles many errors gracefully
-    it.skip('should report CSS syntax errors (CSS-008)', async () => {
+    it('should report CSS syntax errors (CSS-008)', async () => {
       const data = await loadEpub('invalid/content/content-css-syntax-error.epub');
       const result = await EpubCheck.validate(data);
 

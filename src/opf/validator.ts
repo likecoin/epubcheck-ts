@@ -360,6 +360,20 @@ export class OPFValidator {
         continue;
       }
 
+      const isRemote = /^[a-zA-Z][a-zA-Z0-9+\-.]*:/.test(href);
+      if (isRemote) {
+        continue;
+      }
+
+      if (!link.mediaType) {
+        pushMessage(context.messages, {
+          id: MessageId.OPF_093,
+          message:
+            'The "media-type" attribute is required for linked resources located in the EPUB container',
+          location: { path: opfPath },
+        });
+      }
+
       const resolvedPath = resolvePath(opfDir, basePath);
       const resolvedPathDecoded =
         basePathDecoded !== basePath ? resolvePath(opfDir, basePathDecoded) : resolvedPath;
@@ -369,7 +383,6 @@ export class OPFValidator {
         this.manifestByHref.has(basePath) || this.manifestByHref.has(basePathDecoded);
 
       if (!fileExists && !inManifest) {
-        // OPF link elements use RSC-007w (warning) since they're metadata references
         pushMessage(context.messages, {
           id: MessageId.RSC_007w,
           message: `Referenced resource "${resolvedPath}" could not be found in the EPUB`,
@@ -489,10 +502,10 @@ export class OPFValidator {
       // EPUB 3: Validate item properties
       if (this.packageDoc.version !== '2.0' && item.properties) {
         for (const prop of item.properties) {
-          if (!ITEM_PROPERTIES.has(prop) && !prop.includes(':')) {
+          if (!ITEM_PROPERTIES.has(prop)) {
             pushMessage(context.messages, {
-              id: MessageId.OPF_012,
-              message: `Unknown item property: "${prop}" on item "${item.id}"`,
+              id: MessageId.OPF_027,
+              message: `Undefined property: "${prop}"`,
               location: { path: opfPath },
             });
           }

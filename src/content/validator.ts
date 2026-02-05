@@ -1606,6 +1606,34 @@ export class ContentValidator {
       }
     }
 
+    // Extract iframe elements with src attribute
+    const iframeElements = root.find('.//html:iframe[@src]', {
+      html: 'http://www.w3.org/1999/xhtml',
+    });
+    for (const iframe of iframeElements) {
+      const src = this.getAttribute(iframe as XmlElement, 'src');
+      if (!src) continue;
+
+      const line = (iframe as unknown as { line?: number }).line;
+
+      if (src.startsWith('http://') || src.startsWith('https://')) {
+        refValidator.addReference({
+          url: src,
+          targetResource: src,
+          type: ReferenceType.GENERIC,
+          location: line !== undefined ? { path, line } : { path },
+        });
+      } else {
+        const resolvedPath = this.resolveRelativePath(docDir, src, opfDir);
+        refValidator.addReference({
+          url: src,
+          targetResource: resolvedPath,
+          type: ReferenceType.GENERIC,
+          location: line !== undefined ? { path, line } : { path },
+        });
+      }
+    }
+
     // Extract track elements with src attribute
     const trackElements = root.find('.//html:track[@src]', {
       html: 'http://www.w3.org/1999/xhtml',

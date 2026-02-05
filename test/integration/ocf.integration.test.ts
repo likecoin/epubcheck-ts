@@ -77,8 +77,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: Unicode compatibility normalization (NFKC) not implemented
-    it.skip('should allow duplicate filename after Unicode compatibility normalization (NFKC)', async () => {
+    it('should allow duplicate filename after Unicode compatibility normalization (NFKC)', async () => {
       const data = await loadEpub(
         'valid/ocf-filename-duplicate-after-compatibility-normalization-valid.epub',
       );
@@ -275,8 +274,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       expectError(result, 'RSC-007');
     });
 
-    // Skip: iframe resource reference checking not yet implemented
-    it.skip('should report iframe reference not declared in manifest (RSC-007)', async () => {
+    it('should report iframe reference not declared in manifest (RSC-007)', async () => {
       const data = await loadEpub('invalid/ocf/url-xhtml-iframe-missing-resource-error.epub');
       const result = await EpubCheck.validate(data);
 

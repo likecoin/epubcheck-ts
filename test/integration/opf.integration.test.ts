@@ -44,8 +44,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: NCX spine reference validation not yet implemented
-    it.skip('should validate an EPUB with NCX not referencing all spine items', async () => {
+    it('should validate an EPUB with NCX not referencing all spine items', async () => {
       const data = await loadEpub('valid/package-ncx-missing-references-to-spine-valid.epub');
       const result = await EpubCheck.validate(data);
 
@@ -53,8 +52,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: Link media-type validation for remote resources not yet implemented
-    it.skip('should validate an EPUB with link media-type missing for remote resource', async () => {
+    it('should validate an EPUB with link media-type missing for remote resource', async () => {
       const data = await loadEpub('valid/package-link-media-type-missing-remote-valid.epub');
       const result = await EpubCheck.validate(data);
 
@@ -243,8 +241,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectError(result, 'OPF-014');
     });
 
-    // Skip: OPF-027 unknown manifest property detection not yet implemented
-    it.skip('should report unknown manifest item property (OPF-027)', async () => {
+    it('should report unknown manifest item property (OPF-027)', async () => {
       const data = await loadEpub('invalid/opf/package-manifest-prop-unknown-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -281,8 +278,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectWarning(result, 'RSC-007w');
     });
 
-    // Skip: OPF-093 link media-type validation not yet implemented
-    it.skip('should report missing media-type for local linked resource (OPF-093)', async () => {
+    it('should report missing media-type for local linked resource (OPF-093)', async () => {
       const data = await loadEpub('invalid/opf/package-link-media-type-missing-local-error.epub');
       const result = await EpubCheck.validate(data);
 

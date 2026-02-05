@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~80% | 🟢 URL leaking, CSS references, link elements done |
 
-**Overall: ~70% complete (498 tests passing, 55 skipped)**
+**Overall: ~70% complete (505 tests passing, 48 skipped)**
 
 ---
 
@@ -27,17 +27,17 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 398 | 380 | 18 |
-| **Integration Tests** | 155 | 118 | 37 |
-| **Total** | **553** | **498** | **55** |
+| **Integration Tests** | 155 | 125 | 30 |
+| **Total** | **553** | **505** | **48** |
 
 ### Integration Test Files
 
 ```
 test/integration/
 ├── epub.test.ts                 # 4 tests  (4 pass, 0 skip) - Basic EPUB validation
-├── ocf.integration.test.ts      # 47 tests (35 pass, 12 skip) - OCF/ZIP/container
-├── opf.integration.test.ts      # 51 tests (35 pass, 16 skip) - Package document
-├── content.integration.test.ts  # 31 tests (26 pass, 5 skip) - XHTML/CSS/SVG
+├── ocf.integration.test.ts      # 47 tests (37 pass, 10 skip) - OCF/ZIP/container
+├── opf.integration.test.ts      # 51 tests (39 pass, 12 skip) - Package document
+├── content.integration.test.ts  # 31 tests (27 pass, 4 skip) - XHTML/CSS/SVG
 ├── nav.integration.test.ts      # 12 tests (10 pass, 2 skip)  - Navigation
 └── resources.integration.test.ts # 10 tests (8 pass, 2 skip)  - Remote resources
 ```
@@ -115,7 +115,7 @@ test/fixtures/
 - **NCX validation** (NCX-001/002/003/006)
 - **CSS validation** (@font-face, @import, url(), position, forbidden properties CSS-001)
 - **Navigation** (NAV-001/002/010)
-- **Link element validation** (RSC-007w warning for missing resources)
+- **Link element validation** (RSC-007w warning for missing resources, OPF-093 missing media-type)
 - **URL leaking detection** (RSC-026 for path-absolute URLs)
 - **Scripted property** (OPF-014)
 - **MathML/SVG properties** (OPF-014)
@@ -443,6 +443,9 @@ Unused: MED (0), SCP (0), CHK (0)
 - `CSS-001` - Forbidden CSS properties (direction, unicode-bidi)
 - `NAV-010` - Remote links in toc/landmarks/page-list navigation
 - `RSC-011` - Navigation links to items not in spine
+- `OPF-027` - Undefined manifest item properties (including prefixed properties)
+- `OPF-093` - Missing media-type for local linked resources
+- iframe `<iframe src>` reference extraction for RSC-007 validation
 - Script detection excludes non-JS types (application/ld+json, application/json)
 - `RSC-009` - Non-SVG image fragment identifiers (warning)
 - `HTM-045` - Empty href attribute handling (USAGE severity)

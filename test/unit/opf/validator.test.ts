@@ -431,7 +431,7 @@ describe('OPFValidator', () => {
       }
     });
 
-    it('should add OPF-012 warning for unknown item properties', () => {
+    it('should add OPF-027 error for unknown item properties', () => {
       const context = createValidationContext();
       const packageDoc = createMinimalPackage({
         manifest: [
@@ -451,7 +451,7 @@ describe('OPFValidator', () => {
       validatorTest.validateManifest(context, 'OEBPS/content.opf');
 
       expect(
-        context.messages.some((m) => m.id === 'OPF-012' && m.message.includes('unknown-property')),
+        context.messages.some((m) => m.id === 'OPF-027' && m.message.includes('unknown-property')),
       ).toBe(true);
     });
 
