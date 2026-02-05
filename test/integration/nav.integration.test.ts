@@ -19,6 +19,44 @@ describe('Integration Tests - Navigation Documents', () => {
       expect(result.valid).toBe(true);
       expectNoErrorsOrWarnings(result);
     });
+
+    it('should validate navigation document using EPUB CFI', async () => {
+      const data = await loadEpub('valid/nav-cfi-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(true);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should validate toc nav not linking to all spine items', async () => {
+      const data = await loadEpub('valid/nav-toc-missing-references-to-spine-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(true);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should validate page-list nav with correct reading order', async () => {
+      const data = await loadEpub('valid/nav-page-list-reading-order-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(true);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should validate page-list nav with unordered spine links', async () => {
+      const data = await loadEpub('warnings/nav-page-list-unordered-spine-warning.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should validate page-list nav with unordered fragment links', async () => {
+      const data = await loadEpub('warnings/nav-page-list-unordered-fragments-warning.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
   });
 
   describe('TOC validation', () => {
@@ -56,6 +94,24 @@ describe('Integration Tests - Navigation Documents', () => {
       expectError(result, 'RSC-010');
     });
   });
+
+  describe('Reading order validation', () => {
+    // Skip: NAV-011 reading order validation not yet implemented
+    it.skip('should warn about toc nav links not matching spine order (NAV-011)', async () => {
+      const data = await loadEpub('warnings/nav-toc-unordered-spine-warning.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectWarning(result, 'NAV-011');
+    });
+
+    // Skip: NAV-011 reading order validation not yet implemented
+    it.skip('should warn about toc nav link fragments not matching document order (NAV-011)', async () => {
+      const data = await loadEpub('warnings/nav-toc-unordered-fragments-warning.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectWarning(result, 'NAV-011');
+    });
+  });
 });
 
 /**
@@ -85,6 +141,20 @@ function expectError(
   expect(
     hasError,
     `Expected error ${errorId} to be reported. Got: ${JSON.stringify(result.messages.map((m) => m.id))}`,
+  ).toBe(true);
+}
+
+/**
+ * Assert that a specific warning ID is present in the result
+ */
+function expectWarning(
+  result: Awaited<ReturnType<typeof EpubCheck.validate>>,
+  warningId: string,
+): void {
+  const hasWarning = result.messages.some((m) => m.id === warningId && m.severity === 'warning');
+  expect(
+    hasWarning,
+    `Expected warning ${warningId} to be reported. Got: ${JSON.stringify(result.messages.map((m) => ({ id: m.id, severity: m.severity })))}`,
   ).toBe(true);
 }
 

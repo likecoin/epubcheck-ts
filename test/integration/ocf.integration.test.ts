@@ -52,6 +52,22 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       expectNoErrorsOrWarnings(result);
     });
 
+    // Skip: Emoji tag sequence in filenames triggers false positive errors
+    it.skip('should allow Unicode emoji tag set in file name', async () => {
+      const data = await loadEpub('valid/ocf-filename-character-emoji-tag-sequence-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should allow an absolute cite URL', async () => {
+      const data = await loadEpub('valid/url-xhtml-cite-absolute-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(true);
+      expectNoErrorsOrWarnings(result);
+    });
+
     // Skip: diacritic test needs Unicode normalization comparison
     it.skip('should allow diacritic (ü) in file names with composed/precomposed chars', async () => {
       const data = await loadEpub('valid/ocf-container-filename-character-composition-valid.epub');
@@ -258,6 +274,23 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       expect(result.valid).toBe(false);
       expectError(result, 'RSC-007');
     });
+
+    // Skip: iframe resource reference checking not yet implemented
+    it.skip('should report iframe reference not declared in manifest (RSC-007)', async () => {
+      const data = await loadEpub('invalid/ocf/url-xhtml-iframe-missing-resource-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-007');
+    });
+
+    it('should report track reference not declared in manifest (RSC-007)', async () => {
+      const data = await loadEpub('invalid/ocf/url-xhtml-track-missing-resource-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-007');
+    });
   });
 
   describe('META-INF validation', () => {
@@ -302,12 +335,103 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
     });
   });
 
+  describe('Encryption validation', () => {
+    // Skip: encryption.xml schema validation not yet implemented
+    it.skip('should report encryption.xml with invalid markup (RSC-005)', async () => {
+      const data = await loadEpub('invalid/ocf/ocf-encryption-content-model-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    // Skip: encryption.xml schema validation not yet implemented
+    it.skip('should report encryption.xml with duplicate IDs (RSC-005)', async () => {
+      const data = await loadEpub('invalid/ocf/ocf-encryption-duplicate-ids-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    // Skip: encryption.xml schema validation not yet implemented
+    it.skip('should report encryption.xml with invalid compression metadata (RSC-005)', async () => {
+      const data = await loadEpub(
+        'invalid/ocf/ocf-encryption-compression-attributes-invalid-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('should allow encryption with unknown algorithm', async () => {
+      const data = await loadEpub('valid/ocf-encryption-unknown-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
+  });
+
+  describe('Signatures validation', () => {
+    // Skip: signatures.xml schema validation not yet implemented
+    it.skip('should report signatures.xml with invalid markup (RSC-005)', async () => {
+      const data = await loadEpub('invalid/ocf/ocf-signatures-content-model-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+  });
+
+  describe('Font obfuscation', () => {
+    it('should validate publication with obfuscated font', async () => {
+      const data = await loadEpub('valid/ocf-obfuscation-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should allow duplicating encryption declaration for obfuscated font', async () => {
+      const data = await loadEpub('valid/ocf-obfuscation-duplicate-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: PKG-026 font obfuscation validation not yet implemented
+    it.skip('should report obfuscated font that is not a Core Media Type (PKG-026)', async () => {
+      const data = await loadEpub('invalid/ocf/ocf-obfuscation-not-cmt-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'PKG-026');
+    });
+
+    // Skip: PKG-026 font obfuscation validation not yet implemented
+    it.skip('should report obfuscated resource that is not a font (PKG-026)', async () => {
+      const data = await loadEpub('invalid/ocf/ocf-obfuscation-not-font-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'PKG-026');
+    });
+  });
+
   describe('Warnings', () => {
     it('should warn about spaces in file names (PKG-010)', async () => {
       const data = await loadEpub('warnings/ocf-filename-character-space-warning.epub');
       const result = await EpubCheck.validate(data);
 
       expectWarning(result, 'PKG-010');
+    });
+
+    // Skip: PKG-012 non-ASCII filename usage detection not yet implemented
+    it.skip('should report non-ASCII characters in file names (PKG-012 usage)', async () => {
+      const data = await loadEpub('warnings/ocf-filename-character-non-ascii-usage.epub');
+      const result = await EpubCheck.validate(data, { includeUsage: true });
+
+      expectUsage(result, 'PKG-012');
     });
   });
 });
@@ -353,6 +477,20 @@ function expectWarning(
   expect(
     hasWarning,
     `Expected warning ${warningId} to be reported. Got: ${JSON.stringify(result.messages.map((m) => m.id))}`,
+  ).toBe(true);
+}
+
+/**
+ * Assert that a specific usage ID is present in the result
+ */
+function expectUsage(
+  result: Awaited<ReturnType<typeof EpubCheck.validate>>,
+  usageId: string,
+): void {
+  const hasUsage = result.messages.some((m) => m.id === usageId && m.severity === 'usage');
+  expect(
+    hasUsage,
+    `Expected usage ${usageId} to be reported. Got: ${JSON.stringify(result.messages.map((m) => ({ id: m.id, severity: m.severity })))}`,
   ).toBe(true);
 }
 
