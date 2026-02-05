@@ -27,6 +27,50 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expect(result.valid).toBe(true);
       expectNoErrorsOrWarnings(result);
     });
+
+    it('should validate an EPUB with MathML content', async () => {
+      const data = await loadEpub('valid/package-mathml-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(true);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should validate an EPUB with valid NCX', async () => {
+      const data = await loadEpub('valid/package-ncx-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(true);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: NCX spine reference validation not yet implemented
+    it.skip('should validate an EPUB with NCX not referencing all spine items', async () => {
+      const data = await loadEpub('valid/package-ncx-missing-references-to-spine-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(true);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: Link media-type validation for remote resources not yet implemented
+    it.skip('should validate an EPUB with link media-type missing for remote resource', async () => {
+      const data = await loadEpub('valid/package-link-media-type-missing-remote-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(true);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should validate scripted property not required for script data blocks', async () => {
+      const data = await loadEpub(
+        'valid/package-manifest-prop-scripted-not-required-for-script-data-block-valid.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(true);
+      expectNoErrorsOrWarnings(result);
+    });
   });
 
   describe('Manifest validation', () => {
@@ -128,12 +172,84 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectError(result, 'OPF-014');
     });
 
+    it('should report undeclared scripted property for JavaScript (OPF-014)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/package-manifest-prop-scripted-undeclared-javascript-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'OPF-014');
+    });
+
+    it('should report undeclared scripted property for form elements (OPF-014)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/package-manifest-prop-scripted-undeclared-form-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'OPF-014');
+    });
+
+    // Skip: OPF-015 unnecessary property detection not yet implemented
+    it.skip('should report unnecessary scripted property (OPF-015)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/package-manifest-prop-scripted-declared-but-unnecessary-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'OPF-015');
+    });
+
     it('should report undeclared SVG property (OPF-014)', async () => {
       const data = await loadEpub('invalid/opf/package-manifest-prop-svg-undeclared-error.epub');
       const result = await EpubCheck.validate(data);
 
       expect(result.valid).toBe(false);
       expectError(result, 'OPF-014');
+    });
+
+    it('should report undeclared SVG property for partial SVG usage (OPF-014)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/package-manifest-prop-svg-undeclared-partial-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'OPF-014');
+    });
+
+    // Skip: OPF-015 unnecessary property detection not yet implemented
+    it.skip('should report unnecessary SVG property (OPF-015)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/package-manifest-prop-svg-declared-but-unnecessary-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'OPF-015');
+    });
+
+    // Skip: OPF-014 switch property detection not yet implemented
+    it.skip('should report undeclared switch property (OPF-014)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/package-manifest-prop-switch-not-declared-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'OPF-014');
+    });
+
+    // Skip: OPF-027 unknown manifest property detection not yet implemented
+    it.skip('should report unknown manifest item property (OPF-027)', async () => {
+      const data = await loadEpub('invalid/opf/package-manifest-prop-unknown-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'OPF-027');
     });
 
     it('should report undeclared remote-resources property (OPF-014)', async () => {
@@ -145,6 +261,16 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expect(result.valid).toBe(false);
       expectError(result, 'OPF-014');
     });
+
+    // Skip: OPF-018 unnecessary remote-resources detection not yet implemented
+    it.skip('should report unnecessary remote-resources property (OPF-018)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/package-manifest-prop-remote-resource-declared-but-unnecessary-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expectWarning(result, 'OPF-018');
+    });
   });
 
   describe('Link validation', () => {
@@ -153,6 +279,15 @@ describe('Integration Tests - OPF (Package Document)', () => {
       const result = await EpubCheck.validate(data);
 
       expectWarning(result, 'RSC-007w');
+    });
+
+    // Skip: OPF-093 link media-type validation not yet implemented
+    it.skip('should report missing media-type for local linked resource (OPF-093)', async () => {
+      const data = await loadEpub('invalid/opf/package-link-media-type-missing-local-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'OPF-093');
     });
   });
 
@@ -201,12 +336,147 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectError(result, 'RSC-008');
     });
 
+    // Skip: RSC-006 remote image in link detection not yet implemented
+    it.skip('should report remote image in link element (RSC-006)', async () => {
+      const data = await loadEpub('invalid/opf/package-remote-img-in-link-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-006');
+    });
+
+    it('should report undeclared remote audio sources (RSC-008)', async () => {
+      const data = await loadEpub('invalid/opf/package-remote-audio-sources-undeclared-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-008');
+    });
+
+    // Skip: OPF-014 remote font in inline CSS detection not yet implemented
+    it.skip('should report remote font in inline CSS missing property (OPF-014)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/package-remote-font-in-inline-css-missing-property-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'OPF-014');
+    });
+
+    // Skip: OPF-014 remote font in SVG detection not yet implemented
+    it.skip('should report remote font in SVG missing property (OPF-014)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/package-remote-font-in-svg-missing-property-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'OPF-014');
+    });
+
+    // Skip: OPF-014 remote font in XHTML detection not yet implemented
+    it.skip('should report remote font in XHTML missing property (OPF-014)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/package-remote-font-in-xhtml-missing-property-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'OPF-014');
+    });
+
+    // Skip: OPF-014 remote audio in media overlays detection not yet implemented
+    it.skip('should report remote audio in overlays missing property (OPF-014)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/package-remote-audio-in-overlays-missing-property-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'OPF-014');
+    });
+
+    // Skip: OPF-018 remote resource via object param detection not yet implemented
+    it.skip('should warn about remote resource via object param (OPF-018)', async () => {
+      const data = await loadEpub(
+        'warnings/package-manifest-prop-remote-resource-object-param-warning.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expectWarning(result, 'OPF-018');
+    });
+
     it('should validate EPUB with remote resource and inline CSS', async () => {
       const data = await loadEpub('valid/package-remote-resource-and-inline-css-valid.epub');
       const result = await EpubCheck.validate(data);
 
       expect(result.valid).toBe(true);
       expectNoErrorsOrWarnings(result);
+    });
+  });
+
+  describe('Spine reachability validation', () => {
+    // Skip: OPF-096 non-linear reachability check not yet implemented
+    it.skip('should report non-linear content not reachable (OPF-096)', async () => {
+      const data = await loadEpub('invalid/opf/spine-nonlinear-not-reachable-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'OPF-096');
+    });
+
+    it('should validate non-linear content reachable via hyperlink', async () => {
+      const data = await loadEpub('valid/spine-nonlinear-reachable-via-hyperlink-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(true);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should validate non-linear content reachable via navigation', async () => {
+      const data = await loadEpub('valid/spine-nonlinear-reachable-via-nav-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(true);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should validate non-linear content reachable via script', async () => {
+      const data = await loadEpub('valid/spine-nonlinear-reachable-via-script-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(true);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should report spine not listing hyperlink target (RSC-011)', async () => {
+      const data = await loadEpub('invalid/opf/spine-not-listing-hyperlink-target-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-011');
+    });
+
+    it('should report spine not listing navigation document target (RSC-011)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/spine-not-listing-navigation-document-target-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-011');
+    });
+  });
+
+  describe('NCX validation', () => {
+    // Skip: RSC-012 NCX reference validation not yet implemented
+    it.skip('should report invalid NCX reference (RSC-012)', async () => {
+      const data = await loadEpub('invalid/opf/package-ncx-invalid-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-012');
     });
   });
 

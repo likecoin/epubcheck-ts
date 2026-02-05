@@ -140,7 +140,9 @@ describe('Integration Tests - Content Documents', () => {
     });
 
     it('should report a hyperlink to a missing identifier in another document (RSC-012)', async () => {
-      const data = await loadEpub('invalid/content/content-xhtml-link-to-missing-id-xref-error.epub');
+      const data = await loadEpub(
+        'invalid/content/content-xhtml-link-to-missing-id-xref-error.epub',
+      );
       const result = await EpubCheck.validate(data);
 
       expect(result.valid).toBe(false);
@@ -164,7 +166,9 @@ describe('Integration Tests - Content Documents', () => {
     });
 
     it('should report reference to undeclared resource (RSC-007)', async () => {
-      const data = await loadEpub('invalid/content/content-xhtml-referenced-resource-missing-error.epub');
+      const data = await loadEpub(
+        'invalid/content/content-xhtml-referenced-resource-missing-error.epub',
+      );
       const result = await EpubCheck.validate(data);
 
       expect(result.valid).toBe(false);
@@ -218,7 +222,9 @@ describe('Integration Tests - Content Documents', () => {
 
     // Skip: External base URL handling for relative paths not fully implemented
     it.skip('should report relative paths as remote when base is external URL (RSC-006)', async () => {
-      const data = await loadEpub('invalid/content/content-xhtml-base-url-remote-relative-path-error.epub');
+      const data = await loadEpub(
+        'invalid/content/content-xhtml-base-url-remote-relative-path-error.epub',
+      );
       const result = await EpubCheck.validate(data);
 
       expect(result.valid).toBe(false);
@@ -247,7 +253,9 @@ describe('Integration Tests - Content Documents', () => {
 
     // Skip: data-* attribute handling in schema validation not implemented
     it.skip('should report invalid elements after data-* attribute (RSC-005)', async () => {
-      const data = await loadEpub('invalid/content/content-xhtml-data-attr-removal-markup-error.epub');
+      const data = await loadEpub(
+        'invalid/content/content-xhtml-data-attr-removal-markup-error.epub',
+      );
       const result = await EpubCheck.validate(data);
 
       expect(result.valid).toBe(false);
@@ -273,7 +281,9 @@ describe('Integration Tests - Content Documents', () => {
     });
 
     it('should report MathML with alternative image not found (RSC-007)', async () => {
-      const data = await loadEpub('invalid/content/content-xhtml-mathml-altimg-not-found-error.epub');
+      const data = await loadEpub(
+        'invalid/content/content-xhtml-mathml-altimg-not-found-error.epub',
+      );
       const result = await EpubCheck.validate(data);
 
       expect(result.valid).toBe(false);
