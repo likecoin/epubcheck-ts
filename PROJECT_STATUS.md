@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~80% | 🟢 URL leaking, CSS references, link elements done |
 
-**Overall: ~70% complete (476 tests passing, 28 skipped)**
+**Overall: ~70% complete (498 tests passing, 55 skipped)**
 
 ---
 
@@ -26,20 +26,20 @@ Quick reference for implementation progress vs Java EPUBCheck.
 
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
-| **Unit Tests** | 408 | 391 | 17 |
-| **Integration Tests** | 96 | 85 | 11 |
-| **Total** | **504** | **476** | **28** |
+| **Unit Tests** | 398 | 380 | 18 |
+| **Integration Tests** | 155 | 118 | 37 |
+| **Total** | **553** | **498** | **55** |
 
 ### Integration Test Files
 
 ```
 test/integration/
-├── epub.test.ts                 # 4 tests  - Basic EPUB validation
-├── ocf.integration.test.ts      # 30 tests (27 pass, 3 skip) - OCF/ZIP/container
-├── opf.integration.test.ts      # 23 tests (23 pass, 0 skip) - Package document
-├── content.integration.test.ts  # 26 tests (21 pass, 5 skip) - XHTML/CSS/SVG
-├── nav.integration.test.ts      # 5 tests  (5 pass, 0 skip)  - Navigation
-└── resources.integration.test.ts # 8 tests  (6 pass, 2 skip)  - Remote resources
+├── epub.test.ts                 # 4 tests  (4 pass, 0 skip) - Basic EPUB validation
+├── ocf.integration.test.ts      # 47 tests (35 pass, 12 skip) - OCF/ZIP/container
+├── opf.integration.test.ts      # 51 tests (35 pass, 16 skip) - Package document
+├── content.integration.test.ts  # 31 tests (26 pass, 5 skip) - XHTML/CSS/SVG
+├── nav.integration.test.ts      # 12 tests (10 pass, 2 skip)  - Navigation
+└── resources.integration.test.ts # 10 tests (8 pass, 2 skip)  - Remote resources
 ```
 
 **Note**: Integration tests imported from Java EPUBCheck test suite (`../epubcheck/src/test/resources/epub3/`).
@@ -48,16 +48,16 @@ test/integration/
 
 ```
 test/fixtures/
-├── valid/                 # 33 valid EPUBs
+├── valid/                 # 48 valid EPUBs
 ├── invalid/
-│   ├── ocf/              # 25 OCF error cases
-│   ├── opf/              # 15 OPF error cases
-│   ├── content/          # 16 content error cases
+│   ├── ocf/              # 33 OCF error cases
+│   ├── opf/              # 39 OPF error cases
+│   ├── content/          # 21 content error cases
 │   └── nav/              # 4 navigation error cases
-└── warnings/             # 8 warning cases
+└── warnings/             # 9 warning cases
 ```
 
-**Total**: 101 EPUB test fixtures (imported from Java EPUBCheck)
+**Total**: 154 EPUB test fixtures (imported from Java EPUBCheck)
 
 ### Quality: ⭐⭐⭐⭐ (4/5) for implemented features
 
