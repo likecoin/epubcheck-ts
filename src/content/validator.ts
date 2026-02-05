@@ -506,8 +506,8 @@ export class ContentValidator {
     doc: XmlDocument,
     root: XmlElement,
   ): void {
-    const nav = root.get('.//html:nav', { html: 'http://www.w3.org/1999/xhtml' });
-    if (!nav) {
+    const navElements = root.find('.//html:nav', { html: 'http://www.w3.org/1999/xhtml' });
+    if (navElements.length === 0) {
       pushMessage(context.messages, {
         id: MessageId.NAV_001,
         message: 'Navigation document must have a nav element',
@@ -516,28 +516,36 @@ export class ContentValidator {
       return;
     }
 
-    if (!('attrs' in nav)) {
-      return;
+    // Find the nav element with epub:type="toc"
+    let tocNav: (typeof navElements)[0] | undefined;
+    let tocEpubTypeValue = '';
+    for (const nav of navElements) {
+      if (!('attrs' in nav)) continue;
+      const epubTypeAttr = (
+        nav.attrs as { name: string; value: string; prefix?: string; namespaceUri?: string }[]
+      ).find(
+        (attr) =>
+          attr.name === 'type' &&
+          attr.prefix === 'epub' &&
+          attr.namespaceUri === 'http://www.idpf.org/2007/ops',
+      );
+      if (epubTypeAttr?.value.includes('toc')) {
+        tocNav = nav;
+        tocEpubTypeValue = epubTypeAttr.value;
+        break;
+      }
     }
 
-    const epubTypeAttr = (
-      nav.attrs as { name: string; value: string; prefix?: string; namespaceUri?: string }[]
-    ).find(
-      (attr) =>
-        attr.name === 'type' &&
-        attr.prefix === 'epub' &&
-        attr.namespaceUri === 'http://www.idpf.org/2007/ops',
-    );
-
-    if (!epubTypeAttr?.value.includes('toc')) {
+    if (!tocNav) {
       pushMessage(context.messages, {
         id: MessageId.NAV_001,
         message: 'Navigation document nav element must have epub:type="toc"',
         location: { path },
       });
+      return;
     }
 
-    const ol = nav.get('.//html:ol', { html: 'http://www.w3.org/1999/xhtml' });
+    const ol = tocNav.get('.//html:ol', { html: 'http://www.w3.org/1999/xhtml' });
     if (!ol) {
       pushMessage(context.messages, {
         id: MessageId.NAV_002,
@@ -546,7 +554,7 @@ export class ContentValidator {
       });
     }
 
-    this.checkNavRemoteLinks(context, path, root, epubTypeAttr?.value ?? '');
+    this.checkNavRemoteLinks(context, path, root, tocEpubTypeValue);
   }
 
   private checkNavRemoteLinks(
@@ -1069,6 +1077,10 @@ export class ContentValidator {
         continue;
       }
       if (href.startsWith('mailto:') || href.startsWith('tel:')) {
+        continue;
+      }
+      // Skip EPUB CFI references (e.g., "package.opf#epubcfi(/6/2!/4/2/1:1)")
+      if (href.includes('#epubcfi(')) {
         continue;
       }
       if (href.startsWith('#')) {
