@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-02-06
+
+### Added
+
+- **60+ new integration tests** ported from Java EPUBCheck
+  - OCF tests: emoji filenames, encryption.xml, signatures.xml, font obfuscation
+  - OPF tests: manifest properties, link elements, remote resources, spine validation
+  - Nav tests: EPUB CFI, page-list, reading order
+  - Content tests: CSS syntax errors, schema validation
+- **OPF-027**: Undefined manifest property detection
+  - Now correctly reports unknown properties (was incorrectly using OPF-012)
+  - Catches prefixed properties like `rendition:layout-pre-paginated`
+- **OPF-093**: Missing media-type for local linked resources
+  - Reports error when `<link>` element points to local resource without media-type
+- **iframe reference validation** (RSC-007)
+  - Extracts `<iframe src>` attributes and validates referenced resources
+
+### Fixed
+
+- **Remote link false positive** - `<link>` elements with remote URLs (http/https) no longer trigger RSC-007w
+- **Nav document validation** - Now checks all `<nav>` elements, not just the first one
+  - Fixed false NAV-001 when toc nav wasn't the first nav element
+- **EPUB CFI handling** - Links with `#epubcfi(...)` fragments no longer trigger RSC-011
+
 ## [0.3.2] - 2026-02-02
 
 ### Added
@@ -311,7 +335,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - No media overlays validation
 - No script detection/validation
 
-[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.2...HEAD
+[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.3...HEAD
+[0.3.3]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/likecoin/epubcheck-ts/compare/v0.2.4...v0.3.0
