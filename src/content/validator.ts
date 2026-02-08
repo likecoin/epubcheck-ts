@@ -157,8 +157,12 @@ export class ContentValidator {
       doc = XmlDocument.fromString(svgContent);
       // Extract IDs using XPath
       this.extractAndRegisterIDs(path, doc.root, registry);
-    } catch {
-      // SVG parsing failed, skip ID extraction
+    } catch (e) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_016,
+        message: e instanceof Error ? e.message : 'SVG parsing failed',
+        location: { path },
+      });
     } finally {
       doc?.dispose();
     }

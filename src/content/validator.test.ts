@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { ManifestItem, PackageDocument } from '../opf/types.js';
+import { ResourceRegistry } from '../references/registry.js';
 import type { EpubCheckOptions, ValidationContext } from '../types.js';
 import { ContentValidator } from './validator.js';
 
@@ -1182,6 +1183,38 @@ describe('ContentValidator', () => {
 
       const warnings = context.messages.filter((m) => m.id === 'HTM-047');
       expect(warnings).toHaveLength(0);
+    });
+  });
+
+  describe('SVG parse failure', () => {
+    it('should emit RSC-016 when SVG is malformed', () => {
+      const malformedSVG = '<svg><not-closed>';
+      const files = new Map([['OEBPS/image.svg', toBytes(malformedSVG)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'svg1', href: 'image.svg', mediaType: 'image/svg+xml' },
+      ]);
+      context = createContext(files, packageDoc);
+      const registry = new ResourceRegistry();
+      validator.validate(context, registry);
+
+      const fatals = context.messages.filter((m) => m.id === 'RSC-016');
+      expect(fatals).toHaveLength(1);
+      expect(fatals[0]?.location?.path).toBe('OEBPS/image.svg');
+    });
+
+    it('should not emit RSC-016 for valid SVG', () => {
+      const validSVG =
+        '<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg"><rect id="r1"/></svg>';
+      const files = new Map([['OEBPS/image.svg', toBytes(validSVG)]]);
+      const packageDoc = createPackageDoc([
+        { id: 'svg1', href: 'image.svg', mediaType: 'image/svg+xml' },
+      ]);
+      context = createContext(files, packageDoc);
+      const registry = new ResourceRegistry();
+      validator.validate(context, registry);
+
+      const fatals = context.messages.filter((m) => m.id === 'RSC-016');
+      expect(fatals).toHaveLength(0);
     });
   });
 });
