@@ -41,6 +41,12 @@ jobs:
         run: npm run build
         working-directory: examples/web
 
+      - name: Build API docs
+        run: npm run docs:html
+
+      - name: Copy API docs into site
+        run: cp -r docs/html examples/web/dist/docs
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 

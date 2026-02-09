@@ -133,7 +133,7 @@ fileInput.addEventListener('change', async (event) => {
 
 ## API
 
-> Full API reference: [docs/md/globals.md](./docs/md/globals.md)
+> Full API reference: [online](https://likecoin.github.io/epubcheck-ts/docs/) | [markdown](./docs/md/globals.md)
 
 ### `EpubCheck.validate(data, options?)`
 
