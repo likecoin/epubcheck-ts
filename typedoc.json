@@ -1,0 +1,9 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/index.ts"],
+  "tsconfig": "tsconfig.json",
+  "name": "epubcheck-ts",
+  "readme": "README.md",
+  "excludePrivate": true,
+  "excludeInternal": true
+}

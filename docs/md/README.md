@@ -1,3 +1,7 @@
+**epubcheck-ts**
+
+***
+
 # epubcheck-ts
 
 A TypeScript port of [EPUBCheck](https://github.com/w3c/epubcheck) - the official conformance checker for EPUB publications.
@@ -132,8 +136,6 @@ fileInput.addEventListener('change', async (event) => {
 ```
 
 ## API
-
-> Full API reference: [docs/md/globals.md](./docs/md/globals.md)
 
 ### `EpubCheck.validate(data, options?)`
 
@@ -281,7 +283,7 @@ Legend: 🟢 Complete | 🟡 Partial | 🔴 Basic | ❌ Not Started
 
 **Overall Progress: ~70% of Java EPUBCheck features**
 
-See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for detailed comparison.
+See [PROJECT_STATUS.md](_media/PROJECT_STATUS.md) for detailed comparison.
 
 ## Development
 
@@ -321,9 +323,6 @@ npm run build
 | `npm run format` | Format with Biome |
 | `npm run typecheck` | TypeScript type checking |
 | `npm run check` | Run all checks (format + typecheck) |
-| `npm run docs` | Generate API docs (HTML + Markdown) |
-| `npm run docs:html` | Generate HTML API docs to `docs/html/` |
-| `npm run docs:md` | Generate Markdown API docs to `docs/md/` |
 
 ### Project Structure
 
@@ -350,8 +349,6 @@ epubcheck-ts/
 ├── test/
 │   ├── fixtures/          # Test EPUB files
 │   └── integration/       # Integration tests
-├── docs/
-│   └── md/                # Generated API docs (Markdown, checked in)
 ├── examples/
 │   └── web/               # Web demo ✅
 └── dist/                  # Build output
@@ -370,17 +367,17 @@ Legend: ✅ Implemented
 | Integration | Native JS/TS | CLI or Java API |
 | Performance | Comparable | Baseline |
 
-**Note:** epubcheck-ts is currently in active development. See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for detailed feature comparison.
+**Note:** epubcheck-ts is currently in active development. See [PROJECT_STATUS.md](_media/PROJECT_STATUS.md) for detailed feature comparison.
 
 ## Contributing
 
-Contributions are welcome! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+Contributions are welcome! Please read [CONTRIBUTING.md](_media/CONTRIBUTING.md) for guidelines.
 
-For AI agents contributing to this project, see [AGENTS.md](./AGENTS.md).
+For AI agents contributing to this project, see [AGENTS.md](_media/AGENTS.md).
 
 ## License
 
-[GPL-3.0](./LICENSE)
+[GPL-3.0](_media/LICENSE)
 
 This is an independent TypeScript implementation inspired by the Java-based [EPUBCheck](https://github.com/w3c/epubcheck) (BSD-3-Clause). No code was directly copied from the original project.
 

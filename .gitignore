@@ -10,6 +10,9 @@ bin/*.js
 examples/*/dist/
 examples/*/node_modules/
 
+# Generated HTML docs (Markdown docs are kept in repo)
+docs/html/
+
 # Test coverage
 coverage/
 
