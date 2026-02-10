@@ -10,6 +10,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 import { basename } from 'node:path';
+import type { EpubCheckOptions, EPUBProfile, ValidationMessage } from '../src/types.js';
 
 // Dynamic import to support both ESM and CJS builds
 const { EpubCheck, toJSONReport } = await import('../dist/index.js');
@@ -110,12 +111,9 @@ async function main(): Promise<void> {
 
     // Validate
     const startTime = Date.now();
-    const options: {
-      profile?: 'default' | 'dict' | 'edupub' | 'idx' | 'preview';
-      includeUsage?: boolean;
-    } = {};
+    const options: EpubCheckOptions = {};
     if (values.profile) {
-      options.profile = values.profile as 'default' | 'dict' | 'edupub' | 'idx' | 'preview';
+      options.profile = values.profile as EPUBProfile;
     }
     if (values.usage) {
       options.includeUsage = true;
@@ -147,13 +145,11 @@ async function main(): Promise<void> {
     // Console output (unless quiet mode)
     if (!values.quiet) {
       // Group messages by severity
-      const fatal = result.messages.filter((m: { severity: string }) => m.severity === 'fatal');
-      const errors = result.messages.filter((m: { severity: string }) => m.severity === 'error');
-      const warnings = result.messages.filter(
-        (m: { severity: string }) => m.severity === 'warning',
-      );
-      const info = result.messages.filter((m: { severity: string }) => m.severity === 'info');
-      const usage = result.messages.filter((m: { severity: string }) => m.severity === 'usage');
+      const fatal = result.messages.filter((m: ValidationMessage) => m.severity === 'fatal');
+      const errors = result.messages.filter((m: ValidationMessage) => m.severity === 'error');
+      const warnings = result.messages.filter((m: ValidationMessage) => m.severity === 'warning');
+      const info = result.messages.filter((m: ValidationMessage) => m.severity === 'info');
+      const usage = result.messages.filter((m: ValidationMessage) => m.severity === 'usage');
 
       // Print messages with colors
       const printMessages = (
