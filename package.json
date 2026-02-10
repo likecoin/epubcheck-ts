@@ -17,10 +17,7 @@
   "bin": {
     "epubcheck-ts": "bin/epubcheck.js"
   },
-  "files": [
-    "dist",
-    "bin"
-  ],
+  "files": ["dist", "bin"],
   "sideEffects": false,
   "engines": {
     "node": ">=18"
@@ -66,15 +63,7 @@
     "typescript-eslint": "^8.18.1",
     "vitest": "^4.0.18"
   },
-  "keywords": [
-    "epub",
-    "epubcheck",
-    "validation",
-    "ebook",
-    "w3c",
-    "accessibility",
-    "a11y"
-  ],
+  "keywords": ["epub", "epubcheck", "validation", "ebook", "w3c", "accessibility", "a11y"],
   "author": "",
   "license": "GPL-3.0-only",
   "repository": {
