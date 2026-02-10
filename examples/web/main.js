@@ -82,42 +82,75 @@ function displayResults(result, fileName) {
   resultsSection.hidden = false;
   currentMessages = result.messages;
 
+  const hasMessages = result.messages.length > 0;
+
   // Summary
   resultsSummary.className = `results-summary ${result.valid ? 'valid' : 'invalid'}`;
   resultsSummary.innerHTML = result.valid
     ? `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Valid EPUB`
     : `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> Invalid EPUB`;
 
-  // Stats
-  resultsStats.innerHTML = `
-    <div class="stat-card fatal">
-      <div class="count">${result.fatalCount}</div>
-      <div class="label">Fatal</div>
-    </div>
-    <div class="stat-card error">
-      <div class="count">${result.errorCount}</div>
-      <div class="label">Errors</div>
-    </div>
-    <div class="stat-card warning">
-      <div class="count">${result.warningCount}</div>
-      <div class="label">Warnings</div>
-    </div>
-    <div class="stat-card info">
-      <div class="count">${result.infoCount}</div>
-      <div class="label">Info</div>
-    </div>
-    <div class="stat-card usage">
-      <div class="count">${result.usageCount || 0}</div>
-      <div class="label">Usage</div>
-    </div>
-  `;
+  // Show/hide stats and messages based on whether there are any
+  resultsStats.hidden = !hasMessages;
+  document.getElementById('messagesContainer').hidden = !hasMessages;
 
-  // Reset filter
-  filterButtons.forEach((b) => b.classList.remove('active'));
-  filterButtons[0].classList.add('active');
-  currentFilter = 'all';
+  // Success banner for valid EPUB with no messages
+  let successBanner = document.getElementById('successBanner');
+  if (!successBanner) {
+    successBanner = document.createElement('div');
+    successBanner.id = 'successBanner';
+    successBanner.className = 'success-banner';
+    resultsStats.parentNode.insertBefore(successBanner, resultsStats);
+  }
 
-  renderMessages();
+  if (result.valid && !hasMessages) {
+    successBanner.hidden = false;
+    successBanner.innerHTML = `
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="16 9 10.5 14.5 8 12"></polyline>
+        </svg>
+      </div>
+      <div class="success-title">All checks passed</div>
+      <div class="success-detail">${escapeHtml(fileName)} is a valid EPUB with no errors, warnings, or issues.</div>
+    `;
+  } else {
+    successBanner.hidden = true;
+  }
+
+  if (hasMessages) {
+    // Stats
+    resultsStats.innerHTML = `
+      <div class="stat-card fatal">
+        <div class="count">${result.fatalCount}</div>
+        <div class="label">Fatal</div>
+      </div>
+      <div class="stat-card error">
+        <div class="count">${result.errorCount}</div>
+        <div class="label">Errors</div>
+      </div>
+      <div class="stat-card warning">
+        <div class="count">${result.warningCount}</div>
+        <div class="label">Warnings</div>
+      </div>
+      <div class="stat-card info">
+        <div class="count">${result.infoCount}</div>
+        <div class="label">Info</div>
+      </div>
+      <div class="stat-card usage">
+        <div class="count">${result.usageCount || 0}</div>
+        <div class="label">Usage</div>
+      </div>
+    `;
+
+    // Reset filter
+    filterButtons.forEach((b) => b.classList.remove('active'));
+    filterButtons[0].classList.add('active');
+    currentFilter = 'all';
+
+    renderMessages();
+  }
 }
 
 const SEVERITY_ORDER = { fatal: 0, error: 1, warning: 2, info: 3, usage: 4 };

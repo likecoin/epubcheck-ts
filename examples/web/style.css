@@ -334,6 +334,34 @@ header h1 {
   color: var(--color-text-muted);
 }
 
+/* Success Banner */
+.success-banner {
+  text-align: center;
+  padding: 2.5rem 2rem;
+  margin-bottom: 1rem;
+}
+
+.success-icon {
+  color: var(--color-success);
+  margin-bottom: 1rem;
+}
+
+.success-icon svg {
+  filter: drop-shadow(0 0 12px rgba(34, 197, 94, 0.4));
+}
+
+.success-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-success);
+  margin-bottom: 0.5rem;
+}
+
+.success-detail {
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+}
+
 /* About Section */
 .about-section {
   margin-top: 3rem;
