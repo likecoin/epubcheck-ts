@@ -2,217 +2,194 @@
 
 ## Project Overview
 
-**epubcheck-ts** is a TypeScript port of the Java-based [EPUBCheck](https://github.com/w3c/epubcheck) library for validating EPUB publications against EPUB 2.x and 3.x specifications. The project aims for 1:1 feature parity with the Java implementation while running cross-platform in Node.js 18+ and modern browsers with zero native dependencies.
-
-**Current Status:** ~20% feature parity with Java EPUBCheck (see PROJECT_STATUS.md for detailed comparison)
+**epubcheck-ts** is a TypeScript port of Java-based [EPUBCheck](https://github.com/w3c/epubcheck) for validating EPUB 2.x/3.x publications. Runs cross-platform in Node.js 18+ and modern browsers with zero native dependencies. Currently ~70% feature parity with Java implementation (see PROJECT_STATUS.md).
 
 **Key Technologies:**
-- TypeScript 5.7+ with strict type checking (ESM-first with `.js` extensions)
+- TypeScript 5.7+ with strict type checking (ESM-first with `.js` extensions required)
 - Node.js 18+ (tested on 18, 20, 22)
-- Dependencies: `libxml2-wasm` (XML/schema validation), `fflate` (ZIP), `css-tree` (CSS), `fontoxpath` (XPath)
-- Build: `tsup` (ESM + CJS), Test: `vitest`, Lint: `eslint` + `biome`
+- Dependencies: libxml2-wasm (XML/schema), fflate (ZIP), css-tree (CSS), fontoxpath (XPath)
+- Build: tsup (ESM + CJS), Test: vitest, Lint: eslint + biome
 
 ## Build & Validation Workflow
 
-**CRITICAL: Always run commands in this exact order to avoid issues:**
+**⚠️ CRITICAL: Commands must run in this exact order:**
 
-### 1. Initial Setup (Required)
+### 1. Initial Setup
 ```bash
-npm install  # Takes ~5s, installs 245 packages. MUST run before any other command.
+npm install              # ~4s, 227 packages. Required before any other command.
 ```
 
 ### 2. Development Workflow
 ```bash
-# Run ALL checks before committing (matches CI):
-npm run lint       # ESLint - strict TypeScript rules (takes ~2s)
-npm run typecheck  # tsc --noEmit (takes ~3s)
-npm test -- --run  # Vitest - all tests pass (currently 82 pass, 1 skipped)
-npm run build      # tsup builds ESM + CJS + DTS (takes ~2s)
+# Build FIRST (required for typecheck to pass)
+npm run build            # ~2s. Creates dist/ needed by bin/epubcheck.ts
 
-# Or run format + typecheck together:
-npm run check      # biome check + tsc --noEmit (takes ~3s)
+# Then run validations
+npm run lint             # ~5s. CURRENTLY FAILS: 59 errors in bin/epubcheck.ts
+                         # ✅ src/ has 0 errors - don't add new ones!
+npm run typecheck        # ~2s. Requires dist/ to exist
+npm test -- --run        # ~4s. 507 passing, 48 skipped
+npm run format           # Auto-fix formatting. ALWAYS run before commit!
+
+# Combined check (after build)
+npm run check            # ~8s. biome format + eslint + typecheck
 ```
+
+**Why build order matters:**
+- `bin/epubcheck.ts` imports from `dist/index.js`
+- Without build, typecheck fails with "Cannot find module '../dist/index.js'"
 
 ### 3. Common Commands
 ```bash
-npm run dev          # Watch mode build (for development)
-npm test             # Interactive test watch mode
-npm run test:coverage # Coverage report (80% thresholds)
-npm run lint:fix     # Auto-fix ESLint issues
-npm run format       # Auto-fix Biome formatting
-npm run clean        # Remove dist/ and coverage/
+npm run dev              # Watch mode build
+npm test                 # Interactive test watch
+npm run test:coverage    # Coverage report (80% thresholds)
+npm run clean            # Remove dist/, coverage/. Use when build issues occur.
 ```
 
-### 4. Known Issues & Workarounds
-
-- **Formatting**: Some files have Biome formatting issues (`src/core/report.ts`, `examples/web/main.js`). Run `npm run format` to fix before committing.
-- **Security**: `npm install` reports 6 moderate vulnerabilities (transitive deps). These are in dev dependencies only and can be ignored.
-- **Test timeout**: Default is 10s. If tests timeout, check `vitest.config.ts`.
+### 4. Known Issues
+- **Build dependency**: typecheck fails without dist/ - always build first
+- **Lint errors**: bin/epubcheck.ts has 59 errors (known issue). src/ must stay at 0.
+- **CI failure**: CI currently fails on lint step due to bin/ errors
+- **Stale builds**: Run `npm run clean && npm run build` if changes don't reflect
 
 ## CI/CD Pipeline
 
-**GitHub Actions CI** (`.github/workflows/ci.yml`) runs on every push/PR:
+`.github/workflows/ci.yml` runs on every push/PR:
+- Matrix: Node.js 18, 20, 22 on Ubuntu  
+- Steps: checkout → setup → `npm ci` → **build** → lint → typecheck → test
+- **Currently FAILS on lint** (59 bin/ errors)
 
-1. Matrix build: Node.js 18, 20, 22 on Ubuntu
-2. Steps: checkout → setup Node → `npm ci` → lint → typecheck → test → build
-3. **Key difference**: CI uses `npm ci` (clean install) vs `npm install` (dev)
-
-To replicate CI locally:
+Replicate CI locally:
 ```bash
-rm -rf node_modules package-lock.json
-npm install  # Generates fresh lockfile
-npm run lint && npm run typecheck && npm test -- --run && npm run build
+rm -rf node_modules dist
+npm ci                   # ~2s, clean reproducible install
+npm run build            # Build first!
+npm run lint             # Will fail (exit code 1)
+npm run typecheck        # Requires build
+npm test -- --run        # 507 pass
 ```
+
+**To pass CI:** Either fix bin/epubcheck.ts types OR add `bin/` to eslint ignores
 
 ## Project Architecture
 
-### Directory Structure
 ```
 src/
-├── index.ts              # Public API exports (keep minimal)
-├── checker.ts            # Main EpubCheck class & validation orchestration
+├── index.ts              # Public API exports
+├── checker.ts            # Main validation orchestrator
 ├── types.ts              # Shared TypeScript interfaces
-├── core/                 # Report generation, context management
-├── ocf/                  # OCF Container (ZIP) validation (~30% complete)
-│   ├── validator.ts      # Mimetype, container.xml, ZIP structure
-│   └── zip.ts            # fflate-based ZIP reader
-├── opf/                  # Package Document (OPF) validation (~35% complete)
-│   ├── parser.ts         # OPF XML parsing
-│   ├── validator.ts      # Metadata, manifest, spine, fallbacks
-│   └── types.ts          # OPF-specific types
-├── content/              # Content Document validation (~15% complete)
-│   └── validator.ts      # XHTML/SVG validation (regex-based, TODO: DOM)
-├── nav/                  # Navigation validation (~5% complete)
-│   └── validator.ts      # EPUB 3 nav, NCX basic checks
-├── schema/               # Schema validation (0% - stubs only)
-│   ├── relaxng.ts        # RelaxNG via libxml2-wasm (TODO)
-│   ├── xsd.ts            # XSD validation (TODO)
-│   └── validator.ts      # Schema loading infrastructure
-├── references/           # Cross-reference validation (partial)
-│   ├── registry.ts       # Resource ID tracking
-│   └── validator.ts      # Link target validation
-├── css/                  # CSS validation (0% - parser available)
-│   └── validator.ts      # css-tree integration (TODO)
-└── messages/             # Error messages & i18n
-    ├── message-id.ts     # Message ID enum (PKG-*, OPF-*, HTM-*, etc.)
-    └── index.ts          # Message formatting
+├── core/                 # Report generation, context
+├── ocf/                  # ZIP/container validation (~90%)
+├── opf/                  # Package document validation (~85%)
+├── content/              # XHTML/SVG validation (~75%)
+├── nav/                  # Navigation validation (~40%)
+├── ncx/                  # EPUB 2 NCX validation
+├── css/                  # CSS validation (~70%)
+├── schema/               # RelaxNG/XSD/Schematron (~50%)
+├── references/           # Cross-reference validation (~80%)
+└── messages/             # Error messages & registry
+    ├── messages.ts       # Registry: message IDs → default severities
+    └── index.ts          # pushMessage helper, re-exports
+
+test/
+├── unit/                 # Co-located unit tests (*.test.ts)
+├── integration/          # E2E tests imported from Java EPUBCheck
+└── fixtures/             # 154 EPUB test files from Java
+
+Configuration: package.json, tsconfig.json, tsup.config.ts, vitest.config.ts, eslint.config.js, biome.json
 ```
 
-### Key Files to Know
+## Key Conventions
 
-- **Configuration:**
-  - `package.json` - scripts, dependencies, exports
-  - `tsconfig.json` - strict TypeScript settings, NodeNext module resolution
-  - `tsup.config.ts` - build configuration (ESM + CJS + DTS)
-  - `vitest.config.ts` - test configuration, 80% coverage thresholds
-  - `eslint.config.js` - TypeScript ESLint rules (strict, explicit types)
-  - `biome.json` - formatting rules (line width 100, single quotes)
-
-- **Entry Points:**
-  - `src/index.ts` - public API exports
-  - `src/checker.ts` - main validation logic (see TODOs at lines 94, 97)
-
-- **Testing:**
-  - Tests co-located with source: `*.test.ts` (6 test files)
-  - No integration tests or fixtures yet
-  - Run specific test: `npm test -- src/ocf/validator.test.ts`
-
-### Important Patterns
-
-**TypeScript Conventions:**
+**TypeScript imports (critical):**
 ```typescript
 // ALWAYS use .js extensions for local imports (NodeNext resolution)
-import type { ValidationMessage } from './types.js';  // ✓ Correct
-import { Report } from './core/report.js';            // ✓ Correct
-import { ValidationMessage } from './types';          // ✗ Wrong - missing .js
-
-// Use type imports for types only (verbatimModuleSyntax)
-import type { Foo } from './types.js';                // ✓ For types
-import { bar } from './utils.js';                     // ✓ For values
+import type { ValidationMessage } from './types.js';  // ✓ type-only import
+import { Report } from './core/report.js';            // ✓ value import
+import { ValidationMessage } from './types';          // ✗ missing .js extension
 ```
 
-**Message IDs:** Use same IDs as Java EPUBCheck for compatibility:
-- Format: `PREFIX-NNN` (e.g., `PKG-006`, `OPF-030`, `HTM-001`)
-- Prefixes: PKG (container), OPF (package doc), HTM (HTML), CSS, NAV, RSC (resources), ACC (accessibility)
-- See `src/messages/message-id.ts` for full list (~165 defined, ~35 used)
-
-**Test Structure:** Use Vitest with globals enabled:
+**Message IDs** (compatibility with Java EPUBCheck):
 ```typescript
-import { describe, it, expect } from 'vitest';
+import { MessageId, pushMessage } from '../messages/index.js';
 
-describe('ComponentName', () => {
-  it('should do something specific', () => {
-    // Arrange, Act, Assert
-  });
+// Registry auto-maps IDs to severities
+pushMessage(context.messages, {
+  id: MessageId.PKG_006,
+  message: 'Mimetype must be uncompressed',
+  location: { path: 'mimetype' },
 });
 ```
 
-## Areas Under Active Development
+Format: `PREFIX-NNN` (PKG-*, OPF-*, HTM-*, CSS-*, NAV-*, NCX-*, RSC-*, ACC-*, MED-*)
 
-**TODO markers in codebase:**
-- `src/checker.ts:94, 97` - Navigation and schema validation not implemented
-- `src/ocf/validator.ts:147` - Need libxml2-wasm for proper XML parsing
-- `src/schema/relaxng.ts:31, 72` - Schema loading from bundled schemas
-- `src/references/validator.test.ts:100` - ID registration logic needs fixing
-
-**High-priority missing features:**
-1. Schema validation (RelaxNG, XSD, Schematron) - required for many validations
-2. Full XML DOM parsing - currently using regex (error-prone)
-3. Cross-reference validation - link targets, fragments, unused resources
-4. CSS validation - parser available (css-tree), validation not implemented
+**Naming conventions:**
+- Files: kebab-case (`message-id.ts`, `zip-reader.ts`)
+- Classes/Types: PascalCase (`EpubCheck`, `ValidationMessage`)
+- Functions/vars: camelCase (`validateContainer`, `errorCount`)
+- Constants: UPPER_SNAKE_CASE (`DEFAULT_OPTIONS`)
 
 ## Making Changes
 
 **Before coding:**
-1. Review `AGENTS.md` for detailed coding guidelines
-2. Check `PROJECT_STATUS.md` for feature completeness
-3. Search for existing TODOs related to your work: `grep -r "TODO" src/`
+1. Check `CONTRIBUTING.md` - coding standards, testing patterns, porting guidelines
+2. Check `PROJECT_STATUS.md` - feature completion %, known issues, skipped tests
+3. Check `AGENTS.md` - AI agent-specific context (Java source location, CLI usage)
 
 **During development:**
-1. Keep changes minimal - this is a port, not a rewrite
-2. Preserve Java EPUBCheck message IDs and validation behavior
-3. Use TypeScript idioms, don't directly translate Java patterns
-4. Write co-located tests (`foo.ts` → `foo.test.ts`)
-5. Avoid Node.js-specific APIs in core code (must run in browsers)
+- Keep changes minimal (this is a port, not a rewrite)
+- Preserve Java EPUBCheck message IDs and validation behavior
+- Write co-located tests: `foo.ts` → `foo.test.ts`
+- Avoid Node.js-specific APIs in src/ (must run in browsers)
 
 **Before committing:**
 ```bash
-npm run lint       # Must pass (1 warning currently acceptable)
-npm run typecheck  # Must pass
-npm test -- --run  # All tests must pass (some skipped tests are acceptable)
-npm run build      # Must succeed
+npm run clean && npm run build
+npx eslint src/          # Check only src/ (must have 0 errors)
+npm run typecheck        # Must pass
+npm test -- --run        # 507 pass, 48 skip OK
+npm run format           # ALWAYS run - auto-fixes formatting
+git diff --exit-code     # Verify no uncommitted formatting changes
 ```
 
-**Validation Checklist:**
-- [ ] TypeScript strict mode compliance (no `any`, explicit return types)
-- [ ] ESM imports with `.js` extensions
-- [ ] Type-only imports use `import type`
-- [ ] Message IDs match Java EPUBCheck
-- [ ] Tests added/updated
-- [ ] No Node.js-specific APIs in src/ (except examples/)
-- [ ] Biome formatting applied (`npm run format`)
+## Troubleshooting
+
+**Build Failures:**
+- `Cannot find module '../dist/index.js'` → Run `npm run build` before typecheck
+- Stale build, changes not reflected → `npm run clean && npm run build`
+- `npm ci` vs `npm install` → Use `npm install` for dev, `npm ci` to match CI
+
+**Test Failures:**
+- Tests fail after code changes → Rebuild: `npm run build && npm test -- --run`
+- Tests timeout → Increase in vitest.config.ts (currently 10s)
+
+**Lint Failures:**
+- 59 lint errors → Known issue in bin/. Check your changes: `npx eslint src/`
+- CI fails on lint → Fix bin/ types OR add `bin/` to eslint ignores (temporary)
+
+**Common Mistakes:**
+1. Running typecheck before build (always build first!)
+2. Forgetting to format (always run `npm run format`)
+3. Testing with stale dist/ (use `npm run clean` when in doubt)
+4. Adding new lint errors to src/ (src/ must stay at 0 errors)
 
 ## Quick Reference
 
-**File Naming:** kebab-case (`message-id.ts`, `zip-reader.ts`)  
-**Classes/Types:** PascalCase (`EpubCheck`, `ValidationMessage`)  
-**Functions/vars:** camelCase (`validateContainer`, `errorCount`)  
-**Constants:** UPPER_SNAKE_CASE (`DEFAULT_OPTIONS`, `MAX_ERRORS`)
+**Environment:** Node 18/20/22 • TypeScript 5.7.2 • Vitest 2.1.8 • ESLint 9.17.0 • Biome 1.9.4
 
-**Dependencies versions (from package.json):**
-- Node.js: >=18 (tested 18, 20, 22)
-- TypeScript: 5.7.2
-- Vitest: 2.1.8
-- ESLint: 9.17.0
-- Biome: 1.9.4
+**Tests:** 507 passing, 48 skipped (555 total)
 
-**Java EPUBCheck Reference:** The Java source being ported is described in AGENTS.md. The official Java implementation is at https://github.com/w3c/epubcheck
+**Coverage:** 80% thresholds (statements, branches, functions, lines)
 
-## Getting Help
+**Java Reference:** `../epubcheck` (sibling directory) - always cross-reference when implementing logic
 
-- Check existing documentation: `README.md`, `CONTRIBUTING.md`, `AGENTS.md`, `PROJECT_STATUS.md`
-- Search for similar code patterns in `src/`
-- Look at test files for usage examples
-- Review Java EPUBCheck source for validation logic reference (https://github.com/w3c/epubcheck)
+**Message Registry:** `src/messages/messages.ts` - 165 IDs defined, ~76 actively used
 
-**Prefer using these instructions over exploration when the information is sufficient for your task.** Only search/explore if information here is incomplete or incorrect.
+**Other Documentation:**
+- `README.md` - Project overview, architecture, API usage, examples
+- `CONTRIBUTING.md` - Coding standards, testing, porting rules, common tasks
+- `PROJECT_STATUS.md` - Feature completion, test coverage, known issues, priorities
+- `AGENTS.md` - AI agent notes (Java CLI, message imports, E2E test rules)
+
+**Trust these instructions.** Only explore/search if information is incomplete or found incorrect.
