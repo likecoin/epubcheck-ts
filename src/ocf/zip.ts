@@ -38,8 +38,17 @@ export class ZipReader {
    * Open a ZIP file from binary data
    */
   static open(data: Uint8Array): ZipReader {
-    const files = unzipSync(data);
-    const originalOrder = Object.keys(files);
+    const raw = unzipSync(data);
+    // fflate decodes filenames as Latin-1 when the ZIP UTF-8 flag is not set.
+    // EPUB spec requires UTF-8 filenames, so re-decode Latin-1 names as UTF-8.
+    const files: Record<string, Uint8Array> = {};
+    const originalOrder: string[] = [];
+    for (const key of Object.keys(raw)) {
+      const corrected = reDecodeFilename(key);
+      const entry = raw[key];
+      if (entry) files[corrected] = entry;
+      originalOrder.push(corrected);
+    }
     return new ZipReader(files, originalOrder, data);
   }
 
@@ -279,5 +288,32 @@ export class ZipReader {
       }
     }
     return undefined;
+  }
+}
+
+/**
+ * Re-decode a filename from Latin-1 to UTF-8.
+ * fflate decodes filenames as Latin-1 when the ZIP UTF-8 flag is not set,
+ * but EPUB requires UTF-8. If ALL non-ASCII chars are in U+0080–U+00FF
+ * (Latin-1 range), the bytes may be UTF-8 decoded as Latin-1 — re-decode.
+ * If any char is > U+00FF, fflate already decoded as UTF-8 correctly.
+ */
+function reDecodeFilename(name: string): string {
+  let hasNonASCII = false;
+  for (let i = 0; i < name.length; i++) {
+    const code = name.charCodeAt(i);
+    if (code > 0xff) return name; // Already proper Unicode, not Latin-1
+    if (code > 0x7f) hasNonASCII = true;
+  }
+  if (!hasNonASCII) return name;
+
+  const bytes = new Uint8Array(name.length);
+  for (let i = 0; i < name.length; i++) {
+    bytes[i] = name.charCodeAt(i);
+  }
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  } catch {
+    return name;
   }
 }

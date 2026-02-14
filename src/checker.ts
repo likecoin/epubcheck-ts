@@ -5,6 +5,7 @@ import { NCXValidator } from './nav/index.js';
 import { OCFValidator } from './ocf/index.js';
 import { OPFValidator } from './opf/index.js';
 import { ResourceRegistry } from './references/registry.js';
+import { resolveManifestHref } from './references/url.js';
 import { ReferenceValidator } from './references/validator.js';
 import { SchemaValidator } from './schema/orchestrator.js';
 import type {
@@ -185,7 +186,7 @@ export class EpubCheck {
 
     const opfPath = context.opfPath ?? '';
     const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/')) : '';
-    const ncxPath = opfDir ? `${opfDir}/${ncxItem.href}` : ncxItem.href;
+    const ncxPath = resolveManifestHref(opfDir, ncxItem.href);
 
     const ncxData = context.files.get(ncxPath);
     if (!ncxData) {
@@ -255,8 +256,7 @@ export class EpubCheck {
     const spineIdrefs = new Set(packageDoc.spine.map((item) => item.idref));
 
     for (const item of packageDoc.manifest) {
-      const isRemoteURL = item.href.startsWith('http://') || item.href.startsWith('https://');
-      const fullPath = isRemoteURL || !opfDir ? item.href : `${opfDir}/${item.href}`;
+      const fullPath = resolveManifestHref(opfDir, item.href);
       registry.registerResource({
         url: fullPath,
         mimeType: item.mediaType,

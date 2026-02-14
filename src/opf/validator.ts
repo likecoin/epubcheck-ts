@@ -682,7 +682,7 @@ export class OPFValidator {
       // Also try URL-decoded version for comparison
       const decodedHref = tryDecodeUriComponent(item.href);
       const fullPathDecoded =
-        decodedHref !== item.href ? resolvePath(opfPath, decodedHref) : fullPath;
+        decodedHref !== item.href ? resolvePath(opfPath, decodedHref).normalize('NFC') : fullPath;
 
       if (
         !context.files.has(fullPath) &&

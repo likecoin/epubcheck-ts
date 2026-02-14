@@ -210,7 +210,7 @@ function parseDCElements(metadataXml: string): DCElement[] {
     };
 
     if (id) {
-      element.id = id;
+      element.id = id.trim();
     }
     if (Object.keys(attrs).length > 0) {
       element.attributes = attrs;
@@ -250,7 +250,7 @@ function parseMetaElements(metadataXml: string): MetaElement[] {
         element.scheme = attrs.scheme;
       }
       if (attrs.id) {
-        element.id = attrs.id;
+        element.id = attrs.id.trim();
       }
 
       elements.push(element);
@@ -291,7 +291,7 @@ function parseLinkElements(metadataXml: string): LinkElement[] {
         element.properties = attrs.properties.split(/\s+/);
       }
       if (attrs.id) {
-        element.id = attrs.id;
+        element.id = attrs.id.trim();
       }
       if (attrs.hreflang !== undefined) {
         element.hreflang = attrs.hreflang;
@@ -316,7 +316,7 @@ function parseManifestItems(manifestXml: string): ManifestItem[] {
   while ((match = itemRegex.exec(manifestXml)) !== null) {
     const attrsStr = match[1] ?? '';
     const attrs = parseAttributes(attrsStr);
-    const id = attrs.id;
+    const id = attrs.id?.trim();
     const href = attrs.href;
     const mediaType = attrs['media-type'];
 
@@ -369,7 +369,7 @@ function parseSpine(
   while ((match = itemrefRegex.exec(spineXml)) !== null) {
     const attrsStr = match[1] ?? '';
     const attrs = parseAttributes(attrsStr);
-    const idref = attrs.idref;
+    const idref = attrs.idref?.trim();
 
     if (idref) {
       const itemref: SpineItemRef = {

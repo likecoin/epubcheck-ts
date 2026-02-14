@@ -68,8 +68,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: diacritic test needs Unicode normalization comparison
-    it.skip('should allow diacritic (ü) in file names with composed/precomposed chars', async () => {
+    it('should allow diacritic (ü) in file names with composed/precomposed chars', async () => {
       const data = await loadEpub('valid/ocf-container-filename-character-composition-valid.epub');
       const result = await EpubCheck.validate(data);
 

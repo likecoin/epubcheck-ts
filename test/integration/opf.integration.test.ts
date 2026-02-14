@@ -385,8 +385,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectError(result, 'OPF-014');
     });
 
-    // Skip: OPF-018 remote resource via object param detection not yet implemented
-    it.skip('should warn about remote resource via object param (OPF-018)', async () => {
+    it('should warn about remote resource via object param (OPF-018)', async () => {
       const data = await loadEpub(
         'warnings/package-manifest-prop-remote-resource-object-param-warning.epub',
       );
@@ -492,8 +491,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectError(result, 'OPF-098');
     });
 
-    // Skip: Regex parser doesn't normalize XML ID attribute whitespace — OPF-049 false positives
-    it.skip('id attributes can have leading or trailing space', async () => {
+    it('id attributes can have leading or trailing space', async () => {
       const data = await loadEpub('valid/attr-id-with-spaces-valid.epub');
       const result = await EpubCheck.validate(data);
       expectNoErrorsOrWarnings(result);

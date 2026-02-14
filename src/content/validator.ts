@@ -7,6 +7,7 @@ import { CSSValidator } from '../css/validator.js';
 import { MessageId, pushMessage } from '../messages/index.js';
 import type { ResourceRegistry } from '../references/registry.js';
 import { ReferenceType } from '../references/types.js';
+import { resolveManifestHref } from '../references/url.js';
 import type { ReferenceValidator } from '../references/validator.js';
 import type { ValidationContext } from '../types.js';
 
@@ -127,13 +128,13 @@ export class ContentValidator {
 
     for (const item of packageDoc.manifest) {
       if (item.mediaType === 'application/xhtml+xml') {
-        const fullPath = opfDir ? `${opfDir}/${item.href}` : item.href;
+        const fullPath = resolveManifestHref(opfDir, item.href);
         this.validateXHTMLDocument(context, fullPath, item.id, opfDir, registry, refValidator);
       } else if (item.mediaType === 'text/css' && refValidator) {
-        const fullPath = opfDir ? `${opfDir}/${item.href}` : item.href;
+        const fullPath = resolveManifestHref(opfDir, item.href);
         this.validateCSSDocument(context, fullPath, opfDir, refValidator);
       } else if (item.mediaType === 'image/svg+xml') {
-        const fullPath = opfDir ? `${opfDir}/${item.href}` : item.href;
+        const fullPath = resolveManifestHref(opfDir, item.href);
         if (registry) {
           this.extractSVGIDs(context, fullPath, registry);
         }
@@ -2188,11 +2189,18 @@ export class ContentValidator {
   }
 
   private resolveRelativePath(docDir: string, href: string, _opfDir: string): string {
-    const hrefWithoutFragment = href.split('#')[0] ?? href;
-    const fragment = href.includes('#') ? href.split('#')[1] : '';
+    let decoded: string;
+    try {
+      decoded = decodeURIComponent(href);
+    } catch {
+      decoded = href;
+    }
+
+    const hrefWithoutFragment = decoded.split('#')[0] ?? decoded;
+    const fragment = decoded.includes('#') ? decoded.split('#')[1] : '';
 
     if (hrefWithoutFragment.startsWith('/')) {
-      const result = hrefWithoutFragment.slice(1);
+      const result = hrefWithoutFragment.slice(1).normalize('NFC');
       return fragment ? `${result}#${fragment}` : result;
     }
 
@@ -2207,7 +2215,7 @@ export class ContentValidator {
       }
     }
 
-    const result = parts.join('/');
+    const result = parts.join('/').normalize('NFC');
     return fragment ? `${result}#${fragment}` : result;
   }
 }

@@ -29,7 +29,7 @@
  * Reference: Java EPUBCheck DefaultSeverities.java and MessageBundle.properties
  */
 
-import type { Severity, ValidationMessage, EPUBLocation } from '../types.js';
+import type { EPUBLocation, Severity, ValidationMessage } from '../types.js';
 
 export type MessageSeverity = Severity | 'suppressed';
 

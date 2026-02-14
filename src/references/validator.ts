@@ -3,7 +3,7 @@
  */
 
 import { MessageId, pushMessage } from '../messages/index.js';
-import type { ValidationContext, EPUBVersion } from '../types.js';
+import type { EPUBVersion, ValidationContext } from '../types.js';
 import type { ResourceRegistry } from './registry.js';
 import type { Reference } from './types.js';
 import { ReferenceType, isPublicationResourceReference } from './types.js';
@@ -17,6 +17,7 @@ import {
   isMalformedURL,
   isRemoteURL,
   parseURL,
+  resolveManifestHref,
 } from './url.js';
 
 /**
@@ -366,8 +367,7 @@ export class ReferenceValidator {
     for (const [i, spineRef] of spine.entries()) {
       const item = packageDoc.manifest.find((m) => m.id === spineRef.idref);
       if (item) {
-        const fullPath = opfDir ? `${opfDir}/${item.href}` : item.href;
-        spinePositionMap.set(fullPath, i);
+        spinePositionMap.set(resolveManifestHref(opfDir, item.href), i);
       }
     }
 
@@ -436,7 +436,7 @@ export class ReferenceValidator {
       const item = context.packageDocument.manifest.find((m) => m.id === spineItem.idref);
       if (!item) continue;
 
-      const fullPath = opfDir ? `${opfDir}/${item.href}` : item.href;
+      const fullPath = resolveManifestHref(opfDir, item.href);
 
       if (!hyperlinkTargets.has(fullPath)) {
         pushMessage(context.messages, {

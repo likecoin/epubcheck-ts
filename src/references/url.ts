@@ -108,3 +108,15 @@ export function isHTTP(url: string): boolean {
 export function isRemoteURL(url: string): boolean {
   return isHTTP(url) || isHTTPS(url);
 }
+
+export function resolveManifestHref(opfDir: string, href: string): string {
+  if (isRemoteURL(href)) return href;
+  try {
+    const decoded = decodeURIComponent(href);
+    const path = opfDir ? `${opfDir}/${decoded}` : decoded;
+    return path.normalize('NFC');
+  } catch {
+    const path = opfDir ? `${opfDir}/${href}` : href;
+    return path.normalize('NFC');
+  }
+}

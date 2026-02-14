@@ -1,5 +1,5 @@
-import type { ValidationContext, ValidationMessage } from '../types.js';
 import { MessageId, pushMessage } from '../messages/index.js';
+import type { ValidationContext, ValidationMessage } from '../types.js';
 import { ZipReader } from './zip.js';
 
 /**
@@ -32,11 +32,11 @@ export class OCFValidator {
       return;
     }
 
-    // Store all files in context
+    // Store all files in context (NFC-normalize paths for consistent lookups)
     for (const path of zip.paths) {
       const data = zip.readBinary(path);
       if (data) {
-        context.files.set(path, data);
+        context.files.set(path.normalize('NFC'), data);
       }
     }
 
