@@ -57,6 +57,9 @@ export class OCFValidator {
 
     // Validate empty directories
     this.validateEmptyDirectories(zip, context.messages);
+
+    // Parse encryption.xml for obfuscated resources
+    this.parseEncryption(zip, context);
   }
 
   /**
@@ -250,6 +253,7 @@ export class OCFValidator {
 
       const disallowed: string[] = [];
       let hasSpaces = false;
+      let hasNonASCII = false;
 
       for (let i = 0; i < filename.length; i++) {
         const code = filename.charCodeAt(i);
@@ -270,6 +274,11 @@ export class OCFValidator {
         // Check for specials block (0xFFF0-0xFFFF)
         else if (code >= 0xfff0 && code <= 0xffff) {
           disallowed.push(`U+${code.toString(16).toUpperCase().padStart(4, '0')} (SPECIALS)`);
+        }
+
+        // Check for non-ASCII (PKG-012 usage)
+        if (code > 0x7f) {
+          hasNonASCII = true;
         }
 
         // Check for whitespace
@@ -303,6 +312,15 @@ export class OCFValidator {
           message: `Filename "${path}" contains spaces`,
           location: { path },
           severityOverride: 'warning',
+        });
+      }
+
+      // Report non-ASCII characters (PKG-012 - usage)
+      if (hasNonASCII && disallowed.length === 0) {
+        pushMessage(messages, {
+          id: MessageId.PKG_012,
+          message: `Filename "${path}" contains non-ASCII characters`,
+          location: { path },
         });
       }
     }
@@ -428,6 +446,38 @@ export class OCFValidator {
         message: `Filename is not valid UTF-8: "${filename}" (${reason})`,
         location: { path: filename },
       });
+    }
+  }
+
+  /**
+   * Parse encryption.xml to extract obfuscated resource paths.
+   * Stores IDPF font obfuscation URIs in context for PKG-026 validation.
+   */
+  private parseEncryption(zip: ZipReader, context: ValidationContext): void {
+    const encryptionPath = 'META-INF/encryption.xml';
+    if (!zip.has(encryptionPath)) return;
+
+    const content = zip.readText(encryptionPath);
+    if (!content) return;
+
+    const IDPF_OBFUSCATION = 'http://www.idpf.org/2008/embedding';
+    const obfuscated = new Set<string>();
+
+    // Match EncryptedData blocks (with or without namespace prefix)
+    const blocks = content.matchAll(
+      /<(?:\w+:)?EncryptedData[\s>][\s\S]*?<\/(?:\w+:)?EncryptedData>/g,
+    );
+    for (const block of blocks) {
+      const xml = block[0];
+      const algorithmMatch = /Algorithm=["']([^"']+)["']/.exec(xml);
+      const uriMatch = /<(?:\w+:)?CipherReference[^>]+URI=["']([^"']+)["']/.exec(xml);
+      if (algorithmMatch?.[1] === IDPF_OBFUSCATION && uriMatch?.[1]) {
+        obfuscated.add(uriMatch[1]);
+      }
+    }
+
+    if (obfuscated.size > 0) {
+      context.obfuscatedResources = obfuscated;
     }
   }
 

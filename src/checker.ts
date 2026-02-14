@@ -99,6 +99,7 @@ export class EpubCheck {
       // Populate registry from manifest
       if (context.packageDocument) {
         this.populateRegistry(context, registry);
+        this.validateObfuscatedResources(context);
       }
 
       // Step 4: Validate content documents (XHTML) and extract references
@@ -241,6 +242,40 @@ export class EpubCheck {
     }
 
     messages.push(message);
+  }
+
+  /**
+   * Validate that obfuscated resources are blessed font types (PKG-026)
+   */
+  private validateObfuscatedResources(context: ValidationContext): void {
+    if (!context.obfuscatedResources || !context.packageDocument) return;
+
+    const BLESSED_FONT_TYPES = new Set([
+      'font/otf',
+      'font/ttf',
+      'font/woff',
+      'font/woff2',
+      'application/font-sfnt',
+      'application/font-woff',
+      'application/vnd.ms-opentype',
+      'application/x-font-ttf',
+    ]);
+
+    const opfPath = context.opfPath ?? '';
+    const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/')) : '';
+
+    for (const uri of context.obfuscatedResources) {
+      const item = context.packageDocument.manifest.find(
+        (m) => resolveManifestHref(opfDir, m.href) === uri,
+      );
+      if (item && !BLESSED_FONT_TYPES.has(item.mediaType)) {
+        pushMessage(context.messages, {
+          id: MessageId.PKG_026,
+          message: `Obfuscated resource "${uri}" has media-type "${item.mediaType}" which is not a Font Core Media Type`,
+          location: { path: uri },
+        });
+      }
+    }
   }
 
   /**
