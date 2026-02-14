@@ -6,6 +6,52 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-02-13
+
+### Added
+
+- **92 new integration tests** ported from Java EPUBCheck (607 total, up from 505)
+  - OPF: metadata, link elements, items, properties, collections, spine, legacy NCX
+  - Nav: content model, nav types, hidden attribute, landmarks, page-list
+- **OPF Schematron-equivalent validations** (TypeScript reimplementation)
+  - Duplicate ID detection across OPF elements (RSC-005)
+  - Refines cycle detection via DFS (OPF-065)
+  - Modified date syntax validation (RSC-005)
+  - Cover-image/nav property multiplicity checks (RSC-005)
+  - NCX toc attribute requirement for EPUB 3 (RSC-005)
+  - OPF-098 link href targeting package document elements
+  - RSC-017 deprecated bindings element
+  - RSC-020 unencoded spaces in manifest item href
+- **OPF-085**: UUID format validation for `dc:identifier` starting with `urn:uuid:`
+- **OPF-092**: Language tag well-formedness for dc:language, link hreflang, xml:lang
+- **OPF-025/026/027**: Meta property/scheme validation (list, malformed, unknown)
+- **OPF-012**: Cover-image property type restriction, nav property XHTML restriction
+- **OPF-070**: Collection role URL validation
+- **OPF-014**: epub:switch property detection in XHTML content
+- **OPF-014**: Remote font detection in inline CSS `<style>` blocks and SVG `<font-face-uri>`
+- **OPF-018**: Warning for unnecessary `remote-resources` property declaration
+- **OPF-015**: Warning for unnecessary `scripted`/`svg` property declarations
+- **RSC-006**: Remote non-audio/video/font manifest items (with font exclusion)
+- **RSC-012**: NCX fragment ID checking against ResourceRegistry
+- **RSC-020**: Whitespace-trimmed URL validation in nav document hrefs
+- **Nav content model validation**: headings, labels, anchors, lists, hidden attribute
+- **Nav type validation**: page-list/landmarks multiplicity, landmarks epub:type, other nav heading
+- Auto-generated API docs deployed to GitHub Pages
+
+### Fixed
+
+- **RSC-016**: SVG parse failures now emit error instead of silently catching
+- Remote font URLs no longer trigger RSC-006 (fonts are allowed remote)
+- Nav href whitespace trimming prevents false RSC-007 for space-padded URLs
+
+### Changed
+
+- Test coverage: 607 tests passing, 40 skipped (up from 505 passing, 7 skipped)
+- E2E coverage: 23% of Java EPUBCheck scenarios (up from 9%)
+- OPF validation: ~90% complete (up from ~70%)
+- Navigation validation: ~80% complete (up from ~40%)
+- Content validation: ~80% complete (up from ~75%)
+
 ## [0.3.3] - 2026-02-06
 
 ### Added
@@ -335,7 +381,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - No media overlays validation
 - No script detection/validation
 
-[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.3...HEAD
+[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.4...HEAD
+[0.3.4]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.0...v0.3.1
