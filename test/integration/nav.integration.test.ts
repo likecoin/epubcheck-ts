@@ -112,6 +112,175 @@ describe('Integration Tests - Navigation Documents', () => {
       expectWarning(result, 'NAV-011');
     });
   });
+
+  // ============================================================
+  // Tests ported from Java EPUBCheck navigation-document.feature
+  // ============================================================
+
+  describe('Nav element restrictions — content model (§7.3)', () => {
+    // Skip: Nav Schematron content model checks not yet implemented
+    it.skip('report empty nav heading (RSC-005)', async () => {
+      const data = await loadEpub('invalid/nav/content-model-heading-empty-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    // Skip: Nav Schematron content model checks not yet implemented
+    it.skip('report p element used as nav heading (RSC-005)', async () => {
+      const data = await loadEpub('invalid/nav/content-model-heading-p-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    // Skip: Nav Schematron content model checks not yet implemented
+    it.skip('report missing list item label (RSC-005)', async () => {
+      const data = await loadEpub('invalid/nav/content-model-li-label-missing-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    // Skip: Nav Schematron content model checks not yet implemented
+    it.skip('report empty list item label (RSC-005)', async () => {
+      const data = await loadEpub('invalid/nav/content-model-li-label-empty-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    it('allow multiple images in a list item label', async () => {
+      const data = await loadEpub('valid/content-model-li-label-multiple-images-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: Nav Schematron content model checks not yet implemented
+    it.skip('report leaf list item with no link (RSC-005)', async () => {
+      const data = await loadEpub('invalid/nav/content-model-li-leaf-with-no-link-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    // Skip: Nav Schematron content model checks not yet implemented
+    it.skip('report nav hyperlink without content (RSC-005)', async () => {
+      const data = await loadEpub('invalid/nav/content-model-a-empty-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    it('allow multiple images in a nav hyperlink', async () => {
+      const data = await loadEpub('valid/content-model-a-multiple-images-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: Nav Schematron content model checks not yet implemented
+    it.skip('report nav hyperlink with empty nested span (RSC-005)', async () => {
+      const data = await loadEpub('invalid/nav/content-model-a-span-empty-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    // Skip: Fixture has intentional spaces in href that trigger RSC-020
+    it.skip('allow nav hyperlinks with leading and trailing spaces', async () => {
+      const data = await loadEpub('valid/content-model-a-with-leading-trailing-spaces-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: Nav Schematron content model checks not yet implemented
+    it.skip('report nav list without content (RSC-005)', async () => {
+      const data = await loadEpub('invalid/nav/content-model-ol-empty-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+  });
+
+  describe('Nav element types (§7.4)', () => {
+    it('allow a nested toc nav', async () => {
+      const data = await loadEpub('valid/nav-toc-nested-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('allow a page-list nav', async () => {
+      const data = await loadEpub('valid/nav-page-list-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: Nav Schematron type checks not yet implemented
+    it.skip('report multiple page-list nav elements (RSC-005)', async () => {
+      const data = await loadEpub('invalid/nav/nav-page-list-multiple-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    it('allow a landmarks nav', async () => {
+      const data = await loadEpub('valid/nav-landmarks-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: Nav Schematron type checks not yet implemented
+    it.skip('report landmarks link without epub:type (RSC-005)', async () => {
+      const data = await loadEpub('invalid/nav/nav-landmarks-link-type-missing-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    // Skip: Nav Schematron type checks not yet implemented
+    it.skip('report multiple landmarks nav elements (RSC-005)', async () => {
+      const data = await loadEpub('invalid/nav/nav-landmarks-multiple-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    it('allow same epub:type in landmarks when pointing to different resources', async () => {
+      const data = await loadEpub('valid/nav-landmarks-type-twice-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: Nav Schematron type checks not yet implemented
+    it.skip('report same epub:type targeting same resource in landmarks (RSC-005)', async () => {
+      const data = await loadEpub('invalid/nav/nav-landmarks-type-twice-same-resource-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    it('allow a lot (list of tables) nav', async () => {
+      const data = await loadEpub('valid/nav-other-lot-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: Nav Schematron type checks not yet implemented
+    it.skip('report other nav without a heading (RSC-005)', async () => {
+      const data = await loadEpub('invalid/nav/nav-other-heading-missing-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    it('nav without declared epub:type is not restricted', async () => {
+      const data = await loadEpub('valid/nav-type-missing-not-restricted-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+  });
+
+  describe('Use in spine (§7.5)', () => {
+    it('allow a hidden nav', async () => {
+      const data = await loadEpub('valid/hidden-nav-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: Nav Schematron hidden attribute check not yet implemented
+    it.skip('report hidden attribute with wrong value (RSC-005)', async () => {
+      const data = await loadEpub('invalid/nav/hidden-attribute-invalid-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+  });
 });
 
 /**

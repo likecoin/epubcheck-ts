@@ -484,6 +484,480 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectWarning(result, 'PKG-010');
     });
   });
+
+  // ============================================================
+  // Tests ported from Java EPUBCheck package-document.feature
+  // ============================================================
+
+  describe('Shared attributes (§5.3)', () => {
+    it('dir attribute value can be auto', async () => {
+      const data = await loadEpub('valid/attr-dir-auto-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: OPF-098 link-to-package-document-id check not yet implemented
+    it.skip('link target must not reference a manifest ID (OPF-098)', async () => {
+      const data = await loadEpub('invalid/opf/link-to-package-document-id-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'OPF-098');
+    });
+
+    // Skip: OPF Schematron id-with-spaces validation produces false OPF-049 errors
+    it.skip('id attributes can have leading or trailing space', async () => {
+      const data = await loadEpub('valid/attr-id-with-spaces-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: OPF Schematron duplicate id detection not yet implemented (RSC-005)
+    it.skip('id attributes must be unique (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/attr-id-duplicate-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    // Skip: OPF Schematron duplicate id detection not yet implemented (RSC-005)
+    it.skip('id attributes must be unique after whitespace normalization (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/attr-id-duplicate-with-spaces-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    // Skip: OPF Schematron refines validation not yet implemented
+    it.skip('refines attribute must be a relative URL (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-refines-not-relative-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    // Skip: OPF Schematron refines validation not yet implemented
+    it.skip('refines attribute should use a fragment ID (RSC-017)', async () => {
+      const data = await loadEpub('warnings/metadata-refines-not-a-fragment-warning.epub');
+      const result = await EpubCheck.validate(data);
+      expectWarning(result, 'RSC-017');
+    });
+
+    // Skip: OPF Schematron refines validation not yet implemented
+    it.skip('refines fragment ID must target an existing ID (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-refines-unknown-id-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    // Skip: OPF-065 refines cycle detection not yet implemented
+    it.skip('refines cycles are not allowed (OPF-065)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-refines-cycle-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'OPF-065');
+    });
+
+    it('xml:lang attribute can be empty', async () => {
+      const data = await loadEpub('valid/attr-lang-empty-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: OPF-092 language tag well-formedness check not yet implemented
+    it.skip('xml:lang must not have leading/trailing whitespace (OPF-092)', async () => {
+      const data = await loadEpub('invalid/opf/attr-lang-whitespace-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'OPF-092');
+    });
+
+    // Skip: OPF-092 language tag well-formedness check not yet implemented
+    it.skip('xml:lang must be well-formed (OPF-092)', async () => {
+      const data = await loadEpub('invalid/opf/attr-lang-not-well-formed-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'OPF-092');
+    });
+
+    it('three-character language codes are allowed', async () => {
+      const data = await loadEpub('valid/attr-lang-three-char-code-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+  });
+
+  describe('Package element (§5.4)', () => {
+    // Skip: OPF Schematron unique-identifier target check not producing RSC-005
+    it.skip('unique-identifier must be a known ID (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/package-unique-identifier-unknown-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    // Skip: OPF Schematron unique-identifier target check not producing RSC-005
+    it.skip('unique-identifier must point to dc:identifier (RSC-005)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/package-unique-identifier-not-targeting-identifier-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    it('package must have metadata child element (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/package-no-metadata-element-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    it('metadata must come before manifest (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/package-manifest-before-metadata-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+  });
+
+  describe('Metadata values (§5.5.2)', () => {
+    it('dc:identifier must not be empty (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-identifier-empty-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    it('dc:language must not be empty (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-language-empty-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    it('dc:title must not be empty (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-title-empty-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    it('metadata value must be defined (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-meta-value-empty-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+  });
+
+  describe('Dublin Core required elements (§5.5.3)', () => {
+    // Skip: OPF-085 UUID format validation not yet implemented
+    it.skip('dc:identifier starting with urn:uuid should be a valid UUID (OPF-085)', async () => {
+      const data = await loadEpub('warnings/metadata-identifier-uuid-invalid-warning.epub');
+      const result = await EpubCheck.validate(data);
+      expectWarning(result, 'OPF-085');
+    });
+
+    it('dc:title must be specified (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-title-missing-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    it('dc:language must be well-formed (OPF-092)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-language-not-well-formed-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'OPF-092');
+    });
+  });
+
+  describe('Dublin Core optional elements (§5.5.4)', () => {
+    it('dc:source valid values are allowed', async () => {
+      const data = await loadEpub('valid/metadata-source-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('multiple dc:date elements are not allowed (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-date-multiple-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    it('dc:date can be a single year', async () => {
+      const data = await loadEpub('valid/metadata-date-single-year-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('dc:date value can have leading/trailing whitespace', async () => {
+      const data = await loadEpub('valid/metadata-date-with-whitespace-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('dc:date with invalid ISO 8601 syntax is reported (OPF-053)', async () => {
+      const data = await loadEpub('warnings/metadata-date-iso-syntax-error-warning.epub');
+      const result = await EpubCheck.validate(data);
+      expectWarning(result, 'OPF-053');
+    });
+
+    it('dc:date with unknown format is reported (OPF-053)', async () => {
+      const data = await loadEpub('warnings/metadata-date-unknown-format-warning.epub');
+      const result = await EpubCheck.validate(data);
+      expectWarning(result, 'OPF-053');
+    });
+
+    it('dc:type valid values are allowed', async () => {
+      const data = await loadEpub('valid/metadata-type-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+  });
+
+  describe('Meta element (§5.5.5)', () => {
+    it('metadata property name must be defined (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-meta-property-empty-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    // Skip: OPF-025 property list validation not yet implemented
+    it.skip('metadata property name must not be a list (OPF-025)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-meta-property-list-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'OPF-025');
+    });
+
+    // Skip: OPF-026 malformed property validation not yet implemented
+    it.skip('metadata property name must be well-formed (OPF-026)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-meta-property-malformed-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'OPF-026');
+    });
+
+    it('scheme can be used to identify value system', async () => {
+      const data = await loadEpub('valid/metadata-meta-scheme-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: OPF-025 scheme list validation not yet implemented
+    it.skip('scheme must not be a list (OPF-025)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-meta-scheme-list-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'OPF-025');
+    });
+
+    // Skip: OPF-027 unknown scheme validation not yet implemented
+    it.skip('scheme must not be an unknown value with no prefix (OPF-027)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-meta-scheme-unknown-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'OPF-027');
+    });
+  });
+
+  describe('Last modified date (§5.5.6)', () => {
+    // Skip: OPF Schematron modified-missing check not yet implemented (produces OPF-054 instead)
+    it.skip('dcterms:modified must be defined (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-modified-missing-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    // Skip: OPF Schematron modified-syntax check not yet implemented
+    it.skip('dcterms:modified must be CCYY-MM-DDThh:mm:ssZ format (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-modified-syntax-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+  });
+
+  describe('Link element (§5.5.7)', () => {
+    it('link rel can have multiple properties', async () => {
+      const data = await loadEpub('valid/link-rel-multiple-properties-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('link properties must not be empty (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/link-rel-record-properties-empty-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    // Skip: OPF-027 link properties validation not yet implemented
+    it.skip('link with unknown properties value is reported (OPF-027)', async () => {
+      const data = await loadEpub('invalid/opf/link-rel-record-properties-undefined-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'OPF-027');
+    });
+
+    it('link hreflang attribute is valid', async () => {
+      const data = await loadEpub('valid/link-hreflang-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('link hreflang can be empty', async () => {
+      const data = await loadEpub('valid/link-hreflang-empty-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: OPF-092 hreflang well-formedness check not yet implemented
+    it.skip('link hreflang must not have leading/trailing whitespace (OPF-092)', async () => {
+      const data = await loadEpub('invalid/opf/link-hreflang-whitespace-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'OPF-092');
+    });
+
+    // Skip: OPF-092 hreflang well-formedness check not yet implemented
+    it.skip('link hreflang must be well-formed (OPF-092)', async () => {
+      const data = await loadEpub('invalid/opf/link-hreflang-not-well-formed-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'OPF-092');
+    });
+
+    it('link can target a spine item', async () => {
+      const data = await loadEpub('valid/link-to-spine-item-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+  });
+
+  describe('Item element (§5.6.2)', () => {
+    it('manifest item must declare a media type (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/item-media-type-missing-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    // Skip: RSC-020 unencoded spaces in OPF item href not yet implemented
+    it.skip('item URLs must be properly encoded (RSC-020)', async () => {
+      const data = await loadEpub('invalid/opf/item-href-contains-spaces-unencoded-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-020');
+    });
+
+    it('item URLs must not have a fragment identifier (OPF-091)', async () => {
+      const data = await loadEpub('invalid/opf/item-href-with-fragment-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'OPF-091');
+    });
+
+    it('two manifest items cannot represent the same resource (OPF-074)', async () => {
+      const data = await loadEpub('invalid/opf/item-duplicate-resource-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'OPF-074');
+    });
+
+    it('fallback-style attribute is reported (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/fallback-style-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+  });
+
+  describe('Resource properties (§5.6.2.1)', () => {
+    it('unknown item property is reported (OPF-027)', async () => {
+      const data = await loadEpub('invalid/opf/item-property-unknown-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'OPF-027');
+    });
+
+    it('cover-image property is allowed on WebP images', async () => {
+      const data = await loadEpub('valid/item-property-cover-image-webp-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: OPF Schematron cover-image multiplicity check not yet implemented
+    it.skip('cover-image property must occur at most once (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/item-property-cover-image-multiple-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    // Skip: OPF-012 cover-image type check not yet implemented
+    it.skip('cover-image property must only be used on images (OPF-012)', async () => {
+      const data = await loadEpub('invalid/opf/item-property-cover-image-wrongtype-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'OPF-012');
+    });
+
+    it('one item must have the nav property (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/item-nav-missing-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    // Skip: OPF Schematron nav multiplicity check not yet implemented
+    it.skip('at most one item must have the nav property (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/item-nav-multiple-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    // Skip: OPF Schematron nav content-type check not yet implemented
+    it.skip('nav property must be on an XHTML Content Document (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/item-nav-not-xhtml-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+  });
+
+  describe('Bindings element (§5.6.3)', () => {
+    // Skip: RSC-017 bindings deprecated check not yet implemented
+    it.skip('bindings element is reported as deprecated (RSC-017)', async () => {
+      const data = await loadEpub('warnings/bindings-deprecated-warning.epub');
+      const result = await EpubCheck.validate(data);
+      expectWarning(result, 'RSC-017');
+    });
+  });
+
+  describe('Spine element (§5.7)', () => {
+    it('missing spine is reported (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/spine-missing-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    it('empty spine is reported (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/spine-empty-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    it('SVG Content Document is allowed in spine', async () => {
+      const data = await loadEpub('valid/spine-item-svg-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+  });
+
+  describe('Collections (§5.8)', () => {
+    // Skip: Collection validation produces OPF-071 instead of passing clean
+    it.skip('collection role can be an absolute URL', async () => {
+      const data = await loadEpub('valid/collection-role-url-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: Collection validation produces OPF-071 instead of expected OPF-070
+    it.skip('collection role must not be an invalid URL (OPF-070)', async () => {
+      const data = await loadEpub('warnings/collection-role-url-invalid-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectWarning(result, 'OPF-070');
+    });
+
+    // Skip: Collection validation produces OPF-071 instead of expected RSC-005
+    it.skip('manifest collection must be child of another collection (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/collection-role-manifest-toplevel-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+  });
+
+  describe('Legacy content (§5.9)', () => {
+    // Skip: OPF Schematron NCX toc attribute check not yet implemented
+    it.skip('NCX toc attribute must be set when NCX is present (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/legacy-ncx-toc-attribute-missing-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'RSC-005');
+    });
+
+    it('spine toc attribute must point to NCX document (OPF-050)', async () => {
+      const data = await loadEpub('invalid/opf/legacy-ncx-toc-attribute-not-ncx-error.epub');
+      const result = await EpubCheck.validate(data);
+      expectError(result, 'OPF-050');
+    });
+  });
 });
 
 /**

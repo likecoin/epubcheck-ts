@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~80% | 🟢 URL leaking, CSS references, link elements done |
 
-**Overall: ~70% complete (505 tests passing, 48 skipped)**
+**Overall: ~70% complete (552 tests passing, 95 skipped)**
 
 ---
 
@@ -26,20 +26,20 @@ Quick reference for implementation progress vs Java EPUBCheck.
 
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
-| **Unit Tests** | 398 | 380 | 18 |
-| **Integration Tests** | 155 | 125 | 30 |
-| **Total** | **553** | **505** | **48** |
+| **Unit Tests** | 400 | 382 | 18 |
+| **Integration Tests** | 247 | 170 | 77 |
+| **Total** | **647** | **552** | **95** |
 
 ### Integration Test Files
 
 ```
 test/integration/
-├── epub.test.ts                 # 4 tests  (4 pass, 0 skip) - Basic EPUB validation
-├── ocf.integration.test.ts      # 47 tests (37 pass, 10 skip) - OCF/ZIP/container
-├── opf.integration.test.ts      # 51 tests (39 pass, 12 skip) - Package document
-├── content.integration.test.ts  # 31 tests (27 pass, 4 skip) - XHTML/CSS/SVG
-├── nav.integration.test.ts      # 12 tests (10 pass, 2 skip)  - Navigation
-└── resources.integration.test.ts # 10 tests (8 pass, 2 skip)  - Remote resources
+├── epub.test.ts                 # 4 tests   (4 pass, 0 skip)  - Basic EPUB validation
+├── ocf.integration.test.ts      # 47 tests  (37 pass, 10 skip) - OCF/ZIP/container
+├── opf.integration.test.ts      # 119 tests (75 pass, 44 skip) - Package document
+├── content.integration.test.ts  # 31 tests  (27 pass, 4 skip)  - XHTML/CSS/SVG
+├── nav.integration.test.ts      # 36 tests  (19 pass, 17 skip) - Navigation
+└── resources.integration.test.ts # 10 tests  (8 pass, 2 skip)  - Remote resources
 ```
 
 **Note**: Integration tests imported from Java EPUBCheck test suite (`../epubcheck/src/test/resources/epub3/`).
@@ -48,16 +48,16 @@ test/integration/
 
 ```
 test/fixtures/
-├── valid/                 # 48 valid EPUBs
+├── valid/                 # 74 valid EPUBs
 ├── invalid/
 │   ├── ocf/              # 33 OCF error cases
-│   ├── opf/              # 39 OPF error cases
+│   ├── opf/              # 85 OPF error cases
 │   ├── content/          # 21 content error cases
-│   └── nav/              # 4 navigation error cases
-└── warnings/             # 9 warning cases
+│   └── nav/              # 18 navigation error cases
+└── warnings/             # 15 warning cases
 ```
 
-**Total**: 154 EPUB test fixtures (imported from Java EPUBCheck)
+**Total**: 246 EPUB test fixtures (imported from Java EPUBCheck)
 
 ### Quality: ⭐⭐⭐⭐ (4/5) for implemented features
 
@@ -91,13 +91,24 @@ test/fixtures/
   - ACC-005 (1 test) - Image missing alt attribute
   - HTM-012 (1 test) - Unescaped ampersands
 
-**Integration tests (7)** - Library limitations:
+**Integration tests (77)** - Unimplemented features and library limitations:
 - **CSS-008**: CSS syntax error detection (1 test) - css-tree is forgiving, parses invalid CSS successfully
 - **OPF-060**: Duplicate ZIP entry detection (1 test) - fflate deduplicates entries when unzipping
 - **Unicode NFKC normalization** (1 test) - Requires compatibility normalization, not implemented
 - **Unicode NFC normalization for diacritics** (1 test) - Requires composed/precomposed char comparison
 - **Unicode NFC normalization duplicate** (1 test) - Already handled, test expects NFKC
 - **Unit tests (3)** - libxml2-wasm XPath with namespaced attributes
+- **OPF Schematron checks (20 tests)** - OPF-025/026/027 property validation, OPF-065 refines cycles, OPF-085 UUID format, OPF-092 language/hreflang well-formedness, OPF-098 link-to-package-document-id, RSC-005 modified/refines/duplicate-id/cover-image/nav/NCX Schematron rules, RSC-017 bindings deprecated, RSC-020 unencoded spaces, OPF-012 cover-image type, OPF-070/071 collection validation
+- **Nav Schematron checks (15 tests)** - Nav content model validation (empty headings, missing labels, leaf items without links, empty anchors/spans/lists), nav type restrictions (page-list/landmarks multiplicity, landmarks epub:type requirements, other nav heading), hidden attribute validation
+- **OPF-096 non-linear reachability** (1 test) - Non-linear spine item reachability check not implemented
+- **OPF-015 unnecessary property** (2 tests) - Unnecessary scripted/SVG property detection
+- **RSC-006 remote image in link** (1 test) - Remote image detection in link elements
+- **OPF-014 remote font detection** (3 tests) - Remote fonts in inline CSS, SVG, and XHTML
+- **OPF-014 remote audio overlays** (1 test) - Remote audio in media overlays
+- **OPF-018 remote resource warnings** (2 tests) - Unnecessary remote-resources property detection
+- **OPF-014 switch property** (1 test) - Switch property detection
+- **RSC-012 NCX reference** (1 test) - Invalid NCX reference validation
+- **NAV-011 reading order** (2 tests) - TOC reading order vs spine order warning
 
 ---
 
@@ -169,14 +180,14 @@ test/fixtures/
 | 00-minimal | 5 | 4 | 4 | 80% |
 | 03-resources | 113 | 15 | ~10 | 9% |
 | 04-ocf | 61 | 33 | 21 | 34% |
-| 05-package-document | 121 | 18 | 13 | 11% |
+| 05-package-document | 121 | 86 | 49 | 40% |
 | 06-content-document | 215 | 11 | 8 | 4% |
-| 07-navigation-document | 40 | 5 | 5 | 12.5% |
+| 07-navigation-document | 40 | 29 | 14 | 35% |
 | 08-layout | 51 | 0 | 0 | 0% |
 | 09-media-overlays | 51 | 0 | 0 | 0% |
 | D-vocabularies (ARIA) | 56 | 0 | 0 | 0% |
 | Other | 6 | 0 | 0 | 0% |
-| **Total** | **719** | **71** | **63** | **9%** |
+| **Total** | **719** | **163** | **108** | **15%** |
 
 ### E2E Porting Priorities
 
