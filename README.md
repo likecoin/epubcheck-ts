@@ -6,13 +6,13 @@ A TypeScript port of [EPUBCheck](https://github.com/w3c/epubcheck) - the officia
 [![npm](https://img.shields.io/npm/v/%40likecoin%2Fepubcheck-ts)](https://www.npmjs.com/package/@likecoin/epubcheck-ts)
 [![License](https://img.shields.io/npm/l/%40likecoin%2Fepubcheck-ts)](./LICENSE)
 
-> **Note**: This library is primarily developed for internal use at [3ook.com](https://3ook.com/about) and is built with AI-assisted development. While it has comprehensive test coverage (607 tests) and ~75% feature parity with Java EPUBCheck, it may not be suitable for mission-critical production workloads. For production environments requiring full EPUB validation, consider using the official [Java EPUBCheck](https://github.com/w3c/epubcheck). Contributions and feedback are welcome!
+> **Note**: This library is primarily developed for internal use at [3ook.com](https://3ook.com/about) and is built with AI-assisted development. While it has comprehensive test coverage (618 tests) and ~75% feature parity with Java EPUBCheck, it may not be suitable for mission-critical production workloads. For production environments requiring full EPUB validation, consider using the official [Java EPUBCheck](https://github.com/w3c/epubcheck). Contributions and feedback are welcome!
 
 ## Features
 
 - **CLI and programmatic API**: Use as a command-line tool or integrate into your application
 - **Cross-platform**: Works in Node.js (18+) and modern browsers
-- **Partial EPUB validation**: Currently ~70% of EPUBCheck feature parity
+- **Partial EPUB validation**: Currently ~75% of EPUBCheck feature parity
 - **Zero native dependencies**: Pure JavaScript/WebAssembly, no compilation required
 - **TypeScript first**: Full type definitions included
 - **Tree-shakable**: ESM with proper exports for optimal bundling
@@ -70,7 +70,7 @@ epubcheck-ts book.epub --quiet --fail-on-warnings
 epubcheck-ts dictionary.epub --profile dict
 ```
 
-**Note:** This CLI provides ~70% coverage of Java EPUBCheck features. For complete EPUB 3 conformance testing, use the [official Java EPUBCheck](https://github.com/w3c/epubcheck).
+**Note:** This CLI provides ~75% coverage of Java EPUBCheck features. For complete EPUB 3 conformance testing, use the [official Java EPUBCheck](https://github.com/w3c/epubcheck).
 
 ### ES Modules (recommended)
 
@@ -266,20 +266,20 @@ This library is a TypeScript port of the Java-based [EPUBCheck](https://github.c
 
 | Component | Status | Completeness | Notes |
 |-----------|--------|--------------|-------|
-| OCF Container | 🟡 Partial | ~70% | ZIP structure, mimetype (uncompressed check), container.xml |
-| Package Document (OPF) | 🟡 Partial | ~70% | Metadata, manifest, spine, collections, version/date validation |
-| Content Documents | 🟡 Partial | ~70% | XHTML structure, script/MathML/SVG detection, link validation |
-| Navigation Document | 🟡 Partial | ~40% | Nav structure, NCX validation, remote link validation |
+| OCF Container | 🟡 Partial | ~90% | ZIP structure, mimetype, container.xml, encryption.xml obfuscation |
+| Package Document (OPF) | 🟢 Complete | ~90% | Metadata, manifest, spine, collections, Schematron-equivalent checks |
+| Content Documents | 🟡 Partial | ~80% | XHTML structure, CSS url(), @import, SVG, script detection |
+| Navigation Document | 🟢 Complete | ~85% | Nav content model, landmarks, labels, reading order, hidden |
 | Schema Validation | 🟡 Partial | ~50% | RelaxNG for OPF/container; XHTML/SVG disabled (libxml2 limitation) |
-| CSS | 🟡 Partial | ~50% | @font-face, @import, media overlay classes, position warnings |
-| Cross-reference Validation | 🟡 Partial | ~75% | Reference tracking, fragment validation, undeclared resources |
+| CSS | 🟡 Partial | ~70% | @font-face, @import, url() extraction, position, forbidden properties |
+| Cross-reference Validation | 🟡 Partial | ~80% | Reference tracking, fragments, fallbacks, remote resources |
 | Accessibility Checks | 🟡 Partial | ~30% | Basic checks only (empty links, image alt, SVG titles) |
 | Media Overlays | ❌ Not Started | 0% | Planned |
 | Media Validation | ❌ Not Started | 0% | Planned |
 
 Legend: 🟢 Complete | 🟡 Partial | 🔴 Basic | ❌ Not Started
 
-**Overall Progress: ~70% of Java EPUBCheck features**
+**Overall Progress: ~75% of Java EPUBCheck features**
 
 See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for detailed comparison.
 
@@ -364,7 +364,7 @@ Legend: ✅ Implemented
 | Aspect | epubcheck-ts | EPUBCheck (Java) |
 |--------|--------------|------------------|
 | Runtime | Node.js / Browser | JVM |
-| Feature Parity | ~70% | 100% |
+| Feature Parity | ~75% | 100% |
 | Bundle Size | ~450KB JS + ~1.6MB WASM | ~15MB |
 | Installation | `npm install` | Download JAR |
 | Integration | Native JS/TS | CLI or Java API |
