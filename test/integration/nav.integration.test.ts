@@ -118,29 +118,25 @@ describe('Integration Tests - Navigation Documents', () => {
   // ============================================================
 
   describe('Nav element restrictions — content model (§7.3)', () => {
-    // Skip: Nav Schematron content model checks not yet implemented
-    it.skip('report empty nav heading (RSC-005)', async () => {
+    it('report empty nav heading (RSC-005)', async () => {
       const data = await loadEpub('invalid/nav/content-model-heading-empty-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
     });
 
-    // Skip: Nav Schematron content model checks not yet implemented
-    it.skip('report p element used as nav heading (RSC-005)', async () => {
+    it('report p element used as nav heading (RSC-005)', async () => {
       const data = await loadEpub('invalid/nav/content-model-heading-p-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
     });
 
-    // Skip: Nav Schematron content model checks not yet implemented
-    it.skip('report missing list item label (RSC-005)', async () => {
+    it('report missing list item label (RSC-005)', async () => {
       const data = await loadEpub('invalid/nav/content-model-li-label-missing-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
     });
 
-    // Skip: Nav Schematron content model checks not yet implemented
-    it.skip('report empty list item label (RSC-005)', async () => {
+    it('report empty list item label (RSC-005)', async () => {
       const data = await loadEpub('invalid/nav/content-model-li-label-empty-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
@@ -152,15 +148,13 @@ describe('Integration Tests - Navigation Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: Nav Schematron content model checks not yet implemented
-    it.skip('report leaf list item with no link (RSC-005)', async () => {
+    it('report leaf list item with no link (RSC-005)', async () => {
       const data = await loadEpub('invalid/nav/content-model-li-leaf-with-no-link-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
     });
 
-    // Skip: Nav Schematron content model checks not yet implemented
-    it.skip('report nav hyperlink without content (RSC-005)', async () => {
+    it('report nav hyperlink without content (RSC-005)', async () => {
       const data = await loadEpub('invalid/nav/content-model-a-empty-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
@@ -172,8 +166,7 @@ describe('Integration Tests - Navigation Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: Nav Schematron content model checks not yet implemented
-    it.skip('report nav hyperlink with empty nested span (RSC-005)', async () => {
+    it('report nav hyperlink with empty nested span (RSC-005)', async () => {
       const data = await loadEpub('invalid/nav/content-model-a-span-empty-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
@@ -186,8 +179,7 @@ describe('Integration Tests - Navigation Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: Nav Schematron content model checks not yet implemented
-    it.skip('report nav list without content (RSC-005)', async () => {
+    it('report nav list without content (RSC-005)', async () => {
       const data = await loadEpub('invalid/nav/content-model-ol-empty-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
@@ -207,8 +199,7 @@ describe('Integration Tests - Navigation Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: Nav Schematron type checks not yet implemented
-    it.skip('report multiple page-list nav elements (RSC-005)', async () => {
+    it('report multiple page-list nav elements (RSC-005)', async () => {
       const data = await loadEpub('invalid/nav/nav-page-list-multiple-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
@@ -220,15 +211,13 @@ describe('Integration Tests - Navigation Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: Nav Schematron type checks not yet implemented
-    it.skip('report landmarks link without epub:type (RSC-005)', async () => {
+    it('report landmarks link without epub:type (RSC-005)', async () => {
       const data = await loadEpub('invalid/nav/nav-landmarks-link-type-missing-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
     });
 
-    // Skip: Nav Schematron type checks not yet implemented
-    it.skip('report multiple landmarks nav elements (RSC-005)', async () => {
+    it('report multiple landmarks nav elements (RSC-005)', async () => {
       const data = await loadEpub('invalid/nav/nav-landmarks-multiple-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
@@ -240,8 +229,7 @@ describe('Integration Tests - Navigation Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: Nav Schematron type checks not yet implemented
-    it.skip('report same epub:type targeting same resource in landmarks (RSC-005)', async () => {
+    it('report same epub:type targeting same resource in landmarks (RSC-005)', async () => {
       const data = await loadEpub('invalid/nav/nav-landmarks-type-twice-same-resource-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
@@ -253,8 +241,7 @@ describe('Integration Tests - Navigation Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: Nav Schematron type checks not yet implemented
-    it.skip('report other nav without a heading (RSC-005)', async () => {
+    it('report other nav without a heading (RSC-005)', async () => {
       const data = await loadEpub('invalid/nav/nav-other-heading-missing-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
@@ -274,8 +261,7 @@ describe('Integration Tests - Navigation Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: Nav Schematron hidden attribute check not yet implemented
-    it.skip('report hidden attribute with wrong value (RSC-005)', async () => {
+    it('report hidden attribute with wrong value (RSC-005)', async () => {
       const data = await loadEpub('invalid/nav/hidden-attribute-invalid-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');

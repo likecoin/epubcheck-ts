@@ -507,10 +507,11 @@ export class ContentValidator {
   private checkNavDocument(
     context: ValidationContext,
     path: string,
-    doc: XmlDocument,
+    _doc: XmlDocument,
     root: XmlElement,
   ): void {
-    const navElements = root.find('.//html:nav', { html: 'http://www.w3.org/1999/xhtml' });
+    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
+    const navElements = root.find('.//html:nav', HTML_NS);
     if (navElements.length === 0) {
       pushMessage(context.messages, {
         id: MessageId.NAV_001,
@@ -520,11 +521,9 @@ export class ContentValidator {
       return;
     }
 
-    // Find the nav element with epub:type="toc"
-    let tocNav: (typeof navElements)[0] | undefined;
-    let tocEpubTypeValue = '';
-    for (const nav of navElements) {
-      if (!('attrs' in nav)) continue;
+    // Helper to get epub:type tokens from a nav element
+    const getNavTypes = (nav: XmlElement): string[] => {
+      if (!('attrs' in nav)) return [];
       const epubTypeAttr = (
         nav.attrs as { name: string; value: string; prefix?: string; namespaceUri?: string }[]
       ).find(
@@ -533,11 +532,23 @@ export class ContentValidator {
           attr.prefix === 'epub' &&
           attr.namespaceUri === 'http://www.idpf.org/2007/ops',
       );
-      if (epubTypeAttr?.value.includes('toc')) {
+      return epubTypeAttr ? epubTypeAttr.value.trim().split(/\s+/) : [];
+    };
+
+    // Find the nav element with epub:type="toc"
+    let tocNav: (typeof navElements)[0] | undefined;
+    let tocEpubTypeValue = '';
+    let pageListCount = 0;
+    let landmarksCount = 0;
+
+    for (const nav of navElements) {
+      const types = getNavTypes(nav as XmlElement);
+      if (types.includes('toc') && !tocNav) {
         tocNav = nav;
-        tocEpubTypeValue = epubTypeAttr.value;
-        break;
+        tocEpubTypeValue = types.join(' ');
       }
+      if (types.includes('page-list')) pageListCount++;
+      if (types.includes('landmarks')) landmarksCount++;
     }
 
     if (!tocNav) {
@@ -549,7 +560,7 @@ export class ContentValidator {
       return;
     }
 
-    const ol = tocNav.get('.//html:ol', { html: 'http://www.w3.org/1999/xhtml' });
+    const ol = tocNav.get('.//html:ol', HTML_NS);
     if (!ol) {
       pushMessage(context.messages, {
         id: MessageId.NAV_002,
@@ -558,7 +569,303 @@ export class ContentValidator {
       });
     }
 
+    // Check multiple page-list or landmarks nav elements
+    if (pageListCount > 1) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_005,
+        message: 'Multiple occurrences of the "page-list" nav element',
+        location: { path },
+      });
+    }
+    if (landmarksCount > 1) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_005,
+        message: 'Multiple occurrences of the "landmarks" nav element',
+        location: { path },
+      });
+    }
+
+    // Validate each typed nav element
+    for (const nav of navElements) {
+      const navElem = nav as XmlElement;
+      const types = getNavTypes(navElem);
+      if (types.length === 0) continue;
+
+      // Non-standard nav types must have heading as first child
+      const isStandard =
+        types.includes('toc') || types.includes('page-list') || types.includes('landmarks');
+      if (!isStandard) {
+        this.checkNavFirstChildHeading(context, path, navElem);
+      }
+
+      // Check landmarks-specific rules
+      if (types.includes('landmarks')) {
+        this.checkNavLandmarks(context, path, navElem);
+      }
+
+      // Check anchor and span labels within nav ol
+      this.checkNavLabels(context, path, navElem);
+
+      // Check nav content model (ol must have li, li must have a/span or ol)
+      this.checkNavContentModel(context, path, navElem);
+    }
+
+    // Check heading text content in the entire nav document
+    this.checkNavHeadingContent(context, path, root);
+
+    // Check hidden attribute values on nav elements
+    this.checkNavHiddenAttribute(context, path, root);
+
     this.checkNavRemoteLinks(context, path, root, tocEpubTypeValue);
+  }
+
+  private checkNavFirstChildHeading(
+    context: ValidationContext,
+    path: string,
+    navElem: XmlElement,
+  ): void {
+    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
+    const headingTags = new Set(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
+
+    // Get first child element of nav
+    const children = navElem.find('./html:*', HTML_NS);
+    if (children.length === 0) return;
+
+    const firstChild = children[0] as XmlElement;
+    const localName = firstChild.name.split(':').pop() ?? firstChild.name;
+    if (!headingTags.has(localName)) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_005,
+        message:
+          'nav elements other than "toc", "page-list" and "landmarks" must have a heading as their first child',
+        location: { path },
+      });
+    }
+  }
+
+  private checkNavLandmarks(
+    context: ValidationContext,
+    path: string,
+    navElem: XmlElement,
+  ): void {
+    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
+    const EPUB_NS = 'http://www.idpf.org/2007/ops';
+
+    const anchors = navElem.find('.//html:ol//html:a', HTML_NS);
+    const seenLandmarks: { type: string; href: string }[] = [];
+
+    for (const anchor of anchors) {
+      const aElem = anchor as XmlElement;
+
+      // Check for epub:type attribute
+      const epubTypeAttr = ('attrs' in aElem)
+        ? (aElem.attrs as { name: string; value: string; prefix?: string; namespaceUri?: string }[]).find(
+            (attr) => attr.name === 'type' && attr.namespaceUri === EPUB_NS,
+          )
+        : undefined;
+
+      if (!epubTypeAttr) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: 'Missing epub:type attribute on anchor inside "landmarks" nav element',
+          location: { path },
+        });
+        continue;
+      }
+
+      // Check for duplicate type+href
+      const href = this.getAttribute(aElem, 'href');
+      const typeTokens = epubTypeAttr.value.toLowerCase().trim().split(/\s+/);
+      const normalizedHref = (href ?? '').toLowerCase().trim();
+
+      for (const typeToken of typeTokens) {
+        const isDuplicate = seenLandmarks.some(
+          (seen) => seen.type === typeToken && seen.href === normalizedHref,
+        );
+        if (isDuplicate) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `Another landmark was found with the same epub:type and same reference to "${normalizedHref}"`,
+            location: { path },
+          });
+        }
+        seenLandmarks.push({ type: typeToken, href: normalizedHref });
+      }
+    }
+  }
+
+  private checkNavLabels(
+    context: ValidationContext,
+    path: string,
+    navElem: XmlElement,
+  ): void {
+    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
+
+    // Check anchor labels
+    const anchors = navElem.find('.//html:ol//html:a', HTML_NS);
+    for (const anchor of anchors) {
+      if (!this.hasNavLabelContent(anchor as XmlElement)) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: 'Anchors within nav elements must contain text',
+          location: { path },
+        });
+      }
+    }
+
+    // Check span labels
+    const spans = navElem.find('.//html:ol//html:span', HTML_NS);
+    for (const span of spans) {
+      if (!this.hasNavLabelContent(span as XmlElement)) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: 'Spans within nav elements must contain text',
+          location: { path },
+        });
+      }
+    }
+  }
+
+  private hasNavLabelContent(element: XmlElement): boolean {
+    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
+    // Check text content
+    const textContent = element.content;
+    if (textContent && textContent.trim().length > 0) return true;
+
+    // Check img alt attributes
+    const imgs = element.find('./html:img[@alt]', HTML_NS);
+    for (const img of imgs) {
+      const alt = this.getAttribute(img as XmlElement, 'alt');
+      if (alt && alt.trim().length > 0) return true;
+    }
+
+    // Check aria-label on any descendant or self
+    const ariaLabel = this.getAttribute(element, 'aria-label');
+    if (ariaLabel && ariaLabel.trim().length > 0) return true;
+
+    const ariaLabelElements = element.find('.//*[@aria-label]');
+    for (const el of ariaLabelElements) {
+      const label = this.getAttribute(el as XmlElement, 'aria-label');
+      if (label && label.trim().length > 0) return true;
+    }
+
+    return false;
+  }
+
+  private checkNavContentModel(
+    context: ValidationContext,
+    path: string,
+    navElem: XmlElement,
+  ): void {
+    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
+    const headingTags = new Set(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hgroup']);
+
+    // Check nav direct children: only headings, hgroup, and ol are allowed
+    const navChildren = navElem.find('./html:*', HTML_NS);
+    for (const child of navChildren) {
+      const localName = (child as XmlElement).name.split(':').pop() ?? (child as XmlElement).name;
+      if (!headingTags.has(localName) && localName !== 'ol') {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: `element "${localName}" not allowed here; expected element "h1", "h2", "h3", "h4", "h5", "h6", "hgroup" or "ol"`,
+          location: { path },
+        });
+      }
+    }
+
+    // Check ol elements have li children
+    const olElements = navElem.find('.//html:ol', HTML_NS);
+    for (const ol of olElements) {
+      const liChildren = (ol as XmlElement).find('./html:li', HTML_NS);
+      if (liChildren.length === 0) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: 'element "ol" incomplete; missing required element "li"',
+          location: { path },
+        });
+      }
+    }
+
+    // Check li elements content model
+    const liElements = navElem.find('.//html:ol//html:li', HTML_NS);
+    for (const li of liElements) {
+      const liElem = li as XmlElement;
+      const hasOl = liElem.get('./html:ol', HTML_NS);
+      const hasAnchor = liElem.get('./html:a', HTML_NS);
+      const hasSpan = liElem.get('./html:span', HTML_NS);
+
+      if (!hasAnchor && !hasSpan) {
+        if (hasOl) {
+          // li has ol but no a/span label
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: 'element "ol" not allowed yet; expected element "a" or "span"',
+            location: { path },
+          });
+        } else {
+          // leaf li with no link
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: 'element "li" incomplete; missing required element "ol"',
+            location: { path },
+          });
+        }
+      } else if (hasSpan && !hasAnchor && !hasOl) {
+        // li has span label but no nested ol — span implies a branch node that needs a sublist
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: 'element "li" incomplete; missing required element "ol"',
+          location: { path },
+        });
+      }
+    }
+  }
+
+  private checkNavHeadingContent(
+    context: ValidationContext,
+    path: string,
+    root: XmlElement,
+  ): void {
+    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
+    const headingSelectors = [
+      './/html:h1',
+      './/html:h2',
+      './/html:h3',
+      './/html:h4',
+      './/html:h5',
+      './/html:h6',
+    ];
+
+    for (const selector of headingSelectors) {
+      const headings = root.find(selector, HTML_NS);
+      for (const heading of headings) {
+        if (!this.hasNavLabelContent(heading as XmlElement)) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: 'Heading elements must contain text',
+            location: { path },
+          });
+        }
+      }
+    }
+  }
+
+  private checkNavHiddenAttribute(
+    context: ValidationContext,
+    path: string,
+    root: XmlElement,
+  ): void {
+    const hiddenElements = root.find('.//*[@hidden]');
+    for (const elem of hiddenElements) {
+      const hiddenValue = this.getAttribute(elem as XmlElement, 'hidden');
+      if (hiddenValue !== null && hiddenValue !== '' && hiddenValue !== 'hidden' && hiddenValue !== 'until-found') {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: `value of attribute "hidden" is invalid; must be equal to "", "hidden" or "until-found"`,
+          location: { path },
+        });
+      }
+    }
   }
 
   private checkNavRemoteLinks(
