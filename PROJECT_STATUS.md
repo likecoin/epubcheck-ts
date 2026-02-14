@@ -7,16 +7,16 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Completion | Status |
 |----------|------------|--------|
 | OCF Validation | ~90% | 🟢 URL leaking, UTF-8, spaces, forbidden chars all done |
-| OPF Validation | ~85% | 🟢 Link elements, self-reference, remote resources done |
+| OPF Validation | ~90% | 🟢 Schematron-equivalent checks, refines cycles, duplicate IDs done |
 | Content (XHTML/SVG) | ~75% | 🟢 CSS url() references, @import validation done |
 | CSS Validation | ~70% | 🟢 url() extraction from declarations, @font-face src |
-| Navigation (nav/NCX) | ~40% | 🟡 Basic nav done, NCX strong |
+| Navigation (nav/NCX) | ~80% | 🟢 Content model, structural validation, landmarks, labels done |
 | Schema Validation | ~50% | 🟡 RelaxNG for OPF/container; XHTML/SVG disabled (libxml2 limitation) |
 | Media Overlays | 0% | ❌ Not implemented |
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~80% | 🟢 URL leaking, CSS references, link elements done |
 
-**Overall: ~70% complete (552 tests passing, 95 skipped)**
+**Overall: ~75% complete (597 tests passing, 50 skipped)**
 
 ---
 
@@ -27,8 +27,8 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 400 | 382 | 18 |
-| **Integration Tests** | 247 | 170 | 77 |
-| **Total** | **647** | **552** | **95** |
+| **Integration Tests** | 247 | 215 | 32 |
+| **Total** | **647** | **597** | **50** |
 
 ### Integration Test Files
 
@@ -36,9 +36,9 @@ Quick reference for implementation progress vs Java EPUBCheck.
 test/integration/
 ├── epub.test.ts                 # 4 tests   (4 pass, 0 skip)  - Basic EPUB validation
 ├── ocf.integration.test.ts      # 47 tests  (37 pass, 10 skip) - OCF/ZIP/container
-├── opf.integration.test.ts      # 119 tests (75 pass, 44 skip) - Package document
+├── opf.integration.test.ts      # 119 tests (106 pass, 13 skip) - Package document
 ├── content.integration.test.ts  # 31 tests  (27 pass, 4 skip)  - XHTML/CSS/SVG
-├── nav.integration.test.ts      # 36 tests  (19 pass, 17 skip) - Navigation
+├── nav.integration.test.ts      # 36 tests  (33 pass, 3 skip)  - Navigation
 └── resources.integration.test.ts # 10 tests  (8 pass, 2 skip)  - Remote resources
 ```
 
@@ -69,7 +69,7 @@ test/fixtures/
 
 **Critical gaps:**
 - ❌ **ARIA validation** - No role/attribute checks (Java has dozens)
-- ❌ **ID/IDREF validation** - No duplicate detection
+- ❌ **ID/IDREF validation** - OPF duplicate IDs done; XHTML duplicate IDs not yet
 - ❌ **DOCTYPE validation** - No obsolete identifier checks
 - ❌ **Entity validation** - No external entity checks
 - ❌ **Base URL** - No xml:base or HTML base support
@@ -91,15 +91,14 @@ test/fixtures/
   - ACC-005 (1 test) - Image missing alt attribute
   - HTM-012 (1 test) - Unescaped ampersands
 
-**Integration tests (77)** - Unimplemented features and library limitations:
+**Integration tests (32)** - Unimplemented features and library limitations:
 - **CSS-008**: CSS syntax error detection (1 test) - css-tree is forgiving, parses invalid CSS successfully
 - **OPF-060**: Duplicate ZIP entry detection (1 test) - fflate deduplicates entries when unzipping
 - **Unicode NFKC normalization** (1 test) - Requires compatibility normalization, not implemented
 - **Unicode NFC normalization for diacritics** (1 test) - Requires composed/precomposed char comparison
 - **Unicode NFC normalization duplicate** (1 test) - Already handled, test expects NFKC
 - **Unit tests (3)** - libxml2-wasm XPath with namespaced attributes
-- **OPF Schematron checks (20 tests)** - OPF-025/026/027 property validation, OPF-065 refines cycles, OPF-085 UUID format, OPF-092 language/hreflang well-formedness, OPF-098 link-to-package-document-id, RSC-005 modified/refines/duplicate-id/cover-image/nav/NCX Schematron rules, RSC-017 bindings deprecated, RSC-020 unencoded spaces, OPF-012 cover-image type, OPF-070/071 collection validation
-- **Nav Schematron checks (15 tests)** - Nav content model validation (empty headings, missing labels, leaf items without links, empty anchors/spans/lists), nav type restrictions (page-list/landmarks multiplicity, landmarks epub:type requirements, other nav heading), hidden attribute validation
+- **ID whitespace normalization** (1 test) - Regex parser doesn't normalize XML ID attribute whitespace
 - **OPF-096 non-linear reachability** (1 test) - Non-linear spine item reachability check not implemented
 - **OPF-015 unnecessary property** (2 tests) - Unnecessary scripted/SVG property detection
 - **RSC-006 remote image in link** (1 test) - Remote image detection in link elements
@@ -109,6 +108,8 @@ test/fixtures/
 - **OPF-014 switch property** (1 test) - Switch property detection
 - **RSC-012 NCX reference** (1 test) - Invalid NCX reference validation
 - **NAV-011 reading order** (2 tests) - TOC reading order vs spine order warning
+- **RSC-020 nav href spaces** (1 test) - Unencoded spaces in nav document links
+- **OCF tests** (10 tests) - Various OCF features (encryption, signatures, PKG-026)
 
 ---
 
@@ -125,7 +126,8 @@ test/fixtures/
 - **Collections** (OPF-071-084)
 - **NCX validation** (NCX-001/002/003/006)
 - **CSS validation** (@font-face, @import, url(), position, forbidden properties CSS-001)
-- **Navigation** (NAV-001/002/010)
+- **Navigation** (NAV-001/002/010) + content model, landmarks, labels, hidden attribute
+- **OPF Schematron-equivalent** (RSC-005 duplicate IDs/refines/modified/multiplicity, OPF-065 cycles, OPF-092 xml:lang, OPF-098 link-to-OPF, RSC-017 bindings/refines, RSC-020 spaces)
 - **Link element validation** (RSC-007w warning for missing resources, OPF-093 missing media-type)
 - **URL leaking detection** (RSC-026 for path-absolute URLs)
 - **Scripted property** (OPF-014)
@@ -165,7 +167,7 @@ test/fixtures/
 2. **css-tree syntax error handling** - The CSS parser is designed to be forgiving and successfully parses many invalid CSS snippets, making syntax error detection difficult (affects 1 skipped test)
 3. **libxml2-wasm XPath limitations** - Queries for namespaced attributes don't work properly (affects 3 skipped unit tests)
 4. **libxml2-wasm RelaxNG limitations** - Cannot parse XHTML/SVG schemas due to complex recursive patterns (`oneOrMore//interleave//attribute`). Java uses Jing which handles these. XHTML/SVG RelaxNG validation disabled; content validated via Schematron instead.
-5. **Schematron XSLT 2.0** - Some XSLT 2.0 functions not fully supported by fontoxpath
+5. **fontoxpath XPath 2.0** - fontoxpath crashes on XPath 2.0 functions like `tokenize()` used in OPF/nav Schematron; OPF and nav validation rules implemented as direct TypeScript instead
 6. **RelaxNG deprecation** - libxml2 plans to remove RelaxNG support in future
 7. **Unicode NFKC normalization** - Not implemented (affects 1 skipped test)
 
@@ -180,14 +182,14 @@ test/fixtures/
 | 00-minimal | 5 | 4 | 4 | 80% |
 | 03-resources | 113 | 15 | ~10 | 9% |
 | 04-ocf | 61 | 33 | 21 | 34% |
-| 05-package-document | 121 | 86 | 49 | 40% |
+| 05-package-document | 121 | 86 | 80 | 66% |
 | 06-content-document | 215 | 11 | 8 | 4% |
-| 07-navigation-document | 40 | 29 | 14 | 35% |
+| 07-navigation-document | 40 | 29 | 28 | 70% |
 | 08-layout | 51 | 0 | 0 | 0% |
 | 09-media-overlays | 51 | 0 | 0 | 0% |
 | D-vocabularies (ARIA) | 56 | 0 | 0 | 0% |
 | Other | 6 | 0 | 0 | 0% |
-| **Total** | **719** | **163** | **108** | **15%** |
+| **Total** | **719** | **163** | **153** | **21%** |
 
 ### E2E Porting Priorities
 
@@ -402,14 +404,11 @@ The following tests from Java EPUBCheck can be added immediately without new imp
 
 ### High Priority (Core Validation)
 1. **ARIA validation** - Role and attribute validation
-2. **ID/IDREF validation** - Duplicate ID detection (OPF-060)
-3. **DOCTYPE validation** - Obsolete identifiers
-4. **Entity validation** - External entities
-5. **Base URL handling** - xml:base, HTML base
-6. **Refines cycles** - OPF-065 detection
-7. **Link elements** - rel, hreflang, properties
-8. **UUID format** - dc:identifier validation
-9. **Non-UTF8 detection** - PKG-027 for filenames
+2. **DOCTYPE validation** - Obsolete identifiers
+3. **Entity validation** - External entities
+4. **Base URL handling** - xml:base, HTML base
+5. **Non-linear reachability** - OPF-096 spine item reachability
+6. **NAV-011** - TOC reading order vs spine order warning
 
 ### Medium Priority (Completeness)
 
@@ -431,7 +430,7 @@ Ordered by severity impact (number of active error/warning messages not yet emit
 ## Message IDs
 
 **Defined**: ~165 message IDs
-**Actively used**: ~76 (46%)
+**Actively used**: ~82 (50%)
 
 Most-used prefixes: OPF (27), RSC (15), PKG (12), CSS (6), HTM (6), NAV (3), NCX (4), ACC (4)
 Unused: MED (0), SCP (0), CHK (0)
@@ -456,6 +455,15 @@ Unused: MED (0), SCP (0), CHK (0)
 - `RSC-011` - Navigation links to items not in spine
 - `OPF-027` - Undefined manifest item properties (including prefixed properties)
 - `OPF-093` - Missing media-type for local linked resources
+- `OPF-065` - Refines metadata cycle detection via DFS
+- `OPF-085` - UUID format validation for dc:identifier
+- `OPF-092` - Language tag well-formedness (dc:language, link hreflang, xml:lang)
+- `OPF-098` - Link href must not target package document elements
+- `RSC-005` - OPF Schematron-equivalent: duplicate IDs, refines validation, modified date, cover-image/nav multiplicity, NCX toc attribute
+- `RSC-017` - Bindings deprecated, refines not-a-fragment
+- `RSC-020` - Unencoded spaces in manifest item href
+- Nav content model validation (headings, labels, anchors, lists, hidden attribute)
+- Nav type validation (page-list/landmarks multiplicity, landmarks epub:type, other nav heading)
 - iframe `<iframe src>` reference extraction for RSC-007 validation
 - Script detection excludes non-JS types (application/ld+json, application/json)
 - `RSC-009` - Non-SVG image fragment identifiers (warning)
