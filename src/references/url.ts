@@ -77,8 +77,11 @@ export function isMalformedURL(url: string): boolean {
   if (!url) return true;
 
   try {
-    // Check for invalid characters
-    if (/[\s<>]/.test(url)) return true;
+    // Trim leading/trailing whitespace (XML attribute values are whitespace-trimmed)
+    const trimmed = url.trim();
+    if (!trimmed) return true;
+    // Check for invalid characters (whitespace within URL, angle brackets)
+    if (/[\s<>]/.test(trimmed)) return true;
     return false;
   } catch {
     return true;

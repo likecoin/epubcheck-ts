@@ -190,8 +190,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectError(result, 'OPF-014');
     });
 
-    // Skip: OPF-015 unnecessary property detection not yet implemented
-    it.skip('should report unnecessary scripted property (OPF-015)', async () => {
+    it('should report unnecessary scripted property (OPF-015)', async () => {
       const data = await loadEpub(
         'invalid/opf/package-manifest-prop-scripted-declared-but-unnecessary-error.epub',
       );
@@ -219,8 +218,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectError(result, 'OPF-014');
     });
 
-    // Skip: OPF-015 unnecessary property detection not yet implemented
-    it.skip('should report unnecessary SVG property (OPF-015)', async () => {
+    it('should report unnecessary SVG property (OPF-015)', async () => {
       const data = await loadEpub(
         'invalid/opf/package-manifest-prop-svg-declared-but-unnecessary-error.epub',
       );
@@ -332,8 +330,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectError(result, 'RSC-008');
     });
 
-    // Skip: RSC-006 remote image in link detection not yet implemented
-    it.skip('should report remote image in link element (RSC-006)', async () => {
+    it('should report remote image in link element (RSC-006)', async () => {
       const data = await loadEpub('invalid/opf/package-remote-img-in-link-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -466,8 +463,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
   });
 
   describe('NCX validation', () => {
-    // Skip: RSC-012 NCX reference validation not yet implemented
-    it.skip('should report invalid NCX reference (RSC-012)', async () => {
+    it('should report invalid NCX reference (RSC-012)', async () => {
       const data = await loadEpub('invalid/opf/package-ncx-invalid-error.epub');
       const result = await EpubCheck.validate(data);
 

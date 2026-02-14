@@ -104,9 +104,9 @@ export class EpubCheck {
       const contentValidator = new ContentValidator();
       contentValidator.validate(context, registry, refValidator);
 
-      // Step 5: Validate navigation (NCX for EPUB 2, nav for EPUB 3)
-      if (context.version === '2.0' && context.packageDocument) {
-        this.validateNCX(context);
+      // Step 5: Validate NCX navigation (EPUB 2 always; EPUB 3 when NCX is present)
+      if (context.packageDocument) {
+        this.validateNCX(context, registry);
       }
 
       // Step 6: Run cross-reference validation
@@ -163,15 +163,17 @@ export class EpubCheck {
   }
 
   /**
-   * Validate NCX navigation document (EPUB 2.0)
+   * Validate NCX navigation document (EPUB 2 always, EPUB 3 when NCX present)
    */
-  private validateNCX(context: ValidationContext): void {
+  private validateNCX(context: ValidationContext, registry: ResourceRegistry): void {
     if (!context.packageDocument) {
       return;
     }
 
     const ncxId = context.packageDocument.spineToc;
     if (!ncxId) {
+      // For EPUB 3 without toc attribute, check if NCX exists in manifest
+      // (NCX toc attribute missing check is handled in OPF validator)
       return;
     }
 
@@ -193,7 +195,7 @@ export class EpubCheck {
     const ncxContent = new TextDecoder().decode(ncxData);
 
     const ncxValidator = new NCXValidator();
-    ncxValidator.validate(context, ncxContent, ncxPath);
+    ncxValidator.validate(context, ncxContent, ncxPath, registry);
 
     // Check if NCX UID matches OPF unique identifier
     if (context.ncxUid && context.packageDocument.uniqueIdentifier) {

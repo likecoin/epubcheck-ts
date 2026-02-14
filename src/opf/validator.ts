@@ -789,12 +789,28 @@ export class OPFValidator {
         });
       }
 
-      // EPUB 3: Check for remote resources in spine require remote-resources property (RSC-006)
-      // Per Java EPUBCheck, this check only applies to spine items, not all manifest items
+      // EPUB 3: Check remote resource constraints (RSC-006)
       if (
         this.packageDoc.version !== '2.0' &&
         (item.href.startsWith('http://') || item.href.startsWith('https://'))
       ) {
+        // Remote resources that aren't audio, video, or fonts are not allowed
+        if (
+          !item.mediaType.startsWith('audio/') &&
+          !item.mediaType.startsWith('video/') &&
+          !item.mediaType.startsWith('font/') &&
+          item.mediaType !== 'application/font-sfnt' &&
+          item.mediaType !== 'application/font-woff' &&
+          item.mediaType !== 'application/vnd.ms-opentype'
+        ) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_006,
+            message: `Remote resource reference is not allowed in this context; resource "${item.href}" must be located in the EPUB container`,
+            location: { path: opfPath },
+          });
+        }
+
+        // Spine items with remote resources need remote-resources property
         const inSpine = this.packageDoc.spine.some((s) => s.idref === item.id);
         if (inSpine && !item.properties?.includes('remote-resources')) {
           pushMessage(context.messages, {

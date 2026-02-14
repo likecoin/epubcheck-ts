@@ -380,6 +380,13 @@ export class ContentValidator {
             location: { path },
           });
         }
+        if (!hasScripts && manifestItem?.properties?.includes('scripted')) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_015,
+            message: 'The property "scripted" should not be declared in the OPF file',
+            location: { path },
+          });
+        }
 
         const hasMathML = this.detectMathML(context, path, root);
         if (hasMathML && !manifestItem?.properties?.includes('mathml')) {
@@ -396,6 +403,13 @@ export class ContentValidator {
           pushMessage(context.messages, {
             id: MessageId.OPF_014,
             message: 'Content document contains SVG but manifest item is missing "svg" property',
+            location: { path },
+          });
+        }
+        if (!hasSVG && manifestItem?.properties?.includes('svg')) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_015,
+            message: 'The property "svg" should not be declared in the OPF file',
             location: { path },
           });
         }
@@ -1371,9 +1385,10 @@ export class ContentValidator {
 
     const links = root.find('.//html:a[@href]', { html: 'http://www.w3.org/1999/xhtml' });
     for (const link of links) {
-      const href = this.getAttribute(link as XmlElement, 'href');
+      // Trim whitespace (XML attribute values are whitespace-normalized by parsers)
+      const href = this.getAttribute(link as XmlElement, 'href')?.trim() ?? null;
       if (href === null) continue;
-      if (href.trim() === '') {
+      if (href === '') {
         pushMessage(context.messages, {
           id: MessageId.HTM_045,
           message: 'Encountered empty href',

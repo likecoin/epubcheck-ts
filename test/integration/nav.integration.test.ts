@@ -172,8 +172,7 @@ describe('Integration Tests - Navigation Documents', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: Fixture has intentional spaces in href that trigger RSC-020
-    it.skip('allow nav hyperlinks with leading and trailing spaces', async () => {
+    it('allow nav hyperlinks with leading and trailing spaces', async () => {
       const data = await loadEpub('valid/content-model-a-with-leading-trailing-spaces-valid.epub');
       const result = await EpubCheck.validate(data);
       expectNoErrorsOrWarnings(result);

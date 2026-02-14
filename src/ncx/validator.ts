@@ -4,13 +4,19 @@
 
 import { XmlDocument, type XmlElement } from 'libxml2-wasm';
 import { MessageId, pushMessage } from '../messages/index.js';
+import type { ResourceRegistry } from '../references/registry.js';
 import type { ValidationContext } from '../types.js';
 
 /**
  * Validator for EPUB 2 NCX navigation documents
  */
 export class NCXValidator {
-  validate(context: ValidationContext, ncxContent: string, ncxPath: string): void {
+  validate(
+    context: ValidationContext,
+    ncxContent: string,
+    ncxPath: string,
+    registry?: ResourceRegistry,
+  ): void {
     let doc: XmlDocument | null = null;
     try {
       doc = XmlDocument.fromString(ncxContent);
@@ -48,7 +54,7 @@ export class NCXValidator {
 
       this.checkUid(context, root, ncxPath);
       this.checkNavMap(context, root, ncxPath);
-      this.checkContentSrc(context, root, ncxPath);
+      this.checkContentSrc(context, root, ncxPath, registry);
     } finally {
       doc.dispose();
     }
@@ -92,7 +98,12 @@ export class NCXValidator {
     }
   }
 
-  private checkContentSrc(context: ValidationContext, root: XmlElement, ncxPath: string): void {
+  private checkContentSrc(
+    context: ValidationContext,
+    root: XmlElement,
+    ncxPath: string,
+    registry?: ResourceRegistry,
+  ): void {
     const contentElements = root.find('.//ncx:content[@src]', {
       ncx: 'http://www.daisy.org/z3986/2005/ncx/',
     });
@@ -104,7 +115,9 @@ export class NCXValidator {
       const src = srcAttr?.value;
       if (!src) continue;
 
-      const srcBase = src.split('#')[0] ?? src;
+      const hashIdx = src.indexOf('#');
+      const srcBase = hashIdx >= 0 ? src.substring(0, hashIdx) : src;
+      const fragment = hashIdx >= 0 ? src.substring(hashIdx + 1) : '';
 
       let fullPath = srcBase;
       if (ncxDir) {
@@ -135,6 +148,16 @@ export class NCXValidator {
           message: `NCX content src references missing file: ${src}`,
           location: { path: ncxPath, line },
         });
+      } else if (fragment && registry) {
+        // RSC-012: Check that fragment identifier exists in the target document
+        if (!registry.hasID(fullPath, fragment)) {
+          const line = contentElem.line;
+          pushMessage(context.messages, {
+            id: MessageId.RSC_012,
+            message: `Fragment identifier is not defined`,
+            location: { path: ncxPath, line },
+          });
+        }
       }
     }
   }

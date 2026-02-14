@@ -54,7 +54,8 @@ export class ReferenceValidator {
    * Validate a single reference
    */
   private validateReference(context: ValidationContext, reference: Reference): void {
-    const url = reference.url;
+    // Trim leading/trailing whitespace (XML attribute values are whitespace-normalized)
+    const url = reference.url.trim();
 
     // Check for malformed URLs
     if (isMalformedURL(url)) {
