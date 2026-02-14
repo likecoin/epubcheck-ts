@@ -246,9 +246,7 @@ export class OPFValidator {
         const val = dc.value.trim();
         if (val.startsWith('urn:uuid:')) {
           const uuid = val.substring(9);
-          if (
-            !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid)
-          ) {
+          if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid)) {
             pushMessage(context.messages, {
               id: MessageId.OPF_085,
               message: `Invalid UUID value "${uuid}"`,
@@ -824,9 +822,7 @@ export class OPFValidator {
 
     // EPUB 3: Check nav and cover-image property counts
     if (this.packageDoc.version !== '2.0') {
-      const navItems = this.packageDoc.manifest.filter((item) =>
-        item.properties?.includes('nav'),
-      );
+      const navItems = this.packageDoc.manifest.filter((item) => item.properties?.includes('nav'));
       if (navItems.length === 0) {
         pushMessage(context.messages, {
           id: MessageId.RSC_005,

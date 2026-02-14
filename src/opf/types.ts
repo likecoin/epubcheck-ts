@@ -195,12 +195,7 @@ export const ITEM_PROPERTIES = new Set([
 /**
  * Known link element property values (EPUB 3)
  */
-export const LINK_PROPERTIES = new Set([
-  'onix',
-  'marc21xml-record',
-  'mods-record',
-  'xmp-record',
-]);
+export const LINK_PROPERTIES = new Set(['onix', 'marc21xml-record', 'mods-record', 'xmp-record']);
 
 /**
  * Known spine itemref property values (EPUB 3)

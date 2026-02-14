@@ -757,11 +757,7 @@ export class ContentValidator {
     }
   }
 
-  private checkNavLandmarks(
-    context: ValidationContext,
-    path: string,
-    navElem: XmlElement,
-  ): void {
+  private checkNavLandmarks(context: ValidationContext, path: string, navElem: XmlElement): void {
     const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
     const EPUB_NS = 'http://www.idpf.org/2007/ops';
 
@@ -772,11 +768,17 @@ export class ContentValidator {
       const aElem = anchor as XmlElement;
 
       // Check for epub:type attribute
-      const epubTypeAttr = ('attrs' in aElem)
-        ? (aElem.attrs as { name: string; value: string; prefix?: string; namespaceUri?: string }[]).find(
-            (attr) => attr.name === 'type' && attr.namespaceUri === EPUB_NS,
-          )
-        : undefined;
+      const epubTypeAttr =
+        'attrs' in aElem
+          ? (
+              aElem.attrs as {
+                name: string;
+                value: string;
+                prefix?: string;
+                namespaceUri?: string;
+              }[]
+            ).find((attr) => attr.name === 'type' && attr.namespaceUri === EPUB_NS)
+          : undefined;
 
       if (!epubTypeAttr) {
         pushMessage(context.messages, {
@@ -808,11 +810,7 @@ export class ContentValidator {
     }
   }
 
-  private checkNavLabels(
-    context: ValidationContext,
-    path: string,
-    navElem: XmlElement,
-  ): void {
+  private checkNavLabels(context: ValidationContext, path: string, navElem: XmlElement): void {
     const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
 
     // Check anchor labels
@@ -935,11 +933,7 @@ export class ContentValidator {
     }
   }
 
-  private checkNavHeadingContent(
-    context: ValidationContext,
-    path: string,
-    root: XmlElement,
-  ): void {
+  private checkNavHeadingContent(context: ValidationContext, path: string, root: XmlElement): void {
     const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
     const headingSelectors = [
       './/html:h1',
@@ -972,7 +966,12 @@ export class ContentValidator {
     const hiddenElements = root.find('.//*[@hidden]');
     for (const elem of hiddenElements) {
       const hiddenValue = this.getAttribute(elem as XmlElement, 'hidden');
-      if (hiddenValue !== null && hiddenValue !== '' && hiddenValue !== 'hidden' && hiddenValue !== 'until-found') {
+      if (
+        hiddenValue !== null &&
+        hiddenValue !== '' &&
+        hiddenValue !== 'hidden' &&
+        hiddenValue !== 'until-found'
+      ) {
         pushMessage(context.messages, {
           id: MessageId.RSC_005,
           message: `value of attribute "hidden" is invalid; must be equal to "", "hidden" or "until-found"`,
