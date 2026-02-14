@@ -132,10 +132,14 @@ export class ContentValidator {
       } else if (item.mediaType === 'text/css' && refValidator) {
         const fullPath = opfDir ? `${opfDir}/${item.href}` : item.href;
         this.validateCSSDocument(context, fullPath, opfDir, refValidator);
-      } else if (item.mediaType === 'image/svg+xml' && registry) {
-        // Extract IDs from SVG documents for fragment validation
+      } else if (item.mediaType === 'image/svg+xml') {
         const fullPath = opfDir ? `${opfDir}/${item.href}` : item.href;
-        this.extractSVGIDs(context, fullPath, registry);
+        if (registry) {
+          this.extractSVGIDs(context, fullPath, registry);
+        }
+        if (context.version.startsWith('3')) {
+          this.validateSVGDocument(context, fullPath, item);
+        }
       }
     }
   }
@@ -166,6 +170,84 @@ export class ContentValidator {
     } finally {
       doc?.dispose();
     }
+  }
+
+  private validateSVGDocument(
+    context: ValidationContext,
+    path: string,
+    manifestItem: { id: string; properties?: string[] },
+  ): void {
+    const svgData = context.files.get(path);
+    if (!svgData) return;
+
+    const svgContent = new TextDecoder().decode(svgData);
+    let doc: XmlDocument | undefined;
+    try {
+      doc = XmlDocument.fromString(svgContent);
+    } catch {
+      return;
+    }
+
+    try {
+      const root = doc.root;
+      const hasRemote = this.detectSVGRemoteResources(root);
+      if (hasRemote && !manifestItem.properties?.includes('remote-resources')) {
+        pushMessage(context.messages, {
+          id: MessageId.OPF_014,
+          message:
+            'SVG document references remote resources but manifest item is missing "remote-resources" property',
+          location: { path },
+        });
+      }
+    } finally {
+      doc.dispose();
+    }
+  }
+
+  private detectSVGRemoteResources(root: XmlElement): boolean {
+    try {
+      const fontFaceUris = root.find('.//svg:font-face-uri', {
+        svg: 'http://www.w3.org/2000/svg',
+      });
+      for (const uri of fontFaceUris) {
+        const href =
+          this.getAttribute(uri as XmlElement, 'xlink:href') ??
+          this.getAttribute(uri as XmlElement, 'href');
+        if (href && (href.startsWith('http://') || href.startsWith('https://'))) {
+          return true;
+        }
+      }
+    } catch {
+      // empty
+    }
+
+    try {
+      const images = root.find('.//svg:image', { svg: 'http://www.w3.org/2000/svg' });
+      for (const img of images) {
+        const href =
+          this.getAttribute(img as XmlElement, 'xlink:href') ??
+          this.getAttribute(img as XmlElement, 'href');
+        if (href && (href.startsWith('http://') || href.startsWith('https://'))) {
+          return true;
+        }
+      }
+    } catch {
+      // empty
+    }
+
+    try {
+      const styles = root.find('.//svg:style', { svg: 'http://www.w3.org/2000/svg' });
+      for (const style of styles) {
+        const cssContent = (style as XmlElement).content;
+        if (this.cssContainsRemoteUrl(cssContent)) {
+          return true;
+        }
+      }
+    } catch {
+      // empty
+    }
+
+    return false;
   }
 
   private validateCSSDocument(
@@ -414,12 +496,30 @@ export class ContentValidator {
           });
         }
 
+        const hasSwitch = this.detectSwitch(root);
+        if (hasSwitch && !manifestItem?.properties?.includes('switch')) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_014,
+            message:
+              'Content document contains epub:switch but manifest item is missing "switch" property',
+            location: { path },
+          });
+        }
+
         const hasRemoteResources = this.detectRemoteResources(context, path, root);
         if (hasRemoteResources && !manifestItem?.properties?.includes('remote-resources')) {
           pushMessage(context.messages, {
             id: MessageId.OPF_014,
             message:
               'Content document references remote resources but manifest item is missing "remote-resources" property',
+            location: { path },
+          });
+        }
+        if (!hasRemoteResources && manifestItem?.properties?.includes('remote-resources')) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_018,
+            message:
+              'The "remote-resources" property was declared in the Package Document, but no reference to remote resources has been found',
             location: { path },
           });
         }
@@ -971,6 +1071,11 @@ export class ContentValidator {
     return jsTypes.has(type.toLowerCase());
   }
 
+  private detectSwitch(root: XmlElement): boolean {
+    const switchElem = root.get('.//epub:switch', { epub: 'http://www.idpf.org/2007/ops' });
+    return !!switchElem;
+  }
+
   private detectMathML(_context: ValidationContext, _path: string, root: XmlElement): boolean {
     const mathMLElements = root.find('.//math:*', { math: 'http://www.w3.org/1998/Math/MathML' });
     return mathMLElements.length > 0;
@@ -1045,7 +1150,20 @@ export class ContentValidator {
       }
     }
 
+    const styleElements = root.find('.//html:style', { html: 'http://www.w3.org/1999/xhtml' });
+    for (const style of styleElements) {
+      const cssContent = (style as XmlElement).content;
+      if (this.cssContainsRemoteUrl(cssContent)) {
+        return true;
+      }
+    }
+
     return false;
+  }
+
+  private cssContainsRemoteUrl(css: string): boolean {
+    const urlRegex = /url\s*\(\s*["']?(https?:\/\/[^"')]+)["']?\s*\)/gi;
+    return urlRegex.test(css);
   }
 
   private checkDiscouragedElements(

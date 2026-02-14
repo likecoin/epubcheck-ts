@@ -8,7 +8,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 |----------|------------|--------|
 | OCF Validation | ~90% | 🟢 URL leaking, UTF-8, spaces, forbidden chars all done |
 | OPF Validation | ~90% | 🟢 Schematron-equivalent checks, refines cycles, duplicate IDs done |
-| Content (XHTML/SVG) | ~75% | 🟢 CSS url() references, @import validation done |
+| Content (XHTML/SVG) | ~80% | 🟢 CSS url() references, @import, inline CSS remote font, SVG remote font done |
 | CSS Validation | ~70% | 🟢 url() extraction from declarations, @font-face src |
 | Navigation (nav/NCX) | ~80% | 🟢 Content model, structural validation, landmarks, labels done |
 | Schema Validation | ~50% | 🟡 RelaxNG for OPF/container; XHTML/SVG disabled (libxml2 limitation) |
@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~80% | 🟢 URL leaking, CSS references, link elements done |
 
-**Overall: ~75% complete (602 tests passing, 45 skipped)**
+**Overall: ~75% complete (607 tests passing, 40 skipped)**
 
 ---
 
@@ -27,8 +27,8 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 400 | 382 | 18 |
-| **Integration Tests** | 247 | 220 | 27 |
-| **Total** | **647** | **602** | **45** |
+| **Integration Tests** | 247 | 225 | 22 |
+| **Total** | **647** | **607** | **40** |
 
 ### Integration Test Files
 
@@ -36,7 +36,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 test/integration/
 ├── epub.test.ts                 # 4 tests   (4 pass, 0 skip)  - Basic EPUB validation
 ├── ocf.integration.test.ts      # 47 tests  (37 pass, 10 skip) - OCF/ZIP/container
-├── opf.integration.test.ts      # 119 tests (110 pass, 9 skip)  - Package document
+├── opf.integration.test.ts      # 119 tests (115 pass, 4 skip)  - Package document
 ├── content.integration.test.ts  # 31 tests  (27 pass, 4 skip)  - XHTML/CSS/SVG
 ├── nav.integration.test.ts      # 36 tests  (34 pass, 2 skip)  - Navigation
 └── resources.integration.test.ts # 10 tests  (8 pass, 2 skip)  - Remote resources
@@ -91,7 +91,7 @@ test/fixtures/
   - ACC-005 (1 test) - Image missing alt attribute
   - HTM-012 (1 test) - Unescaped ampersands
 
-**Integration tests (27)** - Unimplemented features and library limitations:
+**Integration tests (22)** - Unimplemented features and library limitations:
 - **CSS-008**: CSS syntax error detection (1 test) - css-tree is forgiving, parses invalid CSS successfully
 - **OPF-060**: Duplicate ZIP entry detection (1 test) - fflate deduplicates entries when unzipping
 - **Unicode NFKC normalization** (1 test) - Requires compatibility normalization, not implemented
@@ -100,10 +100,8 @@ test/fixtures/
 - **Unit tests (3)** - libxml2-wasm XPath with namespaced attributes
 - **ID whitespace normalization** (1 test) - Regex parser doesn't normalize XML ID attribute whitespace
 - **OPF-096 non-linear reachability** (1 test) - Non-linear spine item reachability check not implemented
-- **OPF-014 remote font detection** (3 tests) - Remote fonts in inline CSS, SVG, and XHTML
-- **OPF-014 remote audio overlays** (1 test) - Remote audio in media overlays
-- **OPF-018 remote resource warnings** (2 tests) - Unnecessary remote-resources property detection
-- **OPF-014 switch property** (1 test) - Switch property detection
+- **OPF-014 remote audio overlays** (1 test) - Remote audio in media overlays (needs SMIL support)
+- **OPF-018 object param** (1 test) - Remote resource via `<param>` element not tracked
 - **NAV-011 reading order** (2 tests) - TOC reading order vs spine order warning
 - **OCF tests** (10 tests) - Various OCF features (encryption, signatures, PKG-026)
 
@@ -128,7 +126,10 @@ test/fixtures/
 - **URL leaking detection** (RSC-026 for path-absolute URLs)
 - **Scripted property** (OPF-014)
 - **MathML/SVG properties** (OPF-014)
-- **Remote resources property** (OPF-014)
+- **Remote resources property** (OPF-014, OPF-018 unnecessary declaration warning)
+- **Switch property** (OPF-014 for epub:switch detection)
+- **Inline CSS remote font detection** (OPF-014 for @font-face with remote URLs in `<style>` blocks)
+- **SVG remote font detection** (OPF-014 for font-face-uri with remote xlink:href)
 - **Basic accessibility** (ACC-009/011 active; ACC-004/005 suppressed in Java)
 - **Cross-references** (RSC-006/007/008/009/010/011/012/013/014/020/026/027/028/029/031)
 - **Filename validation** (PKG-009/010/011/027)
@@ -178,14 +179,14 @@ test/fixtures/
 | 00-minimal | 5 | 4 | 4 | 80% |
 | 03-resources | 113 | 15 | ~10 | 9% |
 | 04-ocf | 61 | 33 | 21 | 34% |
-| 05-package-document | 121 | 86 | 84 | 69% |
+| 05-package-document | 121 | 86 | 89 | 74% |
 | 06-content-document | 215 | 11 | 8 | 4% |
 | 07-navigation-document | 40 | 29 | 29 | 73% |
 | 08-layout | 51 | 0 | 0 | 0% |
 | 09-media-overlays | 51 | 0 | 0 | 0% |
 | D-vocabularies (ARIA) | 56 | 0 | 0 | 0% |
 | Other | 6 | 0 | 0 | 0% |
-| **Total** | **719** | **163** | **158** | **22%** |
+| **Total** | **719** | **163** | **163** | **23%** |
 
 ### E2E Porting Priorities
 

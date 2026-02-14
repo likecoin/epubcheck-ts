@@ -228,8 +228,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectError(result, 'OPF-015');
     });
 
-    // Skip: OPF-014 switch property detection not yet implemented
-    it.skip('should report undeclared switch property (OPF-014)', async () => {
+    it('should report undeclared switch property (OPF-014)', async () => {
       const data = await loadEpub(
         'invalid/opf/package-manifest-prop-switch-not-declared-error.epub',
       );
@@ -257,8 +256,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectError(result, 'OPF-014');
     });
 
-    // Skip: OPF-018 unnecessary remote-resources detection not yet implemented
-    it.skip('should report unnecessary remote-resources property (OPF-018)', async () => {
+    it('should report unnecessary remote-resources property (OPF-018)', async () => {
       const data = await loadEpub(
         'invalid/opf/package-manifest-prop-remote-resource-declared-but-unnecessary-error.epub',
       );
@@ -346,8 +344,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectError(result, 'RSC-008');
     });
 
-    // Skip: OPF-014 remote font in inline CSS detection not yet implemented
-    it.skip('should report remote font in inline CSS missing property (OPF-014)', async () => {
+    it('should report remote font in inline CSS missing property (OPF-014)', async () => {
       const data = await loadEpub(
         'invalid/opf/package-remote-font-in-inline-css-missing-property-error.epub',
       );
@@ -357,8 +354,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectError(result, 'OPF-014');
     });
 
-    // Skip: OPF-014 remote font in SVG detection not yet implemented
-    it.skip('should report remote font in SVG missing property (OPF-014)', async () => {
+    it('should report remote font in SVG missing property (OPF-014)', async () => {
       const data = await loadEpub(
         'invalid/opf/package-remote-font-in-svg-missing-property-error.epub',
       );
@@ -368,8 +364,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectError(result, 'OPF-014');
     });
 
-    // Skip: OPF-014 remote font in XHTML detection not yet implemented
-    it.skip('should report remote font in XHTML missing property (OPF-014)', async () => {
+    it('should report remote font in XHTML missing property (OPF-014)', async () => {
       const data = await loadEpub(
         'invalid/opf/package-remote-font-in-xhtml-missing-property-error.epub',
       );
