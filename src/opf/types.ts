@@ -122,6 +122,10 @@ export interface PackageDocument {
   guide: GuideReference[];
   /** Collections (EPUB 3) */
   collections: Collection[];
+  /** Whether the bindings element is present (deprecated in EPUB 3.3) */
+  hasBindings?: boolean;
+  /** xml:lang attribute on elements (for validation) */
+  xmlLangs?: string[];
 }
 
 /**

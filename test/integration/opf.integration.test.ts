@@ -496,57 +496,50 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: OPF-098 link-to-package-document-id check not yet implemented
-    it.skip('link target must not reference a manifest ID (OPF-098)', async () => {
+    it('link target must not reference a manifest ID (OPF-098)', async () => {
       const data = await loadEpub('invalid/opf/link-to-package-document-id-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'OPF-098');
     });
 
-    // Skip: OPF Schematron id-with-spaces validation produces false OPF-049 errors
+    // Skip: Regex parser doesn't normalize XML ID attribute whitespace — OPF-049 false positives
     it.skip('id attributes can have leading or trailing space', async () => {
       const data = await loadEpub('valid/attr-id-with-spaces-valid.epub');
       const result = await EpubCheck.validate(data);
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: OPF Schematron duplicate id detection not yet implemented (RSC-005)
-    it.skip('id attributes must be unique (RSC-005)', async () => {
+    it('id attributes must be unique (RSC-005)', async () => {
       const data = await loadEpub('invalid/opf/attr-id-duplicate-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
     });
 
-    // Skip: OPF Schematron duplicate id detection not yet implemented (RSC-005)
-    it.skip('id attributes must be unique after whitespace normalization (RSC-005)', async () => {
+    it('id attributes must be unique after whitespace normalization (RSC-005)', async () => {
       const data = await loadEpub('invalid/opf/attr-id-duplicate-with-spaces-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
     });
 
-    // Skip: OPF Schematron refines validation not yet implemented
-    it.skip('refines attribute must be a relative URL (RSC-005)', async () => {
+    it('refines attribute must be a relative URL (RSC-005)', async () => {
       const data = await loadEpub('invalid/opf/metadata-refines-not-relative-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
     });
 
-    // Skip: OPF Schematron refines validation not yet implemented
-    it.skip('refines attribute should use a fragment ID (RSC-017)', async () => {
+    it('refines attribute should use a fragment ID (RSC-017)', async () => {
       const data = await loadEpub('warnings/metadata-refines-not-a-fragment-warning.epub');
       const result = await EpubCheck.validate(data);
       expectWarning(result, 'RSC-017');
     });
 
-    // Skip: OPF Schematron refines validation not yet implemented
-    it.skip('refines fragment ID must target an existing ID (RSC-005)', async () => {
+    it('refines fragment ID must target an existing ID (RSC-005)', async () => {
       const data = await loadEpub('invalid/opf/metadata-refines-unknown-id-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
     });
 
-    // Skip: OPF-065 refines cycle detection not yet implemented
-    it.skip('refines cycles are not allowed (OPF-065)', async () => {
+    it('refines cycles are not allowed (OPF-065)', async () => {
       const data = await loadEpub('invalid/opf/metadata-refines-cycle-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'OPF-065');
@@ -558,15 +551,13 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: OPF-092 language tag well-formedness check not yet implemented
-    it.skip('xml:lang must not have leading/trailing whitespace (OPF-092)', async () => {
+    it('xml:lang must not have leading/trailing whitespace (OPF-092)', async () => {
       const data = await loadEpub('invalid/opf/attr-lang-whitespace-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'OPF-092');
     });
 
-    // Skip: OPF-092 language tag well-formedness check not yet implemented
-    it.skip('xml:lang must be well-formed (OPF-092)', async () => {
+    it('xml:lang must be well-formed (OPF-092)', async () => {
       const data = await loadEpub('invalid/opf/attr-lang-not-well-formed-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'OPF-092');
@@ -580,15 +571,13 @@ describe('Integration Tests - OPF (Package Document)', () => {
   });
 
   describe('Package element (§5.4)', () => {
-    // Skip: OPF Schematron unique-identifier target check not producing RSC-005
-    it.skip('unique-identifier must be a known ID (RSC-005)', async () => {
+    it('unique-identifier must be a known ID (RSC-005)', async () => {
       const data = await loadEpub('invalid/opf/package-unique-identifier-unknown-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
     });
 
-    // Skip: OPF Schematron unique-identifier target check not producing RSC-005
-    it.skip('unique-identifier must point to dc:identifier (RSC-005)', async () => {
+    it('unique-identifier must point to dc:identifier (RSC-005)', async () => {
       const data = await loadEpub(
         'invalid/opf/package-unique-identifier-not-targeting-identifier-error.epub',
       );
@@ -738,15 +727,13 @@ describe('Integration Tests - OPF (Package Document)', () => {
   });
 
   describe('Last modified date (§5.5.6)', () => {
-    // Skip: OPF Schematron modified-missing check not yet implemented (produces OPF-054 instead)
-    it.skip('dcterms:modified must be defined (RSC-005)', async () => {
+    it('dcterms:modified must be defined (RSC-005)', async () => {
       const data = await loadEpub('invalid/opf/metadata-modified-missing-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
     });
 
-    // Skip: OPF Schematron modified-syntax check not yet implemented
-    it.skip('dcterms:modified must be CCYY-MM-DDThh:mm:ssZ format (RSC-005)', async () => {
+    it('dcterms:modified must be CCYY-MM-DDThh:mm:ssZ format (RSC-005)', async () => {
       const data = await loadEpub('invalid/opf/metadata-modified-syntax-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
@@ -810,8 +797,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: RSC-020 unencoded spaces in OPF item href not yet implemented
-    it.skip('item URLs must be properly encoded (RSC-020)', async () => {
+    it('item URLs must be properly encoded (RSC-020)', async () => {
       const data = await loadEpub('invalid/opf/item-href-contains-spaces-unencoded-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-020');
@@ -849,8 +835,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: OPF Schematron cover-image multiplicity check not yet implemented
-    it.skip('cover-image property must occur at most once (RSC-005)', async () => {
+    it('cover-image property must occur at most once (RSC-005)', async () => {
       const data = await loadEpub('invalid/opf/item-property-cover-image-multiple-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
@@ -868,15 +853,13 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: OPF Schematron nav multiplicity check not yet implemented
-    it.skip('at most one item must have the nav property (RSC-005)', async () => {
+    it('at most one item must have the nav property (RSC-005)', async () => {
       const data = await loadEpub('invalid/opf/item-nav-multiple-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
     });
 
-    // Skip: OPF Schematron nav content-type check not yet implemented
-    it.skip('nav property must be on an XHTML Content Document (RSC-005)', async () => {
+    it('nav property must be on an XHTML Content Document (RSC-005)', async () => {
       const data = await loadEpub('invalid/opf/item-nav-not-xhtml-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
@@ -884,8 +867,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
   });
 
   describe('Bindings element (§5.6.3)', () => {
-    // Skip: RSC-017 bindings deprecated check not yet implemented
-    it.skip('bindings element is reported as deprecated (RSC-017)', async () => {
+    it('bindings element is reported as deprecated (RSC-017)', async () => {
       const data = await loadEpub('warnings/bindings-deprecated-warning.epub');
       const result = await EpubCheck.validate(data);
       expectWarning(result, 'RSC-017');
@@ -933,8 +915,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
   });
 
   describe('Legacy content (§5.9)', () => {
-    // Skip: OPF Schematron NCX toc attribute check not yet implemented
-    it.skip('NCX toc attribute must be set when NCX is present (RSC-005)', async () => {
+    it('NCX toc attribute must be set when NCX is present (RSC-005)', async () => {
       const data = await loadEpub('invalid/opf/legacy-ncx-toc-attribute-missing-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');

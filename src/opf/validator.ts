@@ -80,6 +80,35 @@ export class OPFValidator {
 
     if (this.packageDoc.version.startsWith('3.')) {
       this.validateCollections(context, opfPath);
+
+      // RSC-017: bindings element is deprecated
+      if (this.packageDoc.hasBindings) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_017,
+          message: 'Use of the bindings element is deprecated',
+          location: { path: opfPath },
+        });
+      }
+    }
+
+    // OPF-092: Validate xml:lang attributes in OPF
+    if (this.packageDoc.xmlLangs) {
+      for (const lang of this.packageDoc.xmlLangs) {
+        if (lang === '') continue;
+        if (lang !== lang.trim()) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_092,
+            message: `Language tag "${lang}" is not well-formed`,
+            location: { path: opfPath },
+          });
+        } else if (!isValidLanguageTag(lang)) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_092,
+            message: `Language tag "${lang}" is not well-formed`,
+            location: { path: opfPath },
+          });
+        }
+      }
     }
   }
 
@@ -123,12 +152,17 @@ export class OPFValidator {
         location: { path: opfPath },
       });
     } else {
-      // Verify the referenced identifier exists
+      // Verify the referenced identifier exists and points to dc:identifier
       const refId = this.packageDoc.uniqueIdentifier;
       const matchingDc = this.packageDoc.dcElements.find(
         (dc) => dc.name === 'identifier' && dc.id === refId,
       );
       if (!matchingDc) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: `package element unique-identifier attribute does not resolve to a dc:identifier element (given reference was "${refId}")`,
+          location: { path: opfPath },
+        });
         pushMessage(context.messages, {
           id: MessageId.OPF_030,
           message: `unique-identifier "${refId}" does not reference an existing dc:identifier`,
@@ -380,6 +414,89 @@ export class OPFValidator {
       }
     }
 
+    // EPUB 3: Validate refines attributes
+    if (this.packageDoc.version !== '2.0') {
+      // Collect all IDs from the OPF document
+      const allIds = new Set<string>();
+      for (const dc of dcElements) {
+        if (dc.id) allIds.add(dc.id);
+      }
+      for (const meta of this.packageDoc.metaElements) {
+        if (meta.id) allIds.add(meta.id);
+      }
+      for (const link of this.packageDoc.linkElements) {
+        if (link.id) allIds.add(link.id);
+      }
+      for (const item of this.packageDoc.manifest) {
+        allIds.add(item.id);
+      }
+
+      // Check for duplicate IDs across all elements
+      const seenGlobalIds = new Set<string>();
+      const allIdSources: { id: string; normalized: string }[] = [];
+      for (const dc of dcElements) {
+        if (dc.id) allIdSources.push({ id: dc.id, normalized: dc.id.trim() });
+      }
+      for (const meta of this.packageDoc.metaElements) {
+        if (meta.id) allIdSources.push({ id: meta.id, normalized: meta.id.trim() });
+      }
+      for (const link of this.packageDoc.linkElements) {
+        if (link.id) allIdSources.push({ id: link.id, normalized: link.id.trim() });
+      }
+      for (const item of this.packageDoc.manifest) {
+        allIdSources.push({ id: item.id, normalized: item.id.trim() });
+      }
+      for (const src of allIdSources) {
+        if (seenGlobalIds.has(src.normalized)) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `Duplicate "${src.normalized}"`,
+            location: { path: opfPath },
+          });
+        }
+        seenGlobalIds.add(src.normalized);
+      }
+
+      for (const meta of this.packageDoc.metaElements) {
+        if (!meta.refines) continue;
+
+        const refines = meta.refines;
+
+        // RSC-005: refines must be a relative URL (not absolute)
+        if (/^[a-zA-Z][a-zA-Z0-9+\-.]*:/.test(refines)) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: '@refines must be a relative URL',
+            location: { path: opfPath },
+          });
+          continue;
+        }
+
+        // RSC-017: refines should use a fragment ID (start with #)
+        if (!refines.startsWith('#')) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_017,
+            message: `@refines should instead refer to "${refines}" using a fragment identifier pointing to its manifest item`,
+            location: { path: opfPath },
+          });
+          continue;
+        }
+
+        // RSC-005: refines fragment must target an existing ID
+        const targetId = refines.substring(1);
+        if (!allIds.has(targetId)) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `@refines missing target id: "${targetId}"`,
+            location: { path: opfPath },
+          });
+        }
+      }
+
+      // OPF-065: Detect refines cycles
+      this.detectRefinesCycles(context, opfPath);
+    }
+
     // EPUB 3: Check for dcterms:modified meta
     if (this.packageDoc.version !== '2.0') {
       const modifiedMeta = this.packageDoc.metaElements.find(
@@ -387,16 +504,32 @@ export class OPFValidator {
       );
       if (!modifiedMeta) {
         pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: 'package dcterms:modified meta element must occur exactly once',
+          location: { path: opfPath },
+        });
+        pushMessage(context.messages, {
           id: MessageId.OPF_054,
           message: 'EPUB 3 metadata must include a dcterms:modified meta element',
           location: { path: opfPath },
         });
-      } else if (modifiedMeta.value && !isValidW3CDateFormat(modifiedMeta.value)) {
-        pushMessage(context.messages, {
-          id: MessageId.OPF_054,
-          message: `Invalid dcterms:modified date format "${modifiedMeta.value}"; must be W3C date format (ISO 8601)`,
-          location: { path: opfPath },
-        });
+      } else if (modifiedMeta.value) {
+        // Check for strict CCYY-MM-DDThh:mm:ssZ format (Schematron check)
+        const strictModifiedPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
+        if (!strictModifiedPattern.test(modifiedMeta.value.trim())) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `dcterms:modified illegal syntax (expecting: "CCYY-MM-DDThh:mm:ssZ")`,
+            location: { path: opfPath },
+          });
+        }
+        if (!isValidW3CDateFormat(modifiedMeta.value)) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_054,
+            message: `Invalid dcterms:modified date format "${modifiedMeta.value}"; must be W3C date format (ISO 8601)`,
+            location: { path: opfPath },
+          });
+        }
       }
     }
   }
@@ -450,6 +583,12 @@ export class OPFValidator {
         : decodedHref;
 
       if (href.startsWith('#')) {
+        // OPF-098: link href must not target an element in the package document
+        pushMessage(context.messages, {
+          id: MessageId.OPF_098,
+          message: `The "href" attribute must reference resources, not elements in the package document, but found URL "${href}".`,
+          location: { path: opfPath },
+        });
         continue;
       }
 
@@ -608,6 +747,11 @@ export class OPFValidator {
         if (item.properties.includes('nav')) {
           if (item.mediaType !== 'application/xhtml+xml') {
             pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message: `The manifest item representing the Navigation Document must be of the "application/xhtml+xml" type (given type was "${item.mediaType}")`,
+              location: { path: opfPath },
+            });
+            pushMessage(context.messages, {
               id: MessageId.OPF_012,
               message: `Item with "nav" property must be XHTML, found: ${item.mediaType}`,
               location: { path: opfPath },
@@ -625,6 +769,15 @@ export class OPFValidator {
             });
           }
         }
+      }
+
+      // RSC-020: Check for unencoded spaces in href
+      if (item.href.includes(' ')) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_020,
+          message: `"${item.href}" is not a valid URL (Illegal character in path segment: space is not allowed)`,
+          location: { path: opfPath },
+        });
       }
 
       // Check for href fragment (EPUB 3)
@@ -653,13 +806,32 @@ export class OPFValidator {
       }
     }
 
-    // EPUB 3: Check for required nav document (Schematron in Java, reports RSC-005)
+    // EPUB 3: Check nav and cover-image property counts
     if (this.packageDoc.version !== '2.0') {
-      const hasNav = this.packageDoc.manifest.some((item) => item.properties?.includes('nav'));
-      if (!hasNav) {
+      const navItems = this.packageDoc.manifest.filter((item) =>
+        item.properties?.includes('nav'),
+      );
+      if (navItems.length === 0) {
         pushMessage(context.messages, {
           id: MessageId.RSC_005,
           message: 'Exactly one manifest item must declare the "nav" property',
+          location: { path: opfPath },
+        });
+      } else if (navItems.length > 1) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: `Exactly one manifest item must declare the "nav" property (number of "nav" items: ${String(navItems.length)}).`,
+          location: { path: opfPath },
+        });
+      }
+
+      const coverItems = this.packageDoc.manifest.filter((item) =>
+        item.properties?.includes('cover-image'),
+      );
+      if (coverItems.length > 1) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: `Multiple occurrences of the "cover-image" property (number of "cover-image" items: ${String(coverItems.length)}).`,
           location: { path: opfPath },
         });
       }
@@ -701,6 +873,19 @@ export class OPFValidator {
         message: 'EPUB 2 spine should have a toc attribute referencing the NCX',
         location: { path: opfPath },
       });
+    } else if (!ncxId && this.packageDoc.version !== '2.0') {
+      // EPUB 3: If NCX is in manifest, spine toc attribute must be set
+      const hasNcxInManifest = this.packageDoc.manifest.some(
+        (item) => item.mediaType === 'application/x-dtbncx+xml',
+      );
+      if (hasNcxInManifest) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message:
+            'spine element toc attribute must be set when an NCX is included in the publication',
+          location: { path: opfPath },
+        });
+      }
     } else if (ncxId) {
       // If toc attribute is present (EPUB 2 or 3), validate it points to NCX
       const ncxItem = this.manifestById.get(ncxId);
@@ -830,6 +1015,59 @@ export class OPFValidator {
           location: { path: opfPath },
         });
       }
+    }
+  }
+
+  private detectRefinesCycles(context: ValidationContext, opfPath: string): void {
+    if (!this.packageDoc) return;
+
+    // Build graph: id -> ids it refines (via meta elements that refine it)
+    const refinesGraph = new Map<string, string[]>();
+    for (const meta of this.packageDoc.metaElements) {
+      if (!meta.refines || !meta.id) continue;
+      if (!meta.refines.startsWith('#')) continue;
+      const targetId = meta.refines.substring(1);
+      // meta.id refines targetId — so there's an edge from meta.id to targetId
+      const existing = refinesGraph.get(meta.id);
+      if (existing) {
+        existing.push(targetId);
+      } else {
+        refinesGraph.set(meta.id, [targetId]);
+      }
+    }
+
+    // Detect cycles using DFS
+    const visited = new Set<string>();
+    const inStack = new Set<string>();
+    const reportedCycles = new Set<string>();
+
+    const dfs = (node: string): boolean => {
+      if (inStack.has(node)) return true;
+      if (visited.has(node)) return false;
+      visited.add(node);
+      inStack.add(node);
+
+      const neighbors = refinesGraph.get(node) ?? [];
+      for (const neighbor of neighbors) {
+        if (dfs(neighbor)) {
+          if (!reportedCycles.has(node)) {
+            reportedCycles.add(node);
+            pushMessage(context.messages, {
+              id: MessageId.OPF_065,
+              message: `Invalid metadata declaration, probably due to a cycle in "refines" metadata.`,
+              location: { path: opfPath },
+            });
+          }
+          return true;
+        }
+      }
+
+      inStack.delete(node);
+      return false;
+    };
+
+    for (const node of refinesGraph.keys()) {
+      dfs(node);
     }
   }
 

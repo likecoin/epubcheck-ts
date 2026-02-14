@@ -68,6 +68,19 @@ export function parseOPF(xml: string): PackageDocument {
   // Parse collections (EPUB 3)
   const collections = parseCollections(xml);
 
+  // Detect bindings element (deprecated in EPUB 3.3)
+  const hasBindings = /<bindings[\s>]/.test(xml);
+
+  // Extract xml:lang attributes from OPF elements
+  const xmlLangs: string[] = [];
+  const xmlLangRegex = /xml:lang=["']([^"']*?)["']/g;
+  let langMatch;
+  while ((langMatch = xmlLangRegex.exec(xml)) !== null) {
+    if (langMatch[1] !== undefined) {
+      xmlLangs.push(langMatch[1]);
+    }
+  }
+
   // Build result with proper optional property handling
   const result: PackageDocument = {
     version,
@@ -93,6 +106,12 @@ export function parseOPF(xml: string): PackageDocument {
   }
   if (spineResult.pageProgressionDirection) {
     result.pageProgressionDirection = spineResult.pageProgressionDirection;
+  }
+  if (hasBindings) {
+    result.hasBindings = true;
+  }
+  if (xmlLangs.length > 0) {
+    result.xmlLangs = xmlLangs;
   }
 
   return result;
