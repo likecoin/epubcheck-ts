@@ -88,6 +88,8 @@ export interface LinkElement {
   properties?: string[];
   /** The id attribute, if any */
   id?: string;
+  /** Language tag for the linked resource */
+  hreflang?: string;
 }
 
 /**
@@ -184,6 +186,16 @@ export const ITEM_PROPERTIES = new Set([
   'scripted',
   'svg',
   'switch',
+]);
+
+/**
+ * Known link element property values (EPUB 3)
+ */
+export const LINK_PROPERTIES = new Set([
+  'onix',
+  'marc21xml-record',
+  'mods-record',
+  'xmp-record',
 ]);
 
 /**

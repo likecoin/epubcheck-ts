@@ -65,7 +65,7 @@ describe('OPFValidator', () => {
   });
 
   describe('collection validation', () => {
-    it('should warn about unknown collection role (OPF-071)', () => {
+    it('should accept unknown collection role (EPUB 3.3)', () => {
       const opf = `<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
@@ -89,8 +89,7 @@ describe('OPFValidator', () => {
       validator.validate(context);
 
       const warnings = context.messages.filter((m) => m.id === 'OPF-071');
-      expect(warnings).toHaveLength(1);
-      expect(warnings[0]?.message).toContain('unknown-role');
+      expect(warnings).toHaveLength(0);
     });
 
     it('should accept valid collection roles', () => {

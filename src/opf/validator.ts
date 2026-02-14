@@ -2,7 +2,7 @@ import { MessageId, pushMessage } from '../messages/index.js';
 import type { ValidationContext } from '../types.js';
 import { parseOPF } from './parser.js';
 import type { ManifestItem, PackageDocument } from './types.js';
-import { ITEM_PROPERTIES, SPINE_PROPERTIES } from './types.js';
+import { ITEM_PROPERTIES, LINK_PROPERTIES, SPINE_PROPERTIES } from './types.js';
 
 /**
  * Validates the OPF (Open Packaging Format) package document
@@ -207,6 +207,23 @@ export class OPFValidator {
         }
       }
 
+      // OPF-085: Validate UUID format for dc:identifier starting with urn:uuid:
+      if (dc.name === 'identifier' && dc.value) {
+        const val = dc.value.trim();
+        if (val.startsWith('urn:uuid:')) {
+          const uuid = val.substring(9);
+          if (
+            !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid)
+          ) {
+            pushMessage(context.messages, {
+              id: MessageId.OPF_085,
+              message: `Invalid UUID value "${uuid}"`,
+              location: { path: opfPath },
+            });
+          }
+        }
+      }
+
       // OPF-052: Validate dc:creator with opf:role attribute
       if (dc.name === 'creator' && dc.attributes) {
         const opfRole = dc.attributes['opf:role'];
@@ -318,6 +335,51 @@ export class OPFValidator {
       }
     }
 
+    // EPUB 3: Validate meta element property and scheme attributes
+    if (this.packageDoc.version !== '2.0') {
+      for (const meta of this.packageDoc.metaElements) {
+        // OPF-025: property/scheme must not be a whitespace-separated list
+        if (meta.property && /\s/.test(meta.property.trim())) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_025,
+            message: `Property value must be a single value, not a list: "${meta.property}"`,
+            location: { path: opfPath },
+          });
+        }
+        if (meta.scheme && /\s/.test(meta.scheme.trim())) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_025,
+            message: `Scheme value must be a single value, not a list: "${meta.scheme}"`,
+            location: { path: opfPath },
+          });
+        }
+
+        // OPF-026: property name must be well-formed (valid prefix:localname)
+        if (meta.property && !/\s/.test(meta.property.trim())) {
+          const prop = meta.property.trim();
+          if (prop.includes(':') && /:\s*$/.test(prop)) {
+            pushMessage(context.messages, {
+              id: MessageId.OPF_026,
+              message: `Malformed property name: "${prop}"`,
+              location: { path: opfPath },
+            });
+          }
+        }
+
+        // OPF-027: scheme must be a known value or use a prefix
+        if (meta.scheme) {
+          const scheme = meta.scheme.trim();
+          if (scheme && !scheme.includes(':')) {
+            pushMessage(context.messages, {
+              id: MessageId.OPF_027,
+              message: `Undefined property: "${scheme}"`,
+              location: { path: opfPath },
+            });
+          }
+        }
+      }
+    }
+
     // EPUB 3: Check for dcterms:modified meta
     if (this.packageDoc.version !== '2.0') {
       const modifiedMeta = this.packageDoc.metaElements.find(
@@ -348,6 +410,37 @@ export class OPFValidator {
     const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/')) : '';
 
     for (const link of this.packageDoc.linkElements) {
+      // OPF-092: Validate hreflang well-formedness
+      if (link.hreflang !== undefined && link.hreflang !== '') {
+        const lang = link.hreflang;
+        if (lang !== lang.trim()) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_092,
+            message: `Language tag must not have leading or trailing whitespace: "${lang}"`,
+            location: { path: opfPath },
+          });
+        } else if (!isValidLanguageTag(lang)) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_092,
+            message: `Invalid language tag: "${lang}"`,
+            location: { path: opfPath },
+          });
+        }
+      }
+
+      // OPF-027: Validate link properties
+      if (link.properties) {
+        for (const prop of link.properties) {
+          if (!LINK_PROPERTIES.has(prop) && !prop.includes(':')) {
+            pushMessage(context.messages, {
+              id: MessageId.OPF_027,
+              message: `Undefined property: "${prop}"`,
+              location: { path: opfPath },
+            });
+          }
+        }
+      }
+
       const href = link.href;
       const decodedHref = tryDecodeUriComponent(href);
 
@@ -517,6 +610,17 @@ export class OPFValidator {
             pushMessage(context.messages, {
               id: MessageId.OPF_012,
               message: `Item with "nav" property must be XHTML, found: ${item.mediaType}`,
+              location: { path: opfPath },
+            });
+          }
+        }
+
+        // OPF-012: cover-image property must only be used on image media types
+        if (item.properties.includes('cover-image')) {
+          if (!item.mediaType.startsWith('image/')) {
+            pushMessage(context.messages, {
+              id: MessageId.OPF_012,
+              message: `Item with "cover-image" property must be an image, found: ${item.mediaType}`,
               location: { path: opfPath },
             });
           }
@@ -737,15 +841,27 @@ export class OPFValidator {
       return;
     }
 
-    const validRoles = new Set(['dictionary', 'index', 'preview', 'recordings']);
-
     for (const collection of collections) {
-      if (!validRoles.has(collection.role)) {
+      // RSC-005: manifest collection must not be at the top level
+      if (collection.role === 'manifest') {
         pushMessage(context.messages, {
-          id: MessageId.OPF_071,
-          message: `Unknown collection role: "${collection.role}"`,
+          id: MessageId.RSC_005,
+          message: 'Collection with role "manifest" must be a child of another collection',
           location: { path: opfPath },
         });
+      }
+
+      // OPF-070: collection role URL must be valid if it looks like a URL
+      if (collection.role.includes(':')) {
+        try {
+          new URL(collection.role);
+        } catch {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_070,
+            message: `Invalid collection role URL: "${collection.role}"`,
+            location: { path: opfPath },
+          });
+        }
       }
 
       if (collection.role === 'dictionary') {

@@ -636,8 +636,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
   });
 
   describe('Dublin Core required elements (§5.5.3)', () => {
-    // Skip: OPF-085 UUID format validation not yet implemented
-    it.skip('dc:identifier starting with urn:uuid should be a valid UUID (OPF-085)', async () => {
+    it('dc:identifier starting with urn:uuid should be a valid UUID (OPF-085)', async () => {
       const data = await loadEpub('warnings/metadata-identifier-uuid-invalid-warning.epub');
       const result = await EpubCheck.validate(data);
       expectWarning(result, 'OPF-085');
@@ -707,15 +706,13 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: OPF-025 property list validation not yet implemented
-    it.skip('metadata property name must not be a list (OPF-025)', async () => {
+    it('metadata property name must not be a list (OPF-025)', async () => {
       const data = await loadEpub('invalid/opf/metadata-meta-property-list-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'OPF-025');
     });
 
-    // Skip: OPF-026 malformed property validation not yet implemented
-    it.skip('metadata property name must be well-formed (OPF-026)', async () => {
+    it('metadata property name must be well-formed (OPF-026)', async () => {
       const data = await loadEpub('invalid/opf/metadata-meta-property-malformed-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'OPF-026');
@@ -727,15 +724,13 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: OPF-025 scheme list validation not yet implemented
-    it.skip('scheme must not be a list (OPF-025)', async () => {
+    it('scheme must not be a list (OPF-025)', async () => {
       const data = await loadEpub('invalid/opf/metadata-meta-scheme-list-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'OPF-025');
     });
 
-    // Skip: OPF-027 unknown scheme validation not yet implemented
-    it.skip('scheme must not be an unknown value with no prefix (OPF-027)', async () => {
+    it('scheme must not be an unknown value with no prefix (OPF-027)', async () => {
       const data = await loadEpub('invalid/opf/metadata-meta-scheme-unknown-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'OPF-027');
@@ -771,8 +766,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: OPF-027 link properties validation not yet implemented
-    it.skip('link with unknown properties value is reported (OPF-027)', async () => {
+    it('link with unknown properties value is reported (OPF-027)', async () => {
       const data = await loadEpub('invalid/opf/link-rel-record-properties-undefined-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'OPF-027');
@@ -790,15 +784,13 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: OPF-092 hreflang well-formedness check not yet implemented
-    it.skip('link hreflang must not have leading/trailing whitespace (OPF-092)', async () => {
+    it('link hreflang must not have leading/trailing whitespace (OPF-092)', async () => {
       const data = await loadEpub('invalid/opf/link-hreflang-whitespace-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'OPF-092');
     });
 
-    // Skip: OPF-092 hreflang well-formedness check not yet implemented
-    it.skip('link hreflang must be well-formed (OPF-092)', async () => {
+    it('link hreflang must be well-formed (OPF-092)', async () => {
       const data = await loadEpub('invalid/opf/link-hreflang-not-well-formed-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'OPF-092');
@@ -864,8 +856,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: OPF-012 cover-image type check not yet implemented
-    it.skip('cover-image property must only be used on images (OPF-012)', async () => {
+    it('cover-image property must only be used on images (OPF-012)', async () => {
       const data = await loadEpub('invalid/opf/item-property-cover-image-wrongtype-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'OPF-012');
@@ -922,22 +913,19 @@ describe('Integration Tests - OPF (Package Document)', () => {
   });
 
   describe('Collections (§5.8)', () => {
-    // Skip: Collection validation produces OPF-071 instead of passing clean
-    it.skip('collection role can be an absolute URL', async () => {
+    it('collection role can be an absolute URL', async () => {
       const data = await loadEpub('valid/collection-role-url-valid.epub');
       const result = await EpubCheck.validate(data);
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: Collection validation produces OPF-071 instead of expected OPF-070
-    it.skip('collection role must not be an invalid URL (OPF-070)', async () => {
+    it('collection role must not be an invalid URL (OPF-070)', async () => {
       const data = await loadEpub('warnings/collection-role-url-invalid-error.epub');
       const result = await EpubCheck.validate(data);
       expectWarning(result, 'OPF-070');
     });
 
-    // Skip: Collection validation produces OPF-071 instead of expected RSC-005
-    it.skip('manifest collection must be child of another collection (RSC-005)', async () => {
+    it('manifest collection must be child of another collection (RSC-005)', async () => {
       const data = await loadEpub('invalid/opf/collection-role-manifest-toplevel-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');

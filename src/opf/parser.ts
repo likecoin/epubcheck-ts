@@ -274,6 +274,9 @@ function parseLinkElements(metadataXml: string): LinkElement[] {
       if (attrs.id) {
         element.id = attrs.id;
       }
+      if (attrs.hreflang !== undefined) {
+        element.hreflang = attrs.hreflang;
+      }
 
       elements.push(element);
     }

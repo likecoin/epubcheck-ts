@@ -796,7 +796,7 @@ describe('OPFValidator', () => {
   });
 
   describe('collections validation (EPUB 3)', () => {
-    it('should add OPF-071 warning for unknown collection role', () => {
+    it('should accept unknown collection role (EPUB 3.3)', () => {
       const context = createValidationContext();
       const packageDoc = createMinimalPackage({
         collections: [{ role: 'unknown-role', links: ['chapter1.xhtml'] }],
@@ -808,7 +808,7 @@ describe('OPFValidator', () => {
       validatorTest.buildManifestMaps();
       validatorTest.validateCollections(context, 'OEBPS/content.opf');
 
-      expect(context.messages.some((m) => m.id === 'OPF-071')).toBe(true);
+      expect(context.messages.some((m) => m.id === 'OPF-071')).toBe(false);
     });
 
     it('should add OPF-072 error when dictionary collection has no name', () => {
