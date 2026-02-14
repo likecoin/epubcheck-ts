@@ -10,13 +10,13 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | OPF Validation | ~90% | 🟢 Schematron-equivalent checks, refines cycles, duplicate IDs done |
 | Content (XHTML/SVG) | ~80% | 🟢 CSS url() references, @import, inline CSS remote font, SVG remote font done |
 | CSS Validation | ~70% | 🟢 url() extraction from declarations, @font-face src |
-| Navigation (nav/NCX) | ~80% | 🟢 Content model, structural validation, landmarks, labels done |
+| Navigation (nav/NCX) | ~85% | 🟢 Content model, structural validation, landmarks, labels, reading order done |
 | Schema Validation | ~50% | 🟡 RelaxNG for OPF/container; XHTML/SVG disabled (libxml2 limitation) |
 | Media Overlays | 0% | ❌ Not implemented |
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~80% | 🟢 URL leaking, CSS references, link elements done |
 
-**Overall: ~75% complete (607 tests passing, 40 skipped)**
+**Overall: ~75% complete (610 tests passing, 37 skipped)**
 
 ---
 
@@ -27,8 +27,8 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 400 | 382 | 18 |
-| **Integration Tests** | 247 | 225 | 22 |
-| **Total** | **647** | **607** | **40** |
+| **Integration Tests** | 247 | 228 | 19 |
+| **Total** | **647** | **610** | **37** |
 
 ### Integration Test Files
 
@@ -36,9 +36,9 @@ Quick reference for implementation progress vs Java EPUBCheck.
 test/integration/
 ├── epub.test.ts                 # 4 tests   (4 pass, 0 skip)  - Basic EPUB validation
 ├── ocf.integration.test.ts      # 47 tests  (37 pass, 10 skip) - OCF/ZIP/container
-├── opf.integration.test.ts      # 119 tests (115 pass, 4 skip)  - Package document
+├── opf.integration.test.ts      # 119 tests (116 pass, 3 skip)  - Package document
 ├── content.integration.test.ts  # 31 tests  (27 pass, 4 skip)  - XHTML/CSS/SVG
-├── nav.integration.test.ts      # 36 tests  (34 pass, 2 skip)  - Navigation
+├── nav.integration.test.ts      # 36 tests  (36 pass, 0 skip)  - Navigation
 └── resources.integration.test.ts # 10 tests  (8 pass, 2 skip)  - Remote resources
 ```
 
@@ -91,7 +91,7 @@ test/fixtures/
   - ACC-005 (1 test) - Image missing alt attribute
   - HTM-012 (1 test) - Unescaped ampersands
 
-**Integration tests (22)** - Unimplemented features and library limitations:
+**Integration tests (19)** - Unimplemented features and library limitations:
 - **CSS-008**: CSS syntax error detection (1 test) - css-tree is forgiving, parses invalid CSS successfully
 - **OPF-060**: Duplicate ZIP entry detection (1 test) - fflate deduplicates entries when unzipping
 - **Unicode NFKC normalization** (1 test) - Requires compatibility normalization, not implemented
@@ -99,10 +99,8 @@ test/fixtures/
 - **Unicode NFC normalization duplicate** (1 test) - Already handled, test expects NFKC
 - **Unit tests (3)** - libxml2-wasm XPath with namespaced attributes
 - **ID whitespace normalization** (1 test) - Regex parser doesn't normalize XML ID attribute whitespace
-- **OPF-096 non-linear reachability** (1 test) - Non-linear spine item reachability check not implemented
 - **OPF-014 remote audio overlays** (1 test) - Remote audio in media overlays (needs SMIL support)
 - **OPF-018 object param** (1 test) - Remote resource via `<param>` element not tracked
-- **NAV-011 reading order** (2 tests) - TOC reading order vs spine order warning
 - **OCF tests** (10 tests) - Various OCF features (encryption, signatures, PKG-026)
 
 ---
@@ -120,7 +118,7 @@ test/fixtures/
 - **Collections** (OPF-071-084)
 - **NCX validation** (NCX-001/002/003/006)
 - **CSS validation** (@font-face, @import, url(), position, forbidden properties CSS-001)
-- **Navigation** (NAV-001/002/010) + content model, landmarks, labels, hidden attribute
+- **Navigation** (NAV-001/002/010/011) + content model, landmarks, labels, hidden attribute, reading order
 - **OPF Schematron-equivalent** (RSC-005 duplicate IDs/refines/modified/multiplicity, OPF-065 cycles, OPF-092 xml:lang, OPF-098 link-to-OPF, RSC-017 bindings/refines, RSC-020 spaces)
 - **Link element validation** (RSC-007w warning for missing resources, OPF-093 missing media-type)
 - **URL leaking detection** (RSC-026 for path-absolute URLs)
@@ -136,6 +134,7 @@ test/fixtures/
 - **Duplicate filename detection** (OPF-060) - Unicode NFC normalization, case folding
 - **Non-UTF8 filename detection** (PKG-027)
 - **Cite attribute validation** (RSC-007 for blockquote/q/ins/del cite attributes)
+- **Non-linear reachability** (OPF-096/096b)
 - **Unreferenced resources** (OPF-097)
 - **Percent-encoded URLs** - Proper handling of URL-encoded paths
 

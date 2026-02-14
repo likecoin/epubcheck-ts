@@ -405,8 +405,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
   });
 
   describe('Spine reachability validation', () => {
-    // Skip: OPF-096 non-linear reachability check not yet implemented
-    it.skip('should report non-linear content not reachable (OPF-096)', async () => {
+    it('should report non-linear content not reachable (OPF-096)', async () => {
       const data = await loadEpub('invalid/opf/spine-nonlinear-not-reachable-error.epub');
       const result = await EpubCheck.validate(data);
 

@@ -111,6 +111,8 @@ export interface ValidationContext {
   ncxUid?: string;
   /** Resources referenced in content but not declared in manifest */
   referencedUndeclaredResources?: Set<string>;
+  /** TOC navigation link targets in order, for reading order validation (NAV-011) */
+  tocLinks?: { targetResource: string; fragment?: string; location: EPUBLocation }[];
 }
 
 /**

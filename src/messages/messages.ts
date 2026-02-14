@@ -527,6 +527,11 @@ const MessageDefs = {
     severity: 'error',
     description: 'Non-linear content must be reachable, no hyperlink found',
   },
+  OPF_096b: {
+    id: 'OPF-096b',
+    severity: 'usage',
+    description: 'Non-linear content has no hyperlink but scripting is present',
+  },
   OPF_097: {
     id: 'OPF-097',
     severity: 'usage',

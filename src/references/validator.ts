@@ -48,6 +48,8 @@ export class ReferenceValidator {
     }
 
     this.checkUndeclaredResources(context);
+    this.checkReadingOrder(context);
+    this.checkNonLinearReachability(context);
   }
 
   /**
@@ -349,6 +351,100 @@ export class ReferenceValidator {
         message: `Resource declared in manifest but not referenced: ${resource.url}`,
         location: { path: resource.url },
       });
+    }
+  }
+
+  private checkReadingOrder(context: ValidationContext): void {
+    if (!context.tocLinks || !context.packageDocument) return;
+
+    const packageDoc = context.packageDocument;
+    const spine = packageDoc.spine;
+    const opfPath = context.opfPath ?? '';
+    const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/')) : '';
+
+    const spinePositionMap = new Map<string, number>();
+    for (const [i, spineRef] of spine.entries()) {
+      const item = packageDoc.manifest.find((m) => m.id === spineRef.idref);
+      if (item) {
+        const fullPath = opfDir ? `${opfDir}/${item.href}` : item.href;
+        spinePositionMap.set(fullPath, i);
+      }
+    }
+
+    let lastSpinePosition = -1;
+    let lastAnchorPosition = -1;
+
+    for (const link of context.tocLinks) {
+      const spinePos = spinePositionMap.get(link.targetResource);
+      if (spinePos === undefined) continue;
+
+      if (spinePos < lastSpinePosition) {
+        pushMessage(context.messages, {
+          id: MessageId.NAV_011,
+          message: `"toc" nav must be in reading order; link target "${link.targetResource}" is before the previous link's target in spine order`,
+          location: link.location,
+        });
+        lastSpinePosition = spinePos;
+        lastAnchorPosition = -1;
+      } else {
+        if (spinePos > lastSpinePosition) {
+          lastSpinePosition = spinePos;
+          lastAnchorPosition = -1;
+        }
+
+        const targetAnchorPosition = link.fragment
+          ? this.registry.getIDPosition(link.targetResource, link.fragment)
+          : -1;
+        if (targetAnchorPosition > -1) {
+          if (targetAnchorPosition < lastAnchorPosition) {
+            const target = link.fragment
+              ? `${link.targetResource}#${link.fragment}`
+              : link.targetResource;
+            pushMessage(context.messages, {
+              id: MessageId.NAV_011,
+              message: `"toc" nav must be in reading order; link target "${target}" is before the previous link's target in document order`,
+              location: link.location,
+            });
+          }
+          lastAnchorPosition = targetAnchorPosition;
+        }
+      }
+    }
+  }
+
+  private checkNonLinearReachability(context: ValidationContext): void {
+    if (!context.packageDocument) return;
+
+    const spine = context.packageDocument.spine;
+    const opfPath = context.opfPath ?? '';
+    const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/')) : '';
+
+    const hyperlinkTargets = new Set<string>();
+    for (const ref of this.references) {
+      if (ref.type === ReferenceType.HYPERLINK) {
+        hyperlinkTargets.add(ref.targetResource);
+      }
+    }
+
+    const hasScripts = context.packageDocument.manifest.some((m) =>
+      m.properties?.includes('scripted'),
+    );
+
+    for (const spineItem of spine) {
+      if (spineItem.linear) continue;
+
+      const item = context.packageDocument.manifest.find((m) => m.id === spineItem.idref);
+      if (!item) continue;
+
+      const fullPath = opfDir ? `${opfDir}/${item.href}` : item.href;
+
+      if (!hyperlinkTargets.has(fullPath)) {
+        pushMessage(context.messages, {
+          id: hasScripts ? MessageId.OPF_096b : MessageId.OPF_096,
+          message: `Non-linear content must be reachable, but found no hyperlink to "${fullPath}"`,
+          location: { path: fullPath },
+        });
+      }
     }
   }
 

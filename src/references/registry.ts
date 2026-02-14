@@ -72,6 +72,22 @@ export class ResourceRegistry {
   }
 
   /**
+   * Get the position (document order) of an ID in a resource.
+   * Returns -1 if the ID is not found or is empty.
+   */
+  getIDPosition(resourceURL: string, id: string): number {
+    if (!id) return -1;
+    const resourceIDs = this.ids.get(resourceURL);
+    if (!resourceIDs) return -1;
+    let index = 0;
+    for (const existingId of resourceIDs) {
+      if (existingId === id) return index;
+      index++;
+    }
+    return -1;
+  }
+
+  /**
    * Get all resources
    */
   getAllResources(): Resource[] {

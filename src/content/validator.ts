@@ -731,6 +731,9 @@ export class ContentValidator {
     this.checkNavHiddenAttribute(context, path, root);
 
     this.checkNavRemoteLinks(context, path, root, tocEpubTypeValue);
+
+    // Collect TOC nav link targets in order for reading order validation (NAV-011)
+    this.collectTocLinks(context, path, tocNav as XmlElement);
   }
 
   private checkNavFirstChildHeading(
@@ -1008,6 +1011,46 @@ export class ContentValidator {
         });
       }
     }
+  }
+
+  private collectTocLinks(context: ValidationContext, path: string, tocNav: XmlElement): void {
+    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
+    const docDir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
+    const opfDir = context.opfPath?.includes('/')
+      ? context.opfPath.substring(0, context.opfPath.lastIndexOf('/'))
+      : '';
+
+    const tocAnchors = tocNav.find('.//html:a[@href]', HTML_NS);
+    const tocLinks: NonNullable<ValidationContext['tocLinks']> = [];
+
+    for (const anchor of tocAnchors) {
+      const href = this.getAttribute(anchor as XmlElement, 'href')?.trim();
+      if (!href || href.startsWith('http://') || href.startsWith('https://')) continue;
+
+      let targetResource: string;
+      let fragment: string | undefined;
+
+      if (href.startsWith('#')) {
+        targetResource = path;
+        fragment = href.slice(1);
+      } else {
+        const resolvedPath = this.resolveRelativePath(docDir, href, opfDir);
+        const hashIndex = resolvedPath.indexOf('#');
+        targetResource = hashIndex >= 0 ? resolvedPath.slice(0, hashIndex) : resolvedPath;
+        fragment = hashIndex >= 0 ? resolvedPath.slice(hashIndex + 1) : undefined;
+      }
+
+      const entry: NonNullable<ValidationContext['tocLinks']>[number] = {
+        targetResource,
+        location: { path, line: anchor.line },
+      };
+      if (fragment !== undefined) {
+        entry.fragment = fragment;
+      }
+      tocLinks.push(entry);
+    }
+
+    context.tocLinks = tocLinks;
   }
 
   private detectScripts(_context: ValidationContext, _path: string, root: XmlElement): boolean {

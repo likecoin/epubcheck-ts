@@ -96,16 +96,14 @@ describe('Integration Tests - Navigation Documents', () => {
   });
 
   describe('Reading order validation', () => {
-    // Skip: NAV-011 reading order validation not yet implemented
-    it.skip('should warn about toc nav links not matching spine order (NAV-011)', async () => {
+    it('should warn about toc nav links not matching spine order (NAV-011)', async () => {
       const data = await loadEpub('warnings/nav-toc-unordered-spine-warning.epub');
       const result = await EpubCheck.validate(data);
 
       expectWarning(result, 'NAV-011');
     });
 
-    // Skip: NAV-011 reading order validation not yet implemented
-    it.skip('should warn about toc nav link fragments not matching document order (NAV-011)', async () => {
+    it('should warn about toc nav link fragments not matching document order (NAV-011)', async () => {
       const data = await loadEpub('warnings/nav-toc-unordered-fragments-warning.epub');
       const result = await EpubCheck.validate(data);
 
