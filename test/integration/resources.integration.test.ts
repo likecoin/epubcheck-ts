@@ -89,8 +89,7 @@ describe('Integration Tests - Resources', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: Foreign resource fallback validation (RSC-032) not implemented
-    it.skip('should report foreign resource without fallback (RSC-032)', async () => {
+    it('should report foreign resource without fallback (RSC-032)', async () => {
       const data = await loadEpub(
         'invalid/content/foreign-xhtml-img-src-no-manifest-fallback-error.epub',
       );

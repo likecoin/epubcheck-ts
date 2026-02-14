@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~80% | 🟢 URL leaking, CSS references, link elements done |
 
-**Overall: ~75% complete (617 tests passing, 30 skipped)**
+**Overall: ~75% complete (618 tests passing, 29 skipped)**
 
 ---
 
@@ -27,8 +27,8 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 400 | 382 | 18 |
-| **Integration Tests** | 247 | 235 | 12 |
-| **Total** | **647** | **617** | **30** |
+| **Integration Tests** | 247 | 236 | 11 |
+| **Total** | **647** | **618** | **29** |
 
 ### Integration Test Files
 
@@ -39,7 +39,7 @@ test/integration/
 ├── opf.integration.test.ts      # 119 tests (118 pass, 1 skip)  - Package document
 ├── content.integration.test.ts  # 31 tests  (27 pass, 4 skip)  - XHTML/CSS/SVG
 ├── nav.integration.test.ts      # 36 tests  (36 pass, 0 skip)  - Navigation
-└── resources.integration.test.ts # 10 tests  (8 pass, 2 skip)  - Remote resources
+└── resources.integration.test.ts # 10 tests  (9 pass, 1 skip)  - Remote resources
 ```
 
 **Note**: Integration tests imported from Java EPUBCheck test suite (`../epubcheck/src/test/resources/epub3/`).
@@ -138,6 +138,7 @@ test/fixtures/
 - **Unicode NFC normalization** - Consistent NFC normalization for manifest hrefs and file lookups
 - **Font obfuscation validation** (PKG-026) - Obfuscated resources must be blessed font types
 - **Non-ASCII filename detection** (PKG-012) - Usage message for non-ASCII characters in filenames
+- **Foreign resource fallback** (RSC-032) - Foreign resources must have CMT fallback chain
 
 ### 🟡 Partially Implemented
 - **Schema validation** - RelaxNG for OPF/container works; XHTML/SVG RelaxNG disabled (libxml2-wasm doesn't support complex patterns)

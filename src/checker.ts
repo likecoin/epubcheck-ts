@@ -4,6 +4,7 @@ import { MessageId, pushMessage } from './messages/index.js';
 import { NCXValidator } from './nav/index.js';
 import { OCFValidator } from './ocf/index.js';
 import { OPFValidator } from './opf/index.js';
+import { CORE_MEDIA_TYPES } from './opf/types.js';
 import { ResourceRegistry } from './references/registry.js';
 import { resolveManifestHref } from './references/url.js';
 import { ReferenceValidator } from './references/validator.js';
@@ -289,6 +290,7 @@ export class EpubCheck {
     const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/')) : '';
 
     const spineIdrefs = new Set(packageDoc.spine.map((item) => item.idref));
+    const manifestById = new Map(packageDoc.manifest.map((item) => [item.id, item]));
 
     for (const item of packageDoc.manifest) {
       const fullPath = resolveManifestHref(opfDir, item.href);
@@ -296,8 +298,29 @@ export class EpubCheck {
         url: fullPath,
         mimeType: item.mediaType,
         inSpine: spineIdrefs.has(item.id),
+        hasCoreMediaTypeFallback: this.hasCMTFallback(item.id, manifestById),
         ids: new Set(),
       });
     }
+  }
+
+  /**
+   * Check if a manifest item has a fallback chain reaching a Core Media Type
+   */
+  private hasCMTFallback(
+    itemId: string,
+    manifestById: Map<string, { mediaType: string; fallback?: string }>,
+  ): boolean {
+    const visited = new Set<string>();
+    let currentId: string | undefined = itemId;
+    while (currentId) {
+      if (visited.has(currentId)) return false; // circular
+      visited.add(currentId);
+      const item = manifestById.get(currentId);
+      if (!item) return false;
+      if (CORE_MEDIA_TYPES.has(item.mediaType)) return true;
+      currentId = item.fallback;
+    }
+    return false;
   }
 }

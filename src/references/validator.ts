@@ -3,6 +3,7 @@
  */
 
 import { MessageId, pushMessage } from '../messages/index.js';
+import { CORE_MEDIA_TYPES } from '../opf/types.js';
 import type { EPUBVersion, ValidationContext } from '../types.js';
 import type { ResourceRegistry } from './registry.js';
 import type { Reference } from './types.js';
@@ -215,6 +216,21 @@ export class ReferenceValidator {
           location: reference.location,
         });
       }
+    }
+
+    // RSC-032: Foreign resources (non-CMT) must have a fallback
+    if (
+      resource &&
+      isPublicationResourceReference(reference.type) &&
+      !CORE_MEDIA_TYPES.has(resource.mimeType) &&
+      !resource.hasCoreMediaTypeFallback &&
+      !reference.hasIntrinsicFallback
+    ) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_032,
+        message: `Fallback must be provided for foreign resources, but found none for resource "${resourcePath}" of type "${resource.mimeType}"`,
+        location: reference.location,
+      });
     }
   }
 
