@@ -52,8 +52,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: Emoji tag sequence in filenames triggers false positive errors
-    it.skip('should allow Unicode emoji tag set in file name', async () => {
+    it('should allow Unicode emoji tag set in file name', async () => {
       const data = await loadEpub('valid/ocf-filename-character-emoji-tag-sequence-valid.epub');
       const result = await EpubCheck.validate(data);
 
@@ -396,8 +395,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: PKG-026 font obfuscation validation not yet implemented
-    it.skip('should report obfuscated font that is not a Core Media Type (PKG-026)', async () => {
+    it('should report obfuscated font that is not a Core Media Type (PKG-026)', async () => {
       const data = await loadEpub('invalid/ocf/ocf-obfuscation-not-cmt-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -405,8 +403,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       expectError(result, 'PKG-026');
     });
 
-    // Skip: PKG-026 font obfuscation validation not yet implemented
-    it.skip('should report obfuscated resource that is not a font (PKG-026)', async () => {
+    it('should report obfuscated resource that is not a font (PKG-026)', async () => {
       const data = await loadEpub('invalid/ocf/ocf-obfuscation-not-font-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -423,8 +420,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       expectWarning(result, 'PKG-010');
     });
 
-    // Skip: PKG-012 non-ASCII filename usage detection not yet implemented
-    it.skip('should report non-ASCII characters in file names (PKG-012 usage)', async () => {
+    it('should report non-ASCII characters in file names (PKG-012 usage)', async () => {
       const data = await loadEpub('warnings/ocf-filename-character-non-ascii-usage.epub');
       const result = await EpubCheck.validate(data, { includeUsage: true });
 
