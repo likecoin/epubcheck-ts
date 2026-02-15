@@ -166,14 +166,12 @@ describe('Integration Tests - Resources', () => {
         expectError(result, 'RSC-032');
       });
 
-      // Skip: MED-003 picture element validation not implemented
-      it.skip('should report foreign resource in picture img src (MED-003)', async () => {
+      it('should report foreign resource in picture img src (MED-003)', async () => {
         const result = await validate('invalid/content/foreign-xhtml-picture-img-src-error.epub');
         expectError(result, 'MED-003');
       });
 
-      // Skip: MED-003 picture element validation not implemented
-      it.skip('should report foreign resource in picture img srcset (MED-003)', async () => {
+      it('should report foreign resource in picture img srcset (MED-003)', async () => {
         const result = await validate(
           'invalid/content/foreign-xhtml-picture-img-srcset-error.epub',
         );
@@ -185,8 +183,7 @@ describe('Integration Tests - Resources', () => {
         expectNoErrorsOrWarnings(result);
       });
 
-      // Skip: MED-007 picture source type check not implemented
-      it.skip('should report picture source without type for foreign resource (MED-007)', async () => {
+      it('should report picture source without type for foreign resource (MED-007)', async () => {
         const result = await validate(
           'invalid/content/foreign-xhtml-picture-source-no-type-error.epub',
         );
@@ -352,20 +349,17 @@ describe('Integration Tests - Resources', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: Remote SVG font references not tracked as font usage
-    it.skip('should allow remote SVG fonts', async () => {
+    it('should allow remote SVG fonts', async () => {
       const result = await validate('valid/resources-remote-font-svg-valid.epub');
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: CSS @font-face remote font references not tracked
-    it.skip('should allow remote fonts in CSS @font-face', async () => {
+    it('should allow remote fonts in CSS @font-face', async () => {
       const result = await validate('valid/resources-remote-font-in-css-valid.epub');
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: SVG font-face-uri remote font references not tracked
-    it.skip('should allow remote fonts in SVG font-face-uri', async () => {
+    it('should allow remote fonts in SVG font-face-uri', async () => {
       const result = await validate('valid/resources-remote-font-in-svg-valid.epub');
       expectNoErrorsOrWarnings(result);
     });
@@ -426,16 +420,14 @@ describe('Integration Tests - Resources', () => {
       expectError(result, 'RSC-006');
     });
 
-    // Skip: SVG xml-stylesheet processing instruction not parsed
-    it.skip('should report remote stylesheet in SVG XML PI (RSC-006)', async () => {
+    it('should report remote stylesheet in SVG XML PI (RSC-006)', async () => {
       const result = await validate(
         'invalid/content/resources-remote-stylesheet-svg-xmlpi-error.epub',
       );
       expectError(result, 'RSC-006');
     });
 
-    // Skip: SVG @import in style element not parsed
-    it.skip('should report remote stylesheet in SVG import (RSC-006)', async () => {
+    it('should report remote stylesheet in SVG import (RSC-006)', async () => {
       const result = await validate(
         'invalid/content/resources-remote-stylesheet-svg-import-error.epub',
       );
@@ -516,26 +508,22 @@ describe('Integration Tests - Resources', () => {
   // Other: MIME type mismatch
   // ==========================================================================
   describe('MIME Type Mismatch', () => {
-    // Skip: OPF-013 type mismatch validation not implemented
-    it.skip('should report object type mismatch (OPF-013)', async () => {
+    it('should report object type mismatch (OPF-013)', async () => {
       const result = await validate('warnings/type-mismatch-in-object-warning.epub');
       expectWarning(result, 'OPF-013');
     });
 
-    // Skip: OPF-013 type mismatch validation not implemented
-    it.skip('should report picture source type mismatch (OPF-013)', async () => {
+    it('should report picture source type mismatch (OPF-013)', async () => {
       const result = await validate('warnings/type-mismatch-in-picture-source-warning.epub');
       expectWarning(result, 'OPF-013');
     });
 
-    // Skip: OPF-013 type mismatch validation not implemented
-    it.skip('should report audio source type mismatch (OPF-013)', async () => {
+    it('should report audio source type mismatch (OPF-013)', async () => {
       const result = await validate('warnings/type-mismatch-in-audio-warning.epub');
       expectWarning(result, 'OPF-013');
     });
 
-    // Skip: OPF-013 type mismatch validation not implemented
-    it.skip('should report embed type mismatch (OPF-013)', async () => {
+    it('should report embed type mismatch (OPF-013)', async () => {
       const result = await validate('warnings/type-mismatch-in-embed-warning.epub');
       expectWarning(result, 'OPF-013');
     });

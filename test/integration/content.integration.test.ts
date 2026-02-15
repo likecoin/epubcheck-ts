@@ -212,8 +212,7 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: RSC-015 (SVG use without fragment) not implemented
-    it.skip('should report SVG use element without fragment (RSC-015)', async () => {
+    it('should report SVG use element without fragment (RSC-015)', async () => {
       const data = await loadEpub('invalid/content/content-svg-use-href-no-fragment-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -298,8 +297,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-012');
     });
 
-    // Skip: RSC-013 (fragment in stylesheet URL) not implemented
-    it.skip('should report fragment identifier in stylesheet URL (RSC-013)', async () => {
+    it('should report fragment identifier in stylesheet URL (RSC-013)', async () => {
       const data = await loadEpub(
         'invalid/content/content-xhtml-link-stylesheet-fragment-id-error.epub',
       );
@@ -308,8 +306,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-013');
     });
 
-    // Skip: RSC-014 (incompatible resource type) not implemented
-    it.skip('should report hyperlink to SVG symbol as incompatible (RSC-014)', async () => {
+    it('should report hyperlink to SVG symbol as incompatible (RSC-014)', async () => {
       const data = await loadEpub('invalid/content/content-xhtml-link-to-svg-fragment-error.epub');
       const result = await EpubCheck.validate(data);
 

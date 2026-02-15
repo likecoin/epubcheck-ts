@@ -792,31 +792,36 @@ export class OPFValidator {
         this.packageDoc.version !== '2.0' &&
         (item.href.startsWith('http://') || item.href.startsWith('https://'))
       ) {
-        // Remote resources that aren't audio, video, or fonts are not allowed
-        if (
-          !item.mediaType.startsWith('audio/') &&
-          !item.mediaType.startsWith('video/') &&
-          !item.mediaType.startsWith('font/') &&
-          item.mediaType !== 'application/font-sfnt' &&
-          item.mediaType !== 'application/font-woff' &&
-          item.mediaType !== 'application/vnd.ms-opentype'
-        ) {
-          pushMessage(context.messages, {
-            id: MessageId.RSC_006,
-            message: `Remote resource reference is not allowed in this context; resource "${item.href}" must be located in the EPUB container`,
-            location: { path: opfPath },
-          });
+        const isAllowedRemoteType =
+          item.mediaType.startsWith('audio/') ||
+          item.mediaType.startsWith('video/') ||
+          item.mediaType.startsWith('font/') ||
+          item.mediaType === 'application/font-sfnt' ||
+          item.mediaType === 'application/font-woff' ||
+          item.mediaType === 'application/vnd.ms-opentype';
+
+        const inSpine = this.packageDoc.spine.some((s) => s.idref === item.id);
+
+        // Spine items that are remote with non-standard types are never allowed
+        if (inSpine) {
+          if (!isAllowedRemoteType) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_006,
+              message: `Remote resource reference is not allowed in this context; resource "${item.href}" must be located in the EPUB container`,
+              location: { path: opfPath },
+            });
+          }
+          if (!item.properties?.includes('remote-resources')) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_006,
+              message: `Manifest item "${item.id}" references remote resource but is missing "remote-resources" property`,
+              location: { path: opfPath },
+            });
+          }
         }
 
-        // Spine items with remote resources need remote-resources property
-        const inSpine = this.packageDoc.spine.some((s) => s.idref === item.id);
-        if (inSpine && !item.properties?.includes('remote-resources')) {
-          pushMessage(context.messages, {
-            id: MessageId.RSC_006,
-            message: `Manifest item "${item.id}" references remote resource but is missing "remote-resources" property`,
-            location: { path: opfPath },
-          });
-        }
+        // Non-spine remote items with non-standard types are checked later
+        // by the reference validator (which has content reference context)
       }
     }
 

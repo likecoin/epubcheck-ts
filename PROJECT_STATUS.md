@@ -8,15 +8,15 @@ Quick reference for implementation progress vs Java EPUBCheck.
 |----------|------------|--------|
 | OCF Validation | ~90% | 🟢 URL leaking, UTF-8, spaces, forbidden chars all done |
 | OPF Validation | ~90% | 🟢 Schematron-equivalent checks, refines cycles, duplicate IDs done |
-| Content (XHTML/SVG) | ~80% | 🟢 CSS url() references, @import, inline CSS remote font, SVG remote font done |
+| Content (XHTML/SVG) | ~85% | 🟢 CSS url() references, @import, inline CSS remote font, SVG remote font, picture elements, SVG use done |
 | CSS Validation | ~70% | 🟢 url() extraction from declarations, @font-face src |
 | Navigation (nav/NCX) | ~85% | 🟢 Content model, structural validation, landmarks, labels, reading order done |
 | Schema Validation | ~50% | 🟡 RelaxNG for OPF/container; XHTML/SVG disabled (libxml2 limitation) |
 | Media Overlays | 0% | ❌ Not implemented |
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
-| Cross-reference | ~85% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources done |
+| Cross-reference | ~90% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs done |
 
-**Overall: ~77% complete (688 tests passing, 55 skipped)**
+**Overall: ~79% complete (703 tests passing, 40 skipped)**
 
 ---
 
@@ -27,8 +27,8 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 400 | 382 | 18 |
-| **Integration Tests** | 343 | 306 | 37 |
-| **Total** | **743** | **688** | **55** |
+| **Integration Tests** | 343 | 321 | 22 |
+| **Total** | **743** | **703** | **40** |
 
 ### Integration Test Files
 
@@ -37,9 +37,9 @@ test/integration/
 ├── epub.test.ts                 # 4 tests   (4 pass, 0 skip)  - Basic EPUB validation
 ├── ocf.integration.test.ts      # 47 tests  (42 pass, 5 skip) - OCF/ZIP/container
 ├── opf.integration.test.ts      # 119 tests (118 pass, 1 skip)  - Package document
-├── content.integration.test.ts  # 55 tests  (39 pass, 16 skip)  - XHTML/CSS/SVG
+├── content.integration.test.ts  # 55 tests  (42 pass, 13 skip)  - XHTML/CSS/SVG
 ├── nav.integration.test.ts      # 36 tests  (36 pass, 0 skip)  - Navigation
-└── resources.integration.test.ts # 82 tests  (67 pass, 15 skip)  - Resources/fallbacks
+└── resources.integration.test.ts # 82 tests  (79 pass, 3 skip)  - Resources/fallbacks
 ```
 
 **Note**: Integration tests imported from Java EPUBCheck test suite (`../epubcheck/src/test/resources/epub3/`).
@@ -82,9 +82,9 @@ test/fixtures/
 - **libxml2-wasm XPath limitations (3)** - OPF-014 inline event handlers, CSS-005 conflicting stylesheets, OPF-088 unknown epub:type prefix
 - **Messages suppressed in Java EPUBCheck (15)** - NCX-002 (2), NCX-003 (2), NAV-002 (3+), ACC-004 (1), ACC-005 (1), HTM-012 (1), and parameterized variants
 
-**Integration tests (37)** - Unimplemented features and library limitations:
-- **Resources (15 skipped)**: OPF-013 type mismatch (4), remote font tracking (3), SVG stylesheet parsing (2), MED-003/004/007 (3), OPF-029 (1), PKG-022 (1), corrupt image (1)
-- **Content (16 skipped)**: CSS encoding detection CSS-003/CSS-004 (3), CSS syntax error ordering (1), CSS-019 false positive (1), RSC-013 stylesheet fragment (1), RSC-014 SVG symbol (1), RSC-015 SVG use (1), svgView fragment (1), exempt video in img (1), lang/xml:lang mismatch (1), base URL xml:base (1), XHTML schema (3)
+**Integration tests (22)** - Unimplemented features and library limitations:
+- **Resources (3 skipped)**: OPF-029 (1), PKG-022 (1), corrupt image (1)
+- **Content (13 skipped)**: CSS encoding detection CSS-003/CSS-004 (3), CSS syntax error ordering (1), CSS-019 false positive (1), svgView fragment (1), exempt video in img (1), lang/xml:lang mismatch (1), base URL xml:base (1), XHTML schema (3), MED-004 media format (1)
 - **OCF (5 skipped)**: OPF-060 duplicate ZIP entry (1), encryption/signatures schema (4)
 - **OPF (1 skipped)**: OPF-014 remote audio overlays (1)
 
@@ -114,7 +114,7 @@ test/fixtures/
 - **Inline CSS remote font detection** (OPF-014 for @font-face with remote URLs in `<style>` blocks)
 - **SVG remote font detection** (OPF-014 for font-face-uri with remote xlink:href)
 - **Basic accessibility** (ACC-009/011 active; ACC-004/005 suppressed in Java)
-- **Cross-references** (RSC-006/007/008/009/010/011/012/013/014/020/026/027/028/029/031)
+- **Cross-references** (RSC-006/007/008/009/010/011/012/013/014/015/020/026/027/028/029/031)
 - **Filename validation** (PKG-009/010/011/027)
 - **Duplicate filename detection** (OPF-060) - Unicode NFC normalization, case folding
 - **Non-UTF8 filename detection** (PKG-027)
@@ -172,16 +172,16 @@ test/fixtures/
 | Java Category | Java Scenarios | TS Ported | TS Passing | Coverage |
 |---------------|----------------|-----------|------------|----------|
 | 00-minimal | 5 | 4 | 4 | 80% |
-| 03-resources | 113 | 82 | 67 | 59% |
+| 03-resources | 113 | 82 | 79 | 70% |
 | 04-ocf | 61 | 47 | 42 | 69% |
 | 05-package-document | 121 | 119 | 118 | 98% |
-| 06-content-document | 215 | 55 | 39 | 18% |
+| 06-content-document | 215 | 55 | 42 | 20% |
 | 07-navigation-document | 40 | 36 | 36 | 90% |
 | 08-layout | 51 | 0 | 0 | 0% |
 | 09-media-overlays | 51 | 0 | 0 | 0% |
 | D-vocabularies (ARIA) | 56 | 0 | 0 | 0% |
 | Other | 6 | 0 | 0 | 0% |
-| **Total** | **719** | **343** | **306** | **43%** |
+| **Total** | **719** | **343** | **321** | **45%** |
 
 ### E2E Porting Priorities
 
@@ -192,7 +192,7 @@ test/fixtures/
 
 **High Priority** - Largest remaining gaps:
 4. **06-content-document** (215 scenarios) - 18% coverage, needs ARIA/DOCTYPE/entity validation
-5. **03-resources** (113 scenarios) - 59% coverage, blocked on OPF-013/remote fonts/SVG stylesheets
+5. **03-resources** (113 scenarios) - 70% coverage, OPF-013/remote fonts/SVG stylesheets done
 6. **D-vocabularies** (56 scenarios) - 0% coverage, ARIA roles/epub:type
 
 **Low Priority** - Specialized features:
@@ -208,7 +208,7 @@ All planned OPF (batches 1-5) and Nav (batches 6-8) tests have been ported. Rema
 | Area | Gap | Tests Blocked | Blocker |
 |------|-----|---------------|---------|
 | **06-content-document** | ARIA validation, DOCTYPE, entities | ~160 tests | Needs new validation subsystems |
-| **03-resources** | Exempt resources, data URLs, OPF-013 | ~31 skipped | Needs exempt classification, data URL whitespace fix, type mismatch |
+| **03-resources** | OPF-029, PKG-022, corrupt image | 3 skipped | Specialized features |
 | **D-vocabularies** | ARIA roles/epub:type vocabulary | ~56 tests | Needs ARIA validation |
 | **08-layout** | Rendition/viewport validation | ~51 tests | Not implemented |
 | **09-media-overlays** | SMIL validation | ~51 tests | Not implemented |
@@ -241,10 +241,10 @@ Ordered by severity impact (number of active error/warning messages not yet emit
 ## Message IDs
 
 **Defined**: 300 message IDs
-**Actively used**: 109 (36%)
+**Actively used**: 112 (37%)
 
-Active by prefix: OPF (44), RSC (23), PKG (13), CSS (10), HTM (10), NAV (4), NCX (3), ACC (4)
-Unused prefixes: MED (0), SCP (0), CHK (0), INF (0)
+Active by prefix: OPF (44), RSC (24), PKG (13), CSS (10), HTM (10), NAV (4), NCX (3), ACC (4), MED (2)
+Unused prefixes: SCP (0), CHK (0), INF (0)
 
 ### Recent Message ID Fixes (aligned with Java EPUBCheck)
 - `RSC-001` - Missing manifest resource (was OPF-010)
@@ -284,6 +284,14 @@ Unused prefixes: MED (0), SCP (0), CHK (0), INF (0)
 - Remote script src detection (RSC-006)
 - SVG ID extraction for fragment validation
 - Data URL handling aligned with EPUB 3 spec (allowed for images/audio/video/fonts)
+- `OPF-013` - MIME type mismatch detection for object/embed/audio source/picture source elements
+- `MED-003` - Picture img must reference blessed image type (src and srcset)
+- `MED-007` - Picture source with foreign resource must have type attribute
+- `RSC-015` - SVG use element must have fragment identifier (XHTML and standalone SVG)
+- `RSC-014` - Hyperlinks to SVG symbols are incompatible (inline and standalone SVG)
+- SVG stylesheet reference extraction (xml-stylesheet PI, @import in style elements)
+- SVG font-face-uri reference extraction for remote font tracking
+- Remote resource RSC-006 validation for non-spine manifest items
 
 ---
 

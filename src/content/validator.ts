@@ -142,6 +142,9 @@ export class ContentValidator {
         if (context.version.startsWith('3')) {
           this.validateSVGDocument(context, fullPath, item);
         }
+        if (refValidator) {
+          this.extractSVGReferences(context, fullPath, opfDir, refValidator);
+        }
       }
     }
   }
@@ -203,6 +206,169 @@ export class ContentValidator {
       }
     } finally {
       doc.dispose();
+    }
+  }
+
+  /**
+   * Extract references from SVG documents: font-face-uri, xml-stylesheet PI, @import in style
+   */
+  private extractSVGReferences(
+    context: ValidationContext,
+    path: string,
+    opfDir: string,
+    refValidator: ReferenceValidator,
+  ): void {
+    const svgData = context.files.get(path);
+    if (!svgData) return;
+
+    const svgContent = new TextDecoder().decode(svgData);
+    let doc: XmlDocument | undefined;
+    try {
+      doc = XmlDocument.fromString(svgContent);
+    } catch {
+      return;
+    }
+
+    const docDir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
+
+    try {
+      const root = doc.root;
+
+      // Extract font-face-uri references as FONT type
+      try {
+        const fontFaceUris = root.find('.//svg:font-face-uri', {
+          svg: 'http://www.w3.org/2000/svg',
+        });
+        for (const uri of fontFaceUris) {
+          const href =
+            this.getAttribute(uri as XmlElement, 'xlink:href') ??
+            this.getAttribute(uri as XmlElement, 'href');
+          if (!href) continue;
+          if (href.startsWith('http://') || href.startsWith('https://')) {
+            refValidator.addReference({
+              url: href,
+              targetResource: href,
+              type: ReferenceType.FONT,
+              location: { path, line: uri.line },
+            });
+          } else {
+            const resolvedPath = this.resolveRelativePath(docDir, href, opfDir);
+            refValidator.addReference({
+              url: href,
+              targetResource: resolvedPath,
+              type: ReferenceType.FONT,
+              location: { path, line: uri.line },
+            });
+          }
+        }
+      } catch {
+        // empty
+      }
+
+      // Extract @import from SVG <style> elements
+      try {
+        const styles = root.find('.//svg:style', { svg: 'http://www.w3.org/2000/svg' });
+        for (const style of styles) {
+          const cssContent = (style as XmlElement).content;
+          if (cssContent) {
+            this.extractCSSImports(path, cssContent, opfDir, refValidator);
+          }
+        }
+      } catch {
+        // empty
+      }
+
+      // Extract SVG use elements (RSC-015: must have fragment identifier)
+      try {
+        const svgUseXlink = root.find('.//svg:use[@xlink:href]', {
+          svg: 'http://www.w3.org/2000/svg',
+          xlink: 'http://www.w3.org/1999/xlink',
+        });
+        const svgUseHref = root.find('.//svg:use[@href]', {
+          svg: 'http://www.w3.org/2000/svg',
+        });
+        for (const useNode of [...svgUseXlink, ...svgUseHref]) {
+          const useElem = useNode as XmlElement;
+          const href =
+            this.getAttribute(useElem, 'xlink:href') ?? this.getAttribute(useElem, 'href');
+          if (!href) continue;
+          if (href.startsWith('http://') || href.startsWith('https://')) continue;
+
+          if (!href.includes('#')) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_015,
+              message: `SVG "use" element requires a fragment identifier, but found "${href}"`,
+              location: { path, line: useNode.line },
+            });
+            continue;
+          }
+
+          const resolvedPath = this.resolveRelativePath(docDir, href, opfDir);
+          const hashIndex = resolvedPath.indexOf('#');
+          const targetResource = hashIndex >= 0 ? resolvedPath.slice(0, hashIndex) : path;
+          const fragment = hashIndex >= 0 ? resolvedPath.slice(hashIndex + 1) : undefined;
+          const useRef: Parameters<typeof refValidator.addReference>[0] = {
+            url: href,
+            targetResource,
+            type: ReferenceType.SVG_SYMBOL,
+            location: { path, line: useNode.line },
+          };
+          if (fragment) {
+            useRef.fragment = fragment;
+          }
+          refValidator.addReference(useRef);
+        }
+      } catch {
+        // empty
+      }
+    } finally {
+      doc.dispose();
+    }
+
+    // Extract xml-stylesheet processing instructions
+    this.extractXmlStylesheetPIs(svgContent, path, docDir, opfDir, refValidator);
+  }
+
+  /**
+   * Extract href from <?xml-stylesheet?> processing instructions
+   */
+  private extractXmlStylesheetPIs(
+    content: string,
+    path: string,
+    docDir: string,
+    opfDir: string,
+    refValidator: ReferenceValidator,
+  ): void {
+    const piRegex = /<\?xml-stylesheet\s+([^?]*)\?>/g;
+    let match;
+    while ((match = piRegex.exec(content)) !== null) {
+      const attrs = match[1];
+      if (!attrs) continue;
+
+      // Extract href pseudo-attribute
+      const hrefMatch = /href\s*=\s*["']([^"']*)["']/.exec(attrs);
+      if (!hrefMatch?.[1]) continue;
+      const href = hrefMatch[1];
+
+      const beforeMatch = content.substring(0, match.index);
+      const line = beforeMatch.split('\n').length;
+
+      if (href.startsWith('http://') || href.startsWith('https://')) {
+        refValidator.addReference({
+          url: href,
+          targetResource: href,
+          type: ReferenceType.STYLESHEET,
+          location: { path, line },
+        });
+      } else {
+        const resolvedPath = this.resolveRelativePath(docDir, href, opfDir);
+        refValidator.addReference({
+          url: href,
+          targetResource: resolvedPath,
+          type: ReferenceType.STYLESHEET,
+          location: { path, line },
+        });
+      }
     }
   }
 
@@ -295,9 +461,11 @@ export class ContentValidator {
     for (const ref of result.references) {
       if (ref.type === 'font') {
         if (ref.url.startsWith('http://') || ref.url.startsWith('https://')) {
+          const hashIndex = ref.url.indexOf('#');
+          const targetResource = hashIndex >= 0 ? ref.url.slice(0, hashIndex) : ref.url;
           refValidator.addReference({
             url: ref.url,
-            targetResource: ref.url,
+            targetResource,
             type: ReferenceType.FONT,
             location: { path },
           });
@@ -315,9 +483,11 @@ export class ContentValidator {
         }
       } else if (ref.type === 'image') {
         if (ref.url.startsWith('http://') || ref.url.startsWith('https://')) {
+          const hashIndex = ref.url.indexOf('#');
+          const targetResource = hashIndex >= 0 ? ref.url.slice(0, hashIndex) : ref.url;
           refValidator.addReference({
             url: ref.url,
-            targetResource: ref.url,
+            targetResource,
             type: ReferenceType.IMAGE,
             location: { path },
           });
@@ -556,12 +726,19 @@ export class ContentValidator {
       if (refValidator && opfDir !== undefined) {
         this.extractAndRegisterHyperlinks(context, path, root, opfDir, refValidator);
         this.extractAndRegisterStylesheets(path, root, opfDir, refValidator);
-        this.extractAndRegisterImages(path, root, opfDir, refValidator);
+        this.extractAndRegisterImages(context, path, root, opfDir, refValidator);
         this.extractAndRegisterMathMLAltimg(path, root, opfDir, refValidator);
         this.extractAndRegisterScripts(path, root, opfDir, refValidator);
         this.extractAndRegisterCiteAttributes(path, root, opfDir, refValidator);
-        this.extractAndRegisterMediaElements(path, root, opfDir, refValidator, registry);
-        this.extractAndRegisterEmbeddedElements(path, root, opfDir, refValidator);
+        this.extractAndRegisterMediaElements(context, path, root, opfDir, refValidator, registry);
+        this.extractAndRegisterEmbeddedElements(
+          context,
+          path,
+          root,
+          opfDir,
+          refValidator,
+          registry,
+        );
       }
     } finally {
       doc.dispose();
@@ -1546,9 +1723,14 @@ export class ContentValidator {
   private extractAndRegisterIDs(path: string, root: XmlElement, registry: ResourceRegistry): void {
     const elementsWithId = root.find('.//*[@id]');
     for (const elem of elementsWithId) {
-      const id = this.getAttribute(elem as XmlElement, 'id');
+      const xmlElem = elem as XmlElement;
+      const id = this.getAttribute(xmlElem, 'id');
       if (id) {
         registry.registerID(path, id);
+        const localName = xmlElem.name.includes(':') ? xmlElem.name.split(':').pop() : xmlElem.name;
+        if (localName === 'symbol') {
+          registry.registerSVGSymbolID(path, id);
+        }
       }
     }
   }
@@ -1720,12 +1902,13 @@ export class ContentValidator {
     const cleanedCSS = cssContent.replace(/\/\*[\s\S]*?\*\//g, '');
 
     // Simple regex to match @import statements
-    // Matches: @import "file.css"; @import 'file.css'; @import url("file.css"); @import url('file.css');
-    const importRegex = /@import\s+(?:url\s*\(\s*)?["']([^"']+)["']\s*\)?[^;]*;/gi;
+    // Matches: @import "file.css"; @import 'file.css'; @import url("file.css"); @import url(file.css);
+    const importRegex =
+      /@import\s+(?:url\s*\(\s*["']?([^"')]+?)["']?\s*\)|["']([^"']+)["'])[^;]*;/gi;
 
     let match;
     while ((match = importRegex.exec(cleanedCSS)) !== null) {
-      const importUrl = match[1];
+      const importUrl = match[1] ?? match[2];
       if (!importUrl) continue;
 
       // Calculate line number from regex match position
@@ -1756,6 +1939,7 @@ export class ContentValidator {
   }
 
   private extractAndRegisterImages(
+    context: ValidationContext,
     path: string,
     root: XmlElement,
     opfDir: string,
@@ -1849,6 +2033,52 @@ export class ContentValidator {
         svgImgRef.fragment = fragment;
       }
       refValidator.addReference(svgImgRef);
+    }
+
+    // Extract SVG use elements (RSC-015: must have fragment identifier)
+    try {
+      const svgUseXlink = root.find('.//svg:use[@xlink:href]', {
+        svg: 'http://www.w3.org/2000/svg',
+        xlink: 'http://www.w3.org/1999/xlink',
+      });
+      const svgUseHref = root.find('.//svg:use[@href]', {
+        svg: 'http://www.w3.org/2000/svg',
+      });
+      for (const useNode of [...svgUseXlink, ...svgUseHref]) {
+        const useElem = useNode as XmlElement;
+        const href = this.getAttribute(useElem, 'xlink:href') ?? this.getAttribute(useElem, 'href');
+        if (!href) continue;
+
+        const line = useNode.line;
+
+        if (href.startsWith('http://') || href.startsWith('https://')) continue;
+
+        if (!href.includes('#')) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_015,
+            message: `SVG "use" element requires a fragment identifier, but found "${href}"`,
+            location: { path, line },
+          });
+          continue;
+        }
+
+        const resolvedPath = this.resolveRelativePath(docDir, href, opfDir);
+        const hashIndex = resolvedPath.indexOf('#');
+        const targetResource = hashIndex >= 0 ? resolvedPath.slice(0, hashIndex) : path;
+        const fragment = hashIndex >= 0 ? resolvedPath.slice(hashIndex + 1) : undefined;
+        const useRef: Parameters<typeof refValidator.addReference>[0] = {
+          url: href,
+          targetResource,
+          type: ReferenceType.SVG_SYMBOL,
+          location: { path, line },
+        };
+        if (fragment) {
+          useRef.fragment = fragment;
+        }
+        refValidator.addReference(useRef);
+      }
+    } catch {
+      // empty
     }
 
     // Check for poster images on video elements
@@ -2015,6 +2245,7 @@ export class ContentValidator {
   }
 
   private extractAndRegisterMediaElements(
+    context: ValidationContext,
     path: string,
     root: XmlElement,
     opfDir: string,
@@ -2056,7 +2287,8 @@ export class ContentValidator {
         // Collect <source> children
         const sources = mediaElem.find('html:source[@src]', ns);
         for (const source of sources) {
-          const sourceSrc = this.getAttribute(source as XmlElement, 'src');
+          const sourceElem = source as XmlElement;
+          const sourceSrc = this.getAttribute(sourceElem, 'src');
           if (!sourceSrc) continue;
           const line = source.line;
           if (sourceSrc.startsWith('http://') || sourceSrc.startsWith('https://')) {
@@ -2064,6 +2296,10 @@ export class ContentValidator {
           } else {
             const resolvedPath = this.resolveRelativePath(docDir, sourceSrc, opfDir);
             pendingRefs.push({ url: sourceSrc, targetResource: resolvedPath, type: refType, line });
+          }
+          // OPF-013: Check type attribute mismatch for source in audio/video
+          if (registry) {
+            this.checkMimeTypeMatch(context, path, docDir, opfDir, sourceElem, 'src', registry);
           }
         }
 
@@ -2089,6 +2325,9 @@ export class ContentValidator {
         }
       }
     }
+
+    // Process picture elements for MED-003 and MED-007
+    this.extractAndRegisterPictureElements(context, path, root, opfDir, refValidator, registry);
 
     // Extract iframe elements with src attribute
     const iframeElements = root.find('.//html:iframe[@src]', {
@@ -2148,10 +2387,12 @@ export class ContentValidator {
   }
 
   private extractAndRegisterEmbeddedElements(
+    context: ValidationContext,
     path: string,
     root: XmlElement,
     opfDir: string,
     refValidator: ReferenceValidator,
+    registry?: ResourceRegistry,
   ): void {
     const docDir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
     const ns = { html: 'http://www.w3.org/1999/xhtml' };
@@ -2190,8 +2431,12 @@ export class ContentValidator {
 
     // embed[@src]
     for (const elem of root.find('.//html:embed[@src]', ns)) {
-      const src = this.getAttribute(elem as XmlElement, 'src');
+      const embedElem = elem as XmlElement;
+      const src = this.getAttribute(embedElem, 'src');
       if (src) addRef(src, ReferenceType.GENERIC, elem.line);
+      if (registry) {
+        this.checkMimeTypeMatch(context, path, docDir, opfDir, embedElem, 'src', registry);
+      }
     }
 
     // input[@type='image'][@src]
@@ -2205,9 +2450,9 @@ export class ContentValidator {
 
     // object[@data]
     for (const elem of root.find('.//html:object[@data]', ns)) {
-      const data = this.getAttribute(elem as XmlElement, 'data');
-      if (!data) continue;
       const objElem = elem as XmlElement;
+      const data = this.getAttribute(objElem, 'data');
+      if (!data) continue;
       // Object has intrinsic fallback if it has palpable child content
       // (non-param, non-hidden child elements)
       const allChildren = objElem.find('html:*', ns);
@@ -2216,6 +2461,171 @@ export class ContentValidator {
         return c.name !== 'param' && this.getAttribute(c, 'hidden') === null;
       });
       addRef(data, ReferenceType.GENERIC, elem.line, hasFallbackContent || undefined);
+      if (registry) {
+        this.checkMimeTypeMatch(context, path, docDir, opfDir, objElem, 'data', registry);
+      }
+    }
+  }
+
+  /**
+   * Check if an element's type attribute matches the manifest MIME type (OPF-013)
+   */
+  private checkMimeTypeMatch(
+    context: ValidationContext,
+    path: string,
+    docDir: string,
+    opfDir: string,
+    element: XmlElement,
+    srcAttr: string,
+    registry: ResourceRegistry,
+  ): void {
+    const typeAttr = this.getAttribute(element, 'type');
+    if (!typeAttr) return;
+
+    const src = this.getAttribute(element, srcAttr);
+    if (!src || src.startsWith('http://') || src.startsWith('https://')) return;
+
+    const resolvedPath = this.resolveRelativePath(docDir, src, opfDir);
+    const hashIndex = resolvedPath.indexOf('#');
+    const targetResource = hashIndex >= 0 ? resolvedPath.slice(0, hashIndex) : resolvedPath;
+    const resource = registry.getResource(targetResource);
+    if (!resource) return;
+
+    // Strip parameters from both type attribute and manifest type before comparison
+    const stripParams = (t: string): string => {
+      const idx = t.indexOf(';');
+      return (idx >= 0 ? t.substring(0, idx) : t).trim();
+    };
+    const declaredType = stripParams(typeAttr);
+    const manifestType = stripParams(resource.mimeType);
+
+    if (declaredType && declaredType !== manifestType) {
+      pushMessage(context.messages, {
+        id: MessageId.OPF_013,
+        message: `Resource "${targetResource}" is declared with MIME type "${declaredType}" in content, but has MIME type "${manifestType}" in the package document`,
+        location: { path, line: element.line },
+      });
+    }
+  }
+
+  /**
+   * Extract and validate picture elements (MED-003, MED-007, OPF-013)
+   */
+  private extractAndRegisterPictureElements(
+    context: ValidationContext,
+    path: string,
+    root: XmlElement,
+    opfDir: string,
+    refValidator: ReferenceValidator,
+    registry?: ResourceRegistry,
+  ): void {
+    const docDir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
+    const ns = { html: 'http://www.w3.org/1999/xhtml' };
+
+    const BLESSED_IMAGE_TYPES = new Set([
+      'image/gif',
+      'image/jpeg',
+      'image/png',
+      'image/svg+xml',
+      'image/webp',
+    ]);
+
+    const pictures = root.find('.//html:picture', ns);
+    for (const pic of pictures) {
+      const picElem = pic as XmlElement;
+
+      // Check img inside picture (MED-003)
+      const imgs = picElem.find('html:img[@src]', ns);
+      for (const img of imgs) {
+        const imgElem = img as XmlElement;
+        const src = this.getAttribute(imgElem, 'src');
+        if (!src || src.startsWith('http://') || src.startsWith('https://')) continue;
+
+        if (registry) {
+          const resolvedPath = this.resolveRelativePath(docDir, src, opfDir);
+          const resource = registry.getResource(resolvedPath);
+          if (resource && !BLESSED_IMAGE_TYPES.has(resource.mimeType)) {
+            pushMessage(context.messages, {
+              id: MessageId.MED_003,
+              message: `Image in "picture" element must be a core image type, but found "${resource.mimeType}"`,
+              location: { path, line: img.line },
+            });
+          }
+        }
+
+        // Also check srcset
+        const srcset = this.getAttribute(imgElem, 'srcset');
+        if (srcset && registry) {
+          const entries = srcset.split(',');
+          for (const entry of entries) {
+            const url = entry.trim().split(/\s+/)[0];
+            if (!url || url.startsWith('http://') || url.startsWith('https://')) continue;
+            const resolvedPath = this.resolveRelativePath(docDir, url, opfDir);
+            const resource = registry.getResource(resolvedPath);
+            if (resource && !BLESSED_IMAGE_TYPES.has(resource.mimeType)) {
+              pushMessage(context.messages, {
+                id: MessageId.MED_003,
+                message: `Image in "picture" element must be a core image type, but found "${resource.mimeType}"`,
+                location: { path, line: img.line },
+              });
+            }
+          }
+        }
+      }
+
+      // Check source inside picture (MED-007, OPF-013)
+      // Sources may use src or srcset attribute
+      const sourcesWithSrc = picElem.find('html:source[@src]', ns);
+      const sourcesWithSrcset = picElem.find('html:source[@srcset]', ns);
+      const allSources = new Set([...sourcesWithSrc, ...sourcesWithSrcset]);
+      for (const source of allSources) {
+        const sourceElem = source as XmlElement;
+        const typeAttr = this.getAttribute(sourceElem, 'type');
+
+        // Get source URL from src or first srcset entry
+        const src = this.getAttribute(sourceElem, 'src');
+        const srcset = this.getAttribute(sourceElem, 'srcset');
+        const sourceUrl = src ?? srcset?.split(',')[0]?.trim().split(/\s+/)[0];
+        if (!sourceUrl || sourceUrl.startsWith('http://') || sourceUrl.startsWith('https://'))
+          continue;
+
+        if (registry) {
+          // OPF-013: Check type mismatch (only if source has type and src attributes)
+          if (src) {
+            this.checkMimeTypeMatch(context, path, docDir, opfDir, sourceElem, 'src', registry);
+          } else if (srcset && typeAttr) {
+            // For srcset, manually check the first entry against the type attribute
+            const resolvedPath = this.resolveRelativePath(docDir, sourceUrl, opfDir);
+            const resource = registry.getResource(resolvedPath);
+            if (resource) {
+              const stripParams = (t: string): string => {
+                const idx = t.indexOf(';');
+                return (idx >= 0 ? t.substring(0, idx) : t).trim();
+              };
+              const declaredType = stripParams(typeAttr);
+              const manifestType = stripParams(resource.mimeType);
+              if (declaredType && declaredType !== manifestType) {
+                pushMessage(context.messages, {
+                  id: MessageId.OPF_013,
+                  message: `Resource "${resolvedPath}" is declared with MIME type "${declaredType}" in content, but has MIME type "${manifestType}" in the package document`,
+                  location: { path, line: source.line },
+                });
+              }
+            }
+          }
+
+          // MED-007: source in picture must have type attribute if resource is not blessed image
+          const resolvedPath = this.resolveRelativePath(docDir, sourceUrl, opfDir);
+          const resource = registry.getResource(resolvedPath);
+          if (resource && !BLESSED_IMAGE_TYPES.has(resource.mimeType) && !typeAttr) {
+            pushMessage(context.messages, {
+              id: MessageId.MED_007,
+              message: `Source element in "picture" with foreign resource type "${resource.mimeType}" must declare a "type" attribute`,
+              location: { path, line: source.line },
+            });
+          }
+        }
+      }
     }
   }
 

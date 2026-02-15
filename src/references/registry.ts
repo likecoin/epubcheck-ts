@@ -10,10 +10,12 @@ import type { Resource } from './types.js';
 export class ResourceRegistry {
   private resources: Map<string, Resource>;
   private ids: Map<string, Set<string>>;
+  private svgSymbolIds: Map<string, Set<string>>;
 
   constructor() {
     this.resources = new Map();
     this.ids = new Map();
+    this.svgSymbolIds = new Map();
   }
 
   /**
@@ -85,6 +87,23 @@ export class ResourceRegistry {
       index++;
     }
     return -1;
+  }
+
+  /**
+   * Register an ID as belonging to an SVG symbol element
+   */
+  registerSVGSymbolID(resourceURL: string, id: string): void {
+    if (!this.svgSymbolIds.has(resourceURL)) {
+      this.svgSymbolIds.set(resourceURL, new Set());
+    }
+    this.svgSymbolIds.get(resourceURL)?.add(id);
+  }
+
+  /**
+   * Check if an ID in a resource belongs to an SVG symbol element
+   */
+  isSVGSymbolID(resourceURL: string, id: string): boolean {
+    return this.svgSymbolIds.get(resourceURL)?.has(id) ?? false;
   }
 
   /**

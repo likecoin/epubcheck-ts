@@ -49,6 +49,7 @@ export class ReferenceValidator {
       this.validateReference(context, reference);
     }
 
+    this.checkRemoteResources(context);
     this.checkUndeclaredResources(context);
     this.checkReadingOrder(context);
     this.checkNonLinearReachability(context);
@@ -344,11 +345,10 @@ export class ReferenceValidator {
     }
 
     // RSC-014: SVG fragment type mismatch
-    // SVG views (svgView(...) or viewBox(...)) can only be referenced from SVG documents
-    if (resource?.mimeType === 'image/svg+xml') {
+    if (resource?.mimeType === 'image/svg+xml' && reference.type === ReferenceType.HYPERLINK) {
+      // svgView/viewBox fragments can only be referenced from SVG documents
       const hasSVGView = fragment.includes('svgView(') || fragment.includes('viewBox(');
-
-      if (hasSVGView && reference.type === ReferenceType.HYPERLINK) {
+      if (hasSVGView) {
         pushMessage(context.messages, {
           id: MessageId.RSC_014,
           message: 'SVG view fragments can only be referenced from SVG documents',
@@ -356,10 +356,21 @@ export class ReferenceValidator {
         });
       }
     }
+    // RSC-014: Hyperlink pointing to SVG symbol is incompatible (can be inline in XHTML too)
+    if (reference.type === ReferenceType.HYPERLINK) {
+      if (this.registry.isSVGSymbolID(resourcePath, fragment)) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_014,
+          message: `Fragment identifier "${fragment}" defines an incompatible resource type (SVG symbol)`,
+          location: reference.location,
+        });
+      }
+    }
 
     // Check if fragment target exists (only for resource types we parse for IDs)
+    // Skip remote resources since we can't parse their content
     const parsedMimeTypes = ['application/xhtml+xml', 'image/svg+xml'];
-    if (resource && parsedMimeTypes.includes(resource.mimeType)) {
+    if (resource && parsedMimeTypes.includes(resource.mimeType) && !isRemoteURL(resourcePath)) {
       if (!this.registry.hasID(resourcePath, fragment)) {
         pushMessage(context.messages, {
           id: MessageId.RSC_012,
@@ -367,6 +378,43 @@ export class ReferenceValidator {
           location: reference.location,
         });
       }
+    }
+  }
+
+  /**
+   * Check non-spine remote resources that have non-standard types.
+   * Fires RSC-006 for remote items that aren't audio/video/font types
+   * and aren't referenced as audio/video/font by content documents.
+   * This mirrors Java's checkItemAfterResourceValidation behavior.
+   */
+  private checkRemoteResources(context: ValidationContext): void {
+    if (!this.version.startsWith('3')) return;
+
+    // Collect remote resources that are referenced as allowed types (font/audio/video)
+    const referencedAsAllowed = new Set<string>();
+    for (const ref of this.references) {
+      if (isRemoteURL(ref.url) || isRemoteURL(ref.targetResource)) {
+        if (
+          ref.type === ReferenceType.FONT ||
+          ref.type === ReferenceType.AUDIO ||
+          ref.type === ReferenceType.VIDEO
+        ) {
+          referencedAsAllowed.add(ref.targetResource);
+        }
+      }
+    }
+
+    for (const resource of this.registry.getAllResources()) {
+      if (!isRemoteURL(resource.url)) continue;
+      if (resource.inSpine) continue; // Already checked in OPF validator
+      if (this.isRemoteResourceType(resource.mimeType)) continue;
+      if (referencedAsAllowed.has(resource.url)) continue;
+
+      pushMessage(context.messages, {
+        id: MessageId.RSC_006,
+        message: `Remote resource reference is not allowed; resource "${resource.url}" must be located in the EPUB container`,
+        location: { path: resource.url },
+      });
     }
   }
 
