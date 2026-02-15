@@ -6,13 +6,13 @@ A TypeScript port of [EPUBCheck](https://github.com/w3c/epubcheck) - the officia
 [![npm](https://img.shields.io/npm/v/%40likecoin%2Fepubcheck-ts)](https://www.npmjs.com/package/@likecoin/epubcheck-ts)
 [![License](https://img.shields.io/npm/l/%40likecoin%2Fepubcheck-ts)](./LICENSE)
 
-> **Note**: This library is primarily developed for internal use at [3ook.com](https://3ook.com/about) and is built with AI-assisted development. While it has comprehensive test coverage (672 tests) and ~75% feature parity with Java EPUBCheck, it may not be suitable for mission-critical production workloads. For production environments requiring full EPUB validation, consider using the official [Java EPUBCheck](https://github.com/w3c/epubcheck). Contributions and feedback are welcome!
+> **Note**: This library is primarily developed for internal use at [3ook.com](https://3ook.com/about) and is built with AI-assisted development. While it has comprehensive test coverage (688 tests) and ~77% feature parity with Java EPUBCheck, it may not be suitable for mission-critical production workloads. For production environments requiring full EPUB validation, consider using the official [Java EPUBCheck](https://github.com/w3c/epubcheck). Contributions and feedback are welcome!
 
 ## Features
 
 - **CLI and programmatic API**: Use as a command-line tool or integrate into your application
 - **Cross-platform**: Works in Node.js (18+) and modern browsers
-- **Partial EPUB validation**: Currently ~75% of EPUBCheck feature parity
+- **Partial EPUB validation**: Currently ~77% of EPUBCheck feature parity
 - **Zero native dependencies**: Pure JavaScript/WebAssembly, no compilation required
 - **TypeScript first**: Full type definitions included
 - **Tree-shakable**: ESM with proper exports for optimal bundling

@@ -14,9 +14,9 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Schema Validation | ~50% | 🟡 RelaxNG for OPF/container; XHTML/SVG disabled (libxml2 limitation) |
 | Media Overlays | 0% | ❌ Not implemented |
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
-| Cross-reference | ~80% | 🟢 URL leaking, CSS references, link elements done |
+| Cross-reference | ~85% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources done |
 
-**Overall: ~75% complete (672 tests passing, 71 skipped)**
+**Overall: ~77% complete (688 tests passing, 55 skipped)**
 
 ---
 
@@ -27,8 +27,8 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 400 | 382 | 18 |
-| **Integration Tests** | 343 | 290 | 53 |
-| **Total** | **743** | **672** | **71** |
+| **Integration Tests** | 343 | 306 | 37 |
+| **Total** | **743** | **688** | **55** |
 
 ### Integration Test Files
 
@@ -39,7 +39,7 @@ test/integration/
 ├── opf.integration.test.ts      # 119 tests (118 pass, 1 skip)  - Package document
 ├── content.integration.test.ts  # 55 tests  (39 pass, 16 skip)  - XHTML/CSS/SVG
 ├── nav.integration.test.ts      # 36 tests  (36 pass, 0 skip)  - Navigation
-└── resources.integration.test.ts # 82 tests  (51 pass, 31 skip)  - Resources/fallbacks
+└── resources.integration.test.ts # 82 tests  (67 pass, 15 skip)  - Resources/fallbacks
 ```
 
 **Note**: Integration tests imported from Java EPUBCheck test suite (`../epubcheck/src/test/resources/epub3/`).
@@ -82,8 +82,8 @@ test/fixtures/
 - **libxml2-wasm XPath limitations (3)** - OPF-014 inline event handlers, CSS-005 conflicting stylesheets, OPF-088 unknown epub:type prefix
 - **Messages suppressed in Java EPUBCheck (15)** - NCX-002 (2), NCX-003 (2), NAV-002 (3+), ACC-004 (1), ACC-005 (1), HTM-012 (1), and parameterized variants
 
-**Integration tests (53)** - Unimplemented features and library limitations:
-- **Resources (31 skipped)**: Exempt resource classification (5), embed/input/object reference extraction (3), OPF-013 type mismatch (4), data URL whitespace (3), CMT media type parameters (2), remote font tracking (3), SVG stylesheet parsing (2), intrinsic source fallback (1), MED-003/004/007 (3), OPF-029 (1), PKG-022 (1), remote audio object (1), remote undeclared object (1)
+**Integration tests (37)** - Unimplemented features and library limitations:
+- **Resources (15 skipped)**: OPF-013 type mismatch (4), remote font tracking (3), SVG stylesheet parsing (2), MED-003/004/007 (3), OPF-029 (1), PKG-022 (1), corrupt image (1)
 - **Content (16 skipped)**: CSS encoding detection CSS-003/CSS-004 (3), CSS syntax error ordering (1), CSS-019 false positive (1), RSC-013 stylesheet fragment (1), RSC-014 SVG symbol (1), RSC-015 SVG use (1), svgView fragment (1), exempt video in img (1), lang/xml:lang mismatch (1), base URL xml:base (1), XHTML schema (3)
 - **OCF (5 skipped)**: OPF-060 duplicate ZIP entry (1), encryption/signatures schema (4)
 - **OPF (1 skipped)**: OPF-014 remote audio overlays (1)
@@ -128,6 +128,11 @@ test/fixtures/
 - **Font obfuscation validation** (PKG-026) - Obfuscated resources must be blessed font types
 - **Non-ASCII filename detection** (PKG-012) - Usage message for non-ASCII characters in filenames
 - **Foreign resource fallback** (RSC-032) - Foreign resources must have CMT fallback chain
+- **Exempt resources** - Fonts, tracks, stylesheets exempt from RSC-032; all video/* types are CMT
+- **CMT parameter stripping** - Media types with parameters (e.g., `audio/ogg;codecs=opus`) correctly matched
+- **Intrinsic source fallback** - `<source>` children with CMT types provide fallback for audio/video
+- **Embedded element references** - embed[@src], input[type=image][@src], object[@data] extracted
+- **Data URL validation** - Base64 whitespace handled; RSC-032 for foreign data URLs
 
 ### 🟡 Partially Implemented
 - **Schema validation** - RelaxNG for OPF/container works; XHTML/SVG RelaxNG disabled (libxml2-wasm doesn't support complex patterns)
@@ -167,7 +172,7 @@ test/fixtures/
 | Java Category | Java Scenarios | TS Ported | TS Passing | Coverage |
 |---------------|----------------|-----------|------------|----------|
 | 00-minimal | 5 | 4 | 4 | 80% |
-| 03-resources | 113 | 82 | 51 | 45% |
+| 03-resources | 113 | 82 | 67 | 59% |
 | 04-ocf | 61 | 47 | 42 | 69% |
 | 05-package-document | 121 | 119 | 118 | 98% |
 | 06-content-document | 215 | 55 | 39 | 18% |
@@ -176,7 +181,7 @@ test/fixtures/
 | 09-media-overlays | 51 | 0 | 0 | 0% |
 | D-vocabularies (ARIA) | 56 | 0 | 0 | 0% |
 | Other | 6 | 0 | 0 | 0% |
-| **Total** | **719** | **343** | **290** | **40%** |
+| **Total** | **719** | **343** | **306** | **43%** |
 
 ### E2E Porting Priorities
 
@@ -187,7 +192,7 @@ test/fixtures/
 
 **High Priority** - Largest remaining gaps:
 4. **06-content-document** (215 scenarios) - 18% coverage, needs ARIA/DOCTYPE/entity validation
-5. **03-resources** (113 scenarios) - 45% coverage, many ported but blocked on exempt resources/data URLs/OPF-013
+5. **03-resources** (113 scenarios) - 59% coverage, blocked on OPF-013/remote fonts/SVG stylesheets
 6. **D-vocabularies** (56 scenarios) - 0% coverage, ARIA roles/epub:type
 
 **Low Priority** - Specialized features:

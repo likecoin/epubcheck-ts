@@ -4,7 +4,7 @@ import { MessageId, pushMessage } from './messages/index.js';
 import { NCXValidator } from './nav/index.js';
 import { OCFValidator } from './ocf/index.js';
 import { OPFValidator } from './opf/index.js';
-import { CORE_MEDIA_TYPES } from './opf/types.js';
+import { isCoreMediaType } from './opf/types.js';
 import { ResourceRegistry } from './references/registry.js';
 import { resolveManifestHref } from './references/url.js';
 import { ReferenceValidator } from './references/validator.js';
@@ -318,7 +318,7 @@ export class EpubCheck {
       visited.add(currentId);
       const item = manifestById.get(currentId);
       if (!item) return false;
-      if (CORE_MEDIA_TYPES.has(item.mediaType)) return true;
+      if (isCoreMediaType(item.mediaType)) return true;
       currentId = item.fallback;
     }
     return false;

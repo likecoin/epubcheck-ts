@@ -310,9 +310,7 @@ describe('Integration Tests - Content Documents', () => {
 
     // Skip: RSC-014 (incompatible resource type) not implemented
     it.skip('should report hyperlink to SVG symbol as incompatible (RSC-014)', async () => {
-      const data = await loadEpub(
-        'invalid/content/content-xhtml-link-to-svg-fragment-error.epub',
-      );
+      const data = await loadEpub('invalid/content/content-xhtml-link-to-svg-fragment-error.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-014');

@@ -180,6 +180,27 @@ export const CORE_MEDIA_TYPES = new Set([
 ]);
 
 /**
+ * Check if a MIME type is a Core Media Type per EPUB 3 spec.
+ * Handles media type parameters (e.g., "audio/ogg ; codecs=opus")
+ * and the rule that all video/* types are blessed.
+ */
+export function isCoreMediaType(mimeType: string): boolean {
+  if (CORE_MEDIA_TYPES.has(mimeType)) return true;
+  // All video/* types are blessed per EPUB 3 spec
+  if (mimeType.startsWith('video/')) return true;
+  // Handle audio/ogg with codecs parameter
+  if (/^audio\/ogg\s*;\s*codecs=opus$/i.test(mimeType)) return true;
+  // Strip media type parameters and retry
+  const semicolonIndex = mimeType.indexOf(';');
+  if (semicolonIndex >= 0) {
+    const baseType = mimeType.substring(0, semicolonIndex).trim();
+    if (CORE_MEDIA_TYPES.has(baseType)) return true;
+    if (baseType.startsWith('video/')) return true;
+  }
+  return false;
+}
+
+/**
  * Known item property values (EPUB 3)
  */
 export const ITEM_PROPERTIES = new Set([

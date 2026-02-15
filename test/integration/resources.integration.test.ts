@@ -26,8 +26,7 @@ describe('Integration Tests - Resources', () => {
         expectNoErrorsOrWarnings(result);
       });
 
-      // Skip: CMT matching doesn't strip media type parameters (audio/ogg ; codecs=opus)
-      it.skip('should allow OPUS audio', async () => {
+      it('should allow OPUS audio', async () => {
         const result = await validate('valid/resources-cmt-audio-opus-valid.epub');
         expectNoErrorsOrWarnings(result);
       });
@@ -75,16 +74,13 @@ describe('Integration Tests - Resources', () => {
 
       // Skip: File extension validation (PKG-022) not implemented
       it.skip('should report wrong image extension (PKG-022)', async () => {
-        const result = await validate(
-          'warnings/resources-cmt-image-wrong-extension-warning.epub',
-        );
+        const result = await validate('warnings/resources-cmt-image-wrong-extension-warning.epub');
         expectWarning(result, 'PKG-022');
       });
     });
 
     describe('Fonts', () => {
-      // Skip: CMT matching doesn't strip media type parameters for font/sfnt
-      it.skip('should allow TrueType fonts', async () => {
+      it('should allow TrueType fonts', async () => {
         const result = await validate('valid/resources-cmt-font-truetype-valid.epub');
         expectNoErrorsOrWarnings(result);
       });
@@ -112,9 +108,7 @@ describe('Integration Tests - Resources', () => {
       });
 
       it('should report foreign audio without fallback (RSC-032)', async () => {
-        const result = await validate(
-          'invalid/content/foreign-xhtml-audio-no-fallback-error.epub',
-        );
+        const result = await validate('invalid/content/foreign-xhtml-audio-no-fallback-error.epub');
         expectError(result, 'RSC-032');
       });
 
@@ -132,8 +126,7 @@ describe('Integration Tests - Resources', () => {
         expectError(result, 'RSC-032');
       });
 
-      // Skip: Intrinsic <source> fallback detection not implemented
-      it.skip('should allow foreign audio with source fallback', async () => {
+      it('should allow foreign audio with source fallback', async () => {
         const result = await validate('valid/foreign-xhtml-audio-source-fallback-valid.epub');
         expectNoErrorsOrWarnings(result);
       });
@@ -175,9 +168,7 @@ describe('Integration Tests - Resources', () => {
 
       // Skip: MED-003 picture element validation not implemented
       it.skip('should report foreign resource in picture img src (MED-003)', async () => {
-        const result = await validate(
-          'invalid/content/foreign-xhtml-picture-img-src-error.epub',
-        );
+        const result = await validate('invalid/content/foreign-xhtml-picture-img-src-error.epub');
         expectError(result, 'MED-003');
       });
 
@@ -190,9 +181,7 @@ describe('Integration Tests - Resources', () => {
       });
 
       it('should allow picture source with type attribute for foreign resource', async () => {
-        const result = await validate(
-          'valid/foreign-xhtml-picture-source-with-type-valid.epub',
-        );
+        const result = await validate('valid/foreign-xhtml-picture-source-with-type-valid.epub');
         expectNoErrorsOrWarnings(result);
       });
 
@@ -211,18 +200,14 @@ describe('Integration Tests - Resources', () => {
         expectNoErrorsOrWarnings(result);
       });
 
-      // Skip: embed src not extracted as resource reference
-      it.skip('should report foreign embed without fallback (RSC-032)', async () => {
-        const result = await validate(
-          'invalid/content/foreign-xhtml-embed-no-fallback-error.epub',
-        );
+      it('should report foreign embed without fallback (RSC-032)', async () => {
+        const result = await validate('invalid/content/foreign-xhtml-embed-no-fallback-error.epub');
         expectError(result, 'RSC-032');
       });
     });
 
     describe('Other element fallbacks', () => {
-      // Skip: input[type=image] src not extracted as resource reference
-      it.skip('should report foreign input image without fallback (RSC-032)', async () => {
+      it('should report foreign input image without fallback (RSC-032)', async () => {
         const result = await validate(
           'invalid/content/foreign-xhtml-input-image-no-fallback-error.epub',
         );
@@ -230,9 +215,7 @@ describe('Integration Tests - Resources', () => {
       });
 
       it('should allow foreign video poster with manifest fallback', async () => {
-        const result = await validate(
-          'valid/foreign-xhtml-video-poster-fallback-valid.epub',
-        );
+        const result = await validate('valid/foreign-xhtml-video-poster-fallback-valid.epub');
         expectNoErrorsOrWarnings(result);
       });
 
@@ -253,14 +236,11 @@ describe('Integration Tests - Resources', () => {
 
     describe('Object fallbacks', () => {
       it('should allow foreign object with intrinsic fallback', async () => {
-        const result = await validate(
-          'valid/foreign-xhtml-object-intrinsic-fallback-valid.epub',
-        );
+        const result = await validate('valid/foreign-xhtml-object-intrinsic-fallback-valid.epub');
         expectNoErrorsOrWarnings(result);
       });
 
-      // Skip: object data not extracted as resource reference
-      it.skip('should report foreign object without fallback (RSC-032)', async () => {
+      it('should report foreign object without fallback (RSC-032)', async () => {
         const result = await validate(
           'invalid/content/foreign-xhtml-object-no-fallback-error.epub',
         );
@@ -280,8 +260,7 @@ describe('Integration Tests - Resources', () => {
   // 3.4 Exempt Resources
   // ==========================================================================
   describe('Exempt Resources', () => {
-    // Skip: Exempt resource classification (fonts) not implemented — false RSC-032
-    it.skip('should allow foreign font media types without fallbacks', async () => {
+    it('should allow foreign font media types without fallbacks', async () => {
       const result = await validate('valid/foreign-exempt-font-valid.epub');
       expectNoErrorsOrWarnings(result);
     });
@@ -291,11 +270,8 @@ describe('Integration Tests - Resources', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: Exempt resource classification (XPGT) not implemented — false RSC-032
-    it.skip('should allow XPGT stylesheets without fallbacks', async () => {
-      const result = await validate(
-        'valid/foreign-exempt-xhtml-link-xpgt-no-fallback-valid.epub',
-      );
+    it('should allow XPGT stylesheets without fallbacks', async () => {
+      const result = await validate('valid/foreign-exempt-xhtml-link-xpgt-no-fallback-valid.epub');
       expectNoErrorsOrWarnings(result);
     });
 
@@ -306,20 +282,17 @@ describe('Integration Tests - Resources', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: Exempt resource classification (tracks) not implemented — false RSC-032
-    it.skip('should allow foreign text tracks without fallbacks', async () => {
+    it('should allow foreign text tracks without fallbacks', async () => {
       const result = await validate('valid/foreign-exempt-xhtml-track-valid.epub');
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: Exempt resource classification (video) not implemented — false RSC-032
-    it.skip('should allow foreign video without fallback', async () => {
+    it('should allow foreign video without fallback', async () => {
       const result = await validate('valid/foreign-exempt-xhtml-video-valid.epub');
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: Exempt resource classification (video in img) not implemented — false RSC-032
-    it.skip('should allow foreign video in img element without fallback', async () => {
+    it('should allow foreign video in img element without fallback', async () => {
       const result = await validate('valid/foreign-exempt-xhtml-video-in-img-valid.epub');
       expectNoErrorsOrWarnings(result);
     });
@@ -359,8 +332,7 @@ describe('Integration Tests - Resources', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: object data attribute not extracted as resource reference
-    it.skip('should allow remote audio in object element', async () => {
+    it('should allow remote audio in object element', async () => {
       const result = await validate('valid/resources-remote-audio-object-valid.epub');
       expectNoErrorsOrWarnings(result);
     });
@@ -409,9 +381,7 @@ describe('Integration Tests - Resources', () => {
     });
 
     it('should report remote image in script context (RSC-006)', async () => {
-      const result = await validate(
-        'invalid/content/resources-remote-img-in-script-error.epub',
-      );
+      const result = await validate('invalid/content/resources-remote-img-in-script-error.epub');
       expectError(result, 'RSC-006');
     });
 
@@ -434,8 +404,7 @@ describe('Integration Tests - Resources', () => {
       expectError(result, 'RSC-006');
     });
 
-    // Skip: object data attribute not extracted as resource reference
-    it.skip('should report remote undeclared object (RSC-006)', async () => {
+    it('should report remote undeclared object (RSC-006)', async () => {
       const result = await validate(
         'invalid/content/resources-remote-object-undeclared-error.epub',
       );
@@ -443,16 +412,12 @@ describe('Integration Tests - Resources', () => {
     });
 
     it('should report remote SVG content document (RSC-006)', async () => {
-      const result = await validate(
-        'invalid/content/resources-remote-svg-contentdoc-error.epub',
-      );
+      const result = await validate('invalid/content/resources-remote-svg-contentdoc-error.epub');
       expectError(result, 'RSC-006');
     });
 
     it('should report remote spine item (RSC-006)', async () => {
-      const result = await validate(
-        'invalid/content/resources-remote-spine-item-error.epub',
-      );
+      const result = await validate('invalid/content/resources-remote-spine-item-error.epub');
       expectError(result, 'RSC-006');
     });
 
@@ -497,14 +462,12 @@ describe('Integration Tests - Resources', () => {
   // 3.7 Data URLs
   // ==========================================================================
   describe('Data URLs', () => {
-    // Skip: Whitespace in base64 data URLs causes false RSC-020
-    it.skip('should allow data URL for CMT resource in img element', async () => {
+    it('should allow data URL for CMT resource in img element', async () => {
       const result = await validate('valid/data-url-in-html-img-cmt-valid.epub');
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: Whitespace in base64 data URLs causes false RSC-020
-    it.skip('should allow data URL for exempt resource in link element', async () => {
+    it('should allow data URL for exempt resource in link element', async () => {
       const result = await validate('valid/data-url-in-html-link-exempt-valid.epub');
       expectNoErrorsOrWarnings(result);
     });
@@ -516,8 +479,7 @@ describe('Integration Tests - Resources', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: Whitespace in base64 data URLs causes false RSC-020
-    it.skip('should report data URL for foreign resource without fallback (RSC-032)', async () => {
+    it('should report data URL for foreign resource without fallback (RSC-032)', async () => {
       const result = await validate(
         'invalid/content/data-url-in-html-img-foreign-no-fallback-error.epub',
       );
@@ -545,9 +507,7 @@ describe('Integration Tests - Resources', () => {
   // ==========================================================================
   describe('XML Conformance', () => {
     it('should allow attribute values with leading/trailing whitespace', async () => {
-      const result = await validate(
-        'valid/conformance-xml-id-leading-trailing-spaces-valid.epub',
-      );
+      const result = await validate('valid/conformance-xml-id-leading-trailing-spaces-valid.epub');
       expectNoErrorsOrWarnings(result);
     });
   });
@@ -620,9 +580,7 @@ function expectWarning(
   result: Awaited<ReturnType<typeof EpubCheck.validate>>,
   warningId: string,
 ): void {
-  const hasWarning = result.messages.some(
-    (m) => m.id === warningId && m.severity === 'warning',
-  );
+  const hasWarning = result.messages.some((m) => m.id === warningId && m.severity === 'warning');
   expect(
     hasWarning,
     `Expected warning ${warningId} to be reported. Got: ${JSON.stringify(result.messages.map((m) => ({ id: m.id, severity: m.severity })))}`,

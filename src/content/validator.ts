@@ -5,6 +5,7 @@
 import { XmlDocument, type XmlElement, type XmlNode } from 'libxml2-wasm';
 import { CSSValidator } from '../css/validator.js';
 import { MessageId, pushMessage } from '../messages/index.js';
+import { isCoreMediaType } from '../opf/types.js';
 import type { ResourceRegistry } from '../references/registry.js';
 import { ReferenceType } from '../references/types.js';
 import { resolveManifestHref } from '../references/url.js';
@@ -559,7 +560,8 @@ export class ContentValidator {
         this.extractAndRegisterMathMLAltimg(path, root, opfDir, refValidator);
         this.extractAndRegisterScripts(path, root, opfDir, refValidator);
         this.extractAndRegisterCiteAttributes(path, root, opfDir, refValidator);
-        this.extractAndRegisterMediaElements(path, root, opfDir, refValidator);
+        this.extractAndRegisterMediaElements(path, root, opfDir, refValidator, registry);
+        this.extractAndRegisterEmbeddedElements(path, root, opfDir, refValidator);
       }
     } finally {
       doc.dispose();
@@ -1175,6 +1177,22 @@ export class ContentValidator {
     const sources = root.find('.//html:source[@src]', { html: 'http://www.w3.org/1999/xhtml' });
     for (const source of sources) {
       const src = this.getAttribute(source as XmlElement, 'src');
+      if (src && (src.startsWith('http://') || src.startsWith('https://'))) {
+        return true;
+      }
+    }
+
+    const objects = root.find('.//html:object[@data]', { html: 'http://www.w3.org/1999/xhtml' });
+    for (const obj of objects) {
+      const data = this.getAttribute(obj as XmlElement, 'data');
+      if (data && (data.startsWith('http://') || data.startsWith('https://'))) {
+        return true;
+      }
+    }
+
+    const embeds = root.find('.//html:embed[@src]', { html: 'http://www.w3.org/1999/xhtml' });
+    for (const embed of embeds) {
+      const src = this.getAttribute(embed as XmlElement, 'src');
       if (src && (src.startsWith('http://') || src.startsWith('https://'))) {
         return true;
       }
@@ -2001,95 +2019,74 @@ export class ContentValidator {
     root: XmlElement,
     opfDir: string,
     refValidator: ReferenceValidator,
+    registry?: ResourceRegistry,
   ): void {
     const docDir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
+    const ns = { html: 'http://www.w3.org/1999/xhtml' };
 
-    // Extract audio elements with src attribute
-    const audioElements = root.find('.//html:audio[@src]', {
-      html: 'http://www.w3.org/1999/xhtml',
-    });
-    for (const audio of audioElements) {
-      const src = this.getAttribute(audio as XmlElement, 'src');
-      if (!src) continue;
+    // Process audio and video elements together to detect intrinsic source fallback.
+    // Per Java EPUBCheck: a media element has intrinsic fallback if any of its
+    // sources (src attr or <source> children) resolve to a core media type resource.
+    for (const tagName of ['audio', 'video'] as const) {
+      const isAudio = tagName === 'audio';
+      const refType = isAudio ? ReferenceType.AUDIO : ReferenceType.VIDEO;
+      const elements = root.find(`.//html:${tagName}`, ns);
 
-      const line = (audio as unknown as { line?: number }).line;
+      for (const elem of elements) {
+        const mediaElem = elem as XmlElement;
+        const pendingRefs: {
+          url: string;
+          targetResource: string;
+          type: ReferenceType;
+          line?: number;
+        }[] = [];
 
-      if (src.startsWith('http://') || src.startsWith('https://')) {
-        refValidator.addReference({
-          url: src,
-          targetResource: src,
-          type: ReferenceType.AUDIO,
-          location: line !== undefined ? { path, line } : { path },
-        });
-      } else {
-        const resolvedPath = this.resolveRelativePath(docDir, src, opfDir);
-        refValidator.addReference({
-          url: src,
-          targetResource: resolvedPath,
-          type: ReferenceType.AUDIO,
-          location: line !== undefined ? { path, line } : { path },
-        });
-      }
-    }
+        // Collect direct src attribute
+        const src = this.getAttribute(mediaElem, 'src');
+        if (src) {
+          const line = elem.line;
+          if (src.startsWith('http://') || src.startsWith('https://')) {
+            pendingRefs.push({ url: src, targetResource: src, type: refType, line });
+          } else {
+            const resolvedPath = this.resolveRelativePath(docDir, src, opfDir);
+            pendingRefs.push({ url: src, targetResource: resolvedPath, type: refType, line });
+          }
+        }
 
-    // Extract video elements with src attribute
-    const videoElements = root.find('.//html:video[@src]', {
-      html: 'http://www.w3.org/1999/xhtml',
-    });
-    for (const video of videoElements) {
-      const src = this.getAttribute(video as XmlElement, 'src');
-      if (!src) continue;
+        // Collect <source> children
+        const sources = mediaElem.find('html:source[@src]', ns);
+        for (const source of sources) {
+          const sourceSrc = this.getAttribute(source as XmlElement, 'src');
+          if (!sourceSrc) continue;
+          const line = source.line;
+          if (sourceSrc.startsWith('http://') || sourceSrc.startsWith('https://')) {
+            pendingRefs.push({ url: sourceSrc, targetResource: sourceSrc, type: refType, line });
+          } else {
+            const resolvedPath = this.resolveRelativePath(docDir, sourceSrc, opfDir);
+            pendingRefs.push({ url: sourceSrc, targetResource: resolvedPath, type: refType, line });
+          }
+        }
 
-      const line = (video as unknown as { line?: number }).line;
+        // Check if any source resolves to a CMT resource
+        let hasIntrinsicFallback = false;
+        if (registry && pendingRefs.length > 1) {
+          hasIntrinsicFallback = pendingRefs.some((ref) => {
+            const resource = registry.getResource(ref.targetResource);
+            return resource && isCoreMediaType(resource.mimeType);
+          });
+        }
 
-      if (src.startsWith('http://') || src.startsWith('https://')) {
-        refValidator.addReference({
-          url: src,
-          targetResource: src,
-          type: ReferenceType.VIDEO,
-          location: line !== undefined ? { path, line } : { path },
-        });
-      } else {
-        const resolvedPath = this.resolveRelativePath(docDir, src, opfDir);
-        refValidator.addReference({
-          url: src,
-          targetResource: resolvedPath,
-          type: ReferenceType.VIDEO,
-          location: line !== undefined ? { path, line } : { path },
-        });
-      }
-    }
-
-    // Extract source elements (child of audio/video) with src attribute
-    const sourceElements = root.find('.//html:source[@src]', {
-      html: 'http://www.w3.org/1999/xhtml',
-    });
-    for (const source of sourceElements) {
-      const src = this.getAttribute(source as XmlElement, 'src');
-      if (!src) continue;
-
-      const parent = source.parent as unknown as { name?: string } | undefined;
-      const parentName = parent?.name ?? '';
-      const isAudioChild = parentName === 'audio';
-      const type = isAudioChild ? ReferenceType.AUDIO : ReferenceType.VIDEO;
-
-      const line = (source as unknown as { line?: number }).line;
-
-      if (src.startsWith('http://') || src.startsWith('https://')) {
-        refValidator.addReference({
-          url: src,
-          targetResource: src,
-          type,
-          location: line !== undefined ? { path, line } : { path },
-        });
-      } else {
-        const resolvedPath = this.resolveRelativePath(docDir, src, opfDir);
-        refValidator.addReference({
-          url: src,
-          targetResource: resolvedPath,
-          type,
-          location: line !== undefined ? { path, line } : { path },
-        });
+        // Register all references with the shared fallback flag
+        for (const ref of pendingRefs) {
+          const reference: Parameters<typeof refValidator.addReference>[0] = {
+            url: ref.url,
+            targetResource: ref.targetResource,
+            type: ref.type,
+            location: ref.line !== undefined ? { path, line: ref.line } : { path },
+          };
+          if (hasIntrinsicFallback) reference.hasIntrinsicFallback = true;
+          refValidator.addReference(reference);
+        }
       }
     }
 
@@ -2147,6 +2144,78 @@ export class ContentValidator {
           location: line !== undefined ? { path, line } : { path },
         });
       }
+    }
+  }
+
+  private extractAndRegisterEmbeddedElements(
+    path: string,
+    root: XmlElement,
+    opfDir: string,
+    refValidator: ReferenceValidator,
+  ): void {
+    const docDir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
+    const ns = { html: 'http://www.w3.org/1999/xhtml' };
+
+    const addRef = (
+      src: string,
+      type: ReferenceType,
+      line?: number,
+      hasIntrinsicFallback?: boolean,
+    ): void => {
+      const location = line !== undefined ? { path, line } : { path };
+      if (src.startsWith('http://') || src.startsWith('https://')) {
+        const ref: Parameters<typeof refValidator.addReference>[0] = {
+          url: src,
+          targetResource: src,
+          type,
+          location,
+        };
+        if (hasIntrinsicFallback) ref.hasIntrinsicFallback = true;
+        refValidator.addReference(ref);
+      } else {
+        const resolvedPath = this.resolveRelativePath(docDir, src, opfDir);
+        const hashIndex = resolvedPath.indexOf('#');
+        const targetResource = hashIndex >= 0 ? resolvedPath.slice(0, hashIndex) : resolvedPath;
+        const ref: Parameters<typeof refValidator.addReference>[0] = {
+          url: src,
+          targetResource,
+          type,
+          location,
+        };
+        if (hashIndex >= 0) ref.fragment = resolvedPath.slice(hashIndex + 1);
+        if (hasIntrinsicFallback) ref.hasIntrinsicFallback = true;
+        refValidator.addReference(ref);
+      }
+    };
+
+    // embed[@src]
+    for (const elem of root.find('.//html:embed[@src]', ns)) {
+      const src = this.getAttribute(elem as XmlElement, 'src');
+      if (src) addRef(src, ReferenceType.GENERIC, elem.line);
+    }
+
+    // input[@type='image'][@src]
+    for (const elem of root.find('.//html:input[@src]', ns)) {
+      const type = this.getAttribute(elem as XmlElement, 'type');
+      if (type?.toLowerCase() === 'image') {
+        const src = this.getAttribute(elem as XmlElement, 'src');
+        if (src) addRef(src, ReferenceType.IMAGE, elem.line);
+      }
+    }
+
+    // object[@data]
+    for (const elem of root.find('.//html:object[@data]', ns)) {
+      const data = this.getAttribute(elem as XmlElement, 'data');
+      if (!data) continue;
+      const objElem = elem as XmlElement;
+      // Object has intrinsic fallback if it has palpable child content
+      // (non-param, non-hidden child elements)
+      const allChildren = objElem.find('html:*', ns);
+      const hasFallbackContent = allChildren.some((child) => {
+        const c = child as XmlElement;
+        return c.name !== 'param' && this.getAttribute(c, 'hidden') === null;
+      });
+      addRef(data, ReferenceType.GENERIC, elem.line, hasFallbackContent || undefined);
     }
   }
 

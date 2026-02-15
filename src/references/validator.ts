@@ -3,7 +3,7 @@
  */
 
 import { MessageId, pushMessage } from '../messages/index.js';
-import { CORE_MEDIA_TYPES } from '../opf/types.js';
+import { isCoreMediaType } from '../opf/types.js';
 import type { EPUBVersion, ValidationContext } from '../types.js';
 import type { ResourceRegistry } from './registry.js';
 import type { Reference } from './types.js';
@@ -61,17 +61,7 @@ export class ReferenceValidator {
     // Trim leading/trailing whitespace (XML attribute values are whitespace-normalized)
     const url = reference.url.trim();
 
-    // Check for malformed URLs
-    if (isMalformedURL(url)) {
-      pushMessage(context.messages, {
-        id: MessageId.RSC_020,
-        message: `Malformed URL: ${url}`,
-        location: reference.location,
-      });
-      return;
-    }
-
-    // Validate data URLs
+    // Validate data URLs first (before malformed URL check, since base64 may contain whitespace)
     // Data URLs are allowed for images/audio/video/fonts with CMT or intrinsic fallback
     // but forbidden for hyperlinks (a href, area href), nav links, and cite references
     if (isDataURL(url)) {
@@ -88,10 +78,36 @@ export class ReferenceValidator {
             message: 'Data URLs are not allowed in this context',
             location: reference.location,
           });
+        } else {
+          // Check RSC-032 for data URLs with foreign MIME types
+          const fallbackCheckedTypes = [
+            ReferenceType.IMAGE,
+            ReferenceType.AUDIO,
+            ReferenceType.VIDEO,
+            ReferenceType.GENERIC,
+          ];
+          if (fallbackCheckedTypes.includes(reference.type) && !reference.hasIntrinsicFallback) {
+            const dataUrlMimeType = this.extractDataURLMimeType(url);
+            if (dataUrlMimeType && !isCoreMediaType(dataUrlMimeType)) {
+              pushMessage(context.messages, {
+                id: MessageId.RSC_032,
+                message: `Fallback must be provided for foreign resources, but found none for data URL of type "${dataUrlMimeType}"`,
+                location: reference.location,
+              });
+            }
+          }
         }
-        // Data URLs with allowed reference types (IMAGE, AUDIO, VIDEO, FONT, etc.)
-        // don't need further validation
       }
+      return;
+    }
+
+    // Check for malformed URLs (after data URL check)
+    if (isMalformedURL(url)) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_020,
+        message: `Malformed URL: ${url}`,
+        location: reference.location,
+      });
       return;
     }
 
@@ -219,10 +235,18 @@ export class ReferenceValidator {
     }
 
     // RSC-032: Foreign resources (non-CMT) must have a fallback
+    // Only IMAGE, AUDIO, VIDEO, and GENERIC types are checked;
+    // FONT, TRACK, STYLESHEET, LINK, etc. are exempt per spec
+    const fallbackCheckedTypes = [
+      ReferenceType.IMAGE,
+      ReferenceType.AUDIO,
+      ReferenceType.VIDEO,
+      ReferenceType.GENERIC,
+    ];
     if (
       resource &&
-      isPublicationResourceReference(reference.type) &&
-      !CORE_MEDIA_TYPES.has(resource.mimeType) &&
+      fallbackCheckedTypes.includes(reference.type) &&
+      !isCoreMediaType(resource.mimeType) &&
       !resource.hasCoreMediaTypeFallback &&
       !reference.hasIntrinsicFallback
     ) {
@@ -251,13 +275,21 @@ export class ReferenceValidator {
 
     // Check remote resource restrictions
     if (isPublicationResourceReference(reference.type)) {
-      const allowedRemoteTypes = new Set([
+      const allowedRemoteRefTypes = new Set([
         ReferenceType.AUDIO,
         ReferenceType.VIDEO,
         ReferenceType.FONT,
       ]);
 
-      if (!allowedRemoteTypes.has(reference.type)) {
+      const targetResource = reference.targetResource || url;
+      const resource = this.registry.getResource(targetResource);
+
+      // Allow if reference type is audio/video/font OR if the resource's MIME type
+      // indicates audio/video/font (matching Java's isRemoteResourceType check)
+      const isAllowedByRefType = allowedRemoteRefTypes.has(reference.type);
+      const isAllowedByMimeType = resource && this.isRemoteResourceType(resource.mimeType);
+
+      if (!isAllowedByRefType && !isAllowedByMimeType) {
         pushMessage(context.messages, {
           id: MessageId.RSC_006,
           message: 'Remote resources are only allowed for audio, video, and fonts',
@@ -266,8 +298,7 @@ export class ReferenceValidator {
         return;
       }
 
-      const targetResource = reference.targetResource || url;
-      if (!this.registry.hasResource(targetResource)) {
+      if (!resource) {
         pushMessage(context.messages, {
           id: MessageId.RSC_008,
           message: `Referenced resource "${targetResource}" is not declared in the OPF manifest`,
@@ -326,13 +357,16 @@ export class ReferenceValidator {
       }
     }
 
-    // Check if fragment target exists
-    if (!this.registry.hasID(resourcePath, fragment)) {
-      pushMessage(context.messages, {
-        id: MessageId.RSC_012,
-        message: `Fragment identifier not found: #${fragment}`,
-        location: reference.location,
-      });
+    // Check if fragment target exists (only for resource types we parse for IDs)
+    const parsedMimeTypes = ['application/xhtml+xml', 'image/svg+xml'];
+    if (resource && parsedMimeTypes.includes(resource.mimeType)) {
+      if (!this.registry.hasID(resourcePath, fragment)) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_012,
+          message: `Fragment identifier not found: #${fragment}`,
+          location: reference.location,
+        });
+      }
     }
   }
 
@@ -480,5 +514,21 @@ export class ReferenceValidator {
    */
   private isDeprecatedBlessedItemType(mimeType: string): boolean {
     return mimeType === 'text/x-oeb1-document' || mimeType === 'text/html';
+  }
+
+  private extractDataURLMimeType(url: string): string | undefined {
+    const match = /^data:([^;,]+)/.exec(url);
+    return match?.[1]?.trim().toLowerCase();
+  }
+
+  private isRemoteResourceType(mimeType: string): boolean {
+    return (
+      mimeType.startsWith('audio/') ||
+      mimeType.startsWith('video/') ||
+      mimeType.startsWith('font/') ||
+      mimeType === 'application/font-sfnt' ||
+      mimeType === 'application/font-woff' ||
+      mimeType === 'application/vnd.ms-opentype'
+    );
   }
 }
