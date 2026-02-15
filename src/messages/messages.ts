@@ -912,7 +912,7 @@ const MessageDefs = {
   NAV_001: {
     id: 'NAV-001',
     severity: 'error',
-    description: 'Nav file not supported for EPUB v2',
+    description: 'Navigation Document must have a nav element with epub:type="toc"',
   },
   NAV_002: { id: 'NAV-002', severity: 'suppressed', description: 'Missing toc nav element' },
   NAV_003: {

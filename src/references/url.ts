@@ -109,6 +109,21 @@ export function isRemoteURL(url: string): boolean {
   return isHTTP(url) || isHTTPS(url);
 }
 
+/**
+ * Check if a URL leaks outside the EPUB container using the dual-base resolution trick
+ */
+export function checkUrlLeaking(href: string): boolean {
+  const TEST_BASE_A = 'https://a.example.org/A/';
+  const TEST_BASE_B = 'https://b.example.org/B/';
+  try {
+    const urlA = new URL(href, TEST_BASE_A).toString();
+    const urlB = new URL(href, TEST_BASE_B).toString();
+    return !urlA.startsWith(TEST_BASE_A) || !urlB.startsWith(TEST_BASE_B);
+  } catch {
+    return false;
+  }
+}
+
 export function resolveManifestHref(opfDir: string, href: string): string {
   if (isRemoteURL(href)) return href;
   try {

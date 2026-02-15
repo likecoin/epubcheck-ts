@@ -127,9 +127,7 @@ describe('ReferenceValidator', () => {
   });
 
   describe('Local reference validation', () => {
-    it('should add RSC-026 error for absolute paths (not RSC-027 - TS implementation bug)', () => {
-      // Note: Java EPUBCheck uses RSC-026 for path-absolute URLs
-      // The TypeScript implementation incorrectly uses RSC-027 (which is for UTF-16 encoding in Java)
+    it('should add RSC-026 error for absolute paths', () => {
       validator.addReference({
         url: '/absolute/path.html',
         targetResource: '/absolute/path.html',
@@ -138,10 +136,10 @@ describe('ReferenceValidator', () => {
       });
 
       validator.validate(context);
-      expect(context.messages.some((m) => m.id === 'RSC-027')).toBe(true);
+      expect(context.messages.some((m) => m.id === 'RSC-026')).toBe(true);
     });
 
-    it('should add RSC-028 error for parent directory references', () => {
+    it('should add RSC-026 error for parent directory references', () => {
       validator.addReference({
         url: '../outside/file.html',
         targetResource: 'outside/file.html',
@@ -150,7 +148,7 @@ describe('ReferenceValidator', () => {
       });
 
       validator.validate(context);
-      expect(context.messages.some((m) => m.id === 'RSC-028')).toBe(true);
+      expect(context.messages.some((m) => m.id === 'RSC-026')).toBe(true);
     });
 
     it('should add RSC-007 error for non-existent manifest resource', () => {
@@ -405,6 +403,7 @@ describe('ReferenceValidator', () => {
         url: 'OEBPS/navigation.xhtml',
         mimeType: 'application/xhtml+xml',
         inSpine: false,
+        isNav: true,
         ids: new Set(),
       });
 
@@ -419,6 +418,7 @@ describe('ReferenceValidator', () => {
         url: 'OEBPS/toc.ncx',
         mimeType: 'application/x-dtbncx+xml',
         inSpine: false,
+        isNcx: true,
         ids: new Set(),
       });
 
@@ -433,6 +433,7 @@ describe('ReferenceValidator', () => {
         url: 'OEBPS/images/cover-image.jpg',
         mimeType: 'image/jpeg',
         inSpine: false,
+        isCoverImage: true,
         ids: new Set(),
       });
 

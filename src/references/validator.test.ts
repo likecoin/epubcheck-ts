@@ -91,7 +91,7 @@ describe('ReferenceValidator', () => {
         createReference('/absolute/path.xhtml', ReferenceType.HYPERLINK, 'OEBPS/nav.xhtml'),
       );
       validator.validate(context);
-      const rscErrors = context.messages.filter((m) => m.id === 'RSC-027');
+      const rscErrors = context.messages.filter((m) => m.id === 'RSC-026');
       expect(rscErrors).toHaveLength(1);
     });
 
@@ -100,7 +100,7 @@ describe('ReferenceValidator', () => {
         createReference('../parent.xhtml', ReferenceType.HYPERLINK, 'OEBPS/nav.xhtml'),
       );
       validator.validate(context);
-      const rscErrors = context.messages.filter((m) => m.id === 'RSC-028');
+      const rscErrors = context.messages.filter((m) => m.id === 'RSC-026');
       expect(rscErrors).toHaveLength(1);
     });
   });

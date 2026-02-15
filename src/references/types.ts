@@ -46,6 +46,9 @@ export function isPublicationResourceReference(type: ReferenceType): boolean {
     ReferenceType.VIDEO,
     ReferenceType.TRACK,
     ReferenceType.MEDIA_OVERLAY,
+    ReferenceType.SVG_SYMBOL,
+    ReferenceType.SVG_PAINT,
+    ReferenceType.SVG_CLIP_PATH,
   ].includes(type);
 }
 
@@ -93,6 +96,12 @@ export interface Resource {
   inSpine: boolean;
   /** Whether resource has core media type fallback */
   hasCoreMediaTypeFallback?: boolean;
+  /** Whether this is the navigation document */
+  isNav?: boolean;
+  /** Whether this is the cover image */
+  isCoverImage?: boolean;
+  /** Whether this is an NCX document */
+  isNcx?: boolean;
   /** IDs defined in this resource */
   ids: Set<string>;
 }

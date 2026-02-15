@@ -294,11 +294,15 @@ export class EpubCheck {
 
     for (const item of packageDoc.manifest) {
       const fullPath = resolveManifestHref(opfDir, item.href);
+      const properties = item.properties ?? [];
       registry.registerResource({
         url: fullPath,
         mimeType: item.mediaType,
         inSpine: spineIdrefs.has(item.id),
         hasCoreMediaTypeFallback: this.hasCMTFallback(item.id, manifestById),
+        isNav: properties.includes('nav'),
+        isCoverImage: properties.includes('cover-image'),
+        isNcx: item.mediaType === 'application/x-dtbncx+xml',
         ids: new Set(),
       });
     }

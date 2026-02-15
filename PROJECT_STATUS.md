@@ -114,13 +114,13 @@ test/fixtures/
 - **Inline CSS remote font detection** (OPF-014 for @font-face with remote URLs in `<style>` blocks)
 - **SVG remote font detection** (OPF-014 for font-face-uri with remote xlink:href)
 - **Basic accessibility** (ACC-009/011 active; ACC-004/005 suppressed in Java)
-- **Cross-references** (RSC-006/007/008/009/010/011/012/013/014/015/020/026/027/028/029/031)
+- **Cross-references** (RSC-006/007/008/009/010/011/012/013/014/015/020/026/029/031/032/033)
 - **Filename validation** (PKG-009/010/011/027)
 - **Duplicate filename detection** (OPF-060) - Unicode NFC normalization, case folding
 - **Non-UTF8 filename detection** (PKG-027)
-- **Cite attribute validation** (RSC-007 for blockquote/q/ins/del cite attributes)
+- **Cite attribute validation** (RSC-007 for blockquote/q/ins/del cite attributes, typed as CITE not HYPERLINK)
 - **Non-linear reachability** (OPF-096/096b)
-- **Unreferenced resources** (OPF-097)
+- **Unreferenced resources** (OPF-097) - Uses manifest property flags, not string matching
 - **Percent-encoded URLs** - Proper handling of URL-encoded paths
 - **ZIP UTF-8 filename decoding** - Re-decode Latin-1 filenames as UTF-8 (fflate workaround)
 - **XML ID whitespace normalization** - Trim leading/trailing spaces from id/idref attributes
@@ -130,9 +130,14 @@ test/fixtures/
 - **Foreign resource fallback** (RSC-032) - Foreign resources must have CMT fallback chain
 - **Exempt resources** - Fonts, tracks, stylesheets exempt from RSC-032; all video/* types are CMT
 - **CMT parameter stripping** - Media types with parameters (e.g., `audio/ogg;codecs=opus`) correctly matched
-- **Intrinsic source fallback** - `<source>` children with CMT types provide fallback for audio/video
-- **Embedded element references** - embed[@src], input[type=image][@src], object[@data] extracted
-- **Data URL validation** - Base64 whitespace handled; RSC-032 for foreign data URLs
+- **Intrinsic source fallback** - `<source>` children with CMT types provide fallback for audio/video; `<picture>` propagates to `<img>` child
+- **Embedded element references** - embed[@src], input[type=image][@src], object[@data], area[@href] extracted
+- **Data URL validation** - Base64 whitespace handled; RSC-032 for foreign data URLs; default MIME type text/plain
+- **OPF-044** - Spine fallback chain must resolve to content document
+- **RSC-033** - Relative URL query component detection
+- **OPF-015** - Declared-but-not-found checks for mathml/switch properties (in addition to scripted/svg)
+- **Nav reference types** - NAV_TOC_LINK/NAV_PAGELIST_LINK correctly distinguished from HYPERLINK
+- **BCP 47** - Full language tag validation (extensions, private-use, grandfathered tags)
 
 ### 🟡 Partially Implemented
 - **Schema validation** - RelaxNG for OPF/container works; XHTML/SVG RelaxNG disabled (libxml2-wasm doesn't support complex patterns)
@@ -241,9 +246,9 @@ Ordered by severity impact (number of active error/warning messages not yet emit
 ## Message IDs
 
 **Defined**: 300 message IDs
-**Actively used**: 112 (37%)
+**Actively used**: 114 (38%)
 
-Active by prefix: OPF (44), RSC (24), PKG (13), CSS (10), HTM (10), NAV (4), NCX (3), ACC (4), MED (2)
+Active by prefix: OPF (45), RSC (25), PKG (13), CSS (10), HTM (10), NAV (4), NCX (3), ACC (4), MED (2)
 Unused prefixes: SCP (0), CHK (0), INF (0)
 
 ### Recent Message ID Fixes (aligned with Java EPUBCheck)
@@ -292,6 +297,24 @@ Unused prefixes: SCP (0), CHK (0), INF (0)
 - SVG stylesheet reference extraction (xml-stylesheet PI, @import in style elements)
 - SVG font-face-uri reference extraction for remote font tracking
 - Remote resource RSC-006 validation for non-spine manifest items
+- `RSC-026` - Corrected from RSC-027/028 (which are UTF encoding IDs); container escape in all contexts
+- `RSC-031` - Now correctly scoped to publication resource references only (not hyperlinks)
+- `RSC-033` - Relative URL query component check (new)
+- `OPF-015` - Declared-but-not-found for mathml/switch properties (was missing)
+- `OPF-044` - Spine fallback chain content document resolution (new)
+- `RSC-011` - Now has EPUB 2 guard (EPUB 3 only)
+- `NAV-001` - Updated description to match Java EPUBCheck
+- Nav link reference types (NAV_TOC_LINK/NAV_PAGELIST_LINK) correctly distinguished
+- `checkNavRemoteLinks` now scoped per-nav element instead of document-wide
+- `isPublicationResourceReference` includes SVG_SYMBOL/SVG_PAINT/SVG_CLIP_PATH
+- `isRemoteResourceType` includes application/font-woff2
+- BCP 47 language tag validation expanded (extensions, private-use, grandfathered)
+- CSS @import references now use AST extraction instead of duplicate regex
+- Picture intrinsic fallback propagated to img child
+- Data URL default MIME type is text/plain per spec
+- Area element href extraction (was missing)
+- Multiple dcterms:modified detection
+- Resource flags (isNav, isCoverImage, isNcx) replace fragile string matching
 
 ---
 

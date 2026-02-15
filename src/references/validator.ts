@@ -9,6 +9,7 @@ import type { ResourceRegistry } from './registry.js';
 import type { Reference } from './types.js';
 import { ReferenceType, isPublicationResourceReference } from './types.js';
 import {
+  checkUrlLeaking,
   hasAbsolutePath,
   hasParentDirectoryReference,
   isDataURL,
@@ -126,6 +127,15 @@ export class ReferenceValidator {
     const fragment = reference.fragment ?? parseURL(url).fragment;
     const hasFragment = fragment !== undefined && fragment !== '';
 
+    // RSC-033: Relative URLs must not have a query component
+    if (!isRemoteURL(url) && url.includes('?')) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_033,
+        message: `Relative URL strings must not have a query component: "${url}"`,
+        location: reference.location,
+      });
+    }
+
     // Validate relative URLs
     if (!isRemoteURL(url)) {
       this.validateLocalReference(context, reference, resourcePath);
@@ -147,18 +157,16 @@ export class ReferenceValidator {
     reference: Reference,
     resourcePath: string,
   ): void {
-    // Check for absolute paths
+    // Check for absolute paths (RSC-026: URL leaks outside container)
     if (hasAbsolutePath(resourcePath)) {
       pushMessage(context.messages, {
-        id: MessageId.RSC_027,
+        id: MessageId.RSC_026,
         message: 'Absolute paths are not allowed in EPUB',
         location: reference.location,
       });
     }
 
-    // Check for parent directory references in original URL
-    // Note: Parent directory references are allowed for stylesheets, images, and other resources
-    // They are only forbidden for hyperlinks and navigation references
+    // Check for parent directory references that escape the container (RSC-026)
     const forbiddenParentDirTypes = [
       ReferenceType.HYPERLINK,
       ReferenceType.NAV_TOC_LINK,
@@ -169,8 +177,20 @@ export class ReferenceValidator {
       forbiddenParentDirTypes.includes(reference.type)
     ) {
       pushMessage(context.messages, {
-        id: MessageId.RSC_028,
+        id: MessageId.RSC_026,
         message: 'Parent directory references (..) are not allowed',
+        location: reference.location,
+      });
+    } else if (
+      !hasAbsolutePath(resourcePath) &&
+      !hasParentDirectoryReference(reference.url) &&
+      checkUrlLeaking(reference.url)
+    ) {
+      // RSC-026: Check if the URL leaks outside the container
+      // (only when not already caught by the more specific checks above)
+      pushMessage(context.messages, {
+        id: MessageId.RSC_026,
+        message: `URL "${reference.url}" leaks outside the container`,
         location: reference.location,
       });
     }
@@ -205,8 +225,12 @@ export class ReferenceValidator {
 
     const resource = this.registry.getResource(resourcePath);
 
-    // Check if hyperlinks point to spine items
-    if (reference.type === ReferenceType.HYPERLINK && !resource?.inSpine) {
+    // Check if hyperlinks point to spine items (EPUB 3 only)
+    const isHyperlinkLike =
+      reference.type === ReferenceType.HYPERLINK ||
+      reference.type === ReferenceType.NAV_TOC_LINK ||
+      reference.type === ReferenceType.NAV_PAGELIST_LINK;
+    if (this.version.startsWith('3') && isHyperlinkLike && !resource?.inSpine) {
       pushMessage(context.messages, {
         id: MessageId.RSC_011,
         message: 'Hyperlinks must reference spine items',
@@ -216,10 +240,7 @@ export class ReferenceValidator {
 
     // Check if publication resources point to content documents
     // RSC-010: Hyperlinks and overlay text links must point to blessed content document types
-    if (
-      reference.type === ReferenceType.HYPERLINK ||
-      reference.type === ReferenceType.OVERLAY_TEXT_LINK
-    ) {
+    if (isHyperlinkLike || reference.type === ReferenceType.OVERLAY_TEXT_LINK) {
       const targetMimeType = resource?.mimeType;
       if (
         targetMimeType &&
@@ -265,17 +286,16 @@ export class ReferenceValidator {
   private validateRemoteReference(context: ValidationContext, reference: Reference): void {
     const url = reference.url;
 
-    // Check if using HTTPS
-    if (isHTTP(url) && !isHTTPS(url)) {
-      pushMessage(context.messages, {
-        id: MessageId.RSC_031,
-        message: 'Remote resources must use HTTPS',
-        location: reference.location,
-      });
-    }
-
     // Check remote resource restrictions
     if (isPublicationResourceReference(reference.type)) {
+      // RSC-031: Remote publication resources should use HTTPS
+      if (isHTTP(url) && !isHTTPS(url)) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_031,
+          message: 'Remote resources must use HTTPS',
+          location: reference.location,
+        });
+      }
       const allowedRemoteRefTypes = new Set([
         ReferenceType.AUDIO,
         ReferenceType.VIDEO,
@@ -441,9 +461,9 @@ export class ReferenceValidator {
     for (const resource of this.registry.getAllResources()) {
       if (resource.inSpine) continue;
       if (referencedResources.has(resource.url)) continue;
-      if (resource.url.includes('nav')) continue;
-      if (resource.url.includes('toc.ncx') || resource.url.includes('.ncx')) continue;
-      if (resource.url.includes('cover-image')) continue;
+      if (resource.isNav) continue;
+      if (resource.isNcx) continue;
+      if (resource.isCoverImage) continue;
 
       pushMessage(context.messages, {
         id: MessageId.OPF_097,
@@ -519,7 +539,11 @@ export class ReferenceValidator {
 
     const hyperlinkTargets = new Set<string>();
     for (const ref of this.references) {
-      if (ref.type === ReferenceType.HYPERLINK) {
+      if (
+        ref.type === ReferenceType.HYPERLINK ||
+        ref.type === ReferenceType.NAV_TOC_LINK ||
+        ref.type === ReferenceType.NAV_PAGELIST_LINK
+      ) {
         hyperlinkTargets.add(ref.targetResource);
       }
     }
@@ -564,9 +588,9 @@ export class ReferenceValidator {
     return mimeType === 'text/x-oeb1-document' || mimeType === 'text/html';
   }
 
-  private extractDataURLMimeType(url: string): string | undefined {
+  private extractDataURLMimeType(url: string): string {
     const match = /^data:([^;,]+)/.exec(url);
-    return match?.[1]?.trim().toLowerCase();
+    return match?.[1]?.trim().toLowerCase() ?? 'text/plain';
   }
 
   private isRemoteResourceType(mimeType: string): boolean {
@@ -576,6 +600,7 @@ export class ReferenceValidator {
       mimeType.startsWith('font/') ||
       mimeType === 'application/font-sfnt' ||
       mimeType === 'application/font-woff' ||
+      mimeType === 'application/font-woff2' ||
       mimeType === 'application/vnd.ms-opentype'
     );
   }

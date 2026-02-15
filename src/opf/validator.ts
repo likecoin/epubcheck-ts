@@ -497,9 +497,17 @@ export class OPFValidator {
 
     // EPUB 3: Check for dcterms:modified meta
     if (this.packageDoc.version !== '2.0') {
-      const modifiedMeta = this.packageDoc.metaElements.find(
+      const modifiedMetas = this.packageDoc.metaElements.filter(
         (meta) => meta.property === 'dcterms:modified',
       );
+      const modifiedMeta = modifiedMetas[0];
+      if (modifiedMetas.length > 1) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: 'package dcterms:modified meta element must occur exactly once',
+          location: { path: opfPath },
+        });
+      }
       if (!modifiedMeta) {
         pushMessage(context.messages, {
           id: MessageId.RSC_005,
@@ -946,12 +954,20 @@ export class OPFValidator {
       seenIdrefs.add(itemref.idref);
 
       // Check that spine items have appropriate media types
-      if (!isSpineMediaType(item.mediaType) && !item.fallback) {
-        pushMessage(context.messages, {
-          id: MessageId.OPF_043,
-          message: `Spine item "${item.id}" has non-standard media type "${item.mediaType}" without fallback`,
-          location: { path: opfPath },
-        });
+      if (!isSpineMediaType(item.mediaType)) {
+        if (!item.fallback) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_043,
+            message: `Spine item "${item.id}" has non-standard media type "${item.mediaType}" without fallback`,
+            location: { path: opfPath },
+          });
+        } else if (!this.fallbackChainResolvesToContentDocument(item.id)) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_044,
+            message: `Spine item "${item.id}" has non-standard media type "${item.mediaType}" and its fallback chain does not resolve to a content document`,
+            location: { path: opfPath },
+          });
+        }
       }
 
       // EPUB 3: Validate itemref properties
@@ -1188,6 +1204,20 @@ export class OPFValidator {
       }
     }
   }
+
+  private fallbackChainResolvesToContentDocument(itemId: string): boolean {
+    const visited = new Set<string>();
+    let currentId: string | undefined = itemId;
+    while (currentId) {
+      if (visited.has(currentId)) return false;
+      visited.add(currentId);
+      const item = this.manifestById.get(currentId);
+      if (!item) return false;
+      if (isSpineMediaType(item.mediaType)) return true;
+      currentId = item.fallback;
+    }
+    return false;
+  }
 }
 
 /**
@@ -1206,11 +1236,44 @@ function isSpineMediaType(mediaType: string): boolean {
  * Validate a BCP 47 language tag (simplified check)
  */
 function isValidLanguageTag(tag: string): boolean {
-  // Basic pattern: 2-3 letter primary subtag, optional script/region/variant
-  // This is simplified; full BCP 47 is more complex
+  // BCP 47 language tag validation
+  // Supports: primary subtag, script, region, variants, extensions, and private-use
+  // Also supports grandfathered tags (simplified: allow single-letter singletons)
   const pattern =
-    /^[a-zA-Z]{2,3}(-[a-zA-Z]{4})?(-[a-zA-Z]{2}|-\d{3})?(-([a-zA-Z\d]{5,8}|\d[a-zA-Z\d]{3}))*$/;
-  return pattern.test(tag);
+    /^[a-zA-Z]{2,3}(-[a-zA-Z]{4})?(-[a-zA-Z]{2}|-\d{3})?(-([a-zA-Z\d]{5,8}|\d[a-zA-Z\d]{3}))*(-[a-wyzA-WYZ](-[a-zA-Z\d]{2,8})+)*(-x(-[a-zA-Z\d]{1,8})+)?$/;
+  if (pattern.test(tag)) return true;
+  // Private-use only tags (e.g., "x-custom")
+  if (/^x(-[a-zA-Z\d]{1,8})+$/.test(tag)) return true;
+  // Grandfathered irregular tags
+  const grandfathered = new Set([
+    'en-GB-oed',
+    'i-ami',
+    'i-bnn',
+    'i-default',
+    'i-enochian',
+    'i-hak',
+    'i-klingon',
+    'i-lux',
+    'i-mingo',
+    'i-navajo',
+    'i-pwn',
+    'i-tao',
+    'i-tay',
+    'i-tsu',
+    'sgn-BE-FR',
+    'sgn-BE-NL',
+    'sgn-CH-DE',
+    'art-lojban',
+    'cel-gaulish',
+    'no-bok',
+    'no-nyn',
+    'zh-guoyu',
+    'zh-hakka',
+    'zh-min',
+    'zh-min-nan',
+    'zh-xiang',
+  ]);
+  return grandfathered.has(tag);
 }
 
 /**

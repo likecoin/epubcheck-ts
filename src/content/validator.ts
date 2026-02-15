@@ -503,10 +503,27 @@ export class ContentValidator {
             location: { path },
           });
         }
+      } else if (ref.type === 'import') {
+        const location: { path: string; line?: number } = { path };
+        if (ref.line !== undefined) location.line = ref.line;
+        if (ref.url.startsWith('http://') || ref.url.startsWith('https://')) {
+          refValidator.addReference({
+            url: ref.url,
+            targetResource: ref.url,
+            type: ReferenceType.STYLESHEET,
+            location,
+          });
+        } else {
+          const resolvedPath = this.resolveRelativePath(cssDir, ref.url, opfDir);
+          refValidator.addReference({
+            url: ref.url,
+            targetResource: resolvedPath,
+            type: ReferenceType.STYLESHEET,
+            location,
+          });
+        }
       }
     }
-
-    this.extractCSSImports(path, cssContent, opfDir, refValidator);
   }
 
   private validateXHTMLDocument(
@@ -651,6 +668,13 @@ export class ContentValidator {
             location: { path },
           });
         }
+        if (!hasMathML && manifestItem?.properties?.includes('mathml')) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_015,
+            message: 'The property "mathml" should not be declared in the OPF file',
+            location: { path },
+          });
+        }
 
         const hasSVG = this.detectSVG(context, path, root);
         if (hasSVG && !manifestItem?.properties?.includes('svg')) {
@@ -674,6 +698,13 @@ export class ContentValidator {
             id: MessageId.OPF_014,
             message:
               'Content document contains epub:switch but manifest item is missing "switch" property',
+            location: { path },
+          });
+        }
+        if (!hasSwitch && manifestItem?.properties?.includes('switch')) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_015,
+            message: 'The property "switch" should not be declared in the OPF file',
             location: { path },
           });
         }
@@ -724,9 +755,9 @@ export class ContentValidator {
 
       // Extract hyperlinks and register with reference validator
       if (refValidator && opfDir !== undefined) {
-        this.extractAndRegisterHyperlinks(context, path, root, opfDir, refValidator);
+        this.extractAndRegisterHyperlinks(context, path, root, opfDir, refValidator, !!isNavItem);
         this.extractAndRegisterStylesheets(path, root, opfDir, refValidator);
-        this.extractAndRegisterImages(context, path, root, opfDir, refValidator);
+        this.extractAndRegisterImages(context, path, root, opfDir, refValidator, registry);
         this.extractAndRegisterMathMLAltimg(path, root, opfDir, refValidator);
         this.extractAndRegisterScripts(path, root, opfDir, refValidator);
         this.extractAndRegisterCiteAttributes(path, root, opfDir, refValidator);
@@ -831,7 +862,6 @@ export class ContentValidator {
 
     // Find the nav element with epub:type="toc"
     let tocNav: (typeof navElements)[0] | undefined;
-    let tocEpubTypeValue = '';
     let pageListCount = 0;
     let landmarksCount = 0;
 
@@ -839,7 +869,6 @@ export class ContentValidator {
       const types = getNavTypes(nav as XmlElement);
       if (types.includes('toc') && !tocNav) {
         tocNav = nav;
-        tocEpubTypeValue = types.join(' ');
       }
       if (types.includes('page-list')) pageListCount++;
       if (types.includes('landmarks')) landmarksCount++;
@@ -910,7 +939,7 @@ export class ContentValidator {
     // Check hidden attribute values on nav elements
     this.checkNavHiddenAttribute(context, path, root);
 
-    this.checkNavRemoteLinks(context, path, root, tocEpubTypeValue);
+    this.checkNavRemoteLinks(context, path, root);
 
     // Collect TOC nav link targets in order for reading order validation (NAV-011)
     this.collectTocLinks(context, path, tocNav as XmlElement);
@@ -1164,31 +1193,46 @@ export class ContentValidator {
     }
   }
 
-  private checkNavRemoteLinks(
-    context: ValidationContext,
-    path: string,
-    root: XmlElement,
-    epubTypeValue: string,
-  ): void {
-    const navTypes = epubTypeValue.split(/\s+/);
-    const isToc = navTypes.includes('toc');
-    const isLandmarks = navTypes.includes('landmarks');
-    const isPageList = navTypes.includes('page-list');
+  private checkNavRemoteLinks(context: ValidationContext, path: string, root: XmlElement): void {
+    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
+    const navElements = root.find('.//html:nav', HTML_NS);
 
-    if (!isToc && !isLandmarks && !isPageList) {
-      return;
-    }
+    for (const nav of navElements) {
+      const navElem = nav as XmlElement;
+      const epubTypeAttr =
+        'attrs' in navElem
+          ? (
+              navElem.attrs as {
+                name: string;
+                value: string;
+                prefix?: string;
+                namespaceUri?: string;
+              }[]
+            ).find(
+              (attr) =>
+                attr.name === 'type' &&
+                attr.prefix === 'epub' &&
+                attr.namespaceUri === 'http://www.idpf.org/2007/ops',
+            )
+          : undefined;
+      const types = epubTypeAttr ? epubTypeAttr.value.trim().split(/\s+/) : [];
+      const isToc = types.includes('toc');
+      const isLandmarks = types.includes('landmarks');
+      const isPageList = types.includes('page-list');
 
-    const links = root.find('.//html:a[@href]', { html: 'http://www.w3.org/1999/xhtml' });
-    for (const link of links) {
-      const href = this.getAttribute(link as XmlElement, 'href');
-      if (href && (href.startsWith('http://') || href.startsWith('https://'))) {
-        const navType = isToc ? 'toc' : isLandmarks ? 'landmarks' : 'page-list';
-        pushMessage(context.messages, {
-          id: MessageId.NAV_010,
-          message: `"${navType}" nav must not link to remote resources; found link to "${href}"`,
-          location: { path },
-        });
+      if (!isToc && !isLandmarks && !isPageList) continue;
+
+      const navType = isToc ? 'toc' : isLandmarks ? 'landmarks' : 'page-list';
+      const links = navElem.find('.//html:a[@href]', HTML_NS);
+      for (const link of links) {
+        const href = this.getAttribute(link as XmlElement, 'href');
+        if (href && (href.startsWith('http://') || href.startsWith('https://'))) {
+          pushMessage(context.messages, {
+            id: MessageId.NAV_010,
+            message: `"${navType}" nav must not link to remote resources; found link to "${href}"`,
+            location: { path },
+          });
+        }
       }
     }
   }
@@ -1741,8 +1785,45 @@ export class ContentValidator {
     root: XmlElement,
     opfDir: string,
     refValidator: ReferenceValidator,
+    isNavDocument = false,
   ): void {
     const docDir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
+
+    // Build a map from anchor line numbers to nav-specific reference types
+    // when processing a nav document, to distinguish toc/page-list links from regular hyperlinks
+    const navAnchorTypes = new Map<number, ReferenceType>();
+    if (isNavDocument) {
+      const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
+      const navElements = root.find('.//html:nav', HTML_NS);
+      for (const nav of navElements) {
+        const navElem = nav as XmlElement;
+        const epubTypeAttr =
+          'attrs' in navElem
+            ? (
+                navElem.attrs as {
+                  name: string;
+                  value: string;
+                  prefix?: string;
+                  namespaceUri?: string;
+                }[]
+              ).find(
+                (attr) =>
+                  attr.name === 'type' &&
+                  attr.prefix === 'epub' &&
+                  attr.namespaceUri === 'http://www.idpf.org/2007/ops',
+              )
+            : undefined;
+        const types = epubTypeAttr ? epubTypeAttr.value.trim().split(/\s+/) : [];
+        let refType = ReferenceType.HYPERLINK;
+        if (types.includes('toc')) refType = ReferenceType.NAV_TOC_LINK;
+        else if (types.includes('page-list')) refType = ReferenceType.NAV_PAGELIST_LINK;
+
+        const navAnchors = navElem.find('.//html:a[@href]', HTML_NS);
+        for (const a of navAnchors) {
+          navAnchorTypes.set(a.line, refType);
+        }
+      }
+    }
 
     const links = root.find('.//html:a[@href]', { html: 'http://www.w3.org/1999/xhtml' });
     for (const link of links) {
@@ -1759,6 +1840,9 @@ export class ContentValidator {
       }
 
       const line = link.line;
+      const refType = isNavDocument
+        ? (navAnchorTypes.get(line) ?? ReferenceType.HYPERLINK)
+        : ReferenceType.HYPERLINK;
 
       if (href.startsWith('http://') || href.startsWith('https://')) {
         continue;
@@ -1777,7 +1861,7 @@ export class ContentValidator {
           url: href,
           targetResource,
           fragment,
-          type: ReferenceType.HYPERLINK,
+          type: refType,
           location: { path, line },
         });
         continue;
@@ -1791,13 +1875,55 @@ export class ContentValidator {
       const ref: Parameters<typeof refValidator.addReference>[0] = {
         url: href,
         targetResource,
-        type: ReferenceType.HYPERLINK,
+        type: refType,
         location: { path, line },
       };
       if (fragmentPart) {
         ref.fragment = fragmentPart;
       }
       refValidator.addReference(ref);
+    }
+
+    // Extract <area href> elements (M1: Java extracts these as hyperlink references)
+    const areaLinks = root.find('.//html:area[@href]', { html: 'http://www.w3.org/1999/xhtml' });
+    for (const area of areaLinks) {
+      const href = this.getAttribute(area as XmlElement, 'href')?.trim();
+      if (!href) continue;
+
+      const line = area.line;
+
+      if (href.startsWith('http://') || href.startsWith('https://')) continue;
+      if (href.startsWith('mailto:') || href.startsWith('tel:')) continue;
+      if (href.includes('#epubcfi(')) continue;
+
+      if (href.startsWith('#')) {
+        refValidator.addReference({
+          url: href,
+          targetResource: path,
+          fragment: href.slice(1),
+          type: ReferenceType.HYPERLINK,
+          location: { path, line },
+        });
+        continue;
+      }
+
+      const resolvedAreaPath = this.resolveRelativePath(docDir, href, opfDir);
+      const areaHashIndex = resolvedAreaPath.indexOf('#');
+      const areaTarget =
+        areaHashIndex >= 0 ? resolvedAreaPath.slice(0, areaHashIndex) : resolvedAreaPath;
+      const areaFragment =
+        areaHashIndex >= 0 ? resolvedAreaPath.slice(areaHashIndex + 1) : undefined;
+
+      const areaRef: Parameters<typeof refValidator.addReference>[0] = {
+        url: href,
+        targetResource: areaTarget,
+        type: ReferenceType.HYPERLINK,
+        location: { path, line },
+      };
+      if (areaFragment) {
+        areaRef.fragment = areaFragment;
+      }
+      refValidator.addReference(areaRef);
     }
 
     const svgLinks = root.find('.//svg:a', {
@@ -1944,10 +2070,36 @@ export class ContentValidator {
     root: XmlElement,
     opfDir: string,
     refValidator: ReferenceValidator,
+    registry?: ResourceRegistry,
   ): void {
     const docDir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
+    const ns = { html: 'http://www.w3.org/1999/xhtml' };
 
-    const images = root.find('.//html:img[@src]', { html: 'http://www.w3.org/1999/xhtml' });
+    // Pre-compute which picture elements have CMT source siblings for intrinsic fallback
+    const pictureHasCMTSource = new Set<number>();
+    if (registry) {
+      const pictures = root.find('.//html:picture', ns);
+      for (const pic of pictures) {
+        const picElem = pic as XmlElement;
+        const sources = picElem.find('html:source[@src]', ns);
+        const sourcesWithSrcset = picElem.find('html:source[@srcset]', ns);
+        for (const source of [...sources, ...sourcesWithSrcset]) {
+          const srcAttr = this.getAttribute(source as XmlElement, 'src');
+          const srcsetAttr = this.getAttribute(source as XmlElement, 'srcset');
+          const sourceUrl = srcAttr ?? srcsetAttr?.split(',')[0]?.trim().split(/\s+/)[0];
+          if (!sourceUrl || sourceUrl.startsWith('http://') || sourceUrl.startsWith('https://'))
+            continue;
+          const resolvedSource = this.resolveRelativePath(docDir, sourceUrl, opfDir);
+          const resource = registry.getResource(resolvedSource);
+          if (resource && isCoreMediaType(resource.mimeType)) {
+            pictureHasCMTSource.add(pic.line);
+            break;
+          }
+        }
+      }
+    }
+
+    const images = root.find('.//html:img[@src]', ns);
     for (const img of images) {
       const imgElem = img as XmlElement;
       const src = this.getAttribute(imgElem, 'src');
@@ -1955,14 +2107,28 @@ export class ContentValidator {
 
       const line = img.line;
 
+      // Check if this img is inside a picture with CMT source (intrinsic fallback)
+      let hasIntrinsicFallback: boolean | undefined;
+      if (pictureHasCMTSource.size > 0) {
+        try {
+          const pictureParent = imgElem.get('ancestor::html:picture', ns);
+          if (pictureParent && pictureHasCMTSource.has(pictureParent.line)) {
+            hasIntrinsicFallback = true;
+          }
+        } catch {
+          // ancestor axis may not be supported; skip
+        }
+      }
+
       if (src.startsWith('http://') || src.startsWith('https://')) {
-        // Still register remote resources
-        refValidator.addReference({
+        const ref: Parameters<typeof refValidator.addReference>[0] = {
           url: src,
           targetResource: src,
           type: ReferenceType.IMAGE,
           location: { path, line },
-        });
+        };
+        if (hasIntrinsicFallback) ref.hasIntrinsicFallback = true;
+        refValidator.addReference(ref);
       } else {
         const resolvedPath = this.resolveRelativePath(docDir, src, opfDir);
         const hashIndex = resolvedPath.indexOf('#');
@@ -1974,6 +2140,7 @@ export class ContentValidator {
           type: ReferenceType.IMAGE,
           location: { path, line },
         };
+        if (hasIntrinsicFallback) ref.hasIntrinsicFallback = true;
         if (fragment) {
           ref.fragment = fragment;
         }
@@ -2047,13 +2214,13 @@ export class ContentValidator {
       for (const useNode of [...svgUseXlink, ...svgUseHref]) {
         const useElem = useNode as XmlElement;
         const href = this.getAttribute(useElem, 'xlink:href') ?? this.getAttribute(useElem, 'href');
-        if (!href) continue;
+        if (href === null) continue;
 
         const line = useNode.line;
 
         if (href.startsWith('http://') || href.startsWith('https://')) continue;
 
-        if (!href.includes('#')) {
+        if (href === '' || !href.includes('#')) {
           pushMessage(context.messages, {
             id: MessageId.RSC_015,
             message: `SVG "use" element requires a fragment identifier, but found "${href}"`,
@@ -2220,7 +2387,7 @@ export class ContentValidator {
           url: cite,
           targetResource,
           fragment,
-          type: ReferenceType.HYPERLINK,
+          type: ReferenceType.CITE,
           location: { path, line },
         });
         continue;
@@ -2234,7 +2401,7 @@ export class ContentValidator {
       const ref: Parameters<typeof refValidator.addReference>[0] = {
         url: cite,
         targetResource,
-        type: ReferenceType.HYPERLINK,
+        type: ReferenceType.CITE,
         location: { path, line },
       };
       if (fragment) {
