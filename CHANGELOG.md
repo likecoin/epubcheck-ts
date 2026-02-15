@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-02-15
+
+### Added
+
+- **RSC-032**: Foreign resource fallback validation — non-Core Media Type resources must have a manifest fallback chain
+- **PKG-026**: Font obfuscation validation — obfuscated resources in encryption.xml must be blessed font types
+- **PKG-012**: Non-ASCII filename detection (usage-level message)
+- **NAV-011**: TOC reading order validation against spine order (document and spine order)
+- **OPF-096/096b**: Non-linear spine item reachability checks (with script-aware variant)
+- **OPF-097**: Unreferenced manifest resource detection
+
+### Fixed
+
+- **ZIP UTF-8 filename decoding**: Re-decode Latin-1 filenames as UTF-8 when fflate misinterprets the encoding
+- **Unicode NFC normalization**: Consistent normalization for manifest hrefs and file path lookups (fixes diacritic filename mismatches)
+- **XML ID whitespace normalization**: Trim leading/trailing spaces from id/idref attributes per XML spec
+
+### Changed
+
+- Test coverage: 618 tests passing, 29 skipped (up from 607 passing, 40 skipped)
+- E2E coverage: 33% of Java EPUBCheck scenarios (up from 23%)
+- Message IDs: 109 actively used out of 300 defined
+
 ## [0.3.4] - 2026-02-13
 
 ### Added
