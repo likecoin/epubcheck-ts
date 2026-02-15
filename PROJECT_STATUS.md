@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~80% | 🟢 URL leaking, CSS references, link elements done |
 
-**Overall: ~75% complete (618 tests passing, 29 skipped)**
+**Overall: ~75% complete (672 tests passing, 71 skipped)**
 
 ---
 
@@ -27,8 +27,8 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 400 | 382 | 18 |
-| **Integration Tests** | 247 | 236 | 11 |
-| **Total** | **647** | **618** | **29** |
+| **Integration Tests** | 343 | 290 | 53 |
+| **Total** | **743** | **672** | **71** |
 
 ### Integration Test Files
 
@@ -37,9 +37,9 @@ test/integration/
 ├── epub.test.ts                 # 4 tests   (4 pass, 0 skip)  - Basic EPUB validation
 ├── ocf.integration.test.ts      # 47 tests  (42 pass, 5 skip) - OCF/ZIP/container
 ├── opf.integration.test.ts      # 119 tests (118 pass, 1 skip)  - Package document
-├── content.integration.test.ts  # 31 tests  (27 pass, 4 skip)  - XHTML/CSS/SVG
+├── content.integration.test.ts  # 55 tests  (39 pass, 16 skip)  - XHTML/CSS/SVG
 ├── nav.integration.test.ts      # 36 tests  (36 pass, 0 skip)  - Navigation
-└── resources.integration.test.ts # 10 tests  (9 pass, 1 skip)  - Remote resources
+└── resources.integration.test.ts # 82 tests  (51 pass, 31 skip)  - Resources/fallbacks
 ```
 
 **Note**: Integration tests imported from Java EPUBCheck test suite (`../epubcheck/src/test/resources/epub3/`).
@@ -48,16 +48,16 @@ test/integration/
 
 ```
 test/fixtures/
-├── valid/                 # 74 valid EPUBs
+├── valid/                 # 128 valid EPUBs
 ├── invalid/
 │   ├── ocf/              # 33 OCF error cases
 │   ├── opf/              # 85 OPF error cases
-│   ├── content/          # 21 content error cases
+│   ├── content/          # 57 content error cases
 │   └── nav/              # 18 navigation error cases
-└── warnings/             # 15 warning cases
+└── warnings/             # 23 warning cases
 ```
 
-**Total**: 246 EPUB test fixtures (imported from Java EPUBCheck)
+**Total**: 344 EPUB test fixtures (imported from Java EPUBCheck)
 
 ### Quality: ⭐⭐⭐⭐ (4/5) for implemented features
 
@@ -82,13 +82,11 @@ test/fixtures/
 - **libxml2-wasm XPath limitations (3)** - OPF-014 inline event handlers, CSS-005 conflicting stylesheets, OPF-088 unknown epub:type prefix
 - **Messages suppressed in Java EPUBCheck (15)** - NCX-002 (2), NCX-003 (2), NAV-002 (3+), ACC-004 (1), ACC-005 (1), HTM-012 (1), and parameterized variants
 
-**Integration tests (11)** - Unimplemented features and library limitations:
-- **OPF-060**: Duplicate ZIP entry detection (1 test) - fflate deduplicates entries when unzipping
-- **OPF-014 remote audio overlays** (1 test) - Remote audio in media overlays (needs SMIL support)
-- **MED-004**: Corrupt image detection (1 test) - No image format validation
-- **Base URL** (1 test) - xml:base/HTML base not implemented (RSC-006)
-- **XHTML schema** (3 tests) - RelaxNG/Schematron for XHTML content (libxml2 limitation)
-- **Encryption/Signatures schema** (4 tests) - encryption.xml/signatures.xml schema validation (RSC-005)
+**Integration tests (53)** - Unimplemented features and library limitations:
+- **Resources (31 skipped)**: Exempt resource classification (5), embed/input/object reference extraction (3), OPF-013 type mismatch (4), data URL whitespace (3), CMT media type parameters (2), remote font tracking (3), SVG stylesheet parsing (2), intrinsic source fallback (1), MED-003/004/007 (3), OPF-029 (1), PKG-022 (1), remote audio object (1), remote undeclared object (1)
+- **Content (16 skipped)**: CSS encoding detection CSS-003/CSS-004 (3), CSS syntax error ordering (1), CSS-019 false positive (1), RSC-013 stylesheet fragment (1), RSC-014 SVG symbol (1), RSC-015 SVG use (1), svgView fragment (1), exempt video in img (1), lang/xml:lang mismatch (1), base URL xml:base (1), XHTML schema (3)
+- **OCF (5 skipped)**: OPF-060 duplicate ZIP entry (1), encryption/signatures schema (4)
+- **OPF (1 skipped)**: OPF-014 remote audio overlays (1)
 
 ---
 
@@ -169,16 +167,16 @@ test/fixtures/
 | Java Category | Java Scenarios | TS Ported | TS Passing | Coverage |
 |---------------|----------------|-----------|------------|----------|
 | 00-minimal | 5 | 4 | 4 | 80% |
-| 03-resources | 113 | 10 | 9 | 8% |
+| 03-resources | 113 | 82 | 51 | 45% |
 | 04-ocf | 61 | 47 | 42 | 69% |
 | 05-package-document | 121 | 119 | 118 | 98% |
-| 06-content-document | 215 | 31 | 27 | 13% |
+| 06-content-document | 215 | 55 | 39 | 18% |
 | 07-navigation-document | 40 | 36 | 36 | 90% |
 | 08-layout | 51 | 0 | 0 | 0% |
 | 09-media-overlays | 51 | 0 | 0 | 0% |
 | D-vocabularies (ARIA) | 56 | 0 | 0 | 0% |
 | Other | 6 | 0 | 0 | 0% |
-| **Total** | **719** | **247** | **236** | **33%** |
+| **Total** | **719** | **343** | **290** | **40%** |
 
 ### E2E Porting Priorities
 
@@ -188,8 +186,8 @@ test/fixtures/
 3. **04-ocf** (61 scenarios) - 69% coverage (47 ported, 42 passing)
 
 **High Priority** - Largest remaining gaps:
-4. **06-content-document** (215 scenarios) - 13% coverage, needs ARIA/DOCTYPE/entity validation
-5. **03-resources** (113 scenarios) - 8% coverage, needs more cross-reference tests
+4. **06-content-document** (215 scenarios) - 18% coverage, needs ARIA/DOCTYPE/entity validation
+5. **03-resources** (113 scenarios) - 45% coverage, many ported but blocked on exempt resources/data URLs/OPF-013
 6. **D-vocabularies** (56 scenarios) - 0% coverage, ARIA roles/epub:type
 
 **Low Priority** - Specialized features:
@@ -204,8 +202,8 @@ All planned OPF (batches 1-5) and Nav (batches 6-8) tests have been ported. Rema
 
 | Area | Gap | Tests Blocked | Blocker |
 |------|-----|---------------|---------|
-| **06-content-document** | ARIA validation, DOCTYPE, entities | ~180 tests | Needs new validation subsystems |
-| **03-resources** | Advanced cross-reference scenarios | ~100 tests | Needs RSC-033 (query strings), more resource type tests |
+| **06-content-document** | ARIA validation, DOCTYPE, entities | ~160 tests | Needs new validation subsystems |
+| **03-resources** | Exempt resources, data URLs, OPF-013 | ~31 skipped | Needs exempt classification, data URL whitespace fix, type mismatch |
 | **D-vocabularies** | ARIA roles/epub:type vocabulary | ~56 tests | Needs ARIA validation |
 | **08-layout** | Rendition/viewport validation | ~51 tests | Not implemented |
 | **09-media-overlays** | SMIL validation | ~51 tests | Not implemented |

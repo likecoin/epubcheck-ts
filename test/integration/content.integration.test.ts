@@ -75,6 +75,91 @@ describe('Integration Tests - Content Documents', () => {
       // CSS-019 is a warning, not an error
       expectWarning(result, 'CSS-019');
     });
+
+    it('should report @font-face with empty URL reference (CSS-002)', async () => {
+      const data = await loadEpub('invalid/content/content-css-font-face-url-empty-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectError(result, 'CSS-002');
+    });
+
+    // Skip: CSS encoding detection (CSS-004) not implemented
+    it.skip('should report CSS encoded in latin1 (CSS-004)', async () => {
+      const data = await loadEpub('invalid/content/content-css-encoding-latin1-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectError(result, 'CSS-004');
+    });
+
+    // Skip: CSS UTF-16 encoding detection (CSS-003) not implemented
+    it.skip('should warn about CSS encoded in UTF-16 with @charset (CSS-003)', async () => {
+      const data = await loadEpub('warnings/content-css-encoding-utf16-declared-warning.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectWarning(result, 'CSS-003');
+    });
+
+    // Skip: CSS UTF-16 encoding detection (CSS-003) not implemented
+    it.skip('should warn about CSS encoded in UTF-16 without @charset (CSS-003)', async () => {
+      const data = await loadEpub('warnings/content-css-encoding-utf16-not-declared-warning.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectWarning(result, 'CSS-003');
+    });
+
+    it('should report undeclared CSS import (RSC-008)', async () => {
+      const data = await loadEpub('invalid/content/content-css-import-not-declared-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectError(result, 'RSC-008');
+    });
+
+    // Skip: CSS-008 not reported when syntax error precedes url error
+    it.skip('should report CSS url error even when preceded by syntax error', async () => {
+      const data = await loadEpub(
+        'invalid/content/content-css-url-not-present-preceded-by-invalid-syntax-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expectError(result, 'CSS-008');
+      expectError(result, 'RSC-007');
+    });
+
+    it('should validate CSS with valid selectors', async () => {
+      const data = await loadEpub('valid/content-css-selectors-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should allow namespace URIs in CSS without treating as remote resources', async () => {
+      const data = await loadEpub('valid/content-css-namespace-uri-not-resource-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should validate CSS with valid font-size declarations', async () => {
+      const data = await loadEpub('valid/content-css-font-size-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: False CSS-019 warning on position:absolute in this fixture
+    it.skip('should not check invalid CSS font-size values (out of scope)', async () => {
+      const data = await loadEpub('valid/content-css-font-size-value-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should allow fragment-only URL in CSS without false error', async () => {
+      const data = await loadEpub('valid/content-css-url-fragment-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
   });
 
   describe('XHTML validation', () => {
@@ -117,6 +202,29 @@ describe('Integration Tests - Content Documents', () => {
       const result = await EpubCheck.validate(data);
 
       expect(result.valid).toBe(true);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should allow SVG without viewbox for non-fixed layout', async () => {
+      const data = await loadEpub('valid/content-svg-no-viewbox-not-fxl-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: RSC-015 (SVG use without fragment) not implemented
+    it.skip('should report SVG use element without fragment (RSC-015)', async () => {
+      const data = await loadEpub('invalid/content/content-svg-use-href-no-fragment-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectError(result, 'RSC-015');
+    });
+
+    // Skip: svgView() fragment syntax not recognized — false RSC-012
+    it.skip('should allow svgView fragments for SVG documents', async () => {
+      const data = await loadEpub('valid/content-xhtml-svg-fragment-svgview-valid.epub');
+      const result = await EpubCheck.validate(data);
+
       expectNoErrorsOrWarnings(result);
     });
   });
@@ -173,6 +281,42 @@ describe('Integration Tests - Content Documents', () => {
       expect(result.valid).toBe(false);
       expectError(result, 'RSC-007');
     });
+
+    it('should allow escaped hyperlinks to local file system resources', async () => {
+      const data = await loadEpub('valid/content-xhtml-link-to-local-file-escaped-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should report hyperlink to missing identifier in nav doc (RSC-012)', async () => {
+      const data = await loadEpub(
+        'invalid/content/content-xhtml-link-to-missing-id-in-nav-doc-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expectError(result, 'RSC-012');
+    });
+
+    // Skip: RSC-013 (fragment in stylesheet URL) not implemented
+    it.skip('should report fragment identifier in stylesheet URL (RSC-013)', async () => {
+      const data = await loadEpub(
+        'invalid/content/content-xhtml-link-stylesheet-fragment-id-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expectError(result, 'RSC-013');
+    });
+
+    // Skip: RSC-014 (incompatible resource type) not implemented
+    it.skip('should report hyperlink to SVG symbol as incompatible (RSC-014)', async () => {
+      const data = await loadEpub(
+        'invalid/content/content-xhtml-link-to-svg-fragment-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expectError(result, 'RSC-014');
+    });
   });
 
   describe('Iframe validation', () => {
@@ -208,6 +352,14 @@ describe('Integration Tests - Content Documents', () => {
       expect(result.valid).toBe(false);
       expectError(result, 'RSC-008');
     });
+
+    // Skip: Exempt resource classification (video in img) not implemented — false RSC-032
+    it.skip('should allow img element with video resource', async () => {
+      const data = await loadEpub('valid/content-xhtml-img-video-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
   });
 
   describe('Base URL validation', () => {
@@ -227,6 +379,16 @@ describe('Integration Tests - Content Documents', () => {
       const result = await EpubCheck.validate(data);
 
       expect(result.valid).toBe(false);
+      expectError(result, 'RSC-006');
+    });
+
+    // Skip: xml:base URL handling not implemented
+    it.skip('should report relative paths as remote when xml:base is external URL (RSC-006)', async () => {
+      const data = await loadEpub(
+        'invalid/content/content-xhtml-xml-base-url-remote-relative-path-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
       expectError(result, 'RSC-006');
     });
   });
@@ -287,6 +449,45 @@ describe('Integration Tests - Content Documents', () => {
 
       expect(result.valid).toBe(false);
       expectError(result, 'RSC-007');
+    });
+  });
+
+  describe('Meta viewport', () => {
+    it('should not check viewport meta for non-fixed layout documents', async () => {
+      const data = await loadEpub('valid/content-xhtml-meta-viewport-non-fxl-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
+  });
+
+  describe('Lang attribute', () => {
+    // Skip: Schematron-based lang/xml:lang mismatch check not implemented
+    it.skip('should report lang and xml:lang mismatch (RSC-005)', async () => {
+      const data = await loadEpub(
+        'invalid/content/content-xhtml-lang-xml-lang-mismatch-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expectError(result, 'RSC-005');
+    });
+  });
+
+  describe('Objects', () => {
+    it('should allow fragment identifiers on PDFs', async () => {
+      const data = await loadEpub('valid/object-pdf-fragment-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
+  });
+
+  describe('Source elements', () => {
+    it('should not confuse dc:source with HTML source element', async () => {
+      const data = await loadEpub('valid/dc-source-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
     });
   });
 });
