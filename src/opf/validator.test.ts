@@ -613,6 +613,154 @@ describe('OPFValidator', () => {
     });
   });
 
+  describe('BCP 47 language tag validation', () => {
+    const makeOpfWithLang = (lang: string) => `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:identifier id="uid">test-id</dc:identifier>
+    <dc:title>Test</dc:title>
+    <dc:language>${lang}</dc:language>
+    <meta property="dcterms:modified">2024-01-01T00:00:00Z</meta>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+  </manifest>
+  <spine>
+    <itemref idref="nav"/>
+  </spine>
+</package>`;
+
+    it('should accept language tags with extensions (en-US-u-ca-gregory)', () => {
+      const context = createContext(makeOpfWithLang('en-US-u-ca-gregory'));
+      validator.validate(context);
+      const errors = context.messages.filter((m) => m.id === 'OPF-092');
+      expect(errors).toHaveLength(0);
+    });
+
+    it('should accept language tags with private-use subtags (en-x-custom)', () => {
+      const context = createContext(makeOpfWithLang('en-x-custom'));
+      validator.validate(context);
+      const errors = context.messages.filter((m) => m.id === 'OPF-092');
+      expect(errors).toHaveLength(0);
+    });
+
+    it('should accept private-use only tags (x-custom)', () => {
+      const context = createContext(makeOpfWithLang('x-custom'));
+      validator.validate(context);
+      const errors = context.messages.filter((m) => m.id === 'OPF-092');
+      expect(errors).toHaveLength(0);
+    });
+
+    it('should accept grandfathered tags (i-klingon)', () => {
+      const context = createContext(makeOpfWithLang('i-klingon'));
+      validator.validate(context);
+      const errors = context.messages.filter((m) => m.id === 'OPF-092');
+      expect(errors).toHaveLength(0);
+    });
+
+    it('should accept standard tags (en, en-US, zh-Hans-CN)', () => {
+      for (const lang of ['en', 'en-US', 'zh-Hans-CN']) {
+        const context = createContext(makeOpfWithLang(lang));
+        validator.validate(context);
+        const errors = context.messages.filter((m) => m.id === 'OPF-092');
+        expect(errors).toHaveLength(0);
+      }
+    });
+
+    it('should reject invalid language tags', () => {
+      const context = createContext(makeOpfWithLang('123'));
+      validator.validate(context);
+      const errors = context.messages.filter((m) => m.id === 'OPF-092');
+      expect(errors).toHaveLength(1);
+    });
+  });
+
+  describe('multiple dcterms:modified (M8)', () => {
+    it('should report RSC-005 for multiple dcterms:modified meta elements', () => {
+      const opf = `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:identifier id="uid">test-id</dc:identifier>
+    <dc:title>Test</dc:title>
+    <dc:language>en</dc:language>
+    <meta property="dcterms:modified">2024-01-01T00:00:00Z</meta>
+    <meta property="dcterms:modified">2024-06-15T00:00:00Z</meta>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+  </manifest>
+  <spine>
+    <itemref idref="nav"/>
+  </spine>
+</package>`;
+      const context = createContext(opf);
+      validator.validate(context);
+      const errors = context.messages.filter(
+        (m) => m.id === 'RSC-005' && m.message.includes('exactly once'),
+      );
+      expect(errors).toHaveLength(1);
+    });
+  });
+
+  describe('OPF-044 fallback chain content document', () => {
+    it('should report OPF-044 when fallback chain does not resolve to content document', () => {
+      const opf = `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:identifier id="uid">test-id</dc:identifier>
+    <dc:title>Test</dc:title>
+    <dc:language>en</dc:language>
+    <meta property="dcterms:modified">2024-01-01T00:00:00Z</meta>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+    <item id="pdf1" href="doc.pdf" media-type="application/pdf" fallback="img1"/>
+    <item id="img1" href="cover.jpg" media-type="image/jpeg"/>
+  </manifest>
+  <spine>
+    <itemref idref="nav"/>
+    <itemref idref="pdf1"/>
+  </spine>
+</package>`;
+      const context = createContext(opf, {
+        'OEBPS/doc.pdf': 'PDF',
+        'OEBPS/cover.jpg': 'JPG',
+      });
+      validator.validate(context);
+      const errors = context.messages.filter((m) => m.id === 'OPF-044');
+      expect(errors).toHaveLength(1);
+      expect(errors[0]?.message).toContain('pdf1');
+    });
+
+    it('should not report OPF-044 when fallback chain resolves to XHTML', () => {
+      const opf = `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:identifier id="uid">test-id</dc:identifier>
+    <dc:title>Test</dc:title>
+    <dc:language>en</dc:language>
+    <meta property="dcterms:modified">2024-01-01T00:00:00Z</meta>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+    <item id="pdf1" href="doc.pdf" media-type="application/pdf" fallback="fb1"/>
+    <item id="fb1" href="fallback.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine>
+    <itemref idref="nav"/>
+    <itemref idref="pdf1"/>
+  </spine>
+</package>`;
+      const context = createContext(opf, {
+        'OEBPS/doc.pdf': 'PDF',
+        'OEBPS/fallback.xhtml': '<html/>',
+      });
+      validator.validate(context);
+      const errors = context.messages.filter((m) => m.id === 'OPF-044');
+      expect(errors).toHaveLength(0);
+    });
+  });
+
   describe('valid OPF', () => {
     it('should pass validation for a valid OPF', () => {
       const context = createContext(validOPF);

@@ -229,6 +229,206 @@ describe('ReferenceValidator', () => {
     });
   });
 
+  describe('RSC-033 query component', () => {
+    it('should report RSC-033 for relative URLs with query component', () => {
+      registry.registerResource(createResource('chapter1.xhtml', true));
+      validator.addReference(
+        createReference('chapter1.xhtml?foo=bar', ReferenceType.HYPERLINK, 'OEBPS/nav.xhtml'),
+      );
+      validator.validate(context);
+      const errors = context.messages.filter((m) => m.id === 'RSC-033');
+      expect(errors).toHaveLength(1);
+      expect(errors[0]?.message).toContain('query component');
+    });
+
+    it('should not report RSC-033 for remote URLs with query component', () => {
+      validator.addReference(
+        createReference('https://example.com/page?q=1', ReferenceType.HYPERLINK, 'OEBPS/nav.xhtml'),
+      );
+      validator.validate(context);
+      const errors = context.messages.filter((m) => m.id === 'RSC-033');
+      expect(errors).toHaveLength(0);
+    });
+  });
+
+  describe('CITE reference type', () => {
+    it('should not report RSC-011 for CITE references to non-spine items', () => {
+      registry.registerResource(createResource('appendix.xhtml', false));
+      validator.addReference(
+        createReference('appendix.xhtml', ReferenceType.CITE, 'OEBPS/chapter1.xhtml'),
+      );
+      validator.validate(context);
+      const errors = context.messages.filter((m) => m.id === 'RSC-011');
+      expect(errors).toHaveLength(0);
+    });
+
+    it('should not report RSC-010 for CITE references to non-content documents', () => {
+      registry.registerResource({
+        url: 'data.json',
+        mimeType: 'application/json',
+        inSpine: false,
+        ids: new Set(),
+      });
+      validator.addReference(
+        createReference('data.json', ReferenceType.CITE, 'OEBPS/chapter1.xhtml'),
+      );
+      validator.validate(context);
+      const errors = context.messages.filter((m) => m.id === 'RSC-010');
+      expect(errors).toHaveLength(0);
+    });
+  });
+
+  describe('NAV_TOC_LINK and NAV_PAGELIST_LINK types', () => {
+    it('should report RSC-011 for NAV_TOC_LINK to non-spine item', () => {
+      registry.registerResource(createResource('style.css', false));
+      validator.addReference(
+        createReference('style.css', ReferenceType.NAV_TOC_LINK, 'OEBPS/nav.xhtml'),
+      );
+      validator.validate(context);
+      const errors = context.messages.filter((m) => m.id === 'RSC-011');
+      expect(errors).toHaveLength(1);
+    });
+
+    it('should report RSC-011 for NAV_PAGELIST_LINK to non-spine item', () => {
+      registry.registerResource(createResource('style.css', false));
+      validator.addReference(
+        createReference('style.css', ReferenceType.NAV_PAGELIST_LINK, 'OEBPS/nav.xhtml'),
+      );
+      validator.validate(context);
+      const errors = context.messages.filter((m) => m.id === 'RSC-011');
+      expect(errors).toHaveLength(1);
+    });
+
+    it('should not report RSC-011 for NAV_TOC_LINK to spine item', () => {
+      registry.registerResource(createResource('chapter1.xhtml', true));
+      validator.addReference(
+        createReference('chapter1.xhtml', ReferenceType.NAV_TOC_LINK, 'OEBPS/nav.xhtml'),
+      );
+      validator.validate(context);
+      const errors = context.messages.filter((m) => m.id === 'RSC-011');
+      expect(errors).toHaveLength(0);
+    });
+  });
+
+  describe('RSC-011 EPUB 2 guard', () => {
+    it('should not report RSC-011 for hyperlinks in EPUB 2', () => {
+      const epub2Validator = new ReferenceValidator(registry, '2.0');
+      registry.registerResource(createResource('style.css', false));
+      epub2Validator.addReference(
+        createReference('style.css', ReferenceType.HYPERLINK, 'OEBPS/nav.xhtml'),
+      );
+      epub2Validator.validate(context);
+      const errors = context.messages.filter((m) => m.id === 'RSC-011');
+      expect(errors).toHaveLength(0);
+    });
+  });
+
+  describe('RSC-031 only for publication resource references', () => {
+    it('should not report RSC-031 for HTTP hyperlinks', () => {
+      validator.addReference(
+        createReference('http://example.com/page', ReferenceType.HYPERLINK, 'OEBPS/chapter1.xhtml'),
+      );
+      validator.validate(context);
+      const errors = context.messages.filter((m) => m.id === 'RSC-031');
+      expect(errors).toHaveLength(0);
+    });
+
+    it('should report RSC-031 for HTTP image references', () => {
+      validator.addReference(
+        createReference(
+          'http://example.com/image.png',
+          ReferenceType.IMAGE,
+          'OEBPS/chapter1.xhtml',
+        ),
+      );
+      validator.validate(context);
+      const errors = context.messages.filter((m) => m.id === 'RSC-031');
+      expect(errors).toHaveLength(1);
+    });
+  });
+
+  describe('data URL default MIME type', () => {
+    it('should default to text/plain for data URLs without MIME type', () => {
+      validator.addReference(
+        createReference('data:,Hello', ReferenceType.IMAGE, 'OEBPS/chapter1.xhtml'),
+      );
+      validator.validate(context);
+      // text/plain is not a core media type for images, so RSC-032 should fire
+      const errors = context.messages.filter((m) => m.id === 'RSC-032');
+      expect(errors).toHaveLength(1);
+      expect(errors[0]?.message).toContain('text/plain');
+    });
+  });
+
+  describe('isRemoteResourceType WOFF2', () => {
+    it('should allow remote WOFF2 font resources by MIME type', () => {
+      registry.registerResource({
+        url: 'https://example.com/font.woff2',
+        mimeType: 'application/font-woff2',
+        inSpine: false,
+        ids: new Set(),
+      });
+      validator.addReference({
+        url: 'https://example.com/font.woff2',
+        targetResource: 'https://example.com/font.woff2',
+        type: ReferenceType.STYLESHEET,
+        location: { path: 'OEBPS/chapter1.xhtml', line: 1, column: 1 },
+      });
+      validator.validate(context);
+      const errors = context.messages.filter((m) => m.id === 'RSC-006');
+      expect(errors).toHaveLength(0);
+    });
+  });
+
+  describe('container escape detection (checkUrlLeaking)', () => {
+    it('should report RSC-026 for URLs that leak outside container', () => {
+      // A URL like "//evil.com/hack" resolves to a different host
+      validator.addReference(
+        createReference('//evil.com/hack', ReferenceType.HYPERLINK, 'OEBPS/chapter1.xhtml'),
+      );
+      validator.validate(context);
+      const errors = context.messages.filter((m) => m.id === 'RSC-026');
+      expect(errors).toHaveLength(1);
+    });
+
+    it('should not double-report RSC-026 for absolute paths', () => {
+      validator.addReference(
+        createReference('/absolute/path', ReferenceType.HYPERLINK, 'OEBPS/chapter1.xhtml'),
+      );
+      validator.validate(context);
+      const errors = context.messages.filter((m) => m.id === 'RSC-026');
+      expect(errors).toHaveLength(1);
+    });
+  });
+
+  describe('non-linear reachability with nav types', () => {
+    it('should count NAV_TOC_LINK as valid reachability for non-linear items', () => {
+      const chapterResource = createResource('OEBPS/chapter1.xhtml', true);
+      registry.registerResource(chapterResource);
+      validator.addReference({
+        url: 'chapter1.xhtml',
+        targetResource: 'OEBPS/chapter1.xhtml',
+        type: ReferenceType.NAV_TOC_LINK,
+        location: { path: 'OEBPS/nav.xhtml', line: 1, column: 1 },
+      });
+      context.packageDocument = {
+        version: '3.0',
+        uniqueIdentifier: 'uid',
+        manifest: [{ id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' }],
+        spine: [{ idref: 'ch1', linear: false }],
+        dcElements: [],
+        metaElements: [],
+        linkElements: [],
+        guide: [],
+        collections: [],
+      };
+      context.opfPath = 'OEBPS/content.opf';
+      validator.validate(context);
+      const errors = context.messages.filter((m) => m.id === 'OPF-096' || m.id === 'OPF-096b');
+      expect(errors).toHaveLength(0);
+    });
+  });
+
   describe('unused resources', () => {
     it('should report unreferenced resources', () => {
       // Register a resource that is NOT in spine (inSpine: false)
