@@ -377,6 +377,10 @@ function parseSpine(
         linear: attrs.linear !== 'no',
       };
 
+      if (attrs.id) {
+        itemref.id = attrs.id.trim();
+      }
+
       if (attrs.properties) {
         itemref.properties = attrs.properties.split(/\s+/);
       }

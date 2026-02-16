@@ -444,6 +444,9 @@ export class OPFValidator {
       for (const item of this.packageDoc.manifest) {
         allIdSources.push({ id: item.id, normalized: item.id.trim() });
       }
+      for (const itemref of this.packageDoc.spine) {
+        if (itemref.id) allIdSources.push({ id: itemref.id, normalized: itemref.id.trim() });
+      }
       for (const src of allIdSources) {
         if (seenGlobalIds.has(src.normalized)) {
           pushMessage(context.messages, {

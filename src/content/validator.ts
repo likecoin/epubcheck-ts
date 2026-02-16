@@ -114,6 +114,8 @@ const HTML_ENTITIES = new Set([
 ]);
 
 export class ContentValidator {
+  private cssWithRemoteResources = new Set<string>();
+
   validate(
     context: ValidationContext,
     registry?: ResourceRegistry,
@@ -127,13 +129,20 @@ export class ContentValidator {
     const opfPath = context.opfPath ?? '';
     const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/')) : '';
 
+    // Process CSS files first so cssWithRemoteResources is populated before XHTML checks
+    if (refValidator) {
+      for (const item of packageDoc.manifest) {
+        if (item.mediaType === 'text/css') {
+          const fullPath = resolveManifestHref(opfDir, item.href);
+          this.validateCSSDocument(context, fullPath, opfDir, refValidator);
+        }
+      }
+    }
+
     for (const item of packageDoc.manifest) {
       if (item.mediaType === 'application/xhtml+xml') {
         const fullPath = resolveManifestHref(opfDir, item.href);
         this.validateXHTMLDocument(context, fullPath, item.id, opfDir, registry, refValidator);
-      } else if (item.mediaType === 'text/css' && refValidator) {
-        const fullPath = resolveManifestHref(opfDir, item.href);
-        this.validateCSSDocument(context, fullPath, opfDir, refValidator);
       } else if (item.mediaType === 'image/svg+xml') {
         const fullPath = resolveManifestHref(opfDir, item.href);
         if (registry) {
@@ -291,10 +300,10 @@ export class ContentValidator {
           const useElem = useNode as XmlElement;
           const href =
             this.getAttribute(useElem, 'xlink:href') ?? this.getAttribute(useElem, 'href');
-          if (!href) continue;
+          if (href === null) continue;
           if (href.startsWith('http://') || href.startsWith('https://')) continue;
 
-          if (!href.includes('#')) {
+          if (href === '' || !href.includes('#')) {
             pushMessage(context.messages, {
               id: MessageId.RSC_015,
               message: `SVG "use" element requires a fragment identifier, but found "${href}"`,
@@ -435,14 +444,16 @@ export class ContentValidator {
     const cssValidator = new CSSValidator();
     const result = cssValidator.validate(context, cssContent, path);
 
-    // Check if CSS has remote resources and report OPF-014 if needed
+    // Track CSS files with remote resources for XHTML manifest item checks
     const hasRemoteResources = result.references.some(
       (ref) => ref.url.startsWith('http://') || ref.url.startsWith('https://'),
     );
     if (hasRemoteResources) {
+      this.cssWithRemoteResources.add(path);
+
+      // Check the CSS manifest item itself for remote-resources property
       const packageDoc = context.packageDocument;
       if (packageDoc) {
-        // Find manifest item by checking if path ends with the href
         const manifestItem = packageDoc.manifest.find(
           (item) => path.endsWith(`/${item.href}`) || path === item.href,
         );
@@ -709,7 +720,7 @@ export class ContentValidator {
           });
         }
 
-        const hasRemoteResources = this.detectRemoteResources(context, path, root);
+        const hasRemoteResources = this.detectRemoteResources(context, path, root, opfDir);
         if (hasRemoteResources && !manifestItem?.properties?.includes('remote-resources')) {
           pushMessage(context.messages, {
             id: MessageId.OPF_014,
@@ -1368,8 +1379,9 @@ export class ContentValidator {
    */
   private detectRemoteResources(
     _context: ValidationContext,
-    _path: string,
+    path: string,
     root: XmlElement,
+    opfDir?: string,
   ): boolean {
     const images = root.find('.//html:img[@src]', { html: 'http://www.w3.org/1999/xhtml' });
     for (const img of images) {
@@ -1422,11 +1434,17 @@ export class ContentValidator {
     const linkElements = root.find('.//html:link[@rel and @href]', {
       html: 'http://www.w3.org/1999/xhtml',
     });
+    const docDir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
     for (const linkElem of linkElements) {
       const rel = this.getAttribute(linkElem as XmlElement, 'rel');
       const href = this.getAttribute(linkElem as XmlElement, 'href');
       if (href && rel?.toLowerCase().includes('stylesheet')) {
         if (href.startsWith('http://') || href.startsWith('https://')) {
+          return true;
+        }
+        // Check if locally-linked CSS file contains remote resources
+        const resolvedCss = this.resolveRelativePath(docDir, href, opfDir ?? '');
+        if (this.cssWithRemoteResources.has(resolvedCss)) {
           return true;
         }
       }

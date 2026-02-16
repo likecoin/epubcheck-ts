@@ -22,6 +22,8 @@ export interface ManifestItem {
  * Represents a spine itemref in the OPF
  */
 export interface SpineItemRef {
+  /** Optional ID attribute on the itemref element */
+  id?: string;
   /** Reference to manifest item ID */
   idref: string;
   /** Whether this item is part of the linear reading order */

@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~90% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs done |
 
-**Overall: ~80% complete (727 tests passing, 40 skipped)**
+**Overall: ~80% complete (708 tests passing, 38 skipped)**
 
 ---
 
@@ -26,9 +26,9 @@ Quick reference for implementation progress vs Java EPUBCheck.
 
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
-| **Unit Tests** | 424 | 406 | 18 |
+| **Unit Tests** | 403 | 387 | 16 |
 | **Integration Tests** | 343 | 321 | 22 |
-| **Total** | **767** | **727** | **40** |
+| **Total** | **746** | **708** | **38** |
 
 ### Integration Test Files
 
@@ -78,9 +78,9 @@ test/fixtures/
 
 ### Skipped Tests
 
-**Unit tests (18)** - Various reasons:
+**Unit tests (16)** - Various reasons:
 - **libxml2-wasm XPath limitations (3)** - OPF-014 inline event handlers, CSS-005 conflicting stylesheets, OPF-088 unknown epub:type prefix
-- **Messages suppressed in Java EPUBCheck (15)** - NCX-002 (2), NCX-003 (2), NAV-002 (3+), ACC-004 (1), ACC-005 (1), HTM-012 (1), and parameterized variants
+- **Messages suppressed in Java EPUBCheck (13)** - NCX-002 (2), NCX-003 (2), NAV-002 (1), ACC-004 (1), ACC-005 (1), HTM-012 (1), and parameterized variants
 
 **Integration tests (22)** - Unimplemented features and library limitations:
 - **Resources (3 skipped)**: OPF-029 (1), PKG-022 (1), corrupt image (1)
@@ -315,6 +315,10 @@ Unused prefixes: SCP (0), CHK (0), INF (0)
 - Area element href extraction (was missing)
 - Multiple dcterms:modified detection
 - Resource flags (isNav, isCoverImage, isNcx) replace fragile string matching
+- `RSC-015` - SVG `<use>` empty href now fires RSC-015 instead of silently skipping
+- Spine itemref IDs included in OPF duplicate ID check
+- CSS remote-resources check now also verifies referencing XHTML document manifest items
+- Removed dead `NavValidator` class (nav validation fully handled by `ContentValidator`)
 
 ---
 
