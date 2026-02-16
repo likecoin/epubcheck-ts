@@ -334,9 +334,9 @@ describe('ContentValidator', () => {
       context.version = '2.0';
       validator.validate(context);
 
-      const htmErrors = context.messages.filter((m) => m.id === 'HTM-004');
-      expect(htmErrors.length).toBeGreaterThan(0);
-      expect(htmErrors[0]?.message).toContain('unknownentity');
+      const fatalErrors = context.messages.filter((m) => m.id === 'RSC-016');
+      expect(fatalErrors.length).toBeGreaterThan(0);
+      expect(fatalErrors[0]?.message).toContain('unknownentity');
     });
   });
 
@@ -398,9 +398,9 @@ describe('ContentValidator', () => {
       context = createContext(files, packageDoc);
       validator.validate(context);
 
-      const htmErrors = context.messages.filter((m) => m.id === 'HTM-003');
-      expect(htmErrors).toHaveLength(1);
-      expect(htmErrors[0]?.message).toContain('title');
+      const warnings = context.messages.filter((m) => m.id === 'RSC-017');
+      expect(warnings).toHaveLength(1);
+      expect(warnings[0]?.message).toContain('title');
     });
 
     it('should require body element', () => {

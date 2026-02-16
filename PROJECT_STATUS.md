@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~90% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs done |
 
-**Overall: ~80% complete (708 tests passing, 38 skipped)**
+**Overall: ~82% complete (792 tests passing, 104 skipped)**
 
 ---
 
@@ -27,8 +27,8 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 403 | 387 | 16 |
-| **Integration Tests** | 343 | 321 | 22 |
-| **Total** | **746** | **708** | **38** |
+| **Integration Tests** | 493 | 405 | 88 |
+| **Total** | **896** | **792** | **104** |
 
 ### Integration Test Files
 
@@ -37,7 +37,7 @@ test/integration/
 ├── epub.test.ts                 # 4 tests   (4 pass, 0 skip)  - Basic EPUB validation
 ├── ocf.integration.test.ts      # 47 tests  (42 pass, 5 skip) - OCF/ZIP/container
 ├── opf.integration.test.ts      # 119 tests (118 pass, 1 skip)  - Package document
-├── content.integration.test.ts  # 55 tests  (42 pass, 13 skip)  - XHTML/CSS/SVG
+├── content.integration.test.ts  # 205 tests (118 pass, 87 skip)  - XHTML/CSS/SVG
 ├── nav.integration.test.ts      # 36 tests  (36 pass, 0 skip)  - Navigation
 └── resources.integration.test.ts # 82 tests  (79 pass, 3 skip)  - Resources/fallbacks
 ```
@@ -48,16 +48,16 @@ test/integration/
 
 ```
 test/fixtures/
-├── valid/                 # 128 valid EPUBs
+├── valid/                 # 219 valid EPUBs
 ├── invalid/
 │   ├── ocf/              # 33 OCF error cases
 │   ├── opf/              # 85 OPF error cases
-│   ├── content/          # 57 content error cases
+│   ├── content/          # 121 content error cases
 │   └── nav/              # 18 navigation error cases
-└── warnings/             # 23 warning cases
+└── warnings/             # 27 warning cases
 ```
 
-**Total**: 344 EPUB test fixtures (imported from Java EPUBCheck)
+**Total**: 503 EPUB test fixtures (imported from Java EPUBCheck)
 
 ### Quality: ⭐⭐⭐⭐ (4/5) for implemented features
 
@@ -71,7 +71,7 @@ test/fixtures/
 - ❌ **ARIA validation** - No role/attribute checks (Java has dozens)
 - ❌ **ID/IDREF validation** - OPF duplicate IDs done; XHTML duplicate IDs not yet
 - ❌ **DOCTYPE validation** - No obsolete identifier checks
-- ❌ **Entity validation** - No external entity checks
+- 🟡 **Entity validation** - RSC-016 for undefined/malformed entities; no external entity checks
 - ❌ **Base URL** - No xml:base or HTML base support
 - ❌ **Advanced accessibility** - Only 30% of Java coverage
 - ❌ **Media overlays** - Not implemented
@@ -82,9 +82,18 @@ test/fixtures/
 - **libxml2-wasm XPath limitations (3)** - OPF-014 inline event handlers, CSS-005 conflicting stylesheets, OPF-088 unknown epub:type prefix
 - **Messages suppressed in Java EPUBCheck (13)** - NCX-002 (2), NCX-003 (2), NAV-002 (1), ACC-004 (1), ACC-005 (1), HTM-012 (1), and parameterized variants
 
-**Integration tests (22)** - Unimplemented features and library limitations:
+**Integration tests (88)** - Unimplemented features and library limitations:
+- **Content (79 skipped)**:
+  - *RelaxNG/Schematron content schema (~35)*: Duplicate IDs, obsolete attributes, MathML validation, HTTP-equiv, table border, time elements, image map, img src, foreignObject/SVG title HTML validation, data-* attributes, microdata, style-in-body, Schematron — requires XHTML/SVG schema (libxml2-wasm limitation)
+  - *epub:type/switch/trigger (~12)*: epub:type vocabulary validation, epub:switch structure, epub:trigger references
+  - *CSS encoding/syntax (5)*: CSS-003/CSS-004 encoding detection, CSS syntax error ordering, CSS-019 false positive
+  - *CSS-008 inline style (2)*: style element without type, style attribute syntax
+  - *URL/base handling (5)*: Non-conforming URL RSC-020, unparseable host, unregistered scheme HTM-025, base/xml:base external URL RSC-006
+  - *ARIA (2)*: DPUB-ARIA deprecated roles RSC-017, aria-describedAt RSC-005
+  - *Encoding/DOCTYPE/entities (3)*: External entities HTM-003, encoding detection HTM-058, obsolete DOCTYPE HTM-004
+  - *Custom attributes (2)*: Reserved namespace HTM-054, invalid data-* HTM-061
+  - *Other (13)*: lang/xml:lang mismatch, exempt video in img, svgView fragment, empty font-face SVG, SVG epub:type, SVG unknown epub:* attribute, MED-004
 - **Resources (3 skipped)**: OPF-029 (1), PKG-022 (1), corrupt image (1)
-- **Content (13 skipped)**: CSS encoding detection CSS-003/CSS-004 (3), CSS syntax error ordering (1), CSS-019 false positive (1), svgView fragment (1), exempt video in img (1), lang/xml:lang mismatch (1), base URL xml:base (1), XHTML schema (3), MED-004 media format (1)
 - **OCF (5 skipped)**: OPF-060 duplicate ZIP entry (1), encryption/signatures schema (4)
 - **OPF (1 skipped)**: OPF-014 remote audio overlays (1)
 
@@ -141,7 +150,7 @@ test/fixtures/
 
 ### 🟡 Partially Implemented
 - **Schema validation** - RelaxNG for OPF/container works; XHTML/SVG RelaxNG disabled (libxml2-wasm doesn't support complex patterns)
-- **Content validation** - Core structure good, missing ARIA/DOCTYPE/entities; Schematron validation works
+- **Content validation** - Core structure good; entity/title/XML version/SSML/discouraged element checks done; missing ARIA/DOCTYPE/external entities; Schematron validation works
 - **Image validation** - MED-001/OPF-051 work, no format/size checks
 
 ### ❌ Not Implemented
@@ -180,13 +189,13 @@ test/fixtures/
 | 03-resources | 113 | 82 | 79 | 70% |
 | 04-ocf | 61 | 47 | 42 | 69% |
 | 05-package-document | 121 | 119 | 118 | 98% |
-| 06-content-document | 215 | 55 | 42 | 20% |
+| 06-content-document | 215 | 205 | 118 | 55% |
 | 07-navigation-document | 40 | 36 | 36 | 90% |
 | 08-layout | 51 | 0 | 0 | 0% |
 | 09-media-overlays | 51 | 0 | 0 | 0% |
 | D-vocabularies (ARIA) | 56 | 0 | 0 | 0% |
 | Other | 6 | 0 | 0 | 0% |
-| **Total** | **719** | **343** | **321** | **45%** |
+| **Total** | **719** | **493** | **405** | **56%** |
 
 ### E2E Porting Priorities
 
@@ -319,6 +328,13 @@ Unused prefixes: SCP (0), CHK (0), INF (0)
 - Spine itemref IDs included in OPF duplicate ID check
 - CSS remote-resources check now also verifies referencing XHTML document manifest items
 - Removed dead `NavValidator` class (nav validation fully handled by `ContentValidator`)
+- `RSC-016` - Entity parse errors (undefined entity, missing semicolon) now correctly fatal
+- `HTM-001` - XML 1.1 version declaration detection (pre-parse check)
+- `HTM-007` - SSML empty/whitespace-only ph attribute warning
+- `HTM-055` - Discouraged elements: added `rp` (was missing alongside `base`/`embed`)
+- `RSC-005` - Empty title element detection
+- `RSC-017` - Missing title element (was incorrectly using HTM-003)
+- Absolute URI detection (generic `scheme:` pattern) for hyperlink/area extraction — fixes false RSC-007 on `irc://`, `ftp://`, etc.
 
 ---
 

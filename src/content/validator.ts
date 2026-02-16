@@ -12,7 +12,9 @@ import { resolveManifestHref } from '../references/url.js';
 import type { ReferenceValidator } from '../references/validator.js';
 import type { ValidationContext } from '../types.js';
 
-const DISCOURAGED_ELEMENTS = new Set(['base', 'embed']);
+const DISCOURAGED_ELEMENTS = new Set(['base', 'embed', 'rp']);
+
+const ABSOLUTE_URI_RE = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
 
 const HTML_ENTITIES = new Set([
   'nbsp',
@@ -559,6 +561,17 @@ export class ContentValidator {
     // Check for unescaped ampersands before parsing
     this.checkUnescapedAmpersands(context, path, content);
 
+    // Check for XML 1.1 before parsing (libxml2 may reject it)
+    const xmlVersionMatch = content.match(/<\?xml\s[^?]*version\s*=\s*["']([^"']+)["']/);
+    if (xmlVersionMatch && xmlVersionMatch[1] !== '1.0') {
+      pushMessage(context.messages, {
+        id: MessageId.HTM_001,
+        message: `XML version "${xmlVersionMatch[1]}" is not allowed; must be "1.0"`,
+        location: { path },
+      });
+      return;
+    }
+
     // Try to parse with libxml2-wasm to check for well-formedness
     let doc: XmlDocument | null = null;
     try {
@@ -584,8 +597,11 @@ export class ContentValidator {
           if (column !== undefined) {
             location.column = column;
           }
+          // Entity-related errors are fatal (RSC-016) per Java EPUBCheck behavior
+          const isEntityError =
+            /Entity '/.test(error.message) || /EntityRef:/.test(error.message);
           pushMessage(context.messages, {
-            id: MessageId.HTM_004,
+            id: isEntityError ? MessageId.RSC_016 : MessageId.HTM_004,
             message,
             location,
           });
@@ -626,10 +642,19 @@ export class ContentValidator {
       const title = root.get('.//html:title', { html: 'http://www.w3.org/1999/xhtml' });
       if (!title) {
         pushMessage(context.messages, {
-          id: MessageId.HTM_003,
-          message: 'XHTML document must have a title element',
+          id: MessageId.RSC_017,
+          message: 'The "head" element should have a "title" child element',
           location: { path },
         });
+      } else {
+        const titleText = (title as XmlElement).content?.trim() ?? '';
+        if (titleText === '') {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: 'The "title" element must not be empty',
+            location: { path, line: title.line },
+          });
+        }
       }
 
       // Check for body element
@@ -741,6 +766,9 @@ export class ContentValidator {
 
       // Check for discouraged elements
       this.checkDiscouragedElements(context, path, root);
+
+      // Check SSML ph attributes
+      this.checkSSMLPh(context, path, root, content);
 
       // Check accessibility
       this.checkAccessibility(context, path, root);
@@ -1483,6 +1511,27 @@ export class ContentValidator {
     }
   }
 
+  private checkSSMLPh(
+    context: ValidationContext,
+    path: string,
+    root: XmlElement,
+    content: string,
+  ): void {
+    // Use regex since XPath namespace handling for attributes varies across parsers
+    const ssmlPhPattern = /\bssml:ph\s*=\s*"([^"]*)"/g;
+    let match;
+    while ((match = ssmlPhPattern.exec(content)) !== null) {
+      if (match[1].trim() === '') {
+        const line = content.substring(0, match.index).split('\n').length;
+        pushMessage(context.messages, {
+          id: MessageId.HTM_007,
+          message: 'The ssml:ph attribute value should not be empty',
+          location: { path, line },
+        });
+      }
+    }
+  }
+
   private checkAccessibility(context: ValidationContext, path: string, root: XmlElement): void {
     const links = root.find('.//html:a', { html: 'http://www.w3.org/1999/xhtml' });
     for (const link of links) {
@@ -1862,10 +1911,7 @@ export class ContentValidator {
         ? (navAnchorTypes.get(line) ?? ReferenceType.HYPERLINK)
         : ReferenceType.HYPERLINK;
 
-      if (href.startsWith('http://') || href.startsWith('https://')) {
-        continue;
-      }
-      if (href.startsWith('mailto:') || href.startsWith('tel:')) {
+      if (ABSOLUTE_URI_RE.test(href)) {
         continue;
       }
       // Skip EPUB CFI references (e.g., "package.opf#epubcfi(/6/2!/4/2/1:1)")
@@ -1910,8 +1956,7 @@ export class ContentValidator {
 
       const line = area.line;
 
-      if (href.startsWith('http://') || href.startsWith('https://')) continue;
-      if (href.startsWith('mailto:') || href.startsWith('tel:')) continue;
+      if (ABSOLUTE_URI_RE.test(href)) continue;
       if (href.includes('#epubcfi(')) continue;
 
       if (href.startsWith('#')) {
