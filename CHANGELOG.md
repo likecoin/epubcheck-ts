@@ -6,6 +6,51 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-02-16
+
+### Added
+
+- **98 new E2E test fixtures** ported from Java EPUBCheck (03-resources and 06-content)
+- **24 new unit tests** for validation behaviors (RSC-033, CITE type, nav link types, BCP 47, OPF-044, checkUrlLeaking, etc.)
+- **OPF-013**: MIME type mismatch detection for object/embed/audio source/picture source elements
+- **MED-003**: Picture `<img>` must reference blessed image type (src and srcset)
+- **MED-007**: Picture `<source>` with foreign resource must have type attribute
+- **RSC-015**: SVG `<use>` element must have fragment identifier (XHTML and standalone SVG)
+- **RSC-014**: Hyperlinks to SVG symbols are incompatible (inline and standalone SVG)
+- **RSC-033**: Relative URL query component detection
+- **OPF-044**: Spine fallback chain must resolve to content document
+- **OPF-015**: Declared-but-not-found checks for mathml/switch properties
+- SVG stylesheet reference extraction (xml-stylesheet PI, `@import` in style elements)
+- SVG `<font-face-uri>` reference extraction for remote font tracking
+- `<area href>` element extraction (was missing)
+- Picture intrinsic fallback propagation to `<img>` child
+
+### Fixed
+
+- **RSC-026**: Corrected from RSC-027/028 (which are UTF encoding IDs); container escape detection in all contexts via dual-base URL resolution
+- **RSC-031**: Now correctly scoped to publication resource references only (not hyperlinks)
+- **RSC-011**: Now has EPUB 2 guard (EPUB 3 only, matching Java)
+- **NAV-001**: Updated description to match Java EPUBCheck
+- **BCP 47**: Language tag validation expanded to support extensions, private-use subtags, and grandfathered tags
+- **Nav link types**: NAV_TOC_LINK/NAV_PAGELIST_LINK correctly distinguished from HYPERLINK
+- **checkNavRemoteLinks**: Now scoped per-nav element instead of document-wide
+- **isPublicationResourceReference**: Now includes SVG_SYMBOL/SVG_PAINT/SVG_CLIP_PATH
+- **isRemoteResourceType**: Now includes `application/font-woff2`
+- **Data URL default MIME**: Defaults to `text/plain` per spec
+- **Multiple dcterms:modified**: Now detected and reported
+- **Unreferenced resources**: Uses manifest property flags (isNav, isCoverImage, isNcx) instead of fragile string matching
+- CSS `@import` references now use AST extraction instead of duplicate regex
+- Exempt resources (fonts, tracks, stylesheets) from RSC-032 fallback check
+- CMT parameter stripping for media types (e.g., `audio/ogg;codecs=opus`)
+- Intrinsic source fallback for audio/video `<source>` children with CMT types
+
+### Changed
+
+- Test coverage: 727 tests passing, 40 skipped (up from 703 passing, 40 skipped)
+- E2E coverage: 45% of Java EPUBCheck scenarios (up from 33%)
+- Message IDs: 114 actively used out of 300 defined (up from 109)
+- Overall feature parity: ~80% (up from ~79%)
+
 ## [0.3.5] - 2026-02-15
 
 ### Added
@@ -404,7 +449,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - No media overlays validation
 - No script detection/validation
 
-[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.4...HEAD
+[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.6...HEAD
+[0.3.6]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.5...v0.3.6
+[0.3.5]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.1...v0.3.2

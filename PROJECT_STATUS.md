@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~90% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs done |
 
-**Overall: ~79% complete (703 tests passing, 40 skipped)**
+**Overall: ~80% complete (727 tests passing, 40 skipped)**
 
 ---
 
@@ -26,9 +26,9 @@ Quick reference for implementation progress vs Java EPUBCheck.
 
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
-| **Unit Tests** | 400 | 382 | 18 |
+| **Unit Tests** | 424 | 406 | 18 |
 | **Integration Tests** | 343 | 321 | 22 |
-| **Total** | **743** | **703** | **40** |
+| **Total** | **767** | **727** | **40** |
 
 ### Integration Test Files
 
