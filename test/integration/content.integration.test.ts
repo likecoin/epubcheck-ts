@@ -380,8 +380,7 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: HTM-054 (reserved custom attribute namespace) not implemented
-    it.skip('should report custom attributes using reserved namespace strings (HTM-054)', async () => {
+    it('should report custom attributes using reserved namespace strings (HTM-054)', async () => {
       const data = await loadEpub('invalid/content/attrs-custom-ns-reserved-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -439,8 +438,7 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: HTM-061 (invalid data-* attributes) not implemented
-    it.skip('should report invalid data-* attributes (HTM-061)', async () => {
+    it('should report invalid data-* attributes (HTM-061)', async () => {
       const data = await loadEpub('invalid/content/data-attr-invalid-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -847,36 +845,35 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: RelaxNG content schema validation not wired — all MathML error tests need schema
-    it.skip('should report content MathML annotation without name (RSC-005)', async () => {
+    it('should report content MathML annotation without name (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/mathml-anno-noname-error.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
     });
 
-    it.skip('should report MathML annotation with invalid name (RSC-005)', async () => {
+    it('should report MathML annotation with invalid name (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/mathml-anno-name-error.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
     });
 
-    it.skip('should report MathML annotation with invalid encoding (RSC-005)', async () => {
+    it('should report MathML annotation with invalid encoding (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/mathml-anno-encoding-error.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
     });
 
-    it.skip('should report MathML annotation with reversed XHTML encoding (RSC-005)', async () => {
+    it('should report MathML annotation with reversed XHTML encoding (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/mathml-anno-xhtml-encoding-error.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
     });
 
-    it.skip('should report MathML with only content MathML (RSC-005)', async () => {
+    it('should report MathML with only content MathML (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/mathml-contentmathml-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -1205,8 +1202,7 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: RelaxNG content schema validation not wired
-    it.skip('should report table with invalid border value (RSC-005)', async () => {
+    it('should report table with invalid border value (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/table-border-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -1222,15 +1218,14 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: RelaxNG content schema validation not wired
-    it.skip('should report invalid datetime formats (RSC-005)', async () => {
+    it('should report invalid datetime formats (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/time-error.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
     });
 
-    it.skip('should report nested time elements (RSC-005)', async () => {
+    it('should report nested time elements (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/time-nested-error.epub');
       const result = await EpubCheck.validate(data);
 

@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~90% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs done |
 
-**Overall: ~83% complete (806 tests passing, 90 skipped)**
+**Overall: ~83% complete (816 tests passing, 80 skipped)**
 
 ---
 
@@ -27,8 +27,8 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 403 | 387 | 16 |
-| **Integration Tests** | 493 | 419 | 74 |
-| **Total** | **896** | **806** | **90** |
+| **Integration Tests** | 493 | 429 | 64 |
+| **Total** | **896** | **816** | **80** |
 
 ### Integration Test Files
 
@@ -37,7 +37,7 @@ test/integration/
 ├── epub.test.ts                 # 4 tests   (4 pass, 0 skip)  - Basic EPUB validation
 ├── ocf.integration.test.ts      # 47 tests  (42 pass, 5 skip) - OCF/ZIP/container
 ├── opf.integration.test.ts      # 119 tests (118 pass, 1 skip)  - Package document
-├── content.integration.test.ts  # 205 tests (140 pass, 65 skip)  - XHTML/CSS/SVG
+├── content.integration.test.ts  # 205 tests (150 pass, 55 skip)  - XHTML/CSS/SVG
 ├── nav.integration.test.ts      # 36 tests  (36 pass, 0 skip)  - Navigation
 └── resources.integration.test.ts # 82 tests  (79 pass, 3 skip)  - Resources/fallbacks
 ```
@@ -82,16 +82,15 @@ test/fixtures/
 - **libxml2-wasm XPath limitations (3)** - OPF-014 inline event handlers, CSS-005 conflicting stylesheets, OPF-088 unknown epub:type prefix
 - **Messages suppressed in Java EPUBCheck (13)** - NCX-002 (2), NCX-003 (2), NAV-002 (1), ACC-004 (1), ACC-005 (1), HTM-012 (1), and parameterized variants
 
-**Integration tests (74)** - Unimplemented features and library limitations:
-- **Content (65 skipped)**:
-  - *RelaxNG/Schematron content schema (~21)*: MathML validation, table border, time elements, image map, foreignObject/SVG title HTML validation, data-* attributes, microdata, Schematron, IDREF resolution — requires XHTML/SVG schema (libxml2-wasm limitation)
+**Integration tests (64)** - Unimplemented features and library limitations:
+- **Content (55 skipped)**:
+  - *RelaxNG/Schematron content schema (~11)*: image map, foreignObject/SVG title HTML validation, microdata, Schematron, IDREF resolution — requires XHTML/SVG schema (libxml2-wasm limitation)
   - *epub:type/switch/trigger (~12)*: epub:type vocabulary validation, epub:switch structure, epub:trigger references
   - *CSS encoding/syntax (5)*: CSS-003/CSS-004 encoding detection, CSS syntax error ordering, CSS-019 false positive
   - *CSS-008 inline style (2)*: style element without type, style attribute syntax
   - *URL/base handling (5)*: Non-conforming URL RSC-020, unparseable host, unregistered scheme HTM-025, base/xml:base external URL RSC-006
   - *ARIA (2)*: DPUB-ARIA deprecated roles RSC-017, aria-describedAt RSC-005
   - *Encoding/DOCTYPE/entities (3)*: External entities HTM-003, encoding detection HTM-058, obsolete DOCTYPE HTM-004
-  - *Custom attributes (2)*: Reserved namespace HTM-054, invalid data-* HTM-061
   - *Other (13)*: lang/xml:lang mismatch, exempt video in img, svgView fragment, empty font-face SVG, SVG epub:type, SVG unknown epub:* attribute, MED-004
 - **Resources (3 skipped)**: OPF-029 (1), PKG-022 (1), corrupt image (1)
 - **OCF (5 skipped)**: OPF-060 duplicate ZIP entry (1), encryption/signatures schema (4)
@@ -150,7 +149,7 @@ test/fixtures/
 
 ### 🟡 Partially Implemented
 - **Schema validation** - RelaxNG for OPF/container works; XHTML/SVG RelaxNG disabled (libxml2-wasm doesn't support complex patterns)
-- **Content validation** - Core structure good; entity/title/XML version/SSML/discouraged elements/obsolete HTML/duplicate IDs/HTTP-equiv/img src/style-in-body checks done; missing ARIA/DOCTYPE/external entities; Schematron validation works
+- **Content validation** - Core structure good; entity/title/XML version/SSML/discouraged elements/obsolete HTML/duplicate IDs/HTTP-equiv/img src/style-in-body/table border/time datetime/MathML annotations/Content MathML/reserved namespaces/data-* attributes checks done; missing ARIA/DOCTYPE/external entities; Schematron validation works
 - **Image validation** - MED-001/OPF-051 work, no format/size checks
 
 ### ❌ Not Implemented
@@ -189,7 +188,7 @@ test/fixtures/
 | 03-resources | 113 | 82 | 79 | 70% |
 | 04-ocf | 61 | 47 | 42 | 69% |
 | 05-package-document | 121 | 119 | 118 | 98% |
-| 06-content-document | 215 | 205 | 140 | 65% |
+| 06-content-document | 215 | 205 | 150 | 70% |
 | 07-navigation-document | 40 | 36 | 36 | 90% |
 | 08-layout | 51 | 0 | 0 | 0% |
 | 09-media-overlays | 51 | 0 | 0 | 0% |
@@ -205,7 +204,7 @@ test/fixtures/
 3. **04-ocf** (61 scenarios) - 69% coverage (47 ported, 42 passing)
 
 **High Priority** - Largest remaining gaps:
-4. **06-content-document** (215 scenarios) - 18% coverage, needs ARIA/DOCTYPE/entity validation
+4. **06-content-document** (215 scenarios) - 70% coverage, needs ARIA/DOCTYPE/entity validation
 5. **03-resources** (113 scenarios) - 70% coverage, OPF-013/remote fonts/SVG stylesheets done
 6. **D-vocabularies** (56 scenarios) - 0% coverage, ARIA roles/epub:type
 
@@ -221,7 +220,7 @@ All planned OPF (batches 1-5) and Nav (batches 6-8) tests have been ported. Rema
 
 | Area | Gap | Tests Blocked | Blocker |
 |------|-----|---------------|---------|
-| **06-content-document** | ARIA validation, DOCTYPE, entities | ~160 tests | Needs new validation subsystems |
+| **06-content-document** | ARIA validation, DOCTYPE, entities, epub:type/switch | ~55 tests | Needs new validation subsystems |
 | **03-resources** | OPF-029, PKG-022, corrupt image | 3 skipped | Specialized features |
 | **D-vocabularies** | ARIA roles/epub:type vocabulary | ~56 tests | Needs ARIA validation |
 | **08-layout** | Rendition/viewport validation | ~51 tests | Not implemented |

@@ -16,6 +16,57 @@ const DISCOURAGED_ELEMENTS = new Set(['base', 'embed', 'rp']);
 
 const ABSOLUTE_URI_RE = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
 
+// HTML5 valid datetime for <time datetime="...">
+// See https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-time-element
+const TIME_RE = /^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d{1,3})?)?$/;
+const TZ_RE = /(?:Z|[+-](?:[01]\d|2[0-3]):?[0-5]\d)$/;
+const DATE_RE = /^\d{4,}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$/;
+const ISO_DURATION_RE = /^P(?:\d+D)?(?:T(?:\d+H)?(?:\d+M)?(?:\d+(?:\.\d{1,3})?S)?)?$/;
+// Informal duration: whitespace-separated components like "9123W", "343H", "1M", "12S"
+const INFORMAL_DURATION_RE = /^\s*(?:\d+(?:\.\d{1,3})?[WDHMS]\s*)+$/;
+
+function isValidDatetime(value: string): boolean {
+  const trimmed = value.trim();
+  if (trimmed === '') return false;
+
+  // ISO duration: P...
+  if (trimmed.startsWith('P')) {
+    if (!ISO_DURATION_RE.test(trimmed)) return false;
+    if (trimmed === 'P' || trimmed === 'PT') return false;
+    // T must be followed by at least one time component
+    if (trimmed.endsWith('T')) return false;
+    return true;
+  }
+
+  // Informal duration: "9123W", "343H", "1M", "12S", "123W 123H 32D 12S"
+  if (INFORMAL_DURATION_RE.test(value)) return true;
+
+  // Year: YYYY
+  if (/^\d{4,}$/.test(trimmed)) return true;
+  // Month: YYYY-MM
+  if (/^\d{4,}-(?:0[1-9]|1[0-2])$/.test(trimmed)) return true;
+  // Yearless date: MM-DD or --MM-DD
+  if (/^-?-?(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$/.test(trimmed)) return true;
+  // Date: YYYY-MM-DD
+  if (DATE_RE.test(trimmed)) return true;
+  // Week: YYYY-Www
+  if (/^\d{4,}-W(?:0[1-9]|[1-4]\d|5[0-3])$/.test(trimmed)) return true;
+  // Time: HH:MM[:SS[.frac]]
+  if (TIME_RE.test(trimmed)) return true;
+
+  // Datetime: date separator time [timezone]
+  const dtMatch = /^(\d{4,}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01]))[T ]([\s\S]+)$/.exec(trimmed);
+  if (dtMatch?.[2]) {
+    let timePart: string = dtMatch[2];
+    // Strip timezone suffix
+    const tzMatch = TZ_RE.exec(timePart);
+    if (tzMatch) timePart = timePart.substring(0, timePart.length - tzMatch[0].length);
+    return TIME_RE.test(timePart);
+  }
+
+  return false;
+}
+
 const HTML_ENTITIES = new Set([
   'nbsp',
   'iexcl',
@@ -787,6 +838,21 @@ export class ContentValidator {
 
       // Check HTTP-equiv charset constraints
       this.checkHttpEquivCharset(context, path, root);
+
+      // Check table border attribute
+      this.checkTableBorder(context, path, root);
+
+      // Check time element constraints
+      this.checkTimeElement(context, path, root);
+
+      // Check MathML annotation constraints
+      this.checkMathMLAnnotations(context, path, root);
+
+      // Check reserved custom namespaces (HTM-054)
+      this.checkReservedNamespace(context, path, content);
+
+      // Check invalid data-* attributes (HTM-061)
+      this.checkDataAttributes(context, path, root);
 
       // Check accessibility
       this.checkAccessibility(context, path, root);
@@ -1749,6 +1815,243 @@ export class ContentValidator {
         message: `Invalid ID value "${rootId}"`,
         location: { path, line: root.line },
       });
+    }
+  }
+
+  private checkTableBorder(context: ValidationContext, path: string, root: XmlElement): void {
+    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
+    try {
+      const tables = root.find('.//html:table[@border]', HTML_NS);
+      for (const table of tables) {
+        const border = this.getAttribute(table as XmlElement, 'border');
+        if (border !== null && border !== '' && border !== '1') {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `The value of the "border" attribute on the "table" element must be either "1" or the empty string`,
+            location: { path, line: table.line },
+          });
+        }
+      }
+    } catch {
+      // empty
+    }
+  }
+
+  private checkTimeElement(context: ValidationContext, path: string, root: XmlElement): void {
+    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
+
+    // Check nested time elements
+    try {
+      const nestedTimes = root.find('.//html:time//html:time', HTML_NS);
+      for (const nested of nestedTimes) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: 'The element "time" must not appear as a descendant of the "time" element',
+          location: { path, line: nested.line },
+        });
+      }
+    } catch {
+      // empty
+    }
+
+    // Check datetime attribute format
+    try {
+      const times = root.find('.//html:time[@datetime]', HTML_NS);
+      for (const time of times) {
+        const datetime = this.getAttribute(time as XmlElement, 'datetime');
+        if (datetime !== null && !isValidDatetime(datetime)) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `The "datetime" attribute value "${datetime}" is not a valid date, time, or duration`,
+            location: { path, line: time.line },
+          });
+        }
+      }
+    } catch {
+      // empty
+    }
+  }
+
+  private checkMathMLAnnotations(context: ValidationContext, path: string, root: XmlElement): void {
+    const MATH_NS = { math: 'http://www.w3.org/1998/Math/MathML' };
+    const CONTENT_MATHML_ENCODINGS = new Set(['mathml-content', 'application/mathml-content+xml']);
+    const CONTENT_MATHML_ELEMENTS = new Set([
+      'apply',
+      'bind',
+      'ci',
+      'cn',
+      'cs',
+      'csymbol',
+      'cbytes',
+      'cerror',
+      'share',
+      'piecewise',
+      'lambda',
+      'set',
+      'list',
+      'vector',
+      'matrix',
+      'matrixrow',
+      'interval',
+    ]);
+
+    const contentMathMLNames = [...CONTENT_MATHML_ELEMENTS];
+
+    // Check annotation-xml elements
+    try {
+      const annotations = root.find('.//math:annotation-xml', MATH_NS);
+      for (const anno of annotations) {
+        const el = anno as XmlElement;
+        const encoding = this.getAttribute(el, 'encoding');
+        const name = this.getAttribute(el, 'name');
+
+        if (encoding) {
+          const encodingLower = encoding.toLowerCase();
+          if (CONTENT_MATHML_ENCODINGS.has(encodingLower)) {
+            // Content MathML encoding requires name="contentequiv"
+            if (!name) {
+              pushMessage(context.messages, {
+                id: MessageId.RSC_005,
+                message:
+                  'The "annotation-xml" element with Content MathML encoding must have a "name" attribute with value "contentequiv"',
+                location: { path, line: el.line },
+              });
+            } else if (name !== 'contentequiv') {
+              pushMessage(context.messages, {
+                id: MessageId.RSC_005,
+                message: `The "name" attribute on "annotation-xml" with Content MathML encoding must be "contentequiv", but found "${name}"`,
+                location: { path, line: el.line },
+              });
+            }
+          } else {
+            // Non-Content encoding: check for Content MathML elements inside
+            for (const cElemName of contentMathMLNames) {
+              try {
+                const found = el.get(`./math:${cElemName}`, MATH_NS);
+                if (found) {
+                  pushMessage(context.messages, {
+                    id: MessageId.RSC_005,
+                    message: `Content MathML element "${cElemName}" found in annotation-xml with encoding "${encoding}"`,
+                    location: { path, line: found.line },
+                  });
+                  break;
+                }
+              } catch {
+                // empty
+              }
+            }
+          }
+
+          // Check reversed XHTML MIME type
+          if (encodingLower === 'application/xml+xhtml') {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message:
+                'The encoding "application/xml+xhtml" is not valid; use "application/xhtml+xml" instead',
+              location: { path, line: el.line },
+            });
+          }
+        }
+      }
+    } catch {
+      // empty
+    }
+
+    // Check Content MathML elements directly in math (not inside annotation-xml)
+    for (const elemName of contentMathMLNames) {
+      try {
+        const found = root.get(`.//math:math/math:${elemName}`, MATH_NS);
+        if (found) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `Content MathML element "${elemName}" must not appear as a direct child of "math"; use "semantics" with "annotation-xml" instead`,
+            location: { path, line: found.line },
+          });
+          break;
+        }
+      } catch {
+        // empty
+      }
+    }
+  }
+
+  private checkReservedNamespace(context: ValidationContext, path: string, content: string): void {
+    // HTM-054: Custom namespace URIs must not contain "w3.org" or "idpf.org" in their host
+    const nsPattern = /xmlns:(\w+)="([^"]+)"/g;
+    const STANDARD_PREFIXES = new Set([
+      'xml',
+      'xmlns',
+      'xlink',
+      'epub',
+      'ops',
+      'dc',
+      'dcterms',
+      'svg',
+      'math',
+      'ssml',
+      'ev',
+      'xsi',
+    ]);
+    const STANDARD_NAMESPACES = new Set([
+      'http://www.w3.org/XML/1998/namespace',
+      'http://www.w3.org/2000/xmlns/',
+      'http://www.w3.org/1999/xhtml',
+      'http://www.w3.org/1999/xlink',
+      'http://www.w3.org/2000/svg',
+      'http://www.w3.org/1998/Math/MathML',
+      'http://www.idpf.org/2007/ops',
+      'http://purl.org/dc/elements/1.1/',
+      'http://purl.org/dc/terms/',
+      'http://www.w3.org/2001/10/synthesis',
+      'http://www.w3.org/2001/xml-events',
+      'http://www.w3.org/2001/XMLSchema-instance',
+    ]);
+
+    let match;
+    while ((match = nsPattern.exec(content)) !== null) {
+      const prefix = match[1] ?? '';
+      const uri = match[2] ?? '';
+      if (STANDARD_PREFIXES.has(prefix) || STANDARD_NAMESPACES.has(uri)) continue;
+
+      try {
+        const url = new URL(uri);
+        const host = url.hostname.toLowerCase();
+        for (const reserved of ['w3.org', 'idpf.org']) {
+          if (host.includes(reserved)) {
+            const line = content.substring(0, match.index).split('\n').length;
+            pushMessage(context.messages, {
+              id: MessageId.HTM_054,
+              message: `Custom attribute namespace ("${uri}") must not include the string "${reserved}" in its domain`,
+              location: { path, line },
+            });
+          }
+        }
+      } catch {
+        // Not a valid URL, skip
+      }
+    }
+  }
+
+  private checkDataAttributes(context: ValidationContext, path: string, root: XmlElement): void {
+    const elements = root.find('.//*');
+    const XML_NCNAME_RE =
+      /^[a-z_\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF][a-z0-9._\u00B7\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF-]*$/;
+
+    for (const elem of elements) {
+      const el = elem as XmlElement;
+      if (!('attrs' in el)) continue;
+      const attrs = el.attrs as { name: string; value: string }[];
+      for (const attr of attrs) {
+        if (!attr.name.startsWith('data-')) continue;
+        const suffix = attr.name.substring(5);
+        if (suffix.length === 0 || !XML_NCNAME_RE.test(suffix) || /[A-Z]/.test(attr.name)) {
+          pushMessage(context.messages, {
+            id: MessageId.HTM_061,
+            message: `"${attr.name}" is not a valid custom data attribute (it must have at least one character after the hyphen, be XML-compatible, and not contain ASCII uppercase letters)`,
+            location: { path, line: el.line },
+          });
+        }
+      }
     }
   }
 
