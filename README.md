@@ -6,13 +6,13 @@ A TypeScript port of [EPUBCheck](https://github.com/w3c/epubcheck) - the officia
 [![npm](https://img.shields.io/npm/v/%40likecoin%2Fepubcheck-ts)](https://www.npmjs.com/package/@likecoin/epubcheck-ts)
 [![License](https://img.shields.io/npm/l/%40likecoin%2Fepubcheck-ts)](./LICENSE)
 
-> **Note**: This library is primarily developed for internal use at [3ook.com](https://3ook.com/about) and is built with AI-assisted development. While it has comprehensive test coverage (896 tests) and ~82% feature parity with Java EPUBCheck, it may not be suitable for mission-critical production workloads. For production environments requiring full EPUB validation, consider using the official [Java EPUBCheck](https://github.com/w3c/epubcheck). Contributions and feedback are welcome!
+> **Note**: This library is primarily developed for internal use at [3ook.com](https://3ook.com/about) and is built with AI-assisted development. While it has comprehensive test coverage (806 passing / 896 total tests) and ~83% feature parity with Java EPUBCheck, it may not be suitable for mission-critical production workloads. For production environments requiring full EPUB validation, consider using the official [Java EPUBCheck](https://github.com/w3c/epubcheck). Contributions and feedback are welcome!
 
 ## Features
 
 - **CLI and programmatic API**: Use as a command-line tool or integrate into your application
 - **Cross-platform**: Works in Node.js (18+) and modern browsers
-- **Partial EPUB validation**: Currently ~82% of EPUBCheck feature parity
+- **Partial EPUB validation**: Currently ~83% of EPUBCheck feature parity
 - **Zero native dependencies**: Pure JavaScript/WebAssembly, no compilation required
 - **TypeScript first**: Full type definitions included
 - **Tree-shakable**: ESM with proper exports for optimal bundling
@@ -70,7 +70,7 @@ epubcheck-ts book.epub --quiet --fail-on-warnings
 epubcheck-ts dictionary.epub --profile dict
 ```
 
-**Note:** This CLI provides ~82% coverage of Java EPUBCheck features. For complete EPUB 3 conformance testing, use the [official Java EPUBCheck](https://github.com/w3c/epubcheck).
+**Note:** This CLI provides ~83% coverage of Java EPUBCheck features. For complete EPUB 3 conformance testing, use the [official Java EPUBCheck](https://github.com/w3c/epubcheck).
 
 ### ES Modules (recommended)
 
@@ -279,7 +279,7 @@ This library is a TypeScript port of the Java-based [EPUBCheck](https://github.c
 
 Legend: 🟢 Complete | 🟡 Partial | 🔴 Basic | ❌ Not Started
 
-**Overall Progress: ~82% of Java EPUBCheck features**
+**Overall Progress: ~83% of Java EPUBCheck features**
 
 See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for detailed comparison.
 
@@ -364,7 +364,7 @@ Legend: ✅ Implemented
 | Aspect | epubcheck-ts | EPUBCheck (Java) |
 |--------|--------------|------------------|
 | Runtime | Node.js / Browser | JVM |
-| Feature Parity | ~82% | 100% |
+| Feature Parity | ~83% | 100% |
 | Bundle Size | ~450KB JS + ~1.6MB WASM | ~15MB |
 | Installation | `npm install` | Download JAR |
 | Integration | Native JS/TS | CLI or Java API |

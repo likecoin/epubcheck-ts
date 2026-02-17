@@ -275,8 +275,7 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: RelaxNG content schema validation not wired — duplicate ID detection requires schema
-    it.skip('should report duplicate id attribute values (RSC-005)', async () => {
+    it('should report duplicate id attribute values (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/id-duplicate-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -605,8 +604,7 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: RelaxNG content schema validation not wired — empty src check requires schema
-    it.skip('should report img element with empty src attribute (RSC-005)', async () => {
+    it('should report img element with empty src attribute (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/img-src-empty-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -722,16 +720,14 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: RelaxNG content schema validation not wired
-    it.skip('should report http-equiv with non-utf8 charset (RSC-005)', async () => {
+    it('should report http-equiv with non-utf8 charset (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/http-equiv-non-utf8-error.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
     });
 
-    // Skip: RelaxNG content schema validation not wired
-    it.skip('should report both http-equiv and charset declared (RSC-005)', async () => {
+    it('should report both http-equiv and charset declared (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/http-equiv-and-charset-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -907,50 +903,49 @@ describe('Integration Tests - Content Documents', () => {
   });
 
   describe('Non-conforming features', () => {
-    // Skip: RelaxNG content schema validation not wired — obsolete attribute checks need schema
-    it.skip('should report obsolete typemustmatch attribute (RSC-005)', async () => {
+    it('should report obsolete typemustmatch attribute (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/obsolete-typemustmatch-error.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
     });
 
-    it.skip('should report obsolete contextmenu attribute (RSC-005)', async () => {
+    it('should report obsolete contextmenu attribute (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/obsolete-contextmenu-error.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
     });
 
-    it.skip('should report obsolete dropzone attribute (RSC-005)', async () => {
+    it('should report obsolete dropzone attribute (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/obsolete-dropzone-error.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
     });
 
-    it.skip('should report obsolete keygen element (RSC-005)', async () => {
+    it('should report obsolete keygen element (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/obsolete-keygen-error.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
     });
 
-    it.skip('should report obsolete menu features (RSC-005)', async () => {
+    it('should report obsolete menu features (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/obsolete-menu-features-error.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
     });
 
-    it.skip('should report obsolete pubdate attribute (RSC-005)', async () => {
+    it('should report obsolete pubdate attribute (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/obsolete-pubdate-error.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
     });
 
-    it.skip('should report obsolete seamless attribute (RSC-005)', async () => {
+    it('should report obsolete seamless attribute (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/obsolete-seamless-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -1046,8 +1041,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'CSS-008');
     });
 
-    // Skip: RelaxNG content schema validation not wired — style in body requires schema
-    it.skip('should report style element in the body (RSC-005)', async () => {
+    it('should report style element in the body (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/style-in-body-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -1576,15 +1570,14 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: RelaxNG content schema validation not wired — SVG error checks need schema
-    it.skip('should report duplicate id in SVG (RSC-005)', async () => {
+    it('should report duplicate id in SVG (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/id-duplicate-error-svg.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
     });
 
-    it.skip('should report invalid id in SVG (RSC-005)', async () => {
+    it('should report invalid id in SVG (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/id-invalid-error-svg.epub');
       const result = await EpubCheck.validate(data);
 

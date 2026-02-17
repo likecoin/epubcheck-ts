@@ -215,6 +215,9 @@ export class ContentValidator {
           location: { path },
         });
       }
+
+      this.checkDuplicateIDs(context, path, root);
+      this.checkSVGInvalidIDs(context, path, root);
     } finally {
       doc.dispose();
     }
@@ -562,8 +565,8 @@ export class ContentValidator {
     this.checkUnescapedAmpersands(context, path, content);
 
     // Check for XML 1.1 before parsing (libxml2 may reject it)
-    const xmlVersionMatch = content.match(/<\?xml\s[^?]*version\s*=\s*["']([^"']+)["']/);
-    if (xmlVersionMatch && xmlVersionMatch[1] !== '1.0') {
+    const xmlVersionMatch = /<\?xml\s[^?]*version\s*=\s*["']([^"']+)["']/.exec(content);
+    if (xmlVersionMatch?.[1] && xmlVersionMatch[1] !== '1.0') {
       pushMessage(context.messages, {
         id: MessageId.HTM_001,
         message: `XML version "${xmlVersionMatch[1]}" is not allowed; must be "1.0"`,
@@ -599,7 +602,7 @@ export class ContentValidator {
           }
           // Entity-related errors are fatal (RSC-016) per Java EPUBCheck behavior
           const isEntityError =
-            /Entity '/.test(error.message) || /EntityRef:/.test(error.message);
+            error.message.includes("Entity '") || error.message.includes('EntityRef:');
           pushMessage(context.messages, {
             id: isEntityError ? MessageId.RSC_016 : MessageId.HTM_004,
             message,
@@ -647,7 +650,7 @@ export class ContentValidator {
           location: { path },
         });
       } else {
-        const titleText = (title as XmlElement).content?.trim() ?? '';
+        const titleText = (title as XmlElement).content.trim();
         if (titleText === '') {
           pushMessage(context.messages, {
             id: MessageId.RSC_005,
@@ -769,6 +772,21 @@ export class ContentValidator {
 
       // Check SSML ph attributes
       this.checkSSMLPh(context, path, root, content);
+
+      // Check obsolete HTML attributes and elements
+      this.checkObsoleteHTML(context, path, root);
+
+      // Check for duplicate IDs
+      this.checkDuplicateIDs(context, path, root);
+
+      // Check img src empty
+      this.checkImgSrcEmpty(context, path, root);
+
+      // Check style element in body
+      this.checkStyleInBody(context, path, root);
+
+      // Check HTTP-equiv charset constraints
+      this.checkHttpEquivCharset(context, path, root);
 
       // Check accessibility
       this.checkAccessibility(context, path, root);
@@ -1521,7 +1539,7 @@ export class ContentValidator {
     const ssmlPhPattern = /\bssml:ph\s*=\s*"([^"]*)"/g;
     let match;
     while ((match = ssmlPhPattern.exec(content)) !== null) {
-      if (match[1].trim() === '') {
+      if (match[1]?.trim() === '') {
         const line = content.substring(0, match.index).split('\n').length;
         pushMessage(context.messages, {
           id: MessageId.HTM_007,
@@ -1529,6 +1547,208 @@ export class ContentValidator {
           location: { path, line },
         });
       }
+    }
+  }
+
+  private checkObsoleteHTML(context: ValidationContext, path: string, root: XmlElement): void {
+    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
+
+    // Obsolete global attributes
+    const obsoleteGlobalAttrs = ['contextmenu', 'dropzone'];
+    for (const attr of obsoleteGlobalAttrs) {
+      try {
+        const el = root.get(`.//*[@${attr}]`);
+        if (el) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `The "${attr}" attribute is obsolete`,
+            location: { path, line: el.line },
+          });
+        }
+      } catch {
+        // empty
+      }
+    }
+
+    // Obsolete element-specific attributes
+    const obsoleteElementAttrs: [string, string][] = [
+      ['typemustmatch', './/html:object[@typemustmatch]'],
+      ['pubdate', './/html:time[@pubdate]'],
+      ['seamless', './/html:iframe[@seamless]'],
+    ];
+    for (const [attr, xpath] of obsoleteElementAttrs) {
+      try {
+        const el = root.get(xpath, HTML_NS);
+        if (el) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `The "${attr}" attribute is obsolete`,
+            location: { path, line: el.line },
+          });
+        }
+      } catch {
+        // empty
+      }
+    }
+
+    // Obsolete elements
+    try {
+      const keygen = root.get('.//html:keygen', HTML_NS);
+      if (keygen) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: 'The "keygen" element is obsolete',
+          location: { path, line: keygen.line },
+        });
+      }
+    } catch {
+      // empty
+    }
+
+    // Obsolete menu features: type attribute on menu, command element
+    try {
+      const menuType = root.get('.//html:menu[@type]', HTML_NS);
+      if (menuType) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: 'The "type" attribute on the "menu" element is obsolete',
+          location: { path, line: menuType.line },
+        });
+      }
+    } catch {
+      // empty
+    }
+    try {
+      const command = root.get('.//html:command', HTML_NS);
+      if (command) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: 'The "command" element is obsolete',
+          location: { path, line: command.line },
+        });
+      }
+    } catch {
+      // empty
+    }
+  }
+
+  private checkDuplicateIDs(context: ValidationContext, path: string, root: XmlElement): void {
+    const seen = new Map<string, number>();
+    const elements = root.find('.//*[@id]');
+    for (const elem of elements) {
+      const id = this.getAttribute(elem as XmlElement, 'id');
+      if (id) {
+        if (seen.has(id)) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `Duplicate ID "${id}"`,
+            location: { path, line: elem.line },
+          });
+        } else {
+          seen.set(id, elem.line);
+        }
+      }
+    }
+  }
+
+  private checkImgSrcEmpty(context: ValidationContext, path: string, root: XmlElement): void {
+    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
+    try {
+      const imgs = root.find('.//html:img[@src]', HTML_NS);
+      for (const img of imgs) {
+        const src = this.getAttribute(img as XmlElement, 'src');
+        if (src !== null && src.trim() === '') {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: 'The "src" attribute must not be empty',
+            location: { path, line: img.line },
+          });
+        }
+      }
+    } catch {
+      // empty
+    }
+  }
+
+  private checkStyleInBody(context: ValidationContext, path: string, root: XmlElement): void {
+    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
+    try {
+      const bodyStyles = root.find('.//html:body//html:style', HTML_NS);
+      for (const style of bodyStyles) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: 'The "style" element must not appear in the document body',
+          location: { path, line: style.line },
+        });
+      }
+    } catch {
+      // empty
+    }
+  }
+
+  private checkHttpEquivCharset(context: ValidationContext, path: string, root: XmlElement): void {
+    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
+    try {
+      const metas = root.find('.//html:head/html:meta', HTML_NS);
+      let hasCharsetMeta = false;
+      let hasHttpEquivContentType = false;
+
+      for (const meta of metas) {
+        const el = meta as XmlElement;
+        const charset = this.getAttribute(el, 'charset');
+        if (charset !== null) {
+          hasCharsetMeta = true;
+        }
+
+        const httpEquiv = this.getAttribute(el, 'http-equiv');
+        if (httpEquiv?.toLowerCase() === 'content-type') {
+          hasHttpEquivContentType = true;
+          const contentAttr = (this.getAttribute(el, 'content') ?? '').trim();
+          if (!/^text\/html;\s*charset=utf-8$/i.test(contentAttr)) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message: `The meta element in encoding declaration state must have the value "text/html; charset=utf-8"`,
+              location: { path, line: el.line },
+            });
+          }
+        }
+      }
+
+      if (hasCharsetMeta && hasHttpEquivContentType) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message:
+            'The document must not contain both a meta charset declaration and a meta http-equiv Content-Type declaration',
+          location: { path },
+        });
+      }
+    } catch {
+      // empty
+    }
+  }
+
+  private checkSVGInvalidIDs(context: ValidationContext, path: string, root: XmlElement): void {
+    // SVG IDs must match XML Name production: cannot start with a digit
+    const XML_NAME_START_RE = /^[a-zA-Z_:\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF]/;
+    const elements = root.find('.//*[@id]');
+    for (const elem of elements) {
+      const id = this.getAttribute(elem as XmlElement, 'id');
+      if (id && !XML_NAME_START_RE.test(id)) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: `Invalid ID value "${id}"`,
+          location: { path, line: elem.line },
+        });
+      }
+    }
+    // Also check root element
+    const rootId = this.getAttribute(root, 'id');
+    if (rootId && !XML_NAME_START_RE.test(rootId)) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_005,
+        message: `Invalid ID value "${rootId}"`,
+        location: { path, line: root.line },
+      });
     }
   }
 
