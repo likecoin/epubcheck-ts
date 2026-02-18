@@ -16,6 +16,148 @@ const DISCOURAGED_ELEMENTS = new Set(['base', 'embed', 'rp']);
 
 const ABSOLUTE_URI_RE = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
 
+// EPUB Structural Semantics Vocabulary — deprecated values (OPF-086b)
+const EPUB_SSV_DEPRECATED = new Set([
+  'annoref',
+  'annotation',
+  'biblioentry',
+  'bridgehead',
+  'endnote',
+  'help',
+  'marginalia',
+  'note',
+  'rearnote',
+  'rearnotes',
+  'sidebar',
+  'subchapter',
+  'warning',
+]);
+
+// EPUB SSV values disallowed on XHTML content documents (OPF-087)
+const EPUB_SSV_DISALLOWED_ON_CONTENT = new Set([
+  'aside',
+  'figure',
+  'list',
+  'list-item',
+  'table',
+  'table-cell',
+  'table-row',
+]);
+
+// All known EPUB SSV values (non-exhaustive, for OPF-088 unknown detection)
+const EPUB_SSV_ALL = new Set([
+  ...EPUB_SSV_DEPRECATED,
+  ...EPUB_SSV_DISALLOWED_ON_CONTENT,
+  'abstract',
+  'acknowledgments',
+  'afterword',
+  'appendix',
+  'assessment',
+  'assessments',
+  'backlink',
+  'backmatter',
+  'balloon',
+  'bibliography',
+  'biblioref',
+  'bodymatter',
+  'case-study',
+  'chapter',
+  'colophon',
+  'concluding-sentence',
+  'conclusion',
+  'contributors',
+  'copyright-page',
+  'cover',
+  'covertitle',
+  'credit',
+  'credits',
+  'dedication',
+  'division',
+  'endnotes',
+  'epigraph',
+  'epilogue',
+  'errata',
+  'fill-in-the-blank-problem',
+  'footnote',
+  'footnotes',
+  'foreword',
+  'frontmatter',
+  'fulltitle',
+  'general-problem',
+  'glossary',
+  'glossdef',
+  'glossref',
+  'glossterm',
+  'halftitle',
+  'halftitlepage',
+  'imprimatur',
+  'imprint',
+  'index',
+  'index-editor-note',
+  'index-entry',
+  'index-entry-list',
+  'index-group',
+  'index-headnotes',
+  'index-legend',
+  'index-locator',
+  'index-locator-list',
+  'index-locator-range',
+  'index-term',
+  'index-term-categories',
+  'index-term-category',
+  'index-xref-preferred',
+  'index-xref-related',
+  'introduction',
+  'keyword',
+  'keywords',
+  'label',
+  'landmarks',
+  'learning-objective',
+  'learning-objectives',
+  'learning-outcome',
+  'learning-outcomes',
+  'learning-resource',
+  'learning-resources',
+  'learning-standard',
+  'learning-standards',
+  'loa',
+  'loi',
+  'lot',
+  'lov',
+  'match-problem',
+  'multiple-choice-problem',
+  'noteref',
+  'notice',
+  'ordinal',
+  'other-credits',
+  'page-list',
+  'pagebreak',
+  'panel',
+  'panel-group',
+  'part',
+  'practice',
+  'practices',
+  'preamble',
+  'preface',
+  'prologue',
+  'pullquote',
+  'qna',
+  'question',
+  'referrer',
+  'revision-history',
+  'seriespage',
+  'sound-area',
+  'subtitle',
+  'tip',
+  'title',
+  'titlepage',
+  'toc',
+  'toc-brief',
+  'topic-sentence',
+  'true-false-problem',
+  'volume',
+]);
+
 // HTML5 valid datetime for <time datetime="...">
 // See https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-time-element
 const TIME_RE = /^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d{1,3})?)?$/;
@@ -836,8 +978,17 @@ export class ContentValidator {
       // Check style element in body
       this.checkStyleInBody(context, path, root);
 
+      // Validate inline CSS in <style> elements
+      this.validateInlineStyles(context, path, root);
+
       // Check HTTP-equiv charset constraints
       this.checkHttpEquivCharset(context, path, root);
+
+      // Check lang/xml:lang mismatch
+      this.checkLangMismatch(context, path, root);
+
+      // Check DPUB-ARIA deprecated roles
+      this.checkDpubAriaDeprecated(context, path, root);
 
       // Check table border attribute
       this.checkTableBorder(context, path, root);
@@ -1818,6 +1969,61 @@ export class ContentValidator {
     }
   }
 
+  private validateInlineStyles(context: ValidationContext, path: string, root: XmlElement): void {
+    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
+    try {
+      const styles = root.find('.//html:style', HTML_NS);
+      for (const style of styles) {
+        const cssContent = (style as XmlElement).content;
+        if (cssContent) {
+          const cssValidator = new CSSValidator();
+          cssValidator.validate(context, cssContent, path);
+        }
+      }
+    } catch {
+      // empty
+    }
+  }
+
+  private checkLangMismatch(context: ValidationContext, path: string, root: XmlElement): void {
+    const lang = root.attr('lang')?.value ?? null;
+    const xmlLang = root.attr('lang', 'xml')?.value ?? null;
+    if (lang !== null && xmlLang !== null && lang.toLowerCase() !== xmlLang.toLowerCase()) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_005,
+        message: 'The lang and xml:lang attributes must have the same value',
+        location: { path, line: root.line },
+      });
+    }
+  }
+
+  private checkDpubAriaDeprecated(
+    context: ValidationContext,
+    path: string,
+    root: XmlElement,
+  ): void {
+    const DEPRECATED_ROLES = ['doc-endnote', 'doc-biblioentry'];
+    try {
+      const elements = root.find('.//*[@role]');
+      for (const elem of elements) {
+        const roleAttr = this.getAttribute(elem as XmlElement, 'role');
+        if (!roleAttr) continue;
+        const roles = roleAttr.split(/\s+/);
+        for (const role of DEPRECATED_ROLES) {
+          if (roles.includes(role)) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_017,
+              message: `The "${role}" role is deprecated and should not be used`,
+              location: { path, line: elem.line },
+            });
+          }
+        }
+      }
+    } catch {
+      // empty
+    }
+  }
+
   private checkTableBorder(context: ValidationContext, path: string, root: XmlElement): void {
     const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
     try {
@@ -2184,32 +2390,37 @@ export class ContentValidator {
       epub: 'http://www.idpf.org/2007/ops',
     });
 
-    const knownPrefixes = new Set([
-      '',
-      'http://idpf.org/epub/structure/v1/',
-      'http://idpf.org/epub/vocab/structure/',
-      'http://www.idpf.org/2007/ops',
-    ]);
-
     for (const elem of epubTypeElements) {
       const elemTyped = elem as XmlElement;
-      const epubTypeAttr = elemTyped.attr('epub:type');
+      const epubTypeAttr = elemTyped.attr('type', 'epub');
       if (!epubTypeAttr?.value) continue;
 
-      const epubTypeValue = epubTypeAttr.value;
+      for (const part of epubTypeAttr.value.split(/\s+/)) {
+        if (!part) continue;
+        const hasPrefix = part.includes(':');
+        const localName = hasPrefix ? part.substring(part.indexOf(':') + 1) : part;
 
-      for (const part of epubTypeValue.split(/\s+/)) {
-        const prefix = part.includes(':') ? part.substring(0, part.indexOf(':')) : '';
+        // Prefixed values from non-standard vocabs are allowed since EPUB 3.2
+        if (hasPrefix) continue;
 
-        if (
-          !knownPrefixes.has(prefix) &&
-          !prefix.startsWith('http://') &&
-          !prefix.startsWith('https://')
-        ) {
+        // Check against the default EPUB Structural Semantics Vocabulary
+        if (EPUB_SSV_DEPRECATED.has(localName)) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_086b,
+            message: `epub:type value "${localName}" is deprecated`,
+            location: { path, line: elem.line },
+          });
+        } else if (EPUB_SSV_DISALLOWED_ON_CONTENT.has(localName)) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_087,
+            message: `epub:type value "${localName}" is not allowed on documents of type "application/xhtml+xml"`,
+            location: { path, line: elem.line },
+          });
+        } else if (!EPUB_SSV_ALL.has(localName)) {
           pushMessage(context.messages, {
             id: MessageId.OPF_088,
-            message: `Unknown epub:type prefix "${prefix}": ${epubTypeValue}`,
-            location: { path },
+            message: `Unrecognized epub:type value "${localName}"`,
+            location: { path, line: elem.line },
           });
         }
       }

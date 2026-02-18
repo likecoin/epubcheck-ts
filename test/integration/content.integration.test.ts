@@ -356,8 +356,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: DPUB-ARIA deprecation warnings not implemented (RSC-017)
-    it.skip('should report deprecated DPUB-ARIA roles on li (RSC-017)', async () => {
+    it('should report deprecated DPUB-ARIA roles on li (RSC-017)', async () => {
       const data = await loadEpub('warnings/aria-roles-li-deprecated-warning.epub');
       const result = await EpubCheck.validate(data);
 
@@ -573,8 +572,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-008');
     });
 
-    // Skip: Exempt resource classification (video in img) not implemented — false RSC-032
-    it.skip('should allow img element with video resource', async () => {
+    it('should allow img element with video resource', async () => {
       const data = await loadEpub('valid/content-xhtml-img-video-valid.epub');
       const result = await EpubCheck.validate(data);
 
@@ -625,8 +623,7 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: Schematron-based lang/xml:lang mismatch check not implemented
-    it.skip('should report lang and xml:lang mismatch (RSC-005)', async () => {
+    it('should report lang and xml:lang mismatch (RSC-005)', async () => {
       const data = await loadEpub(
         'invalid/content/content-xhtml-lang-xml-lang-mismatch-error.epub',
       );
@@ -1022,8 +1019,7 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: CSS-008 for style element without type not implemented
-    it.skip('should report style element without type (CSS-008)', async () => {
+    it('should report style element without type (CSS-008)', async () => {
       const data = await loadEpub('invalid/content/style-no-type-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -1093,8 +1089,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-015');
     });
 
-    // Skip: svgView() fragment syntax not recognized — false RSC-012
-    it.skip('should allow svgView fragments for SVG documents', async () => {
+    it('should allow svgView fragments for SVG documents', async () => {
       const data = await loadEpub('valid/content-xhtml-svg-fragment-svgview-valid.epub');
       const result = await EpubCheck.validate(data);
 
@@ -1353,26 +1348,23 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: OPF-086b (deprecated epub:type semantics) not implemented
-    it.skip('should report deprecated epub:type semantics (OPF-086b)', async () => {
+    it('should report deprecated epub:type semantics (OPF-086b)', async () => {
       const data = await loadEpub('valid/epubtype-deprecated-usage.epub');
-      const result = await EpubCheck.validate(data);
+      const result = await EpubCheck.validate(data, { includeUsage: true });
 
       expectUsage(result, 'OPF-086b');
     });
 
-    // Skip: OPF-087 (epub:type usage suggestions) not implemented
-    it.skip('should report epub:type misuse (OPF-087)', async () => {
+    it('should report epub:type misuse (OPF-087)', async () => {
       const data = await loadEpub('valid/epubtype-misuse-usage.epub');
-      const result = await EpubCheck.validate(data);
+      const result = await EpubCheck.validate(data, { includeUsage: true });
 
       expectUsage(result, 'OPF-087');
     });
 
-    // Skip: OPF-088 fires for unknown prefix only, not for unknown semantics in default vocab
-    it.skip('should report unknown epub:type semantic (OPF-088)', async () => {
+    it('should report unknown epub:type semantic (OPF-088)', async () => {
       const data = await loadEpub('valid/epubtype-unknown-usage.epub');
-      const result = await EpubCheck.validate(data);
+      const result = await EpubCheck.validate(data, { includeUsage: true });
 
       expectUsage(result, 'OPF-088');
     });

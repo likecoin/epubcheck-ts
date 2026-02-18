@@ -477,6 +477,11 @@ const MessageDefs = {
     severity: 'warning',
     description: 'Property is deprecated',
   },
+  OPF_086b: {
+    id: 'OPF-086b',
+    severity: 'usage',
+    description: 'epub:type value is deprecated',
+  },
   OPF_087: {
     id: 'OPF-087',
     severity: 'usage',

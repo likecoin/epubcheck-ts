@@ -8,7 +8,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 |----------|------------|--------|
 | OCF Validation | ~90% | 🟢 URL leaking, UTF-8, spaces, forbidden chars all done |
 | OPF Validation | ~90% | 🟢 Schematron-equivalent checks, refines cycles, duplicate IDs done |
-| Content (XHTML/SVG) | ~85% | 🟢 CSS url() references, @import, inline CSS remote font, SVG remote font, picture elements, SVG use done |
+| Content (XHTML/SVG) | ~87% | 🟢 CSS url() references, @import, inline CSS remote font, SVG remote font, picture elements, SVG use, epub:type vocab, lang mismatch done |
 | CSS Validation | ~70% | 🟢 url() extraction from declarations, @font-face src |
 | Navigation (nav/NCX) | ~85% | 🟢 Content model, structural validation, landmarks, labels, reading order done |
 | Schema Validation | ~50% | 🟡 RelaxNG for OPF/container; XHTML/SVG disabled (libxml2 limitation) |
@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~90% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs done |
 
-**Overall: ~83% complete (816 tests passing, 80 skipped)**
+**Overall: ~84% complete (824 tests passing, 72 skipped)**
 
 ---
 
@@ -27,8 +27,8 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 403 | 387 | 16 |
-| **Integration Tests** | 493 | 429 | 64 |
-| **Total** | **896** | **816** | **80** |
+| **Integration Tests** | 493 | 437 | 56 |
+| **Total** | **896** | **824** | **72** |
 
 ### Integration Test Files
 
@@ -37,7 +37,7 @@ test/integration/
 ├── epub.test.ts                 # 4 tests   (4 pass, 0 skip)  - Basic EPUB validation
 ├── ocf.integration.test.ts      # 47 tests  (42 pass, 5 skip) - OCF/ZIP/container
 ├── opf.integration.test.ts      # 119 tests (118 pass, 1 skip)  - Package document
-├── content.integration.test.ts  # 205 tests (150 pass, 55 skip)  - XHTML/CSS/SVG
+├── content.integration.test.ts  # 205 tests (158 pass, 47 skip)  - XHTML/CSS/SVG
 ├── nav.integration.test.ts      # 36 tests  (36 pass, 0 skip)  - Navigation
 └── resources.integration.test.ts # 82 tests  (79 pass, 3 skip)  - Resources/fallbacks
 ```
@@ -68,7 +68,7 @@ test/fixtures/
 - Fast execution (~700ms vs Java's integration-heavy suite)
 
 **Critical gaps:**
-- ❌ **ARIA validation** - No role/attribute checks (Java has dozens)
+- 🟡 **ARIA validation** - DPUB-ARIA deprecated roles done; full role/attribute checks not yet (Java has dozens)
 - 🟡 **ID/IDREF validation** - OPF + XHTML + SVG duplicate IDs done; IDREF resolution not yet
 - ❌ **DOCTYPE validation** - No obsolete identifier checks
 - 🟡 **Entity validation** - RSC-016 for undefined/malformed entities; no external entity checks
@@ -82,16 +82,16 @@ test/fixtures/
 - **libxml2-wasm XPath limitations (3)** - OPF-014 inline event handlers, CSS-005 conflicting stylesheets, OPF-088 unknown epub:type prefix
 - **Messages suppressed in Java EPUBCheck (13)** - NCX-002 (2), NCX-003 (2), NAV-002 (1), ACC-004 (1), ACC-005 (1), HTM-012 (1), and parameterized variants
 
-**Integration tests (64)** - Unimplemented features and library limitations:
-- **Content (55 skipped)**:
+**Integration tests (56)** - Unimplemented features and library limitations:
+- **Content (47 skipped)**:
   - *RelaxNG/Schematron content schema (~11)*: image map, foreignObject/SVG title HTML validation, microdata, Schematron, IDREF resolution — requires XHTML/SVG schema (libxml2-wasm limitation)
-  - *epub:type/switch/trigger (~12)*: epub:type vocabulary validation, epub:switch structure, epub:trigger references
+  - *epub:switch/trigger (~6)*: epub:switch structure, epub:trigger references
   - *CSS encoding/syntax (5)*: CSS-003/CSS-004 encoding detection, CSS syntax error ordering, CSS-019 false positive
-  - *CSS-008 inline style (2)*: style element without type, style attribute syntax
+  - *CSS-008 inline style (1)*: style attribute syntax
   - *URL/base handling (5)*: Non-conforming URL RSC-020, unparseable host, unregistered scheme HTM-025, base/xml:base external URL RSC-006
-  - *ARIA (2)*: DPUB-ARIA deprecated roles RSC-017, aria-describedAt RSC-005
+  - *ARIA (1)*: aria-describedAt RSC-005
   - *Encoding/DOCTYPE/entities (3)*: External entities HTM-003, encoding detection HTM-058, obsolete DOCTYPE HTM-004
-  - *Other (13)*: lang/xml:lang mismatch, exempt video in img, svgView fragment, empty font-face SVG, SVG epub:type, SVG unknown epub:* attribute, MED-004
+  - *Other (~10)*: empty font-face SVG, SVG epub:type, SVG unknown epub:* attribute, MED-004
 - **Resources (3 skipped)**: OPF-029 (1), PKG-022 (1), corrupt image (1)
 - **OCF (5 skipped)**: OPF-060 duplicate ZIP entry (1), encryption/signatures schema (4)
 - **OPF (1 skipped)**: OPF-014 remote audio overlays (1)
@@ -135,8 +135,13 @@ test/fixtures/
 - **Unicode NFC normalization** - Consistent NFC normalization for manifest hrefs and file lookups
 - **Font obfuscation validation** (PKG-026) - Obfuscated resources must be blessed font types
 - **Non-ASCII filename detection** (PKG-012) - Usage message for non-ASCII characters in filenames
-- **Foreign resource fallback** (RSC-032) - Foreign resources must have CMT fallback chain
-- **Exempt resources** - Fonts, tracks, stylesheets exempt from RSC-032; all video/* types are CMT
+- **Foreign resource fallback** (RSC-032) - Foreign resources must have CMT fallback chain; all video/* types are CMT
+- **Exempt resources** - Fonts, tracks, stylesheets exempt from RSC-032
+- **epub:type vocabulary** (OPF-086b/087/088) - Deprecated, disallowed, and unknown epub:type values
+- **Lang/xml:lang mismatch** (RSC-005) - Case-insensitive comparison on HTML elements
+- **DPUB-ARIA deprecated roles** (RSC-017) - doc-endnote, doc-biblioentry
+- **Inline CSS validation** (CSS-008) - `<style>` element content parsed via CSSValidator
+- **svgView fragment** (RSC-012) - Functional SVG fragments skip fragment-not-found check
 - **CMT parameter stripping** - Media types with parameters (e.g., `audio/ogg;codecs=opus`) correctly matched
 - **Intrinsic source fallback** - `<source>` children with CMT types provide fallback for audio/video; `<picture>` propagates to `<img>` child
 - **Embedded element references** - embed[@src], input[type=image][@src], object[@data], area[@href] extracted
@@ -149,7 +154,7 @@ test/fixtures/
 
 ### 🟡 Partially Implemented
 - **Schema validation** - RelaxNG for OPF/container works; XHTML/SVG RelaxNG disabled (libxml2-wasm doesn't support complex patterns)
-- **Content validation** - Core structure good; entity/title/XML version/SSML/discouraged elements/obsolete HTML/duplicate IDs/HTTP-equiv/img src/style-in-body/table border/time datetime/MathML annotations/Content MathML/reserved namespaces/data-* attributes checks done; missing ARIA/DOCTYPE/external entities; Schematron validation works
+- **Content validation** - Core structure good; entity/title/XML version/SSML/discouraged elements/obsolete HTML/duplicate IDs/HTTP-equiv/img src/style-in-body/table border/time datetime/MathML annotations/Content MathML/reserved namespaces/data-* attributes/epub:type vocab/lang mismatch/DPUB-ARIA deprecated/inline CSS checks done; missing full ARIA/DOCTYPE/external entities; Schematron validation works
 - **Image validation** - MED-001/OPF-051 work, no format/size checks
 
 ### ❌ Not Implemented
@@ -158,7 +163,7 @@ test/fixtures/
 - Signatures.xml validation
 - Metadata.xml (multiple renditions)
 - Advanced accessibility (WCAG 2.0 comprehensive)
-- ARIA roles and attributes
+- Full ARIA roles and attributes (DPUB-ARIA deprecated roles done)
 - DOCTYPE obsolete identifiers
 - External entity validation
 - Base URL handling (xml:base, HTML base)
@@ -188,13 +193,13 @@ test/fixtures/
 | 03-resources | 113 | 82 | 79 | 70% |
 | 04-ocf | 61 | 47 | 42 | 69% |
 | 05-package-document | 121 | 119 | 118 | 98% |
-| 06-content-document | 215 | 205 | 150 | 70% |
+| 06-content-document | 215 | 205 | 158 | 73% |
 | 07-navigation-document | 40 | 36 | 36 | 90% |
 | 08-layout | 51 | 0 | 0 | 0% |
 | 09-media-overlays | 51 | 0 | 0 | 0% |
 | D-vocabularies (ARIA) | 56 | 0 | 0 | 0% |
 | Other | 6 | 0 | 0 | 0% |
-| **Total** | **719** | **493** | **419** | **58%** |
+| **Total** | **719** | **493** | **427** | **59%** |
 
 ### E2E Porting Priorities
 
@@ -220,7 +225,7 @@ All planned OPF (batches 1-5) and Nav (batches 6-8) tests have been ported. Rema
 
 | Area | Gap | Tests Blocked | Blocker |
 |------|-----|---------------|---------|
-| **06-content-document** | ARIA validation, DOCTYPE, entities, epub:type/switch | ~55 tests | Needs new validation subsystems |
+| **06-content-document** | ARIA validation, DOCTYPE, entities, epub:switch | ~47 tests | Needs new validation subsystems |
 | **03-resources** | OPF-029, PKG-022, corrupt image | 3 skipped | Specialized features |
 | **D-vocabularies** | ARIA roles/epub:type vocabulary | ~56 tests | Needs ARIA validation |
 | **08-layout** | Rendition/viewport validation | ~51 tests | Not implemented |
@@ -254,9 +259,9 @@ Ordered by severity impact (number of active error/warning messages not yet emit
 ## Message IDs
 
 **Defined**: 300 message IDs
-**Actively used**: 114 (38%)
+**Actively used**: 118 (39%)
 
-Active by prefix: OPF (45), RSC (25), PKG (13), CSS (10), HTM (10), NAV (4), NCX (3), ACC (4), MED (2)
+Active by prefix: OPF (48), RSC (25), PKG (13), CSS (10), HTM (10), NAV (4), NCX (3), ACC (4), MED (2)
 Unused prefixes: SCP (0), CHK (0), INF (0)
 
 ### Recent Message ID Fixes (aligned with Java EPUBCheck)
@@ -341,6 +346,14 @@ Unused prefixes: SCP (0), CHK (0), INF (0)
 - `RSC-005` - Empty `img[src]` attribute detection
 - `RSC-005` - `style` element in document body detection
 - `RSC-005` - HTTP-equiv non-UTF-8 charset and duplicate charset declaration detection
+- `OPF-086b` - Deprecated epub:type values (annoref, annotation, biblioentry, etc.)
+- `OPF-087` - epub:type values disallowed on content documents (aside, figure, list, etc.)
+- `OPF-088` - Unknown epub:type values in default EPUB SSV vocabulary
+- `RSC-005` - lang/xml:lang mismatch on HTML root element
+- `RSC-017` - DPUB-ARIA deprecated roles (doc-endnote, doc-biblioentry)
+- `CSS-008` - Inline `<style>` element CSS parsing (validation via CSSValidator)
+- `RSC-012` - svgView() fragment handling (skip fragment-not-found for functional SVG fragments)
+- `RSC-032` - Exempt video/* types from foreign resource check (all video types are CMT)
 
 ---
 

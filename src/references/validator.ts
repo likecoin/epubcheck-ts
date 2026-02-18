@@ -389,8 +389,14 @@ export class ReferenceValidator {
 
     // Check if fragment target exists (only for resource types we parse for IDs)
     // Skip remote resources since we can't parse their content
+    // Skip svgView() fragments — they are functional, not ID-based
     const parsedMimeTypes = ['application/xhtml+xml', 'image/svg+xml'];
-    if (resource && parsedMimeTypes.includes(resource.mimeType) && !isRemoteURL(resourcePath)) {
+    if (
+      resource &&
+      parsedMimeTypes.includes(resource.mimeType) &&
+      !isRemoteURL(resourcePath) &&
+      !fragment.includes('svgView(')
+    ) {
       if (!this.registry.hasID(resourcePath, fragment)) {
         pushMessage(context.messages, {
           id: MessageId.RSC_012,
