@@ -1026,8 +1026,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'CSS-008');
     });
 
-    // Skip: CSS-008 for style attribute syntax errors not implemented
-    it.skip('should report style attribute with invalid CSS syntax (CSS-008)', async () => {
+    it('should report style attribute with invalid CSS syntax (CSS-008)', async () => {
       const data = await loadEpub('invalid/content/style-attr-syntax-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -1372,22 +1371,21 @@ describe('Integration Tests - Content Documents', () => {
 
   // ==================== Content Switching (Deprecated) ====================
   describe('epub:switch and epub:trigger (deprecated)', () => {
-    // Skip: RelaxNG content schema validation not wired — epub:switch checks need schema
-    it.skip('should report epub:switch is deprecated (RSC-017)', async () => {
+    it('should report epub:switch is deprecated (RSC-017)', async () => {
       const data = await loadEpub('invalid/content/switch-deprecated-warning.epub');
       const result = await EpubCheck.validate(data);
 
       expectWarning(result, 'RSC-017');
     });
 
-    it.skip('should report epub:trigger is deprecated (RSC-017)', async () => {
+    it('should report epub:trigger is deprecated (RSC-017)', async () => {
       const data = await loadEpub('invalid/content/trigger-deprecated-warning.epub');
       const result = await EpubCheck.validate(data);
 
       expectWarning(result, 'RSC-017');
     });
 
-    it.skip('should report epub:switch with invalid mathml (RSC-005, RSC-017)', async () => {
+    it('should report epub:switch with invalid mathml (RSC-005, RSC-017)', async () => {
       const data = await loadEpub('invalid/content/switch-mathml-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -1395,42 +1393,42 @@ describe('Integration Tests - Content Documents', () => {
       expectWarning(result, 'RSC-017');
     });
 
-    it.skip('should report epub:switch default before case (RSC-005)', async () => {
+    it('should report epub:switch default before case (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/switch-default-before-case-error.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
     });
 
-    it.skip('should report epub:switch multiple defaults (RSC-005)', async () => {
+    it('should report epub:switch multiple defaults (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/switch-multiple-default-error.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
     });
 
-    it.skip('should report epub:switch without case (RSC-005)', async () => {
+    it('should report epub:switch without case (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/switch-no-case-error.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
     });
 
-    it.skip('should report epub:switch without default (RSC-005)', async () => {
+    it('should report epub:switch without default (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/switch-no-default-error.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
     });
 
-    it.skip('should report epub:case without required-namespace (RSC-005)', async () => {
+    it('should report epub:case without required-namespace (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/switch-no-case-namespace-error.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
     });
 
-    it.skip('should report epub:trigger bad refs (RSC-005, RSC-017)', async () => {
+    it('should report epub:trigger bad refs (RSC-005, RSC-017)', async () => {
       const data = await loadEpub('invalid/content/trigger-badrefs-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -1613,14 +1611,14 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-005');
     });
 
-    it.skip('should report epub:type not allowed on certain SVG elements (RSC-005)', async () => {
+    it('should report epub:type not allowed on certain SVG elements (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/epubtype-not-allowed-error-svg.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
     });
 
-    it.skip('should report unknown epub:* attribute in SVG (RSC-005)', async () => {
+    it('should report unknown epub:* attribute in SVG (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/unknown-epub-attribute-error-svg.epub');
       const result = await EpubCheck.validate(data);
 

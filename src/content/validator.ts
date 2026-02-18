@@ -411,6 +411,8 @@ export class ContentValidator {
 
       this.checkDuplicateIDs(context, path, root);
       this.checkSVGInvalidIDs(context, path, root);
+      this.validateSvgEpubType(context, path, root);
+      this.checkUnknownEpubAttributes(context, path, root);
     } finally {
       doc.dispose();
     }
@@ -1015,6 +1017,13 @@ export class ContentValidator {
       if (context.version.startsWith('3')) {
         this.validateEpubTypes(context, path, root);
       }
+
+      // Validate epub:switch and epub:trigger (deprecated)
+      this.validateEpubSwitch(context, path, root);
+      this.validateEpubTrigger(context, path, root);
+
+      // Validate CSS in style attributes
+      this.validateStyleAttributes(context, path, root);
 
       // Validate stylesheet links
       this.validateStylesheetLinks(context, path, root);
@@ -2018,6 +2027,268 @@ export class ContentValidator {
             });
           }
         }
+      }
+    } catch {
+      // empty
+    }
+  }
+
+  private validateEpubSwitch(context: ValidationContext, path: string, root: XmlElement): void {
+    const EPUB_NS = { epub: 'http://www.idpf.org/2007/ops' };
+    try {
+      const switches = root.find('.//epub:switch', EPUB_NS);
+      for (const sw of switches) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_017,
+          message: 'The "epub:switch" element is deprecated',
+          location: { path, line: sw.line },
+        });
+
+        const swElem = sw as XmlElement;
+        const cases: XmlNode[] = [];
+        const defaults: XmlNode[] = [];
+        let defaultBeforeCase = false;
+
+        // Iterate child elements
+        try {
+          const childCases = swElem.find('./epub:case', EPUB_NS);
+          const childDefaults = swElem.find('./epub:default', EPUB_NS);
+          cases.push(...childCases);
+          defaults.push(...childDefaults);
+
+          // Check ordering: default must come after all cases
+          const firstDefault = childDefaults[0];
+          const lastCase = childCases[childCases.length - 1];
+          if (firstDefault && lastCase && firstDefault.line < lastCase.line) {
+            defaultBeforeCase = true;
+          }
+        } catch {
+          // empty
+        }
+
+        if (cases.length === 0) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message:
+              'The "epub:switch" element must contain at least one "epub:case" child element',
+            location: { path, line: sw.line },
+          });
+        }
+
+        if (defaults.length === 0) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: 'The "epub:switch" element must contain an "epub:default" child element',
+            location: { path, line: sw.line },
+          });
+        }
+
+        const secondDefault = defaults[1];
+        if (secondDefault) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message:
+              'The "epub:switch" element must not contain more than one "epub:default" child element',
+            location: { path, line: secondDefault.line },
+          });
+        }
+
+        const firstDefaultElem = defaults[0];
+        if (defaultBeforeCase && firstDefaultElem) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: 'The "epub:default" element must appear after all "epub:case" elements',
+            location: { path, line: firstDefaultElem.line },
+          });
+        }
+
+        // Check each case has required-namespace attribute
+        for (const c of cases) {
+          const caseElem = c as XmlElement;
+          const reqNs = caseElem.attr('required-namespace');
+          if (!reqNs) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message: 'The "epub:case" element must have a "required-namespace" attribute',
+              location: { path, line: c.line },
+            });
+          }
+        }
+
+        // Check for nested <math> inside <math> (invalid MathML)
+        try {
+          const MATH_NS = { m: 'http://www.w3.org/1998/Math/MathML' };
+          const nestedMath = swElem.find('.//m:math//m:math', MATH_NS);
+          for (const nested of nestedMath) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message: 'The "math" element must not be nested inside another "math" element',
+              location: { path, line: nested.line },
+            });
+          }
+        } catch {
+          // empty
+        }
+      }
+    } catch {
+      // empty
+    }
+  }
+
+  private validateEpubTrigger(context: ValidationContext, path: string, root: XmlElement): void {
+    const EPUB_NS = { epub: 'http://www.idpf.org/2007/ops' };
+    try {
+      const triggers = root.find('.//epub:trigger', EPUB_NS);
+      for (const trigger of triggers) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_017,
+          message: 'The "epub:trigger" element is deprecated',
+          location: { path, line: trigger.line },
+        });
+
+        const triggerElem = trigger as XmlElement;
+
+        // Collect all IDs in the document for IDREF checking
+        const allIds = new Set<string>();
+        try {
+          const idElements = root.find('.//*[@id]');
+          for (const el of idElements) {
+            const idAttr = this.getAttribute(el as XmlElement, 'id');
+            if (idAttr) allIds.add(idAttr);
+          }
+        } catch {
+          // empty
+        }
+
+        // Check ref attribute
+        const ref = triggerElem.attr('ref');
+        if (ref?.value && !allIds.has(ref.value)) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `The "ref" attribute value "${ref.value}" does not reference a valid ID in the document`,
+            location: { path, line: trigger.line },
+          });
+        }
+
+        // Check ev:observer attribute
+        const observer = triggerElem.attr('observer', 'ev') ?? triggerElem.attr('ev:observer');
+        if (observer?.value && !allIds.has(observer.value)) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `The "ev:observer" attribute value "${observer.value}" does not reference a valid ID in the document`,
+            location: { path, line: trigger.line },
+          });
+        }
+      }
+    } catch {
+      // empty
+    }
+  }
+
+  private validateStyleAttributes(
+    context: ValidationContext,
+    path: string,
+    root: XmlElement,
+  ): void {
+    try {
+      const elements = root.find('.//*[@style]');
+      for (const elem of elements) {
+        const style = this.getAttribute(elem as XmlElement, 'style');
+        if (!style) continue;
+        // Wrap in a dummy rule so the CSS parser can handle it as a stylesheet
+        const wrappedCss = `* { ${style} }`;
+        const cssValidator = new CSSValidator();
+        cssValidator.validate(context, wrappedCss, path);
+      }
+    } catch {
+      // empty
+    }
+  }
+
+  private validateSvgEpubType(context: ValidationContext, path: string, root: XmlElement): void {
+    // SVG elements where epub:type IS allowed
+    const ALLOWED_ELEMENTS = new Set([
+      'svg',
+      'a',
+      'audio',
+      'canvas',
+      'circle',
+      'ellipse',
+      'g',
+      'iframe',
+      'image',
+      'line',
+      'path',
+      'polygon',
+      'polyline',
+      'rect',
+      'switch',
+      'symbol',
+      'text',
+      'textPath',
+      'tspan',
+      'unknown',
+      'use',
+      'video',
+    ]);
+
+    const EPUB_NS = { epub: 'http://www.idpf.org/2007/ops' };
+    try {
+      const elements = root.find('.//*[@epub:type]', EPUB_NS);
+      for (const elem of elements) {
+        const elemTyped = elem as XmlElement;
+        const localName = elemTyped.name;
+        // Also check the root element itself
+        if (!ALLOWED_ELEMENTS.has(localName)) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `Attribute "epub:type" not allowed on SVG element "${localName}"`,
+            location: { path, line: elem.line },
+          });
+        }
+      }
+      // Check root element too
+      const rootEpubType = root.attr('type', 'epub');
+      if (rootEpubType && !ALLOWED_ELEMENTS.has(root.name)) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: `Attribute "epub:type" not allowed on SVG element "${root.name}"`,
+          location: { path, line: root.line },
+        });
+      }
+    } catch {
+      // empty
+    }
+  }
+
+  private checkUnknownEpubAttributes(
+    context: ValidationContext,
+    path: string,
+    root: XmlElement,
+  ): void {
+    const KNOWN_EPUB_ATTRS = new Set(['type']);
+
+    const checkElement = (elem: XmlElement): void => {
+      if (!('attrs' in elem)) return;
+      for (const attr of elem.attrs) {
+        if (attr.prefix === 'epub' && !KNOWN_EPUB_ATTRS.has(attr.name)) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `Attribute "epub:${attr.name}" not allowed`,
+            location: { path, line: elem.line },
+          });
+        }
+      }
+    };
+
+    // Check root element
+    checkElement(root);
+
+    // Check all descendant elements
+    try {
+      const allElements = root.find('.//*');
+      for (const elem of allElements) {
+        checkElement(elem as XmlElement);
       }
     } catch {
       // empty
