@@ -2988,7 +2988,7 @@ export class ContentValidator {
         const navAnchors = navElem.find('.//html:a[@href]', HTML_NS);
         for (const a of navAnchors) {
           const anchorHref = this.getAttribute(a as XmlElement, 'href') ?? '';
-          navAnchorTypes.set(`${a.line}:${anchorHref}`, refType);
+          navAnchorTypes.set(`${String(a.line)}:${anchorHref}`, refType);
         }
       }
     }
@@ -3009,7 +3009,7 @@ export class ContentValidator {
 
       const line = link.line;
       const refType = isNavDocument
-        ? (navAnchorTypes.get(`${line}:${href}`) ?? ReferenceType.HYPERLINK)
+        ? (navAnchorTypes.get(`${String(line)}:${href}`) ?? ReferenceType.HYPERLINK)
         : ReferenceType.HYPERLINK;
 
       if (ABSOLUTE_URI_RE.test(href)) {
