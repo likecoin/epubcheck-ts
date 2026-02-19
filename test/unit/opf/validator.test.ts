@@ -251,7 +251,7 @@ describe('OPFValidator', () => {
       }
     });
 
-    it('should add OPF-052 error for unknown MARC relator code', () => {
+    it('should add OPF-052 error for unknown role code', () => {
       const context = createValidationContext();
       const packageDoc = createMinimalPackage({
         dcElements: [
@@ -261,7 +261,7 @@ describe('OPFValidator', () => {
           {
             name: 'creator',
             value: 'John Doe',
-            attributes: { 'opf:role': 'marc:invalid_code' },
+            attributes: { 'opf:role': 'invalid_code' },
           },
         ],
       });
@@ -286,7 +286,7 @@ describe('OPFValidator', () => {
             {
               name: 'creator',
               value: 'John Doe',
-              attributes: { 'opf:role': `marc:${code}` },
+              attributes: { 'opf:role': code },
             },
           ],
         });
@@ -300,6 +300,28 @@ describe('OPFValidator', () => {
           `MARC code "${code}" should be valid`,
         ).toHaveLength(0);
       }
+    });
+
+    it('should accept oth. prefixed role codes', () => {
+      const context = createValidationContext();
+      const packageDoc = createMinimalPackage({
+        dcElements: [
+          { name: 'identifier', value: 'urn:uuid:12345678', id: 'bookid' },
+          { name: 'title', value: 'Test Book' },
+          { name: 'language', value: 'en' },
+          {
+            name: 'creator',
+            value: 'John Doe',
+            attributes: { 'opf:role': 'oth.custom' },
+          },
+        ],
+      });
+      addFileToContext(context, 'OEBPS/content.opf', '');
+
+      validatorTest.packageDoc = packageDoc;
+      validatorTest.validateMetadata(context, 'OEBPS/content.opf');
+
+      expect(context.messages.filter((m) => m.id === 'OPF-052')).toHaveLength(0);
     });
 
     it('should add OPF-054 error when dcterms:modified is missing in EPUB 3', () => {
