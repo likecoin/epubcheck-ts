@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { describe, expect, it, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+import type { PackageDocument } from '../../../src/opf/types.js';
 import { OPFValidator } from '../../../src/opf/validator.js';
 import type { ValidationContext } from '../../../src/types.js';
-import type { PackageDocument } from '../../../src/opf/types.js';
 
 // Helper interface to access private members in tests
 interface OPFValidatorTest {
