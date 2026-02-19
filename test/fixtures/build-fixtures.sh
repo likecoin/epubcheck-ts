@@ -575,6 +575,15 @@ STUBEOF
       svg)
         echo '<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><rect width="1" height="1"/></svg>' > "$stub_path"
         ;;
+      jpg|jpeg)
+        printf '\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00\xff\xd9' > "$stub_path"
+        ;;
+      png)
+        printf '\x89PNG\r\n\x1a\n' > "$stub_path"
+        ;;
+      gif)
+        printf 'GIF89a\x01\x00\x01\x00\x80\x00\x00\xff\xff\xff\x00\x00\x00!\xf9\x04\x00\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;' > "$stub_path"
+        ;;
       *)
         touch "$stub_path"
         ;;

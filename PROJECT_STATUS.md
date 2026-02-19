@@ -8,7 +8,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 |----------|------------|--------|
 | OCF Validation | ~90% | 🟢 URL leaking, UTF-8, spaces, forbidden chars all done |
 | OPF Validation | ~90% | 🟢 Schematron-equivalent checks, refines cycles, duplicate IDs done |
-| Content (XHTML/SVG) | ~90% | 🟢 CSS url() references, @import, inline CSS remote font, SVG remote font, picture elements, SVG use, epub:type vocab, lang mismatch, switch/trigger, SVG epub:type done |
+| Content (XHTML/SVG) | ~90% | 🟢 CSS url() references, @import, inline CSS remote font, SVG remote font, picture elements, SVG use, epub:type vocab, lang mismatch, switch/trigger, SVG epub:type, media magic numbers done |
 | CSS Validation | ~70% | 🟢 url() extraction from declarations, @font-face src |
 | Navigation (nav/NCX) | ~85% | 🟢 Content model, structural validation, landmarks, labels, reading order done |
 | Schema Validation | ~50% | 🟡 RelaxNG for OPF/container; XHTML/SVG disabled (libxml2 limitation) |
@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~90% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs done |
 
-**Overall: ~86% complete (836 tests passing, 60 skipped)**
+**Overall: ~87% complete (840 tests passing, 56 skipped)**
 
 ---
 
@@ -27,8 +27,8 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 403 | 387 | 16 |
-| **Integration Tests** | 493 | 449 | 44 |
-| **Total** | **896** | **836** | **60** |
+| **Integration Tests** | 493 | 453 | 40 |
+| **Total** | **896** | **840** | **56** |
 
 ### Integration Test Files
 
@@ -37,9 +37,9 @@ test/integration/
 ├── epub.test.ts                 # 4 tests   (4 pass, 0 skip)  - Basic EPUB validation
 ├── ocf.integration.test.ts      # 47 tests  (42 pass, 5 skip) - OCF/ZIP/container
 ├── opf.integration.test.ts      # 119 tests (118 pass, 1 skip)  - Package document
-├── content.integration.test.ts  # 205 tests (170 pass, 35 skip)  - XHTML/CSS/SVG
+├── content.integration.test.ts  # 205 tests (171 pass, 34 skip)  - XHTML/CSS/SVG
 ├── nav.integration.test.ts      # 36 tests  (36 pass, 0 skip)  - Navigation
-└── resources.integration.test.ts # 82 tests  (79 pass, 3 skip)  - Resources/fallbacks
+└── resources.integration.test.ts # 82 tests  (82 pass, 0 skip)  - Resources/fallbacks
 ```
 
 **Note**: Integration tests imported from Java EPUBCheck test suite (`../epubcheck/src/test/resources/epub3/`).
@@ -82,16 +82,16 @@ test/fixtures/
 - **libxml2-wasm XPath limitations (3)** - OPF-014 inline event handlers, CSS-005 conflicting stylesheets, OPF-088 unknown epub:type prefix
 - **Messages suppressed in Java EPUBCheck (13)** - NCX-002 (2), NCX-003 (2), NAV-002 (1), ACC-004 (1), ACC-005 (1), HTM-012 (1), and parameterized variants
 
-**Integration tests (44)** - Unimplemented features and library limitations:
-- **Content (35 skipped)**:
+**Integration tests (40)** - Unimplemented features and library limitations:
+- **Content (34 skipped)**:
   - *RelaxNG/Schematron content schema (~11)*: image map, foreignObject/SVG title HTML validation, microdata, Schematron, IDREF resolution — requires XHTML/SVG schema (libxml2-wasm limitation)
   - *CSS encoding/syntax (5)*: CSS-003/CSS-004 encoding detection, CSS syntax error ordering, CSS-019 false positive
   - *URL/base handling (5)*: Non-conforming URL RSC-020, unparseable host, unregistered scheme HTM-025, base/xml:base external URL RSC-006
   - *ARIA (1)*: aria-describedAt RSC-005
   - *Encoding/DOCTYPE/entities (3)*: External entities HTM-003, encoding detection HTM-058, obsolete DOCTYPE HTM-004
-  - *SVG fixtures (~4)*: SVG epub:type valid (dangling refs), font-face-empty SVG, foreignObject HTML validation
-  - *Other (~6)*: MED-004, file URL, SVG regression
-- **Resources (3 skipped)**: OPF-029 (1), PKG-022 (1), corrupt image (1)
+  - *SVG fixtures (~3)*: SVG epub:type valid (dangling refs), foreignObject HTML validation
+  - *Other (~6)*: file URL, SVG regression
+- **Resources (0 skipped)**: All resource tests now passing
 - **OCF (5 skipped)**: OPF-060 duplicate ZIP entry (1), encryption/signatures schema (4)
 - **OPF (1 skipped)**: OPF-014 remote audio overlays (1)
 
@@ -150,11 +150,13 @@ test/fixtures/
 - **OPF-015** - Declared-but-not-found checks for mathml/switch properties (in addition to scripted/svg)
 - **Nav reference types** - NAV_TOC_LINK/NAV_PAGELIST_LINK correctly distinguished from HYPERLINK
 - **BCP 47** - Full language tag validation (extensions, private-use, grandfathered tags)
+- **Image magic number validation** (MED-004/OPF-029/PKG-022) - Corrupt header detection, MIME type mismatch, wrong file extension
+- **SVG fragment-only reference resolution** - `<use xlink:href="#id">` correctly resolves to current document
 
 ### 🟡 Partially Implemented
 - **Schema validation** - RelaxNG for OPF/container works; XHTML/SVG RelaxNG disabled (libxml2-wasm doesn't support complex patterns)
 - **Content validation** - Core structure good; entity/title/XML version/SSML/discouraged elements/obsolete HTML/duplicate IDs/HTTP-equiv/img src/style-in-body/table border/time datetime/MathML annotations/Content MathML/reserved namespaces/data-* attributes/epub:type vocab/lang mismatch/DPUB-ARIA deprecated/inline CSS/epub:switch-trigger/style attrs/SVG epub:type checks done; missing full ARIA/DOCTYPE/external entities; Schematron validation works
-- **Image validation** - MED-001/OPF-051 work, no format/size checks
+- **Image validation** - MED-001/OPF-051 work; MED-004/OPF-029/PKG-022 magic number checks done
 
 ### ❌ Not Implemented
 - Media overlays validation
@@ -166,7 +168,7 @@ test/fixtures/
 - DOCTYPE obsolete identifiers
 - External entity validation
 - Base URL handling (xml:base, HTML base)
-- Media format validation (image magic numbers, corrupt files)
+- Media format validation (beyond magic numbers — e.g., dimension checks, format-specific parsing)
 
 ---
 

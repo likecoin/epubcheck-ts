@@ -350,6 +350,78 @@ export class ContentValidator {
           this.extractSVGReferences(context, fullPath, opfDir, refValidator);
         }
       }
+
+      this.validateMediaFile(context, item, opfDir);
+    }
+  }
+
+  private validateMediaFile(
+    context: ValidationContext,
+    item: { href: string; mediaType: string; id: string },
+    opfDir: string,
+  ): void {
+    const IMAGE_MAGIC: readonly {
+      mime: string;
+      bytes: readonly number[];
+      extensions: readonly string[];
+    }[] = [
+      { mime: 'image/jpeg', bytes: [0xff, 0xd8], extensions: ['.jpg', '.jpeg', '.jpe'] },
+      { mime: 'image/gif', bytes: [0x47, 0x49, 0x46, 0x38], extensions: ['.gif'] },
+      {
+        mime: 'image/png',
+        bytes: [0x89, 0x50, 0x4e, 0x47],
+        extensions: ['.png'],
+      },
+      { mime: 'image/webp', bytes: [0x52, 0x49, 0x46, 0x46], extensions: ['.webp'] },
+    ];
+
+    const declaredType = item.mediaType;
+    const magicEntry = IMAGE_MAGIC.find((m) => m.mime === declaredType);
+    if (!magicEntry) return;
+
+    const fullPath = resolveManifestHref(opfDir, item.href);
+    const fileData = context.files.get(fullPath);
+    if (!fileData) return;
+
+    const bytes = typeof fileData === 'string' ? new TextEncoder().encode(fileData) : fileData;
+
+    // MED-004: File too small to contain a valid image header
+    if (bytes.length < 4) {
+      pushMessage(context.messages, {
+        id: MessageId.MED_004,
+        message: 'Image file header may be corrupted',
+        location: { path: fullPath },
+      });
+      pushMessage(context.messages, {
+        id: MessageId.PKG_021,
+        message: 'Corrupted image file encountered',
+        location: { path: fullPath },
+      });
+      return;
+    }
+
+    // OPF-029: Magic bytes don't match declared MIME type
+    const headerMatches = magicEntry.bytes.every((b, i) => bytes[i] === b);
+    if (!headerMatches) {
+      const actualType = IMAGE_MAGIC.find((m) => m.bytes.every((b, i) => bytes[i] === b));
+      pushMessage(context.messages, {
+        id: MessageId.OPF_029,
+        message: `File does not match declared media type "${declaredType}"${actualType ? ` (appears to be ${actualType.mime})` : ''}`,
+        location: { path: fullPath },
+      });
+      return;
+    }
+
+    // PKG-022: File extension doesn't match declared MIME type
+    const ext = item.href.includes('.')
+      ? item.href.substring(item.href.lastIndexOf('.')).toLowerCase()
+      : '';
+    if (ext && !magicEntry.extensions.includes(ext)) {
+      pushMessage(context.messages, {
+        id: MessageId.PKG_022,
+        message: `Wrong file extension "${ext}" for declared media type "${declaredType}"`,
+        location: { path: fullPath },
+      });
     }
   }
 
@@ -507,6 +579,17 @@ export class ContentValidator {
             pushMessage(context.messages, {
               id: MessageId.RSC_015,
               message: `SVG "use" element requires a fragment identifier, but found "${href}"`,
+              location: { path, line: useNode.line },
+            });
+            continue;
+          }
+
+          if (href.startsWith('#')) {
+            refValidator.addReference({
+              url: href,
+              targetResource: path,
+              fragment: href.slice(1),
+              type: ReferenceType.SVG_SYMBOL,
               location: { path, line: useNode.line },
             });
             continue;
@@ -3052,10 +3135,12 @@ export class ContentValidator {
       const href = this.getAttribute(linkElem as XmlElement, 'href');
       const rel = this.getAttribute(linkElem as XmlElement, 'rel');
       if (!href) continue;
+      // Java EPUBCheck only registers <link> references with rel="stylesheet"
+      // Skip <link> elements that only have itemprop or other non-rel attributes
+      if (!rel?.toLowerCase().includes('stylesheet')) continue;
 
       const line = linkElem.line;
-      const isStylesheet = rel?.toLowerCase().includes('stylesheet');
-      const type = isStylesheet ? ReferenceType.STYLESHEET : ReferenceType.LINK;
+      const type = ReferenceType.STYLESHEET;
 
       if (href.startsWith('http://') || href.startsWith('https://')) {
         // Still register remote resources
@@ -3292,6 +3377,17 @@ export class ContentValidator {
           pushMessage(context.messages, {
             id: MessageId.RSC_015,
             message: `SVG "use" element requires a fragment identifier, but found "${href}"`,
+            location: { path, line },
+          });
+          continue;
+        }
+
+        if (href.startsWith('#')) {
+          refValidator.addReference({
+            url: href,
+            targetResource: path,
+            fragment: href.slice(1),
+            type: ReferenceType.SVG_SYMBOL,
             location: { path, line },
           });
           continue;

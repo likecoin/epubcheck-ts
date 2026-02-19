@@ -1547,8 +1547,7 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: SVG font-face fixture has many external font references
-    it.skip('should verify empty font-face declarations in SVG', async () => {
+    it('should verify empty font-face declarations in SVG', async () => {
       const data = await loadEpub('valid/font-face-empty-valid-svg.epub');
       const result = await EpubCheck.validate(data);
 

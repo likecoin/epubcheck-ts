@@ -58,22 +58,19 @@ describe('Integration Tests - Resources', () => {
         expectNoErrorsOrWarnings(result);
       });
 
-      // Skip: Corrupt image detection (MED-004) and magic number checks (PKG-021) not implemented
-      it.skip('should report corrupt images (MED-004)', async () => {
+      it('should report corrupt images (MED-004)', async () => {
         const result = await validate('invalid/content/resources-cmt-image-corrupt-error.epub');
         expectError(result, 'MED-004');
       });
 
-      // Skip: Image magic number validation (OPF-029) not implemented
-      it.skip('should report JPEG declared as GIF (OPF-029)', async () => {
+      it('should report JPEG declared as GIF (OPF-029)', async () => {
         const result = await validate(
           'invalid/content/resources-cmt-image-jpeg-declared-as-gif-error.epub',
         );
         expectError(result, 'OPF-029');
       });
 
-      // Skip: File extension validation (PKG-022) not implemented
-      it.skip('should report wrong image extension (PKG-022)', async () => {
+      it('should report wrong image extension (PKG-022)', async () => {
         const result = await validate('warnings/resources-cmt-image-wrong-extension-warning.epub');
         expectWarning(result, 'PKG-022');
       });
