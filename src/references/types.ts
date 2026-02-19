@@ -33,23 +33,25 @@ export enum ReferenceType {
   SEARCH_KEY = 'search-key',
 }
 
+const PUBLICATION_RESOURCE_TYPES = new Set([
+  ReferenceType.GENERIC,
+  ReferenceType.STYLESHEET,
+  ReferenceType.FONT,
+  ReferenceType.IMAGE,
+  ReferenceType.AUDIO,
+  ReferenceType.VIDEO,
+  ReferenceType.TRACK,
+  ReferenceType.MEDIA_OVERLAY,
+  ReferenceType.SVG_SYMBOL,
+  ReferenceType.SVG_PAINT,
+  ReferenceType.SVG_CLIP_PATH,
+]);
+
 /**
  * Check if a reference type is a publication resource reference
  */
 export function isPublicationResourceReference(type: ReferenceType): boolean {
-  return [
-    ReferenceType.GENERIC,
-    ReferenceType.STYLESHEET,
-    ReferenceType.FONT,
-    ReferenceType.IMAGE,
-    ReferenceType.AUDIO,
-    ReferenceType.VIDEO,
-    ReferenceType.TRACK,
-    ReferenceType.MEDIA_OVERLAY,
-    ReferenceType.SVG_SYMBOL,
-    ReferenceType.SVG_PAINT,
-    ReferenceType.SVG_CLIP_PATH,
-  ].includes(type);
+  return PUBLICATION_RESOURCE_TYPES.has(type);
 }
 
 /**

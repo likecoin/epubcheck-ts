@@ -1,8 +1,129 @@
 import { MessageId, pushMessage } from '../messages/index.js';
+import { checkUrlLeaking } from '../references/url.js';
 import type { ValidationContext } from '../types.js';
 import { parseOPF } from './parser.js';
 import type { ManifestItem, PackageDocument } from './types.js';
 import { ITEM_PROPERTIES, LINK_PROPERTIES, SPINE_PROPERTIES } from './types.js';
+
+const VALID_VERSIONS = new Set(['2.0', '3.0', '3.1', '3.2', '3.3']);
+
+const DEPRECATED_MEDIA_TYPES = new Set([
+  'text/x-oeb1-document',
+  'text/x-oeb1-css',
+  'application/x-oeb1-package',
+  'text/x-oeb1-html',
+]);
+
+const VALID_RELATOR_CODES = new Set([
+  'aac',
+  'acq',
+  'aft',
+  'ant',
+  'ard',
+  'arr',
+  'art',
+  'asg',
+  'aus',
+  'aut',
+  'bdd',
+  'ccp',
+  'clb',
+  'clc',
+  'com',
+  'cre',
+  'csl',
+  'ctb',
+  'drd',
+  'dsx',
+  'dte',
+  'edt',
+  'flm',
+  'fmd',
+  'fmo',
+  'fpy',
+  'hnr',
+  'ill',
+  'ilt',
+  'img',
+  'itr',
+  'ldr',
+  'led',
+  'lee',
+  'lel',
+  'lgd',
+  'lrg',
+  'lsa',
+  'lse',
+  'mfr',
+  'mod',
+  'mon',
+  'mus',
+  'nrt',
+  'ogt',
+  'org',
+  'oth',
+  'ove',
+  'pbl',
+  'pdr',
+  'pfr',
+  'pmc',
+  'pnt',
+  'ppa',
+  'prg',
+  'prt',
+  'prv',
+  'pup',
+  'rap',
+  'rce',
+  'red',
+  'rev',
+  'rpc',
+  'rsg',
+  'rtr',
+  'sad',
+  'sgn',
+  'spn',
+  'srv',
+  'stl',
+  'stn',
+  'tce',
+  'trc',
+  'trl',
+  'typ',
+  'vdg',
+  'voc',
+  'wac',
+  'wdc',
+]);
+
+const GRANDFATHERED_LANG_TAGS = new Set([
+  'en-GB-oed',
+  'i-ami',
+  'i-bnn',
+  'i-default',
+  'i-enochian',
+  'i-hak',
+  'i-klingon',
+  'i-lux',
+  'i-mingo',
+  'i-navajo',
+  'i-pwn',
+  'i-tao',
+  'i-tay',
+  'i-tsu',
+  'sgn-BE-FR',
+  'sgn-BE-NL',
+  'sgn-CH-DE',
+  'art-lojban',
+  'cel-gaulish',
+  'no-bok',
+  'no-nyn',
+  'zh-guoyu',
+  'zh-hakka',
+  'zh-min',
+  'zh-min-nan',
+  'zh-xiang',
+]);
 
 /**
  * Validates the OPF (Open Packaging Format) package document
@@ -95,13 +216,7 @@ export class OPFValidator {
     if (this.packageDoc.xmlLangs) {
       for (const lang of this.packageDoc.xmlLangs) {
         if (lang === '') continue;
-        if (lang !== lang.trim()) {
-          pushMessage(context.messages, {
-            id: MessageId.OPF_092,
-            message: `Language tag "${lang}" is not well-formed`,
-            location: { path: opfPath },
-          });
-        } else if (!isValidLanguageTag(lang)) {
+        if (lang !== lang.trim() || !isValidLanguageTag(lang)) {
           pushMessage(context.messages, {
             id: MessageId.OPF_092,
             message: `Language tag "${lang}" is not well-formed`,
@@ -135,11 +250,10 @@ export class OPFValidator {
   private validatePackageAttributes(context: ValidationContext, opfPath: string): void {
     if (!this.packageDoc) return;
 
-    const validVersions = new Set(['2.0', '3.0', '3.1', '3.2', '3.3']);
-    if (!validVersions.has(this.packageDoc.version)) {
+    if (!VALID_VERSIONS.has(this.packageDoc.version)) {
       pushMessage(context.messages, {
         id: MessageId.OPF_001,
-        message: `Invalid package version "${this.packageDoc.version}"; must be one of: ${Array.from(validVersions).join(', ')}`,
+        message: `Invalid package version "${this.packageDoc.version}"; must be one of: ${Array.from(VALID_VERSIONS).join(', ')}`,
         location: { path: opfPath },
       });
     }
@@ -261,102 +375,7 @@ export class OPFValidator {
         const opfRole = dc.attributes['opf:role'];
         if (opfRole?.startsWith('marc:')) {
           const relatorCode = opfRole.substring(5);
-          const validRelatorCodes = new Set([
-            'arr',
-            'aut',
-            'aut',
-            'ccp',
-            'com',
-            'ctb',
-            'csl',
-            'edt',
-            'ill',
-            'itr',
-            'pbl',
-            'pdr',
-            'prt',
-            'trl',
-            'cre',
-            'art',
-            'ctb',
-            'edt',
-            'pfr',
-            'red',
-            'rev',
-            'spn',
-            'dsx',
-            'pmc',
-            'dte',
-            'ove',
-            'trc',
-            'ldr',
-            'led',
-            'prg',
-            'rap',
-            'rce',
-            'rpc',
-            'rtr',
-            'sad',
-            'sgn',
-            'tce',
-            'aac',
-            'acq',
-            'ant',
-            'arr',
-            'art',
-            'ard',
-            'asg',
-            'aus',
-            'aft',
-            'bdd',
-            'bdd',
-            'clb',
-            'clc',
-            'drd',
-            'edt',
-            'edt',
-            'fmd',
-            'flm',
-            'fmo',
-            'fpy',
-            'hnr',
-            'ill',
-            'ilt',
-            'img',
-            'itr',
-            'lrg',
-            'lsa',
-            'led',
-            'lee',
-            'lel',
-            'lgd',
-            'lse',
-            'mfr',
-            'mod',
-            'mon',
-            'mus',
-            'nrt',
-            'ogt',
-            'org',
-            'oth',
-            'pnt',
-            'ppa',
-            'prv',
-            'pup',
-            'red',
-            'rev',
-            'rsg',
-            'srv',
-            'stn',
-            'stl',
-            'trc',
-            'typ',
-            'vdg',
-            'voc',
-            'wac',
-            'wdc',
-          ]);
-          if (!validRelatorCodes.has(relatorCode)) {
+          if (!VALID_RELATOR_CODES.has(relatorCode)) {
             pushMessage(context.messages, {
               id: MessageId.OPF_052,
               message: `Unknown MARC relator code "${relatorCode}" in dc:creator`,
@@ -726,13 +745,7 @@ export class OPFValidator {
       }
 
       // Check for deprecated media types (OEB 1.x)
-      const deprecatedTypes = new Set<string>([
-        'text/x-oeb1-document',
-        'text/x-oeb1-css',
-        'application/x-oeb1-package',
-        'text/x-oeb1-html',
-      ]);
-      if (deprecatedTypes.has(item.mediaType)) {
+      if (DEPRECATED_MEDIA_TYPES.has(item.mediaType)) {
         pushMessage(context.messages, {
           id: MessageId.OPF_037,
           message: `Found deprecated media-type "${item.mediaType}"`,
@@ -809,6 +822,7 @@ export class OPFValidator {
           item.mediaType.startsWith('font/') ||
           item.mediaType === 'application/font-sfnt' ||
           item.mediaType === 'application/font-woff' ||
+          item.mediaType === 'application/font-woff2' ||
           item.mediaType === 'application/vnd.ms-opentype';
 
         const inSpine = this.packageDoc.spine.some((s) => s.idref === item.id);
@@ -1247,36 +1261,7 @@ function isValidLanguageTag(tag: string): boolean {
   if (pattern.test(tag)) return true;
   // Private-use only tags (e.g., "x-custom")
   if (/^x(-[a-zA-Z\d]{1,8})+$/.test(tag)) return true;
-  // Grandfathered irregular tags
-  const grandfathered = new Set([
-    'en-GB-oed',
-    'i-ami',
-    'i-bnn',
-    'i-default',
-    'i-enochian',
-    'i-hak',
-    'i-klingon',
-    'i-lux',
-    'i-mingo',
-    'i-navajo',
-    'i-pwn',
-    'i-tao',
-    'i-tay',
-    'i-tsu',
-    'sgn-BE-FR',
-    'sgn-BE-NL',
-    'sgn-CH-DE',
-    'art-lojban',
-    'cel-gaulish',
-    'no-bok',
-    'no-nyn',
-    'zh-guoyu',
-    'zh-hakka',
-    'zh-min',
-    'zh-min-nan',
-    'zh-xiang',
-  ]);
-  return grandfathered.has(tag);
+  return GRANDFATHERED_LANG_TAGS.has(tag);
 }
 
 /**
@@ -1320,31 +1305,6 @@ function tryDecodeUriComponent(encoded: string): string {
   } catch {
     // If decoding fails (e.g., invalid encoding), return original
     return encoded;
-  }
-}
-
-/**
- * Check if a URL "leaks" outside the container
- *
- * Uses the same trick as Java EPUBCheck: resolve against two different test bases.
- * If the resolved URL doesn't start with both test base paths, it "leaks" above root.
- *
- * Example: "../../../../EPUB/content.xhtml" would resolve to "/EPUB/content.xhtml"
- * from base "A/" but to something outside from base "B/"
- */
-function checkUrlLeaking(href: string): boolean {
-  const TEST_BASE_A = 'https://a.example.org/A/';
-  const TEST_BASE_B = 'https://b.example.org/B/';
-
-  try {
-    const urlA = new URL(href, TEST_BASE_A).toString();
-    const urlB = new URL(href, TEST_BASE_B).toString();
-
-    // If either resolved URL doesn't start with its test base path, the URL leaks
-    return !urlA.startsWith(TEST_BASE_A) || !urlB.startsWith(TEST_BASE_B);
-  } catch {
-    // Invalid URL, don't report as leaking (other validation will catch it)
-    return false;
   }
 }
 

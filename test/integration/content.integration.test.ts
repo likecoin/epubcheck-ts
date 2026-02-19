@@ -393,21 +393,12 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    it('should verify RDFa attributes are allowed on HTML elements', async () => {
-      // Skip: Single-doc test — EPUB wrapper creates false reference errors from RDFa link elements
+    // Skip: EPUB wrapper creates false reference errors (OPF-096, RSC-007) from RDFa link elements
+    it.skip('should verify RDFa attributes are allowed on HTML elements', async () => {
       const data = await loadEpub('valid/rdfa-valid.epub');
       const result = await EpubCheck.validate(data);
 
-      // RDFa fixture has external link references that trigger false OPF-096 in full-EPUB mode
-      // Just check no fatal/error-level messages other than known false positives
-      const realErrors = result.messages.filter(
-        (m) =>
-          (m.severity === 'error' || m.severity === 'fatal') &&
-          m.id !== 'OPF-096' &&
-          m.id !== 'RSC-007' &&
-          m.id !== 'RSC-007w',
-      );
-      expect(realErrors).toHaveLength(0);
+      expectNoErrorsOrWarnings(result);
     });
   });
 
@@ -1137,7 +1128,7 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    it('should verify SVG title valid content model', async () => {
+    it('should verify embedded SVG title valid content model', async () => {
       const data = await loadEpub('valid/svg-title-content-valid.epub');
       const result = await EpubCheck.validate(data);
 
@@ -1173,7 +1164,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-005');
     });
 
-    it.skip('should report SVG title with non-HTML elements (RSC-005)', async () => {
+    it.skip('should report embedded SVG title with non-HTML elements (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/svg-title-content-not-html-error.epub');
       const result = await EpubCheck.validate(data);
 

@@ -435,10 +435,15 @@ function parseAttributes(attrsStr: string): Record<string, string> {
     const name = match[1];
     const value = match[2];
     if (name !== undefined && value !== undefined) {
-      // Remove namespace prefix for common attributes
+      attrs[name] = value;
+      // Also store by local name for convenience
       const colonIdx = name.indexOf(':');
-      const localName = colonIdx >= 0 ? name.slice(colonIdx + 1) : name;
-      attrs[localName] = value;
+      if (colonIdx >= 0) {
+        const localName = name.slice(colonIdx + 1);
+        if (!(localName in attrs)) {
+          attrs[localName] = value;
+        }
+      }
     }
   }
   return attrs;

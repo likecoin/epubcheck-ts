@@ -16,6 +16,17 @@ const DISCOURAGED_ELEMENTS = new Set(['base', 'embed', 'rp']);
 
 const ABSOLUTE_URI_RE = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
 
+const IMAGE_MAGIC: readonly {
+  mime: string;
+  bytes: readonly number[];
+  extensions: readonly string[];
+}[] = [
+  { mime: 'image/jpeg', bytes: [0xff, 0xd8], extensions: ['.jpg', '.jpeg', '.jpe'] },
+  { mime: 'image/gif', bytes: [0x47, 0x49, 0x46, 0x38], extensions: ['.gif'] },
+  { mime: 'image/png', bytes: [0x89, 0x50, 0x4e, 0x47], extensions: ['.png'] },
+  { mime: 'image/webp', bytes: [0x52, 0x49, 0x46, 0x46], extensions: ['.webp'] },
+];
+
 function stripMimeParams(t: string): string {
   const idx = t.indexOf(';');
   return (idx >= 0 ? t.substring(0, idx) : t).trim();
@@ -365,21 +376,6 @@ export class ContentValidator {
     item: { href: string; mediaType: string; id: string },
     opfDir: string,
   ): void {
-    const IMAGE_MAGIC: readonly {
-      mime: string;
-      bytes: readonly number[];
-      extensions: readonly string[];
-    }[] = [
-      { mime: 'image/jpeg', bytes: [0xff, 0xd8], extensions: ['.jpg', '.jpeg', '.jpe'] },
-      { mime: 'image/gif', bytes: [0x47, 0x49, 0x46, 0x38], extensions: ['.gif'] },
-      {
-        mime: 'image/png',
-        bytes: [0x89, 0x50, 0x4e, 0x47],
-        extensions: ['.png'],
-      },
-      { mime: 'image/webp', bytes: [0x52, 0x49, 0x46, 0x46], extensions: ['.webp'] },
-    ];
-
     const declaredType = item.mediaType;
     const magicEntry = IMAGE_MAGIC.find((m) => m.mime === declaredType);
     if (!magicEntry) return;
@@ -2914,8 +2910,6 @@ export class ContentValidator {
             });
             continue;
           }
-
-          void contentAttr;
         } else {
           // Reflowable document viewport validation (HTM-060b)
           pushMessage(context.messages, {
@@ -2964,7 +2958,7 @@ export class ContentValidator {
 
     // Build a map from anchor line numbers to nav-specific reference types
     // when processing a nav document, to distinguish toc/page-list links from regular hyperlinks
-    const navAnchorTypes = new Map<number, ReferenceType>();
+    const navAnchorTypes = new Map<string, ReferenceType>();
     if (isNavDocument) {
       const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
       const navElements = root.find('.//html:nav', HTML_NS);
@@ -2993,7 +2987,8 @@ export class ContentValidator {
 
         const navAnchors = navElem.find('.//html:a[@href]', HTML_NS);
         for (const a of navAnchors) {
-          navAnchorTypes.set(a.line, refType);
+          const anchorHref = this.getAttribute(a as XmlElement, 'href') ?? '';
+          navAnchorTypes.set(`${a.line}:${anchorHref}`, refType);
         }
       }
     }
@@ -3014,7 +3009,7 @@ export class ContentValidator {
 
       const line = link.line;
       const refType = isNavDocument
-        ? (navAnchorTypes.get(line) ?? ReferenceType.HYPERLINK)
+        ? (navAnchorTypes.get(`${line}:${href}`) ?? ReferenceType.HYPERLINK)
         : ReferenceType.HYPERLINK;
 
       if (ABSOLUTE_URI_RE.test(href)) {
