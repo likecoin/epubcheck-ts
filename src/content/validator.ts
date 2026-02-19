@@ -16,6 +16,11 @@ const DISCOURAGED_ELEMENTS = new Set(['base', 'embed', 'rp']);
 
 const ABSOLUTE_URI_RE = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
 
+function stripMimeParams(t: string): string {
+  const idx = t.indexOf(';');
+  return (idx >= 0 ? t.substring(0, idx) : t).trim();
+}
+
 // EPUB Structural Semantics Vocabulary — deprecated values (OPF-086b)
 const EPUB_SSV_DEPRECATED = new Set([
   'annoref',
@@ -559,60 +564,7 @@ export class ContentValidator {
         // empty
       }
 
-      // Extract SVG use elements (RSC-015: must have fragment identifier)
-      try {
-        const svgUseXlink = root.find('.//svg:use[@xlink:href]', {
-          svg: 'http://www.w3.org/2000/svg',
-          xlink: 'http://www.w3.org/1999/xlink',
-        });
-        const svgUseHref = root.find('.//svg:use[@href]', {
-          svg: 'http://www.w3.org/2000/svg',
-        });
-        for (const useNode of [...svgUseXlink, ...svgUseHref]) {
-          const useElem = useNode as XmlElement;
-          const href =
-            this.getAttribute(useElem, 'xlink:href') ?? this.getAttribute(useElem, 'href');
-          if (href === null) continue;
-          if (href.startsWith('http://') || href.startsWith('https://')) continue;
-
-          if (href === '' || !href.includes('#')) {
-            pushMessage(context.messages, {
-              id: MessageId.RSC_015,
-              message: `SVG "use" element requires a fragment identifier, but found "${href}"`,
-              location: { path, line: useNode.line },
-            });
-            continue;
-          }
-
-          if (href.startsWith('#')) {
-            refValidator.addReference({
-              url: href,
-              targetResource: path,
-              fragment: href.slice(1),
-              type: ReferenceType.SVG_SYMBOL,
-              location: { path, line: useNode.line },
-            });
-            continue;
-          }
-
-          const resolvedPath = this.resolveRelativePath(docDir, href, opfDir);
-          const hashIndex = resolvedPath.indexOf('#');
-          const targetResource = hashIndex >= 0 ? resolvedPath.slice(0, hashIndex) : path;
-          const fragment = hashIndex >= 0 ? resolvedPath.slice(hashIndex + 1) : undefined;
-          const useRef: Parameters<typeof refValidator.addReference>[0] = {
-            url: href,
-            targetResource,
-            type: ReferenceType.SVG_SYMBOL,
-            location: { path, line: useNode.line },
-          };
-          if (fragment) {
-            useRef.fragment = fragment;
-          }
-          refValidator.addReference(useRef);
-        }
-      } catch {
-        // empty
-      }
+      this.extractSVGUseReferences(context, path, root, docDir, opfDir, refValidator);
     } finally {
       doc.dispose();
     }
@@ -661,6 +613,70 @@ export class ContentValidator {
           location: { path, line },
         });
       }
+    }
+  }
+
+  private extractSVGUseReferences(
+    context: ValidationContext,
+    path: string,
+    root: XmlElement,
+    docDir: string,
+    opfDir: string,
+    refValidator: ReferenceValidator,
+  ): void {
+    try {
+      const svgUseXlink = root.find('.//svg:use[@xlink:href]', {
+        svg: 'http://www.w3.org/2000/svg',
+        xlink: 'http://www.w3.org/1999/xlink',
+      });
+      const svgUseHref = root.find('.//svg:use[@href]', {
+        svg: 'http://www.w3.org/2000/svg',
+      });
+      for (const useNode of [...svgUseXlink, ...svgUseHref]) {
+        const useElem = useNode as XmlElement;
+        const href = this.getAttribute(useElem, 'xlink:href') ?? this.getAttribute(useElem, 'href');
+        if (href === null) continue;
+        if (href.startsWith('http://') || href.startsWith('https://')) continue;
+
+        const line = useNode.line;
+
+        if (href === '' || !href.includes('#')) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_015,
+            message: `SVG "use" element requires a fragment identifier, but found "${href}"`,
+            location: { path, line },
+          });
+          continue;
+        }
+
+        if (href.startsWith('#')) {
+          refValidator.addReference({
+            url: href,
+            targetResource: path,
+            fragment: href.slice(1),
+            type: ReferenceType.SVG_SYMBOL,
+            location: { path, line },
+          });
+          continue;
+        }
+
+        const resolvedPath = this.resolveRelativePath(docDir, href, opfDir);
+        const hashIndex = resolvedPath.indexOf('#');
+        const targetResource = hashIndex >= 0 ? resolvedPath.slice(0, hashIndex) : path;
+        const fragment = hashIndex >= 0 ? resolvedPath.slice(hashIndex + 1) : undefined;
+        const useRef: Parameters<typeof refValidator.addReference>[0] = {
+          url: href,
+          targetResource,
+          type: ReferenceType.SVG_SYMBOL,
+          location: { path, line },
+        };
+        if (fragment) {
+          useRef.fragment = fragment;
+        }
+        refValidator.addReference(useRef);
+      }
+    } catch {
+      // XPath may fail on malformed documents
     }
   }
 
@@ -1866,8 +1882,8 @@ export class ContentValidator {
     const obsoleteGlobalAttrs = ['contextmenu', 'dropzone'];
     for (const attr of obsoleteGlobalAttrs) {
       try {
-        const el = root.get(`.//*[@${attr}]`);
-        if (el) {
+        const elements = root.find(`.//*[@${attr}]`);
+        for (const el of elements) {
           pushMessage(context.messages, {
             id: MessageId.RSC_005,
             message: `The "${attr}" attribute is obsolete`,
@@ -1875,7 +1891,7 @@ export class ContentValidator {
           });
         }
       } catch {
-        // empty
+        // XPath may fail on malformed documents
       }
     }
 
@@ -1887,8 +1903,8 @@ export class ContentValidator {
     ];
     for (const [attr, xpath] of obsoleteElementAttrs) {
       try {
-        const el = root.get(xpath, HTML_NS);
-        if (el) {
+        const elements = root.find(xpath, HTML_NS);
+        for (const el of elements) {
           pushMessage(context.messages, {
             id: MessageId.RSC_005,
             message: `The "${attr}" attribute is obsolete`,
@@ -1896,14 +1912,14 @@ export class ContentValidator {
           });
         }
       } catch {
-        // empty
+        // XPath may fail on malformed documents
       }
     }
 
     // Obsolete elements
     try {
-      const keygen = root.get('.//html:keygen', HTML_NS);
-      if (keygen) {
+      const keygens = root.find('.//html:keygen', HTML_NS);
+      for (const keygen of keygens) {
         pushMessage(context.messages, {
           id: MessageId.RSC_005,
           message: 'The "keygen" element is obsolete',
@@ -1911,13 +1927,13 @@ export class ContentValidator {
         });
       }
     } catch {
-      // empty
+      // XPath may fail on malformed documents
     }
 
     // Obsolete menu features: type attribute on menu, command element
     try {
-      const menuType = root.get('.//html:menu[@type]', HTML_NS);
-      if (menuType) {
+      const menuTypes = root.find('.//html:menu[@type]', HTML_NS);
+      for (const menuType of menuTypes) {
         pushMessage(context.messages, {
           id: MessageId.RSC_005,
           message: 'The "type" attribute on the "menu" element is obsolete',
@@ -1925,11 +1941,11 @@ export class ContentValidator {
         });
       }
     } catch {
-      // empty
+      // XPath may fail on malformed documents
     }
     try {
-      const command = root.get('.//html:command', HTML_NS);
-      if (command) {
+      const commands = root.find('.//html:command', HTML_NS);
+      for (const command of commands) {
         pushMessage(context.messages, {
           id: MessageId.RSC_005,
           message: 'The "command" element is obsolete',
@@ -1937,7 +1953,7 @@ export class ContentValidator {
         });
       }
     } catch {
-      // empty
+      // XPath may fail on malformed documents
     }
   }
 
@@ -2222,6 +2238,20 @@ export class ContentValidator {
     const EPUB_NS = { epub: 'http://www.idpf.org/2007/ops' };
     try {
       const triggers = root.find('.//epub:trigger', EPUB_NS);
+      if (triggers.length === 0) return;
+
+      // Collect all IDs in the document once for IDREF checking
+      const allIds = new Set<string>();
+      try {
+        const idElements = root.find('.//*[@id]');
+        for (const el of idElements) {
+          const idAttr = this.getAttribute(el as XmlElement, 'id');
+          if (idAttr) allIds.add(idAttr);
+        }
+      } catch {
+        // XPath may fail on malformed documents
+      }
+
       for (const trigger of triggers) {
         pushMessage(context.messages, {
           id: MessageId.RSC_017,
@@ -2230,18 +2260,6 @@ export class ContentValidator {
         });
 
         const triggerElem = trigger as XmlElement;
-
-        // Collect all IDs in the document for IDREF checking
-        const allIds = new Set<string>();
-        try {
-          const idElements = root.find('.//*[@id]');
-          for (const el of idElements) {
-            const idAttr = this.getAttribute(el as XmlElement, 'id');
-            if (idAttr) allIds.add(idAttr);
-          }
-        } catch {
-          // empty
-        }
 
         // Check ref attribute
         const ref = triggerElem.attr('ref');
@@ -2264,7 +2282,7 @@ export class ContentValidator {
         }
       }
     } catch {
-      // empty
+      // XPath may fail on malformed documents
     }
   }
 
@@ -3355,62 +3373,7 @@ export class ContentValidator {
       refValidator.addReference(svgImgRef);
     }
 
-    // Extract SVG use elements (RSC-015: must have fragment identifier)
-    try {
-      const svgUseXlink = root.find('.//svg:use[@xlink:href]', {
-        svg: 'http://www.w3.org/2000/svg',
-        xlink: 'http://www.w3.org/1999/xlink',
-      });
-      const svgUseHref = root.find('.//svg:use[@href]', {
-        svg: 'http://www.w3.org/2000/svg',
-      });
-      for (const useNode of [...svgUseXlink, ...svgUseHref]) {
-        const useElem = useNode as XmlElement;
-        const href = this.getAttribute(useElem, 'xlink:href') ?? this.getAttribute(useElem, 'href');
-        if (href === null) continue;
-
-        const line = useNode.line;
-
-        if (href.startsWith('http://') || href.startsWith('https://')) continue;
-
-        if (href === '' || !href.includes('#')) {
-          pushMessage(context.messages, {
-            id: MessageId.RSC_015,
-            message: `SVG "use" element requires a fragment identifier, but found "${href}"`,
-            location: { path, line },
-          });
-          continue;
-        }
-
-        if (href.startsWith('#')) {
-          refValidator.addReference({
-            url: href,
-            targetResource: path,
-            fragment: href.slice(1),
-            type: ReferenceType.SVG_SYMBOL,
-            location: { path, line },
-          });
-          continue;
-        }
-
-        const resolvedPath = this.resolveRelativePath(docDir, href, opfDir);
-        const hashIndex = resolvedPath.indexOf('#');
-        const targetResource = hashIndex >= 0 ? resolvedPath.slice(0, hashIndex) : path;
-        const fragment = hashIndex >= 0 ? resolvedPath.slice(hashIndex + 1) : undefined;
-        const useRef: Parameters<typeof refValidator.addReference>[0] = {
-          url: href,
-          targetResource,
-          type: ReferenceType.SVG_SYMBOL,
-          location: { path, line },
-        };
-        if (fragment) {
-          useRef.fragment = fragment;
-        }
-        refValidator.addReference(useRef);
-      }
-    } catch {
-      // empty
-    }
+    this.extractSVGUseReferences(context, path, root, docDir, opfDir, refValidator);
 
     // Check for poster images on video elements
     const videos = root.find('.//html:video[@poster]', { html: 'http://www.w3.org/1999/xhtml' });
@@ -3822,13 +3785,8 @@ export class ContentValidator {
     const resource = registry.getResource(targetResource);
     if (!resource) return;
 
-    // Strip parameters from both type attribute and manifest type before comparison
-    const stripParams = (t: string): string => {
-      const idx = t.indexOf(';');
-      return (idx >= 0 ? t.substring(0, idx) : t).trim();
-    };
-    const declaredType = stripParams(typeAttr);
-    const manifestType = stripParams(resource.mimeType);
+    const declaredType = stripMimeParams(typeAttr);
+    const manifestType = stripMimeParams(resource.mimeType);
 
     if (declaredType && declaredType !== manifestType) {
       pushMessage(context.messages, {
@@ -3929,12 +3887,8 @@ export class ContentValidator {
             const resolvedPath = this.resolveRelativePath(docDir, sourceUrl, opfDir);
             const resource = registry.getResource(resolvedPath);
             if (resource) {
-              const stripParams = (t: string): string => {
-                const idx = t.indexOf(';');
-                return (idx >= 0 ? t.substring(0, idx) : t).trim();
-              };
-              const declaredType = stripParams(typeAttr);
-              const manifestType = stripParams(resource.mimeType);
+              const declaredType = stripMimeParams(typeAttr);
+              const manifestType = stripMimeParams(resource.mimeType);
               if (declaredType && declaredType !== manifestType) {
                 pushMessage(context.messages, {
                   id: MessageId.OPF_013,
