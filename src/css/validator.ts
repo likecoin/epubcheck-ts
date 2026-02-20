@@ -259,14 +259,6 @@ export class CSSValidator {
       });
     }
 
-    // CSS-019: position: absolute is discouraged
-    if (value === 'absolute') {
-      pushMessage(context.messages, {
-        id: MessageId.CSS_019,
-        message: 'CSS property "position: absolute" should be used with caution in EPUB',
-        location,
-      });
-    }
   }
 
   /**

@@ -61,12 +61,11 @@ describe('CSSValidator', () => {
       expect(messages[0]?.message).toContain('position: fixed');
     });
 
-    it('should warn about position: absolute (CSS-019)', () => {
+    it('should not warn about position: absolute (Java has no such check)', () => {
       const css = '.popup { position: absolute; left: 0; }';
       validator.validate(context, css, 'OEBPS/styles.css');
       const warnings = context.messages.filter((m) => m.id === 'CSS-019');
-      expect(warnings).toHaveLength(1);
-      expect(warnings[0]?.severity).toBe('warning');
+      expect(warnings).toHaveLength(0);
     });
 
     it('should not warn about position: relative', () => {

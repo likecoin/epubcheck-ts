@@ -395,7 +395,8 @@ export class ReferenceValidator {
       resource &&
       parsedMimeTypes.includes(resource.mimeType) &&
       !isRemoteURL(resourcePath) &&
-      !fragment.includes('svgView(')
+      !fragment.includes('svgView(') &&
+      reference.type !== ReferenceType.SVG_SYMBOL
     ) {
       if (!this.registry.hasID(resourcePath, fragment)) {
         pushMessage(context.messages, {

@@ -147,8 +147,7 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: False CSS-019 warning on position:absolute in this fixture
-    it.skip('should not check invalid CSS font-size values (out of scope)', async () => {
+    it('should not check invalid CSS font-size values (out of scope)', async () => {
       const data = await loadEpub('valid/content-css-font-size-value-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -196,8 +195,7 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: Obsolete DOCTYPE detection not implemented (HTM-004 check doesn't scan parsed documents)
-    it.skip('should report doctype with obsolete public identifier (HTM-004)', async () => {
+    it('should report doctype with obsolete public identifier (HTM-004)', async () => {
       const data = await loadEpub('invalid/content/doctype-obsolete-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -237,8 +235,7 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: External entity detection (HTM-003) not implemented
-    it.skip('should report external entities (HTM-003)', async () => {
+    it('should report external entities (HTM-003)', async () => {
       const data = await loadEpub('invalid/content/entities-external-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -1530,8 +1527,7 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: SVG epub:type fixture has external xlink:href references
-    it.skip('should verify epub:type on SVG structural elements', async () => {
+    it('should verify epub:type on SVG structural elements', async () => {
       const data = await loadEpub('valid/epubtype-valid-svg.epub');
       const result = await EpubCheck.validate(data);
 

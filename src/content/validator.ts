@@ -854,6 +854,38 @@ export class ContentValidator {
     // Check for unescaped ampersands before parsing
     this.checkUnescapedAmpersands(context, path, content);
 
+    // HTM-004 (EPUB 3): Obsolete/irregular DOCTYPE — scan raw string since libxml2 doesn't expose DOCTYPE
+    if (context.version !== '2.0') {
+      const doctypeMatch = /<!DOCTYPE\s+html\b([\s\S]*?)>/i.exec(content);
+      if (doctypeMatch) {
+        const inner = doctypeMatch[1] ?? '';
+        const hasPublic = /\bPUBLIC\b/i.test(inner);
+        const hasSystem = /\bSYSTEM\b/i.test(inner);
+        const isLegacyCompat = inner.includes('about:legacy-compat');
+        if (hasPublic || (hasSystem && !isLegacyCompat)) {
+          pushMessage(context.messages, {
+            id: MessageId.HTM_004,
+            message: 'Irregular DOCTYPE found; expected "<!DOCTYPE html>"',
+            location: { path },
+          });
+        }
+      }
+    }
+
+    // HTM-003 (EPUB 3): External entity declarations not allowed
+    if (context.version !== '2.0') {
+      const entityRe = /<!ENTITY\s+(?:%\s+)?\w+\s+(?:SYSTEM|PUBLIC)\s/gi;
+      let entityMatch = entityRe.exec(content);
+      while (entityMatch) {
+        pushMessage(context.messages, {
+          id: MessageId.HTM_003,
+          message: 'External entities are not allowed in EPUB 3 content documents',
+          location: { path },
+        });
+        entityMatch = entityRe.exec(content);
+      }
+    }
+
     // Check for XML 1.1 before parsing (libxml2 may reject it)
     const xmlVersionMatch = /<\?xml\s[^?]*version\s*=\s*["']([^"']+)["']/.exec(content);
     if (xmlVersionMatch?.[1] && xmlVersionMatch[1] !== '1.0') {

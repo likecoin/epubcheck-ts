@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~90% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs done |
 
-**Overall: ~88% complete (888 tests passing, 57 skipped)**
+**Overall: ~88% complete (892 tests passing, 53 skipped)**
 
 ---
 
@@ -27,8 +27,8 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 403 | 387 | 16 |
-| **Integration Tests** | 542 | 501 | 41 |
-| **Total** | **945** | **888** | **57** |
+| **Integration Tests** | 542 | 505 | 37 |
+| **Total** | **945** | **892** | **53** |
 
 ### Integration Test Files
 
@@ -37,7 +37,7 @@ test/integration/
 ├── epub.test.ts                 # 4 tests   (4 pass, 0 skip)  - Basic EPUB validation
 ├── ocf.integration.test.ts      # 47 tests  (42 pass, 5 skip) - OCF/ZIP/container
 ├── opf.integration.test.ts      # 167 tests (166 pass, 1 skip)  - Package document
-├── content.integration.test.ts  # 205 tests (170 pass, 35 skip)  - XHTML/CSS/SVG
+├── content.integration.test.ts  # 205 tests (174 pass, 31 skip)  - XHTML/CSS/SVG
 ├── nav.integration.test.ts      # 36 tests  (36 pass, 0 skip)  - Navigation
 └── resources.integration.test.ts # 82 tests  (82 pass, 0 skip)  - Resources/fallbacks
 ```
