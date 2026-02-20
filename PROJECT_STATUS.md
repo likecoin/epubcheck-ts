@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~90% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs done |
 
-**Overall: ~87% complete (840 tests passing, 56 skipped)**
+**Overall: ~88% complete (888 tests passing, 57 skipped)**
 
 ---
 
@@ -27,8 +27,8 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 403 | 387 | 16 |
-| **Integration Tests** | 493 | 453 | 40 |
-| **Total** | **896** | **840** | **56** |
+| **Integration Tests** | 542 | 501 | 41 |
+| **Total** | **945** | **888** | **57** |
 
 ### Integration Test Files
 
@@ -36,8 +36,8 @@ Quick reference for implementation progress vs Java EPUBCheck.
 test/integration/
 ├── epub.test.ts                 # 4 tests   (4 pass, 0 skip)  - Basic EPUB validation
 ├── ocf.integration.test.ts      # 47 tests  (42 pass, 5 skip) - OCF/ZIP/container
-├── opf.integration.test.ts      # 119 tests (118 pass, 1 skip)  - Package document
-├── content.integration.test.ts  # 205 tests (171 pass, 34 skip)  - XHTML/CSS/SVG
+├── opf.integration.test.ts      # 167 tests (166 pass, 1 skip)  - Package document
+├── content.integration.test.ts  # 205 tests (170 pass, 35 skip)  - XHTML/CSS/SVG
 ├── nav.integration.test.ts      # 36 tests  (36 pass, 0 skip)  - Navigation
 └── resources.integration.test.ts # 82 tests  (82 pass, 0 skip)  - Resources/fallbacks
 ```
@@ -48,16 +48,16 @@ test/integration/
 
 ```
 test/fixtures/
-├── valid/                 # 219 valid EPUBs
+├── valid/                 # 236 valid EPUBs
 ├── invalid/
 │   ├── ocf/              # 33 OCF error cases
-│   ├── opf/              # 85 OPF error cases
+│   ├── opf/              # 113 OPF error cases
 │   ├── content/          # 121 content error cases
 │   └── nav/              # 18 navigation error cases
-└── warnings/             # 27 warning cases
+└── warnings/             # 30 warning cases
 ```
 
-**Total**: 503 EPUB test fixtures (imported from Java EPUBCheck)
+**Total**: 551 EPUB test fixtures (imported from Java EPUBCheck)
 
 ### Quality: ⭐⭐⭐⭐ (4/5) for implemented features
 
@@ -112,7 +112,8 @@ test/fixtures/
 - **CSS validation** (@font-face, @import, url(), position, forbidden properties CSS-001)
 - **Navigation** (NAV-001/002/010/011) + content model, landmarks, labels, hidden attribute, reading order
 - **OPF Schematron-equivalent** (RSC-005 duplicate IDs/refines/modified/multiplicity, OPF-065 cycles, OPF-092 xml:lang, OPF-098 link-to-OPF, RSC-017 bindings/refines, RSC-020 spaces)
-- **Link element validation** (RSC-007w warning for missing resources, OPF-093 missing media-type)
+- **Link element validation** (RSC-007w warning for missing resources, OPF-093 missing media-type, OPF-086 deprecated rel, OPF-089 alternate+others, OPF-094 record/voicing need media-type, OPF-095 voicing audio type, RSC-005 record/voicing refines)
+- **Meta-properties vocab validation** (D-vocabulary: authority/term/belongs-to-collection/collection-type/display-seq/file-as/group-position/identifier-type/meta-auth/role/source-of/title-type)
 - **URL leaking detection** (RSC-026 for path-absolute URLs)
 - **Scripted property** (OPF-014)
 - **MathML/SVG properties** (OPF-014)
@@ -198,9 +199,9 @@ test/fixtures/
 | 07-navigation-document | 40 | 36 | 36 | 90% |
 | 08-layout | 51 | 0 | 0 | 0% |
 | 09-media-overlays | 51 | 0 | 0 | 0% |
-| D-vocabularies (ARIA) | 56 | 0 | 0 | 0% |
+| D-vocabularies (ARIA) | 56 | 48 | 48 | 86% |
 | Other | 6 | 0 | 0 | 0% |
-| **Total** | **719** | **493** | **439** | **61%** |
+| **Total** | **719** | **541** | **487** | **68%** |
 
 ### E2E Porting Priorities
 
@@ -208,11 +209,11 @@ test/fixtures/
 1. **05-package-document** (121 scenarios) - 98% coverage (119 ported, 118 passing)
 2. **07-navigation-document** (40 scenarios) - 90% coverage (36 ported, all passing)
 3. **04-ocf** (61 scenarios) - 69% coverage (47 ported, 42 passing)
+4. **D-vocabularies** (56 scenarios) - 86% coverage (48 ported, 48 passing); remaining 8 need media overlays / rendition
 
 **High Priority** - Largest remaining gaps:
-4. **06-content-document** (215 scenarios) - 70% coverage, needs ARIA/DOCTYPE/entity validation
-5. **03-resources** (113 scenarios) - 70% coverage, OPF-013/remote fonts/SVG stylesheets done
-6. **D-vocabularies** (56 scenarios) - 0% coverage, ARIA roles/epub:type
+5. **06-content-document** (215 scenarios) - 70% coverage, needs ARIA/DOCTYPE/entity validation
+6. **03-resources** (113 scenarios) - 70% coverage, OPF-013/remote fonts/SVG stylesheets done
 
 **Low Priority** - Specialized features:
 7. **08-layout** (51 scenarios) - Rendition/viewport (not implemented)
@@ -228,7 +229,7 @@ All planned OPF (batches 1-5) and Nav (batches 6-8) tests have been ported. Rema
 |------|-----|---------------|---------|
 | **06-content-document** | ARIA validation, DOCTYPE, entities | ~35 tests | Needs new validation subsystems |
 | **03-resources** | OPF-029, PKG-022, corrupt image | 3 skipped | Specialized features |
-| **D-vocabularies** | ARIA roles/epub:type vocabulary | ~56 tests | Needs ARIA validation |
+| **D-vocabularies** | media-overlays-vocab, package-rendering-vocab | ~8 tests | Needs media overlay / rendition implementation |
 | **08-layout** | Rendition/viewport validation | ~51 tests | Not implemented |
 | **09-media-overlays** | SMIL validation | ~51 tests | Not implemented |
 
@@ -262,7 +263,7 @@ Ordered by severity impact (number of active error/warning messages not yet emit
 **Defined**: 300 message IDs
 **Actively used**: 120 (40%)
 
-Active by prefix: OPF (48), RSC (25), PKG (13), CSS (10), HTM (10), NAV (4), NCX (3), ACC (4), MED (2)
+Active by prefix: OPF (50), RSC (25), PKG (13), CSS (10), HTM (10), NAV (4), NCX (3), ACC (4), MED (2)
 Unused prefixes: SCP (0), CHK (0), INF (0)
 
 ### Recent Message ID Fixes (aligned with Java EPUBCheck)

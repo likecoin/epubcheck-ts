@@ -684,12 +684,16 @@ export class OPFValidator {
         }
 
         // RSC-017: refines should use a fragment ID (start with #)
+        // Only fire when refines resolves to a manifest item href (Java compat)
         if (!refines.startsWith('#')) {
-          pushMessage(context.messages, {
-            id: MessageId.RSC_017,
-            message: `@refines should instead refer to "${refines}" using a fragment identifier pointing to its manifest item`,
-            location: { path: opfPath },
-          });
+          const isManifestHref = this.packageDoc.manifest.some((item) => item.href === refines);
+          if (isManifestHref) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_017,
+              message: `@refines should instead refer to "${refines}" using a fragment identifier pointing to its manifest item`,
+              location: { path: opfPath },
+            });
+          }
           continue;
         }
 
@@ -706,6 +710,11 @@ export class OPFValidator {
 
       // OPF-065: Detect refines cycles
       this.detectRefinesCycles(context, opfPath);
+    }
+
+    // EPUB 3: Validate meta element vocabulary (D-vocabularies Schematron)
+    if (this.packageDoc.version !== '2.0') {
+      this.validateMetaPropertiesVocab(context, opfPath, dcElements);
     }
 
     // EPUB 3: Check for dcterms:modified meta
@@ -754,12 +763,323 @@ export class OPFValidator {
   }
 
   /**
+   * Validate EPUB 3 meta element vocabulary (D-vocabularies: meta-properties)
+   * Ports package-30.sch Schematron patterns for authority, term, belongs-to-collection,
+   * collection-type, display-seq, file-as, group-position, identifier-type, meta-auth,
+   * role, source-of, and title-type.
+   */
+  private validateMetaPropertiesVocab(
+    context: ValidationContext,
+    opfPath: string,
+    dcElements: { name: string; value: string; id?: string; attributes?: Record<string, string> }[],
+  ): void {
+    if (!this.packageDoc) return;
+
+    const metaElements = this.packageDoc.metaElements;
+
+    // Build meta id → property map
+    const metaIdToProp = new Map<string, string>();
+    for (const meta of metaElements) {
+      if (meta.id) metaIdToProp.set(meta.id.trim(), meta.property.trim());
+    }
+
+    // opf.dc.subject.authority-term: for each dc:subject with an id, check authority/term counts
+    for (const dc of dcElements) {
+      if (dc.name !== 'subject' || !dc.id) continue;
+      const subjectId = dc.id.trim();
+      // Schematron uses substring(refines, 2) which strips first char, so "#id".substring(1) = "id"
+      const authorityCount = metaElements.filter(
+        (m) => m.property.trim() === 'authority' && m.refines?.trim().substring(1) === subjectId,
+      ).length;
+      const termCount = metaElements.filter(
+        (m) => m.property.trim() === 'term' && m.refines?.trim().substring(1) === subjectId,
+      ).length;
+      if (authorityCount > 1 || termCount > 1) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message:
+            'Only one pair of authority and term properties can be associated with a dc:subject',
+          location: { path: opfPath },
+        });
+      } else if (authorityCount === 1 && termCount === 0) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message:
+            'A term property must be associated with a dc:subject when an authority is specified',
+          location: { path: opfPath },
+        });
+      } else if (authorityCount === 0 && termCount === 1) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message:
+            'An authority property must be associated with a dc:subject when a term is specified',
+          location: { path: opfPath },
+        });
+      }
+    }
+
+    // Track seen (property + ":" + refines) for cardinality checks
+    const seenPropertyRefines = new Set<string>();
+
+    for (const meta of metaElements) {
+      const prop = meta.property.trim();
+      const refines = meta.refines?.trim();
+
+      switch (prop) {
+        case 'authority': {
+          // Must refine a dc:subject: concat('#', id) = refines
+          const ok = dcElements.some(
+            (dc) => dc.name === 'subject' && dc.id && '#' + dc.id.trim() === refines,
+          );
+          if (!ok) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message: 'Property "authority" must refine a "subject" property.',
+              location: { path: opfPath },
+            });
+          }
+          break;
+        }
+
+        case 'term': {
+          // Must refine a dc:subject: concat('#', id) = refines
+          const ok = dcElements.some(
+            (dc) => dc.name === 'subject' && dc.id && '#' + dc.id.trim() === refines,
+          );
+          if (!ok) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message: 'Property "term" must refine a "subject" property.',
+              location: { path: opfPath },
+            });
+          }
+          break;
+        }
+
+        case 'belongs-to-collection': {
+          // If refines, target (by substring(1)) must be another belongs-to-collection meta
+          if (refines) {
+            const targetId = refines.substring(1);
+            if (metaIdToProp.get(targetId) !== 'belongs-to-collection') {
+              pushMessage(context.messages, {
+                id: MessageId.RSC_005,
+                message:
+                  'Property "belongs-to-collection" can only refine other "belongs-to-collection" properties.',
+                location: { path: opfPath },
+              });
+            }
+          }
+          break;
+        }
+
+        case 'collection-type': {
+          // Must refine a belongs-to-collection meta (no refines = error too)
+          if (!refines) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message: 'Property "collection-type" must refine a "belongs-to-collection" property.',
+              location: { path: opfPath },
+            });
+          } else {
+            const targetId = refines.substring(1);
+            if (metaIdToProp.get(targetId) !== 'belongs-to-collection') {
+              pushMessage(context.messages, {
+                id: MessageId.RSC_005,
+                message:
+                  'Property "collection-type" must refine a "belongs-to-collection" property.',
+                location: { path: opfPath },
+              });
+            }
+          }
+          // Cardinality
+          const ctKey = `${prop}:${refines ?? ''}`;
+          if (seenPropertyRefines.has(ctKey)) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message:
+                '"collection-type" cannot be declared more than once to refine the same "belongs-to-collection" expression.',
+              location: { path: opfPath },
+            });
+          }
+          seenPropertyRefines.add(ctKey);
+          break;
+        }
+
+        case 'display-seq': {
+          const key = `${prop}:${refines ?? ''}`;
+          if (seenPropertyRefines.has(key)) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message:
+                '"display-seq" cannot be declared more than once to refine the same expression.',
+              location: { path: opfPath },
+            });
+          }
+          seenPropertyRefines.add(key);
+          break;
+        }
+
+        case 'file-as': {
+          const key = `${prop}:${refines ?? ''}`;
+          if (seenPropertyRefines.has(key)) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message: '"file-as" cannot be declared more than once to refine the same expression.',
+              location: { path: opfPath },
+            });
+          }
+          seenPropertyRefines.add(key);
+          break;
+        }
+
+        case 'group-position': {
+          const key = `${prop}:${refines ?? ''}`;
+          if (seenPropertyRefines.has(key)) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message:
+                '"group-position" cannot be declared more than once to refine the same expression.',
+              location: { path: opfPath },
+            });
+          }
+          seenPropertyRefines.add(key);
+          break;
+        }
+
+        case 'identifier-type': {
+          // Must refine dc:identifier or dc:source: concat('#', id) = refines
+          const ok = dcElements.some(
+            (dc) =>
+              (dc.name === 'identifier' || dc.name === 'source') &&
+              dc.id &&
+              '#' + dc.id.trim() === refines,
+          );
+          if (!ok) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message:
+                'Property "identifier-type" must refine an "identifier" or "source" property.',
+              location: { path: opfPath },
+            });
+          }
+          // Cardinality
+          const itKey = `${prop}:${refines ?? ''}`;
+          if (seenPropertyRefines.has(itKey)) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message:
+                '"identifier-type" cannot be declared more than once to refine the same expression.',
+              location: { path: opfPath },
+            });
+          }
+          seenPropertyRefines.add(itKey);
+          break;
+        }
+
+        case 'meta-auth': {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_017,
+            message: 'Use of the meta-auth property is deprecated',
+            location: { path: opfPath },
+          });
+          break;
+        }
+
+        case 'role': {
+          // Must refine dc:creator, dc:contributor, or dc:publisher: concat('#', id) = refines
+          const ok = dcElements.some(
+            (dc) =>
+              (dc.name === 'creator' || dc.name === 'contributor' || dc.name === 'publisher') &&
+              dc.id &&
+              '#' + dc.id.trim() === refines,
+          );
+          if (!ok) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message:
+                'Property "role" must refine a "creator", "contributor", or "publisher" property.',
+              location: { path: opfPath },
+            });
+          }
+          break;
+        }
+
+        case 'source-of': {
+          // Value must be 'pagination'
+          if (meta.value.trim() !== 'pagination') {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message: 'The "source-of" property must have the value "pagination"',
+              location: { path: opfPath },
+            });
+          }
+          // Must refine dc:source: uses substring(refines, 2) form
+          const hasSourceRefines = dcElements.some(
+            (dc) => dc.name === 'source' && dc.id && refines?.substring(1) === dc.id.trim(),
+          );
+          if (!hasSourceRefines) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message: 'The "source-of" property must refine a "source" property.',
+              location: { path: opfPath },
+            });
+          }
+          // Cardinality
+          const soKey = `${prop}:${refines ?? ''}`;
+          if (seenPropertyRefines.has(soKey)) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message:
+                '"source-of" cannot be declared more than once to refine the same "source" expression.',
+              location: { path: opfPath },
+            });
+          }
+          seenPropertyRefines.add(soKey);
+          break;
+        }
+
+        case 'title-type': {
+          // Must refine dc:title: concat('#', id) = refines
+          const ok = dcElements.some(
+            (dc) => dc.name === 'title' && dc.id && '#' + dc.id.trim() === refines,
+          );
+          if (!ok) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message: 'Property "title-type" must refine a "title" property.',
+              location: { path: opfPath },
+            });
+          }
+          // Cardinality
+          const ttKey = `${prop}:${refines ?? ''}`;
+          if (seenPropertyRefines.has(ttKey)) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message:
+                '"title-type" cannot be declared more than once to refine the same "title" expression.',
+              location: { path: opfPath },
+            });
+          }
+          seenPropertyRefines.add(ttKey);
+          break;
+        }
+      }
+    }
+  }
+
+  /**
    * Validate EPUB 3 link elements in metadata
    */
   private validateLinkElements(context: ValidationContext, opfPath: string): void {
     if (!this.packageDoc) return;
 
-    const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/')) : '';
+    const DEPRECATED_REL = new Set([
+      'marc21xml-record',
+      'mods-record',
+      'onix-record',
+      'xmp-record',
+      'xml-signature',
+    ]);
 
     for (const link of this.packageDoc.linkElements) {
       // OPF-092: Validate hreflang well-formedness
@@ -793,6 +1113,51 @@ export class OPFValidator {
         }
       }
 
+      // Parse rel keywords
+      const relKeywords = link.rel ? link.rel.trim().split(/\s+/).filter(Boolean) : [];
+      const hasRecord = relKeywords.includes('record');
+      const hasVoicing = relKeywords.includes('voicing');
+      const hasAlternate = relKeywords.includes('alternate');
+
+      // OPF-089: alternate must not be combined with other rel keywords
+      if (hasAlternate && relKeywords.length > 1) {
+        pushMessage(context.messages, {
+          id: MessageId.OPF_089,
+          message: `The "alternate" keyword must not be combined with other keywords in the "rel" attribute`,
+          location: { path: opfPath },
+        });
+      }
+
+      // OPF-086: deprecated rel keywords
+      for (const kw of relKeywords) {
+        if (DEPRECATED_REL.has(kw)) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_086,
+            message: `The rel keyword "${kw}" is deprecated`,
+            location: { path: opfPath },
+          });
+        }
+      }
+
+      // RSC-005: "record" links must not have a refines attribute
+      if (hasRecord && link.refines) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message:
+            '"record" links only applies to the Publication (must not have a "refines" attribute).',
+          location: { path: opfPath },
+        });
+      }
+
+      // RSC-005: "voicing" links must have a refines attribute
+      if (hasVoicing && !link.refines) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: '"voicing" links must have a "refines" attribute.',
+          location: { path: opfPath },
+        });
+      }
+
       const href = link.href;
       const decodedHref = tryDecodeUriComponent(href);
 
@@ -812,6 +1177,25 @@ export class OPFValidator {
       }
 
       const isRemote = /^[a-zA-Z][a-zA-Z0-9+\-.]*:/.test(href);
+
+      // OPF-095: voicing media-type must be audio (applies to both local and remote)
+      if (hasVoicing && link.mediaType && !link.mediaType.startsWith('audio/')) {
+        pushMessage(context.messages, {
+          id: MessageId.OPF_095,
+          message: `The "voicing" link media type must be an audio type, but found "${link.mediaType}"`,
+          location: { path: opfPath },
+        });
+      }
+
+      // OPF-094: record/voicing require media-type for remote URLs
+      if (isRemote && !link.mediaType && (hasRecord || hasVoicing)) {
+        pushMessage(context.messages, {
+          id: MessageId.OPF_094,
+          message: `The "media-type" attribute is required for "record" and "voicing" links`,
+          location: { path: opfPath },
+        });
+      }
+
       if (isRemote) {
         continue;
       }
@@ -825,9 +1209,9 @@ export class OPFValidator {
         });
       }
 
-      const resolvedPath = resolvePath(opfDir, basePath);
+      const resolvedPath = resolvePath(opfPath, basePath);
       const resolvedPathDecoded =
-        basePathDecoded !== basePath ? resolvePath(opfDir, basePathDecoded) : resolvedPath;
+        basePathDecoded !== basePath ? resolvePath(opfPath, basePathDecoded) : resolvedPath;
 
       const fileExists = context.files.has(resolvedPath) || context.files.has(resolvedPathDecoded);
       const inManifest =

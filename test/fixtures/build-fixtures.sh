@@ -157,6 +157,36 @@ SMILEOF
     echo '<?xml version="1.0"?><record/>' > "$tmpdir/EPUB/record.xml"
   fi
 
+  # D-vocabulary link stubs
+  if echo "$opf_content" | grep -q 'href="record.atom"'; then
+    echo '<?xml version="1.0"?><feed/>' > "$tmpdir/EPUB/record.atom"
+  fi
+  if echo "$opf_content" | grep -q 'href="title.mp3"'; then
+    printf '\xff\xfb' > "$tmpdir/EPUB/title.mp3"
+  fi
+  if echo "$opf_content" | grep -q 'href="onix.xml"'; then
+    echo '<?xml version="1.0"?><ONIXMessage/>' > "$tmpdir/EPUB/onix.xml"
+  fi
+  if echo "$opf_content" | grep -q 'href="other.xml"'; then
+    echo '<?xml version="1.0"?><other/>' > "$tmpdir/EPUB/other.xml"
+  fi
+  # Deprecated rel keyword stubs
+  if echo "$opf_content" | grep -q 'href="marc21-record.xml"'; then
+    echo '<?xml version="1.0"?><marc21/>' > "$tmpdir/EPUB/marc21-record.xml"
+  fi
+  if echo "$opf_content" | grep -q 'href="mods-record.xml"'; then
+    echo '<?xml version="1.0"?><mods/>' > "$tmpdir/EPUB/mods-record.xml"
+  fi
+  if echo "$opf_content" | grep -q 'href="onix-record.xml"'; then
+    echo '<?xml version="1.0"?><onix/>' > "$tmpdir/EPUB/onix-record.xml"
+  fi
+  if echo "$opf_content" | grep -q 'href="xmp-record.xml"'; then
+    echo '<?xml version="1.0"?><xmp/>' > "$tmpdir/EPUB/xmp-record.xml"
+  fi
+  if echo "$opf_content" | grep -q 'href="xml-signature.xml"'; then
+    echo '<?xml version="1.0"?><signature/>' > "$tmpdir/EPUB/xml-signature.xml"
+  fi
+
   # Build the EPUB
   mkdir -p "$(dirname "$epub_out")"
   (cd "$tmpdir" && zip -X0 "../epub.zip" mimetype && zip -Xr9 "../epub.zip" META-INF EPUB) > /dev/null 2>&1
@@ -962,6 +992,103 @@ for name in "${SVG_USAGE[@]}"; do
 done
 
 echo ""
+echo "=== Building D-vocabulary fixtures ==="
+
+JAVA_DVOCAB_DIR="../epubcheck/src/test/resources/epub3/D-vocabularies/files"
+
+DVOCAB_ERRORS=(
+  # meta-properties errors
+  "metadata-meta-authority-refines-disallowed-error"
+  "metadata-meta-authority-no-term-error"
+  "metadata-meta-authority-cardinality-error"
+  "metadata-meta-collection-refines-non-collection-error"
+  "metadata-meta-collection-type-refines-missing-error"
+  "metadata-meta-collection-type-refines-non-collection-error"
+  "metadata-meta-collection-type-cardinality-error"
+  "metadata-meta-display-seq-cardinality-error"
+  "metadata-meta-file-as-cardinality-error"
+  "metadata-meta-group-position-cardinality-error"
+  "metadata-meta-identifier-type-refines-disallowed-error"
+  "metadata-meta-identifier-type-cardinality-error"
+  "metadata-meta-role-refines-disallowed-error"
+  "metadata-meta-source-of-value-unknown-error"
+  "metadata-meta-source-of-refines-missing-error"
+  "metadata-meta-source-of-refines-not-dcsource-error"
+  "metadata-meta-source-of-cardinality-error"
+  "metadata-meta-term-refines-disallowed-error"
+  "metadata-meta-term-no-authority-error"
+  "metadata-meta-term-cardinality-error"
+  "metadata-meta-title-type-refines-disallowed-error"
+  "metadata-meta-title-type-cardinality-error"
+  # link-rel errors
+  "link-rel-alternate-with-other-keyword-error"
+  "link-rel-record-mediatype-missing-error"
+  "link-rel-record-refines-error"
+  "link-rel-voicing-as-publication-metadata-error"
+  "link-rel-voicing-mediatype-missing-error"
+  "link-rel-voicing-mediatype-not-audio-error"
+)
+
+DVOCAB_WARNINGS=(
+  "metadata-meta-meta-auth-deprecated-warning"
+  "link-rel-record-deprecated-warning"
+  "link-rel-xml-signature-deprecated-warning"
+)
+
+DVOCAB_VALIDS=(
+  "metadata-meta-authority-valid"
+  "metadata-meta-collection-valid"
+  "metadata-meta-display-seq-valid"
+  "metadata-meta-file-as-valid"
+  "metadata-meta-group-position-valid"
+  "metadata-meta-pageBreakSource-valid"
+  "metadata-meta-role-valid"
+  "metadata-meta-source-of-valid"
+  "metadata-meta-term-valid"
+  "metadata-meta-title-type-valid"
+  "link-rel-acquire-valid"
+  "link-rel-alternate-valid"
+  "link-rel-record-local-valid"
+  "link-rel-record-remote-valid"
+  "link-rel-record-with-other-keyword-valid"
+  "link-rel-record-properties-valid"
+  "link-rel-voicing-valid"
+)
+
+for name in "${DVOCAB_ERRORS[@]}"; do
+  src="$JAVA_DVOCAB_DIR/${name}.opf"
+  out="$FIXTURES_DIR/invalid/opf/${name}.epub"
+  if [ -f "$src" ]; then
+    echo "  Building $out"
+    build_opf_epub "$src" "$out"
+  else
+    echo "  WARNING: Source not found: $src"
+  fi
+done
+
+for name in "${DVOCAB_WARNINGS[@]}"; do
+  src="$JAVA_DVOCAB_DIR/${name}.opf"
+  out="$FIXTURES_DIR/warnings/${name}.epub"
+  if [ -f "$src" ]; then
+    echo "  Building $out"
+    build_opf_epub "$src" "$out"
+  else
+    echo "  WARNING: Source not found: $src"
+  fi
+done
+
+for name in "${DVOCAB_VALIDS[@]}"; do
+  src="$JAVA_DVOCAB_DIR/${name}.opf"
+  out="$FIXTURES_DIR/valid/${name}.epub"
+  if [ -f "$src" ]; then
+    echo "  Building $out"
+    build_opf_epub "$src" "$out"
+  else
+    echo "  WARNING: Source not found: $src"
+  fi
+done
+
+echo ""
 echo "=== Done ==="
 echo "Total OPF errors: ${#OPF_ERRORS[@]}"
 echo "Total OPF warnings: ${#OPF_WARNINGS[@]}"
@@ -976,3 +1103,6 @@ echo "Total XHTML switch/trigger: ${#XHTML_SWITCH_TRIGGER[@]}"
 echo "Total SVG valid: ${#SVG_VALID[@]}"
 echo "Total SVG errors: ${#SVG_ERRORS[@]}"
 echo "Total SVG usage: ${#SVG_USAGE[@]}"
+echo "Total D-vocabulary errors: ${#DVOCAB_ERRORS[@]}"
+echo "Total D-vocabulary warnings: ${#DVOCAB_WARNINGS[@]}"
+echo "Total D-vocabulary valid: ${#DVOCAB_VALIDS[@]}"

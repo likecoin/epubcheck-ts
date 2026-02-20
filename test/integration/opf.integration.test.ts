@@ -915,6 +915,348 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectError(result, 'OPF-050');
     });
   });
+
+  describe('D-vocabulary: meta-properties vocab', () => {
+    it('authority must refine a subject property (RSC-005)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/metadata-meta-authority-refines-disallowed-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('authority without companion term is an error (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-meta-authority-no-term-error.epub');
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('only one authority per subject is allowed (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-meta-authority-cardinality-error.epub');
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('authority and term valid usage is allowed', async () => {
+      const data = await loadEpub('valid/metadata-meta-authority-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('term must refine a subject property (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-meta-term-refines-disallowed-error.epub');
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('term without companion authority is an error (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-meta-term-no-authority-error.epub');
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('only one term per subject is allowed (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-meta-term-cardinality-error.epub');
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('term valid usage is allowed', async () => {
+      const data = await loadEpub('valid/metadata-meta-term-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('belongs-to-collection can only refine another belongs-to-collection (RSC-005)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/metadata-meta-collection-refines-non-collection-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('belongs-to-collection valid usage is allowed', async () => {
+      const data = await loadEpub('valid/metadata-meta-collection-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('collection-type must have a refines attribute (RSC-005)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/metadata-meta-collection-type-refines-missing-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('collection-type must refine a belongs-to-collection meta (RSC-005)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/metadata-meta-collection-type-refines-non-collection-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('collection-type cannot be declared more than once per collection (RSC-005)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/metadata-meta-collection-type-cardinality-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('display-seq cannot be declared more than once for same refines (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-meta-display-seq-cardinality-error.epub');
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('display-seq valid usage is allowed', async () => {
+      const data = await loadEpub('valid/metadata-meta-display-seq-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('file-as cannot be declared more than once for same refines (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-meta-file-as-cardinality-error.epub');
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('file-as valid usage is allowed', async () => {
+      const data = await loadEpub('valid/metadata-meta-file-as-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('group-position cannot be declared more than once for same refines (RSC-005)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/metadata-meta-group-position-cardinality-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('group-position valid usage is allowed', async () => {
+      const data = await loadEpub('valid/metadata-meta-group-position-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('identifier-type must refine an identifier or source property (RSC-005)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/metadata-meta-identifier-type-refines-disallowed-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('identifier-type cannot be declared more than once per identifier (RSC-005)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/metadata-meta-identifier-type-cardinality-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('meta-auth property is deprecated (RSC-017)', async () => {
+      const data = await loadEpub('warnings/metadata-meta-meta-auth-deprecated-warning.epub');
+      const result = await EpubCheck.validate(data);
+      expectWarning(result, 'RSC-017');
+    });
+
+    it('role must refine a creator, contributor, or publisher (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-meta-role-refines-disallowed-error.epub');
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('role valid usage is allowed (multiple roles per creator/contributor/publisher)', async () => {
+      const data = await loadEpub('valid/metadata-meta-role-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('source-of must have value "pagination" (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-meta-source-of-value-unknown-error.epub');
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('source-of must have a refines attribute (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-meta-source-of-refines-missing-error.epub');
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('source-of must refine a dc:source property (RSC-005)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/metadata-meta-source-of-refines-not-dcsource-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('source-of cannot be declared more than once per source (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-meta-source-of-cardinality-error.epub');
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('source-of valid usage is allowed', async () => {
+      const data = await loadEpub('valid/metadata-meta-source-of-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('title-type must refine a title property (RSC-005)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/metadata-meta-title-type-refines-disallowed-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('title-type cannot be declared more than once per title (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/metadata-meta-title-type-cardinality-error.epub');
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('title-type valid usage is allowed', async () => {
+      const data = await loadEpub('valid/metadata-meta-title-type-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('unknown meta property (pageBreakSource) is allowed', async () => {
+      const data = await loadEpub('valid/metadata-meta-pageBreakSource-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+  });
+
+  describe('D-vocabulary: link-rel vocab', () => {
+    it('alternate rel must not be combined with other rel keywords (OPF-089)', async () => {
+      const data = await loadEpub('invalid/opf/link-rel-alternate-with-other-keyword-error.epub');
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'OPF-089');
+    });
+
+    it('alternate valid usage is allowed', async () => {
+      const data = await loadEpub('valid/link-rel-alternate-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('deprecated rel keywords emit OPF-086 warning (marc21xml-record etc)', async () => {
+      const data = await loadEpub('warnings/link-rel-record-deprecated-warning.epub');
+      const result = await EpubCheck.validate(data);
+      expectWarning(result, 'OPF-086');
+    });
+
+    it('deprecated rel keyword xml-signature emits OPF-086 warning', async () => {
+      const data = await loadEpub('warnings/link-rel-xml-signature-deprecated-warning.epub');
+      const result = await EpubCheck.validate(data);
+      expectWarning(result, 'OPF-086');
+    });
+
+    it('record link with remote URL requires media-type (OPF-094)', async () => {
+      const data = await loadEpub('invalid/opf/link-rel-record-mediatype-missing-error.epub');
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'OPF-094');
+    });
+
+    it('record link must not have refines attribute (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/link-rel-record-refines-error.epub');
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('record link with local resource is valid', async () => {
+      const data = await loadEpub('valid/link-rel-record-local-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('record link with remote resource and media-type is valid', async () => {
+      const data = await loadEpub('valid/link-rel-record-remote-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('record combined with other non-deprecated rel keywords is valid', async () => {
+      const data = await loadEpub('valid/link-rel-record-with-other-keyword-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('record with link properties is valid', async () => {
+      const data = await loadEpub('valid/link-rel-record-properties-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('acquire rel link is valid', async () => {
+      const data = await loadEpub('valid/link-rel-acquire-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('voicing without refines is an error (RSC-005)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/link-rel-voicing-as-publication-metadata-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-005');
+    });
+
+    it('voicing with remote URL and no media-type requires media-type (OPF-094)', async () => {
+      const data = await loadEpub('invalid/opf/link-rel-voicing-mediatype-missing-error.epub');
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'OPF-094');
+    });
+
+    it('voicing media-type must be an audio type (OPF-095)', async () => {
+      const data = await loadEpub('invalid/opf/link-rel-voicing-mediatype-not-audio-error.epub');
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'OPF-095');
+    });
+
+    it('voicing with refines and audio media-type is valid', async () => {
+      const data = await loadEpub('valid/link-rel-voicing-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+  });
 });
 
 /**
