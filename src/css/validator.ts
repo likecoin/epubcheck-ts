@@ -258,7 +258,6 @@ export class CSSValidator {
         location,
       });
     }
-
   }
 
   /**
