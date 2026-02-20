@@ -861,7 +861,7 @@ export class ContentValidator {
         const inner = doctypeMatch[1] ?? '';
         const hasPublic = /\bPUBLIC\b/i.test(inner);
         const hasSystem = /\bSYSTEM\b/i.test(inner);
-        const isLegacyCompat = inner.includes('about:legacy-compat');
+        const isLegacyCompat = /['"]about:legacy-compat['"]/.test(inner);
         if (hasPublic || (hasSystem && !isLegacyCompat)) {
           pushMessage(context.messages, {
             id: MessageId.HTM_004,
@@ -874,7 +874,7 @@ export class ContentValidator {
 
     // HTM-003 (EPUB 3): External entity declarations not allowed
     if (context.version !== '2.0') {
-      const entityRe = /<!ENTITY\s+(?:%\s+)?\w+\s+(?:SYSTEM|PUBLIC)\s/gi;
+      const entityRe = /<!ENTITY\s+\w+\s+(?:SYSTEM|PUBLIC)\s/gi;
       let entityMatch = entityRe.exec(content);
       while (entityMatch) {
         pushMessage(context.messages, {

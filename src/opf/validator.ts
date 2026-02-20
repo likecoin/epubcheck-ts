@@ -290,6 +290,14 @@ const VALID_RELATOR_CODES = new Set([
   'wst',
 ]);
 
+const DEPRECATED_LINK_REL = new Set([
+  'marc21xml-record',
+  'mods-record',
+  'onix-record',
+  'xmp-record',
+  'xml-signature',
+]);
+
 const GRANDFATHERED_LANG_TAGS = new Set([
   'en-GB-oed',
   'i-ami',
@@ -1073,14 +1081,6 @@ export class OPFValidator {
   private validateLinkElements(context: ValidationContext, opfPath: string): void {
     if (!this.packageDoc) return;
 
-    const DEPRECATED_REL = new Set([
-      'marc21xml-record',
-      'mods-record',
-      'onix-record',
-      'xmp-record',
-      'xml-signature',
-    ]);
-
     for (const link of this.packageDoc.linkElements) {
       // OPF-092: Validate hreflang well-formedness
       if (link.hreflang !== undefined && link.hreflang !== '') {
@@ -1130,7 +1130,7 @@ export class OPFValidator {
 
       // OPF-086: deprecated rel keywords
       for (const kw of relKeywords) {
-        if (DEPRECATED_REL.has(kw)) {
+        if (DEPRECATED_LINK_REL.has(kw)) {
           pushMessage(context.messages, {
             id: MessageId.OPF_086,
             message: `The rel keyword "${kw}" is deprecated`,
