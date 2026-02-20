@@ -6,6 +6,51 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.7] - 2026-02-20
+
+### Added
+
+- **165 new E2E tests** ported from Java EPUBCheck content validation suite
+- **48 new E2E test fixtures** for D-vocabulary meta-properties and link-rel vocab
+- **OPF D-vocabulary meta-properties validation** (RSC-005 / RSC-017):
+  - `authority` and `term` must refine `dc:subject`; co-occurrence rules (authority-term pairs)
+  - `belongs-to-collection` can only refine other `belongs-to-collection` elements
+  - `collection-type` must refine a `belongs-to-collection` element
+  - `display-seq`, `file-as`, `group-position` cardinality enforcement
+  - `identifier-type` must refine `dc:identifier` or `dc:source`
+  - `meta-auth` deprecated (RSC-017)
+  - `role` must refine `dc:creator`, `dc:contributor`, or `dc:publisher`
+  - `source-of` must have value `"pagination"` and refine `dc:source`
+  - `title-type` must refine `dc:title`
+- **OPF D-vocabulary link-rel validation**:
+  - **OPF-086**: Deprecated rel keywords (marc21xml-record, mods-record, onix-record, xmp-record, xml-signature)
+  - **OPF-089**: `alternate` relation cannot be combined with other link keywords
+  - **OPF-094**: `record` and `voicing` links require `media-type` attribute for remote resources
+  - **OPF-095**: `voicing` link `media-type` must be an audio type
+  - RSC-005 for `record` (must not have `refines`) and `voicing` (must have `refines`)
+- **HTM-003**: External entity declaration detection — general external entities are forbidden in EPUB 3 content documents
+- **HTM-004**: Obsolete/irregular DOCTYPE detection in EPUB 3 content documents
+- **MED-004 / OPF-029 / PKG-022**: Media magic byte validation — corrupt file detection and MIME type mismatch against file headers
+- Content validation: SVG epub:type structural semantics, epub:switch/trigger validation, style attribute restrictions, lang/xml:lang mismatch, pseudo-schema checks (inline styles, discouraged elements, obsolete HTML)
+
+### Fixed
+
+- **OPF-052**: MARC relator validation corrected to match Java EPUBCheck (country codes and 3-character codes allowed as-is; only two-character non-country relators are errors)
+- **RSC-017**: No longer fires for non-manifest `meta/@refines` values (e.g. `refines="uid"`); now only fires when the `refines` value matches a manifest item href
+- **RSC-012**: No longer fires for SVG `<use>` same-document fragment references (matching Java's `checkSymbol()` behavior)
+- **CSS-019**: No longer fires for `position: absolute` — Java only uses this message ID for empty `@font-face` declarations
+- **HTM-004**: DOCTYPE regex now correctly matches both single-quoted and double-quoted `about:legacy-compat`
+- **HTM-003**: Entity detection pattern now correctly excludes parameter entities (`% name`), matching Java's general-entity-only check
+- Content validator: deduplicated SVG use extraction, fixed obsolete HTML reporting, reduced hot-path allocations
+
+### Changed
+
+- Test coverage: 892 tests passing, 53 skipped (up from 727 passing, 40 skipped)
+- E2E coverage: ~55% of Java EPUBCheck scenarios (up from 45%)
+- OPF D-vocabulary validation: ~85% complete (up from 0%)
+- Message IDs: ~120 actively used out of 300 defined (up from 114)
+- Overall feature parity: ~88% (up from ~80%)
+
 ## [0.3.6] - 2026-02-16
 
 ### Added
@@ -449,7 +494,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - No media overlays validation
 - No script detection/validation
 
-[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.6...HEAD
+[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.7...HEAD
+[0.3.7]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.6...v0.3.7
 [0.3.6]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.3...v0.3.4

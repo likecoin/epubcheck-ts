@@ -70,8 +70,7 @@ test/fixtures/
 **Critical gaps:**
 - 🟡 **ARIA validation** - DPUB-ARIA deprecated roles done; full role/attribute checks not yet (Java has dozens)
 - 🟡 **ID/IDREF validation** - OPF + XHTML + SVG duplicate IDs done; IDREF resolution not yet
-- ❌ **DOCTYPE validation** - No obsolete identifier checks
-- 🟡 **Entity validation** - RSC-016 for undefined/malformed entities; no external entity checks
+- 🟡 **Entity validation** - RSC-016 for undefined/malformed entities; HTM-003 external entity declarations done; encoding detection HTM-058 not yet
 - ❌ **Base URL** - No xml:base or HTML base support
 - ❌ **Advanced accessibility** - Only 30% of Java coverage
 - ❌ **Media overlays** - Not implemented
@@ -82,14 +81,14 @@ test/fixtures/
 - **libxml2-wasm XPath limitations (3)** - OPF-014 inline event handlers, CSS-005 conflicting stylesheets, OPF-088 unknown epub:type prefix
 - **Messages suppressed in Java EPUBCheck (13)** - NCX-002 (2), NCX-003 (2), NAV-002 (1), ACC-004 (1), ACC-005 (1), HTM-012 (1), and parameterized variants
 
-**Integration tests (40)** - Unimplemented features and library limitations:
-- **Content (34 skipped)**:
+**Integration tests (37)** - Unimplemented features and library limitations:
+- **Content (31 skipped)**:
   - *RelaxNG/Schematron content schema (~11)*: image map, foreignObject/SVG title HTML validation, microdata, Schematron, IDREF resolution — requires XHTML/SVG schema (libxml2-wasm limitation)
-  - *CSS encoding/syntax (5)*: CSS-003/CSS-004 encoding detection, CSS syntax error ordering, CSS-019 false positive
+  - *CSS encoding/syntax (4)*: CSS-003/CSS-004 encoding detection, CSS syntax error ordering
   - *URL/base handling (5)*: Non-conforming URL RSC-020, unparseable host, unregistered scheme HTM-025, base/xml:base external URL RSC-006
   - *ARIA (1)*: aria-describedAt RSC-005
-  - *Encoding/DOCTYPE/entities (3)*: External entities HTM-003, encoding detection HTM-058, obsolete DOCTYPE HTM-004
-  - *SVG fixtures (~3)*: SVG epub:type valid (dangling refs), foreignObject HTML validation
+  - *Encoding/entities (1)*: Encoding detection HTM-058
+  - *SVG fixtures (~2)*: foreignObject HTML validation
   - *Other (~6)*: file URL, SVG regression
 - **Resources (0 skipped)**: All resource tests now passing
 - **OCF (5 skipped)**: OPF-060 duplicate ZIP entry (1), encryption/signatures schema (4)

@@ -15,7 +15,7 @@ import type { EpubCheckOptions, EPUBProfile, ValidationMessage } from '../src/ty
 // Dynamic import to support both ESM and CJS builds
 const { EpubCheck, toJSONReport } = await import('../dist/index.js');
 
-const VERSION = '0.3.6';
+const VERSION = '0.3.7';
 
 // Parse command line arguments
 const { values, positionals } = parseArgs({
@@ -38,7 +38,7 @@ if (values.version) {
   console.log(`EPUBCheck-TS v${VERSION}`);
   console.log('TypeScript EPUB validator for Node.js and browsers');
   console.log();
-  console.log('Note: This is ~70% feature-complete compared to Java EPUBCheck.');
+  console.log('Note: This is ~88% feature-complete compared to Java EPUBCheck.');
   console.log('For production validation: https://github.com/w3c/epubcheck');
   process.exit(0);
 }
@@ -81,7 +81,7 @@ Exit Codes:
   1  Validation errors found (or warnings with --fail-on-warnings)
   2  Runtime error (file not found, invalid arguments, etc.)
 
-Note: This tool provides ~70% coverage of Java EPUBCheck features.
+Note: This tool provides ~88% coverage of Java EPUBCheck features.
 Missing features: Media Overlays, advanced ARIA checks, encryption/signatures.
 For complete EPUB 3 conformance testing, use: https://github.com/w3c/epubcheck
 
@@ -210,7 +210,7 @@ async function main(): Promise<void> {
       // Show limitation notice if there were no major errors
       if (result.errorCount === 0 && result.fatalCount === 0) {
         console.log(
-          '\x1b[90mNote: This validator provides ~70% coverage of Java EPUBCheck.\x1b[0m',
+          '\x1b[90mNote: This validator provides ~88% coverage of Java EPUBCheck.\x1b[0m',
         );
         console.log('\x1b[90mFor complete validation: https://github.com/w3c/epubcheck\x1b[0m');
         console.log();
