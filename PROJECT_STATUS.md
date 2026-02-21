@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~90% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs done |
 
-**Overall: ~88% complete (892 tests passing, 53 skipped)**
+**Overall: ~89% complete (909 tests passing, 64 skipped)**
 
 ---
 
@@ -26,9 +26,9 @@ Quick reference for implementation progress vs Java EPUBCheck.
 
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
-| **Unit Tests** | 403 | 387 | 16 |
-| **Integration Tests** | 542 | 505 | 37 |
-| **Total** | **945** | **892** | **53** |
+| **Unit Tests** | 404 | 387 | 17 |
+| **Integration Tests** | 569 | 522 | 47 |
+| **Total** | **973** | **909** | **64** |
 
 ### Integration Test Files
 
@@ -39,7 +39,7 @@ test/integration/
 ├── opf.integration.test.ts      # 167 tests (166 pass, 1 skip)  - Package document
 ├── content.integration.test.ts  # 205 tests (174 pass, 31 skip)  - XHTML/CSS/SVG
 ├── nav.integration.test.ts      # 36 tests  (36 pass, 0 skip)  - Navigation
-└── resources.integration.test.ts # 82 tests  (82 pass, 0 skip)  - Resources/fallbacks
+└── resources.integration.test.ts # 110 tests (99 pass, 11 skip)  - Resources/fallbacks
 ```
 
 **Note**: Integration tests imported from Java EPUBCheck test suite (`../epubcheck/src/test/resources/epub3/`).
@@ -48,16 +48,16 @@ test/integration/
 
 ```
 test/fixtures/
-├── valid/                 # 236 valid EPUBs
+├── valid/                 # 243 valid EPUBs
 ├── invalid/
 │   ├── ocf/              # 33 OCF error cases
 │   ├── opf/              # 113 OPF error cases
-│   ├── content/          # 121 content error cases
+│   ├── content/          # 133 content error cases
 │   └── nav/              # 18 navigation error cases
 └── warnings/             # 30 warning cases
 ```
 
-**Total**: 551 EPUB test fixtures (imported from Java EPUBCheck)
+**Total**: 570 EPUB test fixtures (imported from Java EPUBCheck)
 
 ### Quality: ⭐⭐⭐⭐ (4/5) for implemented features
 
@@ -90,7 +90,11 @@ test/fixtures/
   - *Encoding/entities (1)*: Encoding detection HTM-058
   - *SVG fixtures (~2)*: foreignObject HTML validation
   - *Other (~6)*: file URL, SVG regression
-- **Resources (0 skipped)**: All resource tests now passing
+- **Resources (11 skipped)**:
+  - *XML encoding detection (6)*: RSC-027/RSC-028 encoding detection not implemented (UTF-16, Latin-1, UTF-32, unknown)
+  - *XML conformance (2)*: RSC-016 for OPF XML parse errors (emits OPF-002/RSC-005 instead)
+  - *Single-file validation mode (2)*: remote XHTML/SVG font validation not supported
+  - *OPF-090 usage (1)*: not-preferred media type usage message not emitted
 - **OCF (5 skipped)**: OPF-060 duplicate ZIP entry (1), encryption/signatures schema (4)
 - **OPF (1 skipped)**: OPF-014 remote audio overlays (1)
 
@@ -191,7 +195,7 @@ test/fixtures/
 | Java Category | Java Scenarios | TS Ported | TS Passing | Coverage |
 |---------------|----------------|-----------|------------|----------|
 | 00-minimal | 5 | 4 | 4 | 80% |
-| 03-resources | 113 | 82 | 79 | 70% |
+| 03-resources | 113 | 110 | 99 | 88% |
 | 04-ocf | 61 | 47 | 42 | 69% |
 | 05-package-document | 121 | 119 | 118 | 98% |
 | 06-content-document | 215 | 205 | 170 | 79% |
@@ -200,7 +204,7 @@ test/fixtures/
 | 09-media-overlays | 51 | 0 | 0 | 0% |
 | D-vocabularies (ARIA) | 56 | 48 | 48 | 86% |
 | Other | 6 | 0 | 0 | 0% |
-| **Total** | **719** | **541** | **487** | **68%** |
+| **Total** | **719** | **569** | **507** | **71%** |
 
 ### E2E Porting Priorities
 
@@ -212,7 +216,7 @@ test/fixtures/
 
 **High Priority** - Largest remaining gaps:
 5. **06-content-document** (215 scenarios) - 70% coverage, needs ARIA/DOCTYPE/entity validation
-6. **03-resources** (113 scenarios) - 70% coverage, OPF-013/remote fonts/SVG stylesheets done
+6. **03-resources** (113 scenarios) - 88% coverage, data/file URL checks, fallback chains, XML conformance done
 
 **Low Priority** - Specialized features:
 7. **08-layout** (51 scenarios) - Rendition/viewport (not implemented)
@@ -227,7 +231,7 @@ All planned OPF (batches 1-5) and Nav (batches 6-8) tests have been ported. Rema
 | Area | Gap | Tests Blocked | Blocker |
 |------|-----|---------------|---------|
 | **06-content-document** | ARIA validation, DOCTYPE, entities | ~35 tests | Needs new validation subsystems |
-| **03-resources** | OPF-029, PKG-022, corrupt image | 3 skipped | Specialized features |
+| **03-resources** | XML encoding detection, RSC-016 OPF parse, single-file mode | 11 skipped | Encoding detection, OPF parser architecture, single-file mode |
 | **D-vocabularies** | media-overlays-vocab, package-rendering-vocab | ~8 tests | Needs media overlay / rendition implementation |
 | **08-layout** | Rendition/viewport validation | ~51 tests | Not implemented |
 | **09-media-overlays** | SMIL validation | ~51 tests | Not implemented |
@@ -327,6 +331,9 @@ Unused prefixes: SCP (0), CHK (0), INF (0)
 - Picture intrinsic fallback propagated to img child
 - Data URL default MIME type is text/plain per spec
 - Area element href extraction (was missing)
+- `RSC-029` - Data URL checks in OPF manifest item hrefs and package link hrefs
+- `RSC-030` - File URL checks in OPF package link hrefs
+- Data/file URL passthrough in content validator — `data:` and `file:` URLs in anchor/area hrefs now pass to reference validator (were silently skipped by ABSOLUTE_URI_RE)
 - Multiple dcterms:modified detection
 - Resource flags (isNav, isCoverImage, isNcx) replace fragile string matching
 - `RSC-015` - SVG `<use>` empty href now fires RSC-015 instead of silently skipping

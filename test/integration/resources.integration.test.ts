@@ -92,6 +92,19 @@ describe('Integration Tests - Resources', () => {
         expectNoErrorsOrWarnings(result);
       });
     });
+
+    describe('All Core Media Types (OPF)', () => {
+      it('should allow all core media types in a single manifest', async () => {
+        const result = await validate('valid/resources-core-media-types-valid.epub');
+        expectNoErrorsOrWarnings(result);
+      });
+
+      it.skip('should allow non-preferred core media types (OPF-090)', async () => {
+        // OPF-090 usage not emitted
+        const result = await validate('valid/resources-core-media-types-not-preferred-valid.epub');
+        expectUsage(result, 'OPF-090');
+      });
+    });
   });
 
   // ==========================================================================
@@ -315,6 +328,27 @@ describe('Integration Tests - Resources', () => {
       const result = await validate('invalid/content/fallback-chain-circular-error.epub');
       expectError(result, 'OPF-045');
     });
+
+    it('should allow manifest fallback to XHTML content document', async () => {
+      const result = await validate('valid/fallback-to-xhtml-valid.epub');
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should allow manifest fallback to SVG content document', async () => {
+      const result = await validate('valid/fallback-to-svg-valid.epub');
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should allow valid manifest fallback chain (reversed document order)', async () => {
+      const result = await validate('valid/fallback-chain-valid.epub');
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should report missing manifest fallback for spine item (OPF-043)', async () => {
+      const result = await validate('invalid/content/fallback-missing-error.epub');
+      expectError(result, 'OPF-043');
+    });
+
   });
 
   // ==========================================================================
@@ -479,6 +513,36 @@ describe('Integration Tests - Resources', () => {
       const result = await validate('valid/data-url-with-unescaped-query-valid.epub');
       expectNoErrorsOrWarnings(result);
     });
+
+    it('should report data URL in HTML anchor href (RSC-029)', async () => {
+      const result = await validate('invalid/content/data-url-in-html-a-href-error.epub');
+      expectError(result, 'RSC-029');
+    });
+
+    it('should report data URL in SVG anchor href (RSC-029)', async () => {
+      const result = await validate('invalid/content/data-url-in-svg-a-href-error.epub');
+      expectError(result, 'RSC-029');
+    });
+
+    it('should report data URL in HTML area href (RSC-029)', async () => {
+      const result = await validate('invalid/content/data-url-in-html-area-href-error.epub');
+      expectError(result, 'RSC-029');
+    });
+
+    it('should report data URL in manifest item href (RSC-029)', async () => {
+      const result = await validate('invalid/content/data-url-in-manifest-item-error.epub');
+      expectError(result, 'RSC-029');
+    });
+
+    it('should report data URL in manifest item in spine (RSC-029)', async () => {
+      const result = await validate('invalid/content/data-url-in-manifest-item-in-spine-error.epub');
+      expectError(result, 'RSC-029');
+    });
+
+    it('should report data URL in package link href (RSC-029)', async () => {
+      const result = await validate('invalid/content/data-url-in-package-link-error.epub');
+      expectError(result, 'RSC-029');
+    });
   });
 
   // ==========================================================================
@@ -487,6 +551,21 @@ describe('Integration Tests - Resources', () => {
   describe('File URLs', () => {
     it('should report file URL in CSS (RSC-030)', async () => {
       const result = await validate('invalid/content/file-url-in-css-error.epub');
+      expectError(result, 'RSC-030');
+    });
+
+    it('should report file URL in XHTML content (RSC-030)', async () => {
+      const result = await validate('invalid/content/file-url-in-xhtml-content-error.epub');
+      expectError(result, 'RSC-030');
+    });
+
+    it('should report file URL in SVG content (RSC-030)', async () => {
+      const result = await validate('invalid/content/file-url-in-svg-content-error.epub');
+      expectError(result, 'RSC-030');
+    });
+
+    it('should report file URL in package document link (RSC-030)', async () => {
+      const result = await validate('invalid/content/file-url-in-package-document-error.epub');
       expectError(result, 'RSC-030');
     });
   });
@@ -498,6 +577,33 @@ describe('Integration Tests - Resources', () => {
     it('should allow attribute values with leading/trailing whitespace', async () => {
       const result = await validate('valid/conformance-xml-id-leading-trailing-spaces-valid.epub');
       expectNoErrorsOrWarnings(result);
+    });
+
+    it('should allow UTF-8 encoding declared in XML declaration', async () => {
+      const result = await validate('valid/xml-encoding-utf8-declared-valid.epub');
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should allow UTF-8 encoding with BOM', async () => {
+      const result = await validate('valid/xml-encoding-utf8-BOM-valid.epub');
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should allow UTF-8 encoding with no XML declaration', async () => {
+      const result = await validate('valid/xml-encoding-utf8-no-declaration-valid.epub');
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it.skip('should report malformed XML (RSC-016)', async () => {
+      // OPF parser reports OPF-002/RSC-005 instead of RSC-016 for XML well-formedness errors
+      const result = await validate('invalid/content/conformance-xml-malformed-error.epub');
+      expectFatal(result, 'RSC-016');
+    });
+
+    it.skip('should report undeclared namespace prefix (RSC-016)', async () => {
+      // OPF parser reports RSC-005 instead of RSC-016 for undeclared namespace prefix
+      const result = await validate('invalid/content/conformance-xml-undeclared-namespace-error.epub');
+      expectFatal(result, 'RSC-016');
     });
   });
 
@@ -523,6 +629,64 @@ describe('Integration Tests - Resources', () => {
     it('should report embed type mismatch (OPF-013)', async () => {
       const result = await validate('warnings/type-mismatch-in-embed-warning.epub');
       expectWarning(result, 'OPF-013');
+    });
+  });
+
+  // ==========================================================================
+  // Skipped: XML Encoding Detection (RSC-027/RSC-028)
+  // ==========================================================================
+  describe('XML Encoding Detection', () => {
+    it.skip('should warn about UTF-16 encoding declaration (RSC-027)', async () => {
+      // Encoding detection not implemented
+      const result = await validate('valid/xml-encoding-utf16-declared-warning.epub');
+      expectWarning(result, 'RSC-027');
+    });
+
+    it.skip('should warn about UTF-16 BOM without declaration (RSC-027)', async () => {
+      // Encoding detection not implemented
+      const result = await validate('valid/xml-encoding-utf16-BOM-no-declaration-warning.epub');
+      expectWarning(result, 'RSC-027');
+    });
+
+    it.skip('should warn about UTF-16 BOM with UTF-8 declaration (RSC-027 + RSC-016)', async () => {
+      // Encoding detection not implemented
+      const result = await validate('invalid/content/xml-encoding-utf16-BOM-and-utf8-declaration-warning.epub');
+      expectWarning(result, 'RSC-027');
+    });
+
+    it.skip('should report Latin-1 encoding declaration (RSC-028)', async () => {
+      // Encoding detection not implemented
+      const result = await validate('invalid/content/xml-encoding-latin1-declaration-error.epub');
+      expectError(result, 'RSC-028');
+    });
+
+    it.skip('should report UTF-32 BOM (RSC-028)', async () => {
+      // Encoding detection not implemented
+      const result = await validate('invalid/content/xml-encoding-utf32-BOM-error.epub');
+      expectError(result, 'RSC-028');
+    });
+
+    it.skip('should report unknown encoding declaration (RSC-028 + RSC-016)', async () => {
+      // Encoding detection not implemented
+      const result = await validate('invalid/content/xml-encoding-unknown-declared-error.epub');
+      expectError(result, 'RSC-028');
+    });
+  });
+
+  // ==========================================================================
+  // Skipped: Single-file validation mode
+  // ==========================================================================
+  describe('Single-file Validation Mode', () => {
+    it.skip('should report remote XHTML resource (RSC-006)', async () => {
+      // Single-file validation mode not supported
+      const result = await validate('invalid/content/resources-remote-xhtml-error.epub');
+      expectError(result, 'RSC-006');
+    });
+
+    it.skip('should allow remote SVG font in single-file mode', async () => {
+      // Single-file validation mode not supported
+      const result = await validate('valid/resources-remote-svg-font-valid.epub');
+      expectNoErrorsOrWarnings(result);
     });
   });
 });
@@ -569,6 +733,34 @@ function expectWarning(
   expect(
     hasWarning,
     `Expected warning ${warningId} to be reported. Got: ${JSON.stringify(result.messages.map((m) => ({ id: m.id, severity: m.severity })))}`,
+  ).toBe(true);
+}
+
+/**
+ * Assert that a specific fatal error ID is present in the result
+ */
+function expectFatal(
+  result: Awaited<ReturnType<typeof EpubCheck.validate>>,
+  errorId: string,
+): void {
+  const hasFatal = result.messages.some((m) => m.id === errorId && m.severity === 'fatal');
+  expect(
+    hasFatal,
+    `Expected fatal ${errorId} to be reported. Got: ${JSON.stringify(result.messages.map((m) => ({ id: m.id, severity: m.severity })))}`,
+  ).toBe(true);
+}
+
+/**
+ * Assert that a specific usage ID is present in the result
+ */
+function expectUsage(
+  result: Awaited<ReturnType<typeof EpubCheck.validate>>,
+  usageId: string,
+): void {
+  const hasUsage = result.messages.some((m) => m.id === usageId && m.severity === 'usage');
+  expect(
+    hasUsage,
+    `Expected usage ${usageId} to be reported. Got: ${JSON.stringify(result.messages.map((m) => ({ id: m.id, severity: m.severity })))}`,
   ).toBe(true);
 }
 

@@ -3044,6 +3044,16 @@ export class ContentValidator {
         ? (navAnchorTypes.get(`${String(line)}:${href}`) ?? ReferenceType.HYPERLINK)
         : ReferenceType.HYPERLINK;
 
+      // data: and file: URLs need validation (RSC-029/RSC-030)
+      if (href.startsWith('data:') || href.startsWith('file:')) {
+        refValidator.addReference({
+          url: href,
+          targetResource: href,
+          type: refType,
+          location: { path, line },
+        });
+        continue;
+      }
       if (ABSOLUTE_URI_RE.test(href)) {
         continue;
       }
@@ -3089,6 +3099,16 @@ export class ContentValidator {
 
       const line = area.line;
 
+      // data: and file: URLs need validation (RSC-029/RSC-030)
+      if (href.startsWith('data:') || href.startsWith('file:')) {
+        refValidator.addReference({
+          url: href,
+          targetResource: href,
+          type: ReferenceType.HYPERLINK,
+          location: { path, line },
+        });
+        continue;
+      }
       if (ABSOLUTE_URI_RE.test(href)) continue;
       if (href.includes('#epubcfi(')) continue;
 
@@ -3133,6 +3153,16 @@ export class ContentValidator {
 
       const line = link.line;
 
+      // data: and file: URLs need validation (RSC-029/RSC-030)
+      if (href.startsWith('data:') || href.startsWith('file:')) {
+        refValidator.addReference({
+          url: href,
+          targetResource: href,
+          type: ReferenceType.HYPERLINK,
+          location: { path, line },
+        });
+        continue;
+      }
       if (href.startsWith('http://') || href.startsWith('https://')) {
         continue;
       }

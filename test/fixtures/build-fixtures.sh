@@ -37,9 +37,22 @@ create_content() {
 }
 
 # Create a stub nav file at $1 (referencing $2 as main content href, default content_001.xhtml)
+# If $2 is "SELF_LINK", creates a nav with an empty href to avoid spine reference issues.
 create_nav() {
-  local target="${2:-content_001.xhtml}"
-  echo "$MINIMAL_NAV" | sed "s|content_001.xhtml|${target}|" > "$1"
+  if [ "${2}" = "SELF_LINK" ]; then
+    cat > "$1" << 'NAVEOF'
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="en" lang="en">
+<head><meta charset="utf-8"/><title>Nav</title></head>
+<body>
+<nav epub:type="toc"><ol><li><a href="">Content</a></li></ol></nav>
+</body>
+</html>
+NAVEOF
+  else
+    local target="${2:-content_001.xhtml}"
+    echo "$MINIMAL_NAV" | sed "s|content_001.xhtml|${target}|" > "$1"
+  fi
 }
 
 # Build an EPUB from an OPF file
@@ -66,16 +79,51 @@ build_opf_epub() {
     nav_href=$(echo "$opf_content" | grep -o '<item[^>]*href="[^"]*"[^>]*properties="[^"]*nav[^"]*"[^>]*>' | grep -o 'href="[^"]*"' | sed 's/href="//;s/"$//' | head -1 || true)
   fi
 
+  # Find a spine XHTML item for nav link target
+  # Extract spine idrefs, then find matching manifest XHTML items
+  local first_content_href=""
+  local spine_idrefs
+  spine_idrefs=$(echo "$opf_content" | grep -oE '<itemref[^>]*idref="[^"]*"' | sed 's/.*idref="//;s/"$//' || true)
+  for idref in $spine_idrefs; do
+    local item_line
+    item_line=$(echo "$opf_content" | grep -E "id=\"${idref}\"" | head -1 || true)
+    if echo "$item_line" | grep -q 'media-type="application/xhtml+xml"'; then
+      first_content_href=$(echo "$item_line" | grep -o 'href="[^"]*"' | sed 's/href="//;s/"$//' | head -1 || true)
+      break
+    fi
+  done
+  if [ -z "$first_content_href" ]; then
+    # No spine XHTML item found; use nav itself if it's in the spine, otherwise use fragment-only link
+    local nav_in_spine=""
+    local nav_id
+    nav_id=$(echo "$opf_content" | grep -o '<item[^>]*properties="[^"]*nav[^"]*"[^>]*>' | grep -o 'id="[^"]*"' | sed 's/id="//;s/"$//' | head -1 || true)
+    if [ -z "$nav_id" ]; then
+      nav_id=$(echo "$opf_content" | grep -o '<item[^>]*href="[^"]*"[^>]*properties="[^"]*nav[^"]*"[^>]*>' | grep -o 'id="[^"]*"' | sed 's/id="//;s/"$//' | head -1 || true)
+    fi
+    if [ -n "$nav_id" ]; then
+      nav_in_spine=$(echo "$opf_content" | grep "idref=\"${nav_id}\"" || true)
+    fi
+    if [ -n "$nav_in_spine" ]; then
+      first_content_href="$nav_href"
+    else
+      first_content_href="SELF_LINK"
+    fi
+  fi
+
   # Extract all href references from manifest items and create appropriate stubs
   local all_hrefs
   all_hrefs=$(echo "$opf_content" | grep -oE 'href="[^"]*"' | sed 's/href="//;s/"$//' | sort -u || true)
 
   for href in $all_hrefs; do
+    # Skip remote URLs, data URLs, and file URLs
+    case "$href" in
+      http://*|https://*|data:*|file:*) continue ;;
+    esac
     local ext="${href##*.}"
     case "$ext" in
       xhtml|html)
         if [ "$href" = "$nav_href" ]; then
-          create_nav "$tmpdir/EPUB/$href" "$href"
+          create_nav "$tmpdir/EPUB/$href" "$first_content_href"
         else
           create_content "$tmpdir/EPUB/$href"
         fi
@@ -83,10 +131,73 @@ build_opf_epub() {
       css)
         echo "body { margin: 0; }" > "$tmpdir/EPUB/$href"
         ;;
-      ncx)
-        # handled below
+      js)
+        touch "$tmpdir/EPUB/$href"
         ;;
-      svg|jpg|jpeg|png|webp|gif|xml|smil)
+      mp3|mpg)
+        printf '\xff\xfb' > "$tmpdir/EPUB/$href"
+        ;;
+      mp4|aac|m4v)
+        printf '\x00\x00\x00\x00' > "$tmpdir/EPUB/$href"
+        ;;
+      opus)
+        printf 'OggS' > "$tmpdir/EPUB/$href"
+        ;;
+      webm)
+        printf '\x1a\x45\xdf\xa3' > "$tmpdir/EPUB/$href"
+        ;;
+      ttf)
+        printf '\x00\x01\x00\x00' > "$tmpdir/EPUB/$href"
+        ;;
+      otf)
+        printf 'OTTO' > "$tmpdir/EPUB/$href"
+        ;;
+      woff)
+        printf 'wOFF' > "$tmpdir/EPUB/$href"
+        ;;
+      woff2)
+        printf 'wOF2' > "$tmpdir/EPUB/$href"
+        ;;
+      gif)
+        printf 'GIF89a\x01\x00\x01\x00\x80\x00\x00\xff\xff\xff\x00\x00\x00!\xf9\x04\x00\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;' > "$tmpdir/EPUB/$href"
+        ;;
+      jpg|jpeg)
+        printf '\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00\xff\xd9' > "$tmpdir/EPUB/$href"
+        ;;
+      png)
+        printf '\x89PNG\r\n\x1a\n' > "$tmpdir/EPUB/$href"
+        ;;
+      webp)
+        printf 'RIFF\x24\x00\x00\x00WEBPVP8 \x18\x00\x00\x000\x01\x00\x9d\x01\x2a\x01\x00\x01\x00\x01\x40\x25\xa4\x00\x03\x70\x00\xfe\xfb\x94\x00\x00' > "$tmpdir/EPUB/$href"
+        ;;
+      svg)
+        echo '<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><rect width="1" height="1"/></svg>' > "$tmpdir/EPUB/$href"
+        ;;
+      pls)
+        echo '<?xml version="1.0" encoding="UTF-8"?><lexicon xmlns="http://www.w3.org/2005/01/pronunciation-lexicon" version="1.0" xml:lang="en" alphabet="ipa"><lexeme><grapheme>test</grapheme><phoneme>tɛst</phoneme></lexeme></lexicon>' > "$tmpdir/EPUB/$href"
+        ;;
+      vnd)
+        touch "$tmpdir/EPUB/$href"
+        ;;
+      ncx)
+        cat > "$tmpdir/EPUB/$href" << 'NCXEOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
+<head><meta name="dtb:uid" content="NOID"/></head>
+<docTitle><text>Title</text></docTitle>
+<navMap><navPoint id="np1" playOrder="1"><navLabel><text>Content</text></navLabel><content src="content_001.xhtml"/></navPoint></navMap>
+</ncx>
+NCXEOF
+        ;;
+      smil)
+        cat > "$tmpdir/EPUB/$href" << 'SMILEOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<smil xmlns="http://www.w3.org/ns/SMIL" version="3.0">
+<body><seq><par><text src="content_001.xhtml"/></par></seq></body>
+</smil>
+SMILEOF
+        ;;
+      xml)
         # handled below
         ;;
     esac
@@ -1089,6 +1200,90 @@ for name in "${DVOCAB_VALIDS[@]}"; do
 done
 
 echo ""
+echo "=== Building 03-resources fixtures ==="
+
+JAVA_RESOURCES_DIR="../epubcheck/src/test/resources/epub3/03-resources/files"
+
+RESOURCES_OPF_VALIDS=(
+  "resources-core-media-types-valid"
+  "resources-remote-audio-valid"
+  "fallback-to-xhtml-valid"
+  "fallback-to-svg-valid"
+  "fallback-chain-valid"
+  "xml-encoding-utf8-declared-valid"
+  "xml-encoding-utf8-BOM-valid"
+  "xml-encoding-utf8-no-declaration-valid"
+)
+
+RESOURCES_OPF_ERRORS=(
+  "fallback-missing-error"
+  "fallback-chain-circular-error"
+  "conformance-xml-malformed-error"
+  "conformance-xml-undeclared-namespace-error"
+  "data-url-in-manifest-item-error"
+  "data-url-in-manifest-item-in-spine-error"
+  "data-url-in-package-link-error"
+  "file-url-in-package-document-error"
+)
+
+for name in "${RESOURCES_OPF_VALIDS[@]}"; do
+  src="$JAVA_RESOURCES_DIR/${name}.opf"
+  out="$FIXTURES_DIR/valid/${name}.epub"
+  if [ -f "$src" ]; then
+    echo "  Building $out"
+    build_opf_epub "$src" "$out"
+  else
+    echo "  WARNING: Source not found: $src"
+  fi
+done
+
+for name in "${RESOURCES_OPF_ERRORS[@]}"; do
+  src="$JAVA_RESOURCES_DIR/${name}.opf"
+  out="$FIXTURES_DIR/invalid/content/${name}.epub"
+  if [ -f "$src" ]; then
+    echo "  Building $out"
+    build_opf_epub "$src" "$out"
+  else
+    echo "  WARNING: Source not found: $src"
+  fi
+done
+
+# XHTML single-file fixtures for data/file URL tests
+RESOURCES_XHTML_ERRORS=(
+  "data-url-in-html-a-href-error"
+  "data-url-in-html-area-href-error"
+  "data-url-in-svg-a-href-error"
+  "file-url-in-xhtml-content-error"
+)
+
+for name in "${RESOURCES_XHTML_ERRORS[@]}"; do
+  src="$JAVA_RESOURCES_DIR/${name}.xhtml"
+  out="$FIXTURES_DIR/invalid/content/${name}.epub"
+  if [ -f "$src" ]; then
+    echo "  Building $out"
+    build_single_xhtml_epub "$src" "$out"
+  else
+    echo "  WARNING: Source not found: $src"
+  fi
+done
+
+# SVG single-file fixture for file URL test
+RESOURCES_SVG_ERRORS=(
+  "file-url-in-svg-content-error"
+)
+
+for name in "${RESOURCES_SVG_ERRORS[@]}"; do
+  src="$JAVA_RESOURCES_DIR/${name}.svg"
+  out="$FIXTURES_DIR/invalid/content/${name}.epub"
+  if [ -f "$src" ]; then
+    echo "  Building $out"
+    build_single_svg_epub "$src" "$out"
+  else
+    echo "  WARNING: Source not found: $src"
+  fi
+done
+
+echo ""
 echo "=== Done ==="
 echo "Total OPF errors: ${#OPF_ERRORS[@]}"
 echo "Total OPF warnings: ${#OPF_WARNINGS[@]}"
@@ -1106,3 +1301,7 @@ echo "Total SVG usage: ${#SVG_USAGE[@]}"
 echo "Total D-vocabulary errors: ${#DVOCAB_ERRORS[@]}"
 echo "Total D-vocabulary warnings: ${#DVOCAB_WARNINGS[@]}"
 echo "Total D-vocabulary valid: ${#DVOCAB_VALIDS[@]}"
+echo "Total Resources OPF valid: ${#RESOURCES_OPF_VALIDS[@]}"
+echo "Total Resources OPF errors: ${#RESOURCES_OPF_ERRORS[@]}"
+echo "Total Resources XHTML errors: ${#RESOURCES_XHTML_ERRORS[@]}"
+echo "Total Resources SVG errors: ${#RESOURCES_SVG_ERRORS[@]}"

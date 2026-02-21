@@ -1,5 +1,5 @@
 import { MessageId, pushMessage } from '../messages/index.js';
-import { checkUrlLeaking } from '../references/url.js';
+import { checkUrlLeaking, isDataURL, isFileURL } from '../references/url.js';
 import type { ValidationContext } from '../types.js';
 import { parseOPF } from './parser.js';
 import type { ManifestItem, PackageDocument } from './types.js';
@@ -1176,6 +1176,26 @@ export class OPFValidator {
         continue;
       }
 
+      // RSC-029: data URLs are not allowed in link hrefs
+      if (isDataURL(href)) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_029,
+          message: `Data URLs are not allowed in the package document link href`,
+          location: { path: opfPath },
+        });
+        continue;
+      }
+
+      // RSC-030: file URLs are not allowed in link hrefs
+      if (isFileURL(href)) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_030,
+          message: `File URLs are not allowed in the package document`,
+          location: { path: opfPath },
+        });
+        continue;
+      }
+
       const isRemote = /^[a-zA-Z][a-zA-Z0-9+\-.]*:/.test(href);
 
       // OPF-095: voicing media-type must be audio (applies to both local and remote)
@@ -1256,6 +1276,16 @@ export class OPFValidator {
         });
       }
       seenHrefs.add(item.href);
+
+      // RSC-029: data URLs are not allowed in manifest item hrefs
+      if (isDataURL(item.href)) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_029,
+          message: `Data URLs are not allowed in the manifest item href`,
+          location: { path: opfPath },
+        });
+        continue;
+      }
 
       // Check for self-referencing manifest item (OPF-099)
       // The manifest must not list the package document itself
