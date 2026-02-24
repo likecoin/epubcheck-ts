@@ -8,7 +8,8 @@ import { MessageId, pushMessage } from '../messages/index.js';
 import { isCoreMediaType } from '../opf/types.js';
 import type { ResourceRegistry } from '../references/registry.js';
 import { ReferenceType } from '../references/types.js';
-import { resolveManifestHref } from '../references/url.js';
+import { isRegisteredScheme } from '../references/uri-schemes.js';
+import { isMalformedURL, isURLParseable, resolveManifestHref } from '../references/url.js';
 import type { ReferenceValidator } from '../references/validator.js';
 import type { ValidationContext } from '../types.js';
 
@@ -3055,6 +3056,21 @@ export class ContentValidator {
         continue;
       }
       if (ABSOLUTE_URI_RE.test(href)) {
+        const scheme = href.slice(0, href.indexOf(':')).toLowerCase();
+        if (!isRegisteredScheme(scheme)) {
+          pushMessage(context.messages, {
+            id: MessageId.HTM_025,
+            message: 'Hyperlink uses non-registered URI scheme type',
+            location: { path, line },
+          });
+        }
+        if (isMalformedURL(href) || !isURLParseable(href)) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_020,
+            message: `URL is not valid: "${href}"`,
+            location: { path, line },
+          });
+        }
         continue;
       }
       // Skip EPUB CFI references (e.g., "package.opf#epubcfi(/6/2!/4/2/1:1)")
@@ -3109,7 +3125,24 @@ export class ContentValidator {
         });
         continue;
       }
-      if (ABSOLUTE_URI_RE.test(href)) continue;
+      if (ABSOLUTE_URI_RE.test(href)) {
+        const scheme = href.slice(0, href.indexOf(':')).toLowerCase();
+        if (!isRegisteredScheme(scheme)) {
+          pushMessage(context.messages, {
+            id: MessageId.HTM_025,
+            message: 'Hyperlink uses non-registered URI scheme type',
+            location: { path, line },
+          });
+        }
+        if (isMalformedURL(href) || !isURLParseable(href)) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_020,
+            message: `URL is not valid: "${href}"`,
+            location: { path, line },
+          });
+        }
+        continue;
+      }
       if (href.includes('#epubcfi(')) continue;
 
       if (href.startsWith('#')) {
@@ -3163,7 +3196,22 @@ export class ContentValidator {
         });
         continue;
       }
-      if (href.startsWith('http://') || href.startsWith('https://')) {
+      if (ABSOLUTE_URI_RE.test(href)) {
+        const scheme = href.slice(0, href.indexOf(':')).toLowerCase();
+        if (!isRegisteredScheme(scheme)) {
+          pushMessage(context.messages, {
+            id: MessageId.HTM_025,
+            message: 'Hyperlink uses non-registered URI scheme type',
+            location: { path, line },
+          });
+        }
+        if (isMalformedURL(href) || !isURLParseable(href)) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_020,
+            message: `URL is not valid: "${href}"`,
+            location: { path, line },
+          });
+        }
         continue;
       }
       if (href.startsWith('#')) {

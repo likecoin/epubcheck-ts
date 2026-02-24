@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~90% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs done |
 
-**Overall: ~89% complete (909 tests passing, 64 skipped)**
+**Overall: ~89% complete (918 tests passing, 64 skipped)**
 
 ---
 
@@ -27,8 +27,8 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 404 | 387 | 17 |
-| **Integration Tests** | 569 | 522 | 47 |
-| **Total** | **973** | **909** | **64** |
+| **Integration Tests** | 578 | 531 | 47 |
+| **Total** | **982** | **918** | **64** |
 
 ### Integration Test Files
 
@@ -37,7 +37,7 @@ test/integration/
 ├── epub.test.ts                 # 4 tests   (4 pass, 0 skip)  - Basic EPUB validation
 ├── ocf.integration.test.ts      # 47 tests  (42 pass, 5 skip) - OCF/ZIP/container
 ├── opf.integration.test.ts      # 167 tests (166 pass, 1 skip)  - Package document
-├── content.integration.test.ts  # 205 tests (174 pass, 31 skip)  - XHTML/CSS/SVG
+├── content.integration.test.ts  # 214 tests (183 pass, 31 skip)  - XHTML/CSS/SVG
 ├── nav.integration.test.ts      # 36 tests  (36 pass, 0 skip)  - Navigation
 └── resources.integration.test.ts # 110 tests (99 pass, 11 skip)  - Resources/fallbacks
 ```
@@ -85,10 +85,13 @@ test/fixtures/
 - **Content (31 skipped)**:
   - *RelaxNG/Schematron content schema (~11)*: image map, foreignObject/SVG title HTML validation, microdata, Schematron, IDREF resolution — requires XHTML/SVG schema (libxml2-wasm limitation)
   - *CSS encoding/syntax (4)*: CSS-003/CSS-004 encoding detection, CSS syntax error ordering
-  - *URL/base handling (5)*: Non-conforming URL RSC-020, unparseable host, unregistered scheme HTM-025, base/xml:base external URL RSC-006
+  - *URL/base handling (2)*: base/xml:base external URL RSC-006
   - *ARIA (1)*: aria-describedAt RSC-005
   - *Encoding/entities (1)*: Encoding detection HTM-058
   - *SVG fixtures (~2)*: foreignObject HTML validation
+  - *Standalone SVG (1)*: ACC-011 accessibility check not wired for standalone SVG documents
+  - *Namespace (1)*: HTM-010 unusual epub namespace not implemented (false positive HTM-004)
+  - *RDFa (1)*: OPF-096 non-linear content linked only via `<link rel="prev/next">`
   - *Other (~6)*: file URL, SVG regression
 - **Resources (11 skipped)**:
   - *XML encoding detection (6)*: RSC-027/RSC-028 encoding detection not implemented (UTF-16, Latin-1, UTF-32, unknown)
@@ -198,13 +201,13 @@ test/fixtures/
 | 03-resources | 113 | 110 | 99 | 88% |
 | 04-ocf | 61 | 47 | 42 | 69% |
 | 05-package-document | 121 | 119 | 118 | 98% |
-| 06-content-document | 215 | 205 | 170 | 79% |
+| 06-content-document | 215 | 214 | 183 | 85% |
 | 07-navigation-document | 40 | 36 | 36 | 90% |
 | 08-layout | 51 | 0 | 0 | 0% |
 | 09-media-overlays | 51 | 0 | 0 | 0% |
 | D-vocabularies (ARIA) | 56 | 48 | 48 | 86% |
 | Other | 6 | 0 | 0 | 0% |
-| **Total** | **719** | **569** | **507** | **71%** |
+| **Total** | **719** | **578** | **531** | **74%** |
 
 ### E2E Porting Priorities
 
@@ -215,7 +218,7 @@ test/fixtures/
 4. **D-vocabularies** (56 scenarios) - 86% coverage (48 ported, 48 passing); remaining 8 need media overlays / rendition
 
 **High Priority** - Largest remaining gaps:
-5. **06-content-document** (215 scenarios) - 70% coverage, needs ARIA/DOCTYPE/entity validation
+5. **06-content-document** (215 scenarios) - 85% coverage, needs ARIA/DOCTYPE/entity validation
 6. **03-resources** (113 scenarios) - 88% coverage, data/file URL checks, fallback chains, XML conformance done
 
 **Low Priority** - Specialized features:
@@ -264,9 +267,9 @@ Ordered by severity impact (number of active error/warning messages not yet emit
 ## Message IDs
 
 **Defined**: 300 message IDs
-**Actively used**: 120 (40%)
+**Actively used**: 121 (40%)
 
-Active by prefix: OPF (50), RSC (25), PKG (13), CSS (10), HTM (10), NAV (4), NCX (3), ACC (4), MED (2)
+Active by prefix: OPF (50), RSC (25), PKG (13), CSS (10), HTM (11), NAV (4), NCX (3), ACC (4), MED (2)
 Unused prefixes: SCP (0), CHK (0), INF (0)
 
 ### Recent Message ID Fixes (aligned with Java EPUBCheck)
@@ -370,6 +373,8 @@ Unused prefixes: SCP (0), CHK (0), INF (0)
 - `CSS-008` - Style attribute CSS syntax validation (declaration list parsing)
 - `RSC-005` - SVG epub:type not allowed on disallowed elements (title, desc, defs, foreignObject, etc.)
 - `RSC-005` - Unknown epub:* attributes in SVG (only epub:type is allowed)
+- `HTM-025` - Unregistered URI scheme detection in hyperlinks (anchor, area, SVG `<a>`)
+- `RSC-020` - Malformed URL detection in content document hyperlinks (whitespace, missing `://` for special schemes)
 
 ---
 

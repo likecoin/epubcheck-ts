@@ -651,6 +651,13 @@ describe('Integration Tests - Content Documents', () => {
 
       expectError(result, 'CSS-015');
     });
+
+    it('should verify link element with conflicting alt style tags', async () => {
+      const data = await loadEpub('valid/link-alt-style-tags-conflict-usage.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
   });
 
   describe('Lists', () => {
@@ -863,6 +870,14 @@ describe('Integration Tests - Content Documents', () => {
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
+    });
+
+    it('should report MathML without alt text (ACC-009)', async () => {
+      const data = await loadEpub('valid/mathml-noalt-usage.epub');
+      const result = await EpubCheck.validate(data, { includeUsage: true });
+
+      expectNoErrorsOrWarnings(result);
+      expectUsage(result, 'ACC-009');
     });
   });
 
@@ -1174,6 +1189,13 @@ describe('Integration Tests - Content Documents', () => {
 
       expectError(result, 'RSC-005');
     });
+
+    it('should verify embedded SVG with invalid elements as valid (RSC-025 not implemented)', async () => {
+      const data = await loadEpub('valid/svg-invalid-usage.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
   });
 
   describe('Tables', () => {
@@ -1223,24 +1245,21 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: RSC-020 URL validation for content doc URLs not implemented
-    it.skip('should report non-conforming URLs (RSC-020)', async () => {
+    it('should report non-conforming URLs (RSC-020)', async () => {
       const data = await loadEpub('invalid/content/url-invalid-error.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-020');
     });
 
-    // Skip: RSC-020 URL validation for content doc URLs not implemented
-    it.skip('should report unparseable URL host (RSC-020)', async () => {
+    it('should report unparseable URL host (RSC-020)', async () => {
       const data = await loadEpub('invalid/content/url-host-unparseable-warning.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-020');
     });
 
-    // Skip: HTM-025 (unregistered URL scheme) not implemented
-    it.skip('should report unregistered URL scheme (HTM-025)', async () => {
+    it('should report unregistered URL scheme (HTM-025)', async () => {
       const data = await loadEpub('warnings/url-unregistered-scheme-warning.epub');
       const result = await EpubCheck.validate(data);
 
@@ -1469,6 +1488,29 @@ describe('Integration Tests - Content Documents', () => {
     });
   });
 
+  // ==================== Namespaces ====================
+  describe('Namespace validation', () => {
+    // Skip: HTM-010 (unusual epub namespace) not implemented; our code false-positives HTM-004
+    it.skip('should report unknown epub namespace (HTM-010)', async () => {
+      const data = await loadEpub('valid/ns-epub-unknown-info.epub');
+      const result = await EpubCheck.validate(data, { includeUsage: true });
+
+      expectNoErrorsOrWarnings(result);
+      expectUsage(result, 'HTM-010');
+    });
+  });
+
+  // ==================== RDFa ====================
+  describe('RDFa validation', () => {
+    // Skip: OPF-096 fires for non-linear content linked only via <link rel="prev/next">
+    it.skip('should allow RDFa attributes on elements', async () => {
+      const data = await loadEpub('valid/rdfa-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
+  });
+
   // ==================== SVG Content Documents ====================
   describe('SVG Content Documents', () => {
     it('should verify custom namespace elements in SVG', async () => {
@@ -1536,6 +1578,36 @@ describe('Integration Tests - Content Documents', () => {
 
     it('should verify empty font-face declarations in SVG', async () => {
       const data = await loadEpub('valid/font-face-empty-valid-svg.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should verify SVG with invalid elements as valid (RSC-025 not implemented)', async () => {
+      const data = await loadEpub('valid/svg-invalid-usage-svg.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should verify links are allowed in SVG', async () => {
+      const data = await loadEpub('valid/link-valid-svg.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: ACC-011 not reported for standalone SVG documents (only embedded SVG in XHTML)
+    it.skip('should report SVG link without label (ACC-011)', async () => {
+      const data = await loadEpub('valid/link-label-valid-svg.epub');
+      const result = await EpubCheck.validate(data, { includeUsage: true });
+
+      expectNoErrorsOrWarnings(result);
+      expectUsage(result, 'ACC-011');
+    });
+
+    it('should verify image xlink:href fragment in SVG', async () => {
+      const data = await loadEpub('valid/image-fragment-valid-svg.epub');
       const result = await EpubCheck.validate(data);
 
       expectNoErrorsOrWarnings(result);

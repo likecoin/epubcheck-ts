@@ -124,6 +124,22 @@ export function checkUrlLeaking(href: string): boolean {
   }
 }
 
+const SPECIAL_URL_SCHEMES = new Set(['http', 'https', 'ftp', 'ws', 'wss']);
+
+/**
+ * Check if a URL with a scheme can be parsed as a valid URL.
+ * For special schemes (http, https, ftp, ws, wss), verifies "://" follows the scheme.
+ */
+export function isURLParseable(url: string): boolean {
+  const colonIdx = url.indexOf(':');
+  if (colonIdx < 0) return true;
+  const scheme = url.substring(0, colonIdx).toLowerCase();
+  if (SPECIAL_URL_SCHEMES.has(scheme)) {
+    if (!url.substring(colonIdx).startsWith('://')) return false;
+  }
+  return true;
+}
+
 export function resolveManifestHref(opfDir: string, href: string): string {
   if (isRemoteURL(href)) return href;
   try {
