@@ -9,13 +9,42 @@ import { isCoreMediaType } from '../opf/types.js';
 import type { ResourceRegistry } from '../references/registry.js';
 import { ReferenceType } from '../references/types.js';
 import { isRegisteredScheme } from '../references/uri-schemes.js';
-import { isMalformedURL, isURLParseable, resolveManifestHref } from '../references/url.js';
+import { resolveManifestHref } from '../references/url.js';
 import type { ReferenceValidator } from '../references/validator.js';
 import type { ValidationContext } from '../types.js';
 
 const DISCOURAGED_ELEMENTS = new Set(['base', 'embed', 'rp']);
 
 const ABSOLUTE_URI_RE = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
+
+const SPECIAL_URL_SCHEMES = new Set(['http', 'https', 'ftp', 'ws', 'wss']);
+
+function validateAbsoluteHyperlinkURL(
+  context: ValidationContext,
+  href: string,
+  path: string,
+  line: number | undefined,
+): void {
+  const location = line != null ? { path, line } : { path };
+  const scheme = href.slice(0, href.indexOf(':')).toLowerCase();
+  if (!isRegisteredScheme(scheme)) {
+    pushMessage(context.messages, {
+      id: MessageId.HTM_025,
+      message: 'Hyperlink uses non-registered URI scheme type',
+      location,
+    });
+  }
+  if (
+    /[\s<>]/.test(href) ||
+    (SPECIAL_URL_SCHEMES.has(scheme) && !href.slice(href.indexOf(':')).startsWith('://'))
+  ) {
+    pushMessage(context.messages, {
+      id: MessageId.RSC_020,
+      message: `URL is not valid: "${href}"`,
+      location,
+    });
+  }
+}
 
 const IMAGE_MAGIC: readonly {
   mime: string;
@@ -3056,21 +3085,7 @@ export class ContentValidator {
         continue;
       }
       if (ABSOLUTE_URI_RE.test(href)) {
-        const scheme = href.slice(0, href.indexOf(':')).toLowerCase();
-        if (!isRegisteredScheme(scheme)) {
-          pushMessage(context.messages, {
-            id: MessageId.HTM_025,
-            message: 'Hyperlink uses non-registered URI scheme type',
-            location: { path, line },
-          });
-        }
-        if (isMalformedURL(href) || !isURLParseable(href)) {
-          pushMessage(context.messages, {
-            id: MessageId.RSC_020,
-            message: `URL is not valid: "${href}"`,
-            location: { path, line },
-          });
-        }
+        validateAbsoluteHyperlinkURL(context, href, path, line);
         continue;
       }
       // Skip EPUB CFI references (e.g., "package.opf#epubcfi(/6/2!/4/2/1:1)")
@@ -3126,21 +3141,7 @@ export class ContentValidator {
         continue;
       }
       if (ABSOLUTE_URI_RE.test(href)) {
-        const scheme = href.slice(0, href.indexOf(':')).toLowerCase();
-        if (!isRegisteredScheme(scheme)) {
-          pushMessage(context.messages, {
-            id: MessageId.HTM_025,
-            message: 'Hyperlink uses non-registered URI scheme type',
-            location: { path, line },
-          });
-        }
-        if (isMalformedURL(href) || !isURLParseable(href)) {
-          pushMessage(context.messages, {
-            id: MessageId.RSC_020,
-            message: `URL is not valid: "${href}"`,
-            location: { path, line },
-          });
-        }
+        validateAbsoluteHyperlinkURL(context, href, path, line);
         continue;
       }
       if (href.includes('#epubcfi(')) continue;
@@ -3197,21 +3198,7 @@ export class ContentValidator {
         continue;
       }
       if (ABSOLUTE_URI_RE.test(href)) {
-        const scheme = href.slice(0, href.indexOf(':')).toLowerCase();
-        if (!isRegisteredScheme(scheme)) {
-          pushMessage(context.messages, {
-            id: MessageId.HTM_025,
-            message: 'Hyperlink uses non-registered URI scheme type',
-            location: { path, line },
-          });
-        }
-        if (isMalformedURL(href) || !isURLParseable(href)) {
-          pushMessage(context.messages, {
-            id: MessageId.RSC_020,
-            message: `URL is not valid: "${href}"`,
-            location: { path, line },
-          });
-        }
+        validateAbsoluteHyperlinkURL(context, href, path, line);
         continue;
       }
       if (href.startsWith('#')) {

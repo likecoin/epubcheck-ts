@@ -348,7 +348,6 @@ describe('Integration Tests - Resources', () => {
       const result = await validate('invalid/content/fallback-missing-error.epub');
       expectError(result, 'OPF-043');
     });
-
   });
 
   // ==========================================================================
@@ -535,7 +534,9 @@ describe('Integration Tests - Resources', () => {
     });
 
     it('should report data URL in manifest item in spine (RSC-029)', async () => {
-      const result = await validate('invalid/content/data-url-in-manifest-item-in-spine-error.epub');
+      const result = await validate(
+        'invalid/content/data-url-in-manifest-item-in-spine-error.epub',
+      );
       expectError(result, 'RSC-029');
     });
 
@@ -602,7 +603,9 @@ describe('Integration Tests - Resources', () => {
 
     it.skip('should report undeclared namespace prefix (RSC-016)', async () => {
       // OPF parser reports RSC-005 instead of RSC-016 for undeclared namespace prefix
-      const result = await validate('invalid/content/conformance-xml-undeclared-namespace-error.epub');
+      const result = await validate(
+        'invalid/content/conformance-xml-undeclared-namespace-error.epub',
+      );
       expectFatal(result, 'RSC-016');
     });
   });
@@ -650,7 +653,9 @@ describe('Integration Tests - Resources', () => {
 
     it.skip('should warn about UTF-16 BOM with UTF-8 declaration (RSC-027 + RSC-016)', async () => {
       // Encoding detection not implemented
-      const result = await validate('invalid/content/xml-encoding-utf16-BOM-and-utf8-declaration-warning.epub');
+      const result = await validate(
+        'invalid/content/xml-encoding-utf16-BOM-and-utf8-declaration-warning.epub',
+      );
       expectWarning(result, 'RSC-027');
     });
 

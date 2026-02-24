@@ -74,18 +74,9 @@ export function hasParentDirectoryReference(url: string): boolean {
  * Check if a URL is malformed
  */
 export function isMalformedURL(url: string): boolean {
-  if (!url) return true;
-
-  try {
-    // Trim leading/trailing whitespace (XML attribute values are whitespace-trimmed)
-    const trimmed = url.trim();
-    if (!trimmed) return true;
-    // Check for invalid characters (whitespace within URL, angle brackets)
-    if (/[\s<>]/.test(trimmed)) return true;
-    return false;
-  } catch {
-    return true;
-  }
+  if (!url.trim()) return true;
+  if (/[\s<>]/.test(url)) return true;
+  return false;
 }
 
 /**
@@ -122,22 +113,6 @@ export function checkUrlLeaking(href: string): boolean {
   } catch {
     return false;
   }
-}
-
-const SPECIAL_URL_SCHEMES = new Set(['http', 'https', 'ftp', 'ws', 'wss']);
-
-/**
- * Check if a URL with a scheme can be parsed as a valid URL.
- * For special schemes (http, https, ftp, ws, wss), verifies "://" follows the scheme.
- */
-export function isURLParseable(url: string): boolean {
-  const colonIdx = url.indexOf(':');
-  if (colonIdx < 0) return true;
-  const scheme = url.substring(0, colonIdx).toLowerCase();
-  if (SPECIAL_URL_SCHEMES.has(scheme)) {
-    if (!url.substring(colonIdx).startsWith('://')) return false;
-  }
-  return true;
 }
 
 export function resolveManifestHref(opfDir: string, href: string): string {
