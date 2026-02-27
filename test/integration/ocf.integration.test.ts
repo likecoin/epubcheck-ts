@@ -83,6 +83,15 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
 
       expectNoErrorsOrWarnings(result);
     });
+
+    it('should allow forbidden characters in remote resource URLs', async () => {
+      const data = await loadEpub(
+        'valid/ocf-filename-character-forbidden-in-remote-url-valid.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
   });
 
   describe('Mimetype validation', () => {
@@ -245,6 +254,16 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       expect(result.valid).toBe(false);
       expectError(result, 'PKG-027');
     });
+
+    // Skip: Single-file validation mode not supported (duplicate of existing PKG-009 EPUB test)
+    it.skip('should report forbidden characters in file names - single-file mode (PKG-009)', () => {
+      // Java: ocf-filename-character-forbidden-error.opf
+    });
+
+    // Skip: Single-file validation mode not supported (duplicate of existing PKG-012 EPUB test)
+    it.skip('should report non-ASCII characters in file names - single-file mode (PKG-012)', () => {
+      // Java: ocf-filename-character-non-ascii-usage.opf
+    });
   });
 
   describe('URL validation', () => {
@@ -253,7 +272,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       const result = await EpubCheck.validate(data);
 
       expect(result.valid).toBe(false);
-      expectError(result, 'RSC-026');
+      expectErrorCount(result, 'RSC-026', 2);
     });
 
     it('should report path-absolute URLs in package document (RSC-026)', async () => {
@@ -269,7 +288,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       const result = await EpubCheck.validate(data);
 
       expect(result.valid).toBe(false);
-      expectError(result, 'RSC-007');
+      expectErrorCount(result, 'RSC-007', 4);
     });
 
     it('should report iframe reference not declared in manifest (RSC-007)', async () => {
@@ -286,6 +305,30 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
 
       expect(result.valid).toBe(false);
       expectError(result, 'RSC-007');
+    });
+
+    it('should report URL query string in manifest item href (RSC-033)', async () => {
+      const data = await loadEpub('invalid/ocf/url-query-in-package-item-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-033');
+    });
+
+    it('should report URL query string in package link href (RSC-033)', async () => {
+      const data = await loadEpub('invalid/ocf/url-query-in-package-link-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-033');
+    });
+
+    it('should report URL query string in XHTML anchor href (RSC-033)', async () => {
+      const data = await loadEpub('invalid/ocf/url-query-in-xhtml-a-error.epub');
+      const result = await EpubCheck.validate(data);
+
+      expect(result.valid).toBe(false);
+      expectError(result, 'RSC-033');
     });
   });
 
@@ -361,11 +404,12 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       expectError(result, 'RSC-005');
     });
 
-    it('should allow encryption with unknown algorithm', async () => {
+    it('should allow encryption with unknown algorithm and report RSC-004 info', async () => {
       const data = await loadEpub('valid/ocf-encryption-unknown-valid.epub');
       const result = await EpubCheck.validate(data);
 
       expectNoErrorsOrWarnings(result);
+      expectInfo(result, 'RSC-004');
     });
   });
 
@@ -386,6 +430,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       const result = await EpubCheck.validate(data);
 
       expectNoErrorsOrWarnings(result);
+      expectInfo(result, 'RSC-004');
     });
 
     it('should allow duplicating encryption declaration for obfuscated font', async () => {
@@ -393,6 +438,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       const result = await EpubCheck.validate(data);
 
       expectNoErrorsOrWarnings(result);
+      expectInfo(result, 'RSC-004');
     });
 
     it('should report obfuscated font that is not a Core Media Type (PKG-026)', async () => {
@@ -426,6 +472,21 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
 
       expectUsage(result, 'PKG-012');
     });
+
+    // Skip: Single-file validation mode not supported (duplicate of existing PKG-010 EPUB test)
+    it.skip('should warn about spaces in file names - single-file mode (PKG-010)', () => {
+      // Java: ocf-filename-character-space-warning.opf
+    });
+
+    // Skip: Single-file validation mode not supported (valid URL forms covered across other suites)
+    it.skip('should allow valid URLs in XHTML - single-file mode', () => {
+      // Java: url-in-xhtml-valid.xhtml
+    });
+
+    // Skip: Directory validation mode not supported (duplicate of existing PKG-006 .epub test)
+    it.skip('should report missing mimetype file in directory mode (PKG-006)', () => {
+      // Java: ocf-mimetype-file-missing-error (directory)
+    });
   });
 });
 
@@ -456,6 +517,34 @@ function expectError(
   expect(
     hasError,
     `Expected error ${errorId} to be reported. Got: ${JSON.stringify(result.messages.map((m) => m.id))}`,
+  ).toBe(true);
+}
+
+/**
+ * Assert that a specific error ID is present exactly N times
+ */
+function expectErrorCount(
+  result: Awaited<ReturnType<typeof EpubCheck.validate>>,
+  errorId: string,
+  count: number,
+): void {
+  const errors = result.messages.filter(
+    (m) => m.id === errorId && (m.severity === 'error' || m.severity === 'fatal'),
+  );
+  expect(
+    errors.length,
+    `Expected ${String(count)} ${errorId} errors, got ${String(errors.length)}. All messages: ${JSON.stringify(result.messages.map((m) => m.id))}`,
+  ).toBe(count);
+}
+
+/**
+ * Assert that a specific info ID is present in the result
+ */
+function expectInfo(result: Awaited<ReturnType<typeof EpubCheck.validate>>, infoId: string): void {
+  const hasInfo = result.messages.some((m) => m.id === infoId && m.severity === 'info');
+  expect(
+    hasInfo,
+    `Expected info ${infoId} to be reported. Got: ${JSON.stringify(result.messages.map((m) => ({ id: m.id, severity: m.severity })))}`,
   ).toBe(true);
 }
 

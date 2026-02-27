@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~90% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs done |
 
-**Overall: ~89% complete (918 tests passing, 64 skipped)**
+**Overall: ~89% complete (922 tests passing, 69 skipped)**
 
 ---
 
@@ -27,15 +27,15 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 404 | 387 | 17 |
-| **Integration Tests** | 578 | 531 | 47 |
-| **Total** | **982** | **918** | **64** |
+| **Integration Tests** | 587 | 535 | 52 |
+| **Total** | **991** | **922** | **69** |
 
 ### Integration Test Files
 
 ```
 test/integration/
 ├── epub.test.ts                 # 4 tests   (4 pass, 0 skip)  - Basic EPUB validation
-├── ocf.integration.test.ts      # 47 tests  (42 pass, 5 skip) - OCF/ZIP/container
+├── ocf.integration.test.ts      # 56 tests  (46 pass, 10 skip) - OCF/ZIP/container
 ├── opf.integration.test.ts      # 167 tests (166 pass, 1 skip)  - Package document
 ├── content.integration.test.ts  # 214 tests (183 pass, 31 skip)  - XHTML/CSS/SVG
 ├── nav.integration.test.ts      # 36 tests  (36 pass, 0 skip)  - Navigation
@@ -48,16 +48,16 @@ test/integration/
 
 ```
 test/fixtures/
-├── valid/                 # 243 valid EPUBs
+├── valid/                 # 244 valid EPUBs
 ├── invalid/
-│   ├── ocf/              # 33 OCF error cases
+│   ├── ocf/              # 37 OCF error cases
 │   ├── opf/              # 113 OPF error cases
 │   ├── content/          # 133 content error cases
 │   └── nav/              # 18 navigation error cases
 └── warnings/             # 30 warning cases
 ```
 
-**Total**: 570 EPUB test fixtures (imported from Java EPUBCheck)
+**Total**: 575 EPUB test fixtures (imported from Java EPUBCheck)
 
 ### Quality: ⭐⭐⭐⭐ (4/5) for implemented features
 
@@ -98,7 +98,7 @@ test/fixtures/
   - *XML conformance (2)*: RSC-016 for OPF XML parse errors (emits OPF-002/RSC-005 instead)
   - *Single-file validation mode (2)*: remote XHTML/SVG font validation not supported
   - *OPF-090 usage (1)*: not-preferred media type usage message not emitted
-- **OCF (5 skipped)**: OPF-060 duplicate ZIP entry (1), encryption/signatures schema (4)
+- **OCF (10 skipped)**: OPF-060 duplicate ZIP entry (1), encryption/signatures schema (4), single-file/directory validation mode (5)
 - **OPF (1 skipped)**: OPF-014 remote audio overlays (1)
 
 ---
@@ -188,6 +188,7 @@ test/fixtures/
 5. **fontoxpath XPath 2.0** - fontoxpath crashes on XPath 2.0 functions like `tokenize()` used in OPF/nav Schematron; OPF and nav validation rules implemented as direct TypeScript instead
 6. **RelaxNG deprecation** - libxml2 plans to remove RelaxNG support in future
 7. **Unicode NFKC normalization** - Not implemented (affects 1 skipped test)
+8. **Single-file/directory validation mode** - TS validator only accepts full EPUB ZIP data; cannot validate standalone .opf/.xhtml files or unpacked directories (affects 5 skipped OCF tests, 2 skipped Resources tests)
 
 ---
 
@@ -199,7 +200,7 @@ test/fixtures/
 |---------------|----------------|-----------|------------|----------|
 | 00-minimal | 5 | 4 | 4 | 80% |
 | 03-resources | 113 | 110 | 99 | 88% |
-| 04-ocf | 61 | 47 | 42 | 69% |
+| 04-ocf | 61 | 56 | 46 | 75% |
 | 05-package-document | 121 | 119 | 118 | 98% |
 | 06-content-document | 215 | 214 | 183 | 85% |
 | 07-navigation-document | 40 | 36 | 36 | 90% |
@@ -207,14 +208,14 @@ test/fixtures/
 | 09-media-overlays | 51 | 0 | 0 | 0% |
 | D-vocabularies (ARIA) | 56 | 48 | 48 | 86% |
 | Other | 6 | 0 | 0 | 0% |
-| **Total** | **719** | **578** | **531** | **74%** |
+| **Total** | **719** | **587** | **535** | **74%** |
 
 ### E2E Porting Priorities
 
 **Completed** - High coverage achieved:
 1. **05-package-document** (121 scenarios) - 98% coverage (119 ported, 118 passing)
 2. **07-navigation-document** (40 scenarios) - 90% coverage (36 ported, all passing)
-3. **04-ocf** (61 scenarios) - 69% coverage (47 ported, 42 passing)
+3. **04-ocf** (61 scenarios) - 75% coverage (56 ported, 46 passing)
 4. **D-vocabularies** (56 scenarios) - 86% coverage (48 ported, 48 passing); remaining 8 need media overlays / rendition
 
 **High Priority** - Largest remaining gaps:
@@ -267,9 +268,9 @@ Ordered by severity impact (number of active error/warning messages not yet emit
 ## Message IDs
 
 **Defined**: 300 message IDs
-**Actively used**: 121 (40%)
+**Actively used**: 122 (41%)
 
-Active by prefix: OPF (50), RSC (25), PKG (13), CSS (10), HTM (11), NAV (4), NCX (3), ACC (4), MED (2)
+Active by prefix: OPF (50), RSC (26), PKG (13), CSS (10), HTM (11), NAV (4), NCX (3), ACC (4), MED (2)
 Unused prefixes: SCP (0), CHK (0), INF (0)
 
 ### Recent Message ID Fixes (aligned with Java EPUBCheck)
@@ -375,6 +376,8 @@ Unused prefixes: SCP (0), CHK (0), INF (0)
 - `RSC-005` - Unknown epub:* attributes in SVG (only epub:type is allowed)
 - `HTM-025` - Unregistered URI scheme detection in hyperlinks (anchor, area, SVG `<a>`)
 - `RSC-020` - Malformed URL detection in content document hyperlinks (whitespace, missing `://` for special schemes)
+- `RSC-004` - Encrypted resource info message (non-IDPF-obfuscation encryption detected in encryption.xml)
+- `RSC-033` - Query component check extended to OPF manifest item hrefs and package link hrefs
 
 ---
 

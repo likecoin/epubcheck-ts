@@ -471,9 +471,18 @@ export class OCFValidator {
       const xml = block[0];
       const algorithmMatch = /Algorithm=["']([^"']+)["']/.exec(xml);
       const uriMatch = /<(?:\w+:)?CipherReference[^>]+URI=["']([^"']+)["']/.exec(xml);
-      if (algorithmMatch?.[1] === IDPF_OBFUSCATION && uriMatch?.[1]) {
-        obfuscated.add(uriMatch[1]);
+      const algorithm = algorithmMatch?.[1];
+      const uri = uriMatch?.[1];
+      if (!uri) continue;
+      if (algorithm === IDPF_OBFUSCATION) {
+        obfuscated.add(uri);
       }
+      // RSC-004: Encrypted resource — content will not be checked (matches Java: all algorithms)
+      pushMessage(context.messages, {
+        id: MessageId.RSC_004,
+        message: `File "${uri}" is encrypted, its content will not be checked`,
+        location: { path: encryptionPath },
+      });
     }
 
     if (obfuscated.size > 0) {

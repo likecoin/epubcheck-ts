@@ -1198,6 +1198,15 @@ export class OPFValidator {
 
       const isRemote = /^[a-zA-Z][a-zA-Z0-9+\-.]*:/.test(href);
 
+      // RSC-033: Relative URLs must not have a query component
+      if (!isRemote && href.includes('?')) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_033,
+          message: `Relative URL strings must not have a query component: "${href}"`,
+          location: { path: opfPath },
+        });
+      }
+
       // OPF-095: voicing media-type must be audio (applies to both local and remote)
       if (hasVoicing && link.mediaType && !link.mediaType.startsWith('audio/')) {
         pushMessage(context.messages, {
@@ -1229,13 +1238,23 @@ export class OPFValidator {
         });
       }
 
-      const resolvedPath = resolvePath(opfPath, basePath);
+      // Strip query strings for path resolution
+      const basePathNoQuery = basePath.includes('?')
+        ? basePath.substring(0, basePath.indexOf('?'))
+        : basePath;
+      const basePathDecodedNoQuery = basePathDecoded.includes('?')
+        ? basePathDecoded.substring(0, basePathDecoded.indexOf('?'))
+        : basePathDecoded;
+
+      const resolvedPath = resolvePath(opfPath, basePathNoQuery);
       const resolvedPathDecoded =
-        basePathDecoded !== basePath ? resolvePath(opfPath, basePathDecoded) : resolvedPath;
+        basePathDecodedNoQuery !== basePathNoQuery
+          ? resolvePath(opfPath, basePathDecodedNoQuery)
+          : resolvedPath;
 
       const fileExists = context.files.has(resolvedPath) || context.files.has(resolvedPathDecoded);
       const inManifest =
-        this.manifestByHref.has(basePath) || this.manifestByHref.has(basePathDecoded);
+        this.manifestByHref.has(basePathNoQuery) || this.manifestByHref.has(basePathDecodedNoQuery);
 
       if (!fileExists && !inManifest) {
         pushMessage(context.messages, {
@@ -1287,10 +1306,25 @@ export class OPFValidator {
         continue;
       }
 
+      // RSC-033: Relative URLs must not have a query component
+      const isRemoteItem = /^[a-zA-Z][a-zA-Z0-9+\-.]*:/.test(item.href);
+      if (!isRemoteItem && item.href.includes('?')) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_033,
+          message: `Relative URL strings must not have a query component: "${item.href}"`,
+          location: { path: opfPath },
+        });
+      }
+
+      // Strip query string for path resolution
+      const itemHrefBase = item.href.includes('?')
+        ? item.href.substring(0, item.href.indexOf('?'))
+        : item.href;
+
       // Check for self-referencing manifest item (OPF-099)
       // The manifest must not list the package document itself
       // Note: href may be URL-encoded (e.g., table%20us%202.png) but file paths are not
-      const fullPath = resolvePath(opfPath, item.href);
+      const fullPath = resolvePath(opfPath, itemHrefBase);
       if (fullPath === opfPath) {
         pushMessage(context.messages, {
           id: MessageId.OPF_099,
@@ -1314,10 +1348,12 @@ export class OPFValidator {
       }
 
       // Check that referenced file exists (RSC-001 per Java EPUBCheck)
-      // Also try URL-decoded version for comparison
-      const decodedHref = tryDecodeUriComponent(item.href);
+      // Also try URL-decoded version for comparison (use query-stripped href)
+      const decodedHref = tryDecodeUriComponent(itemHrefBase);
       const fullPathDecoded =
-        decodedHref !== item.href ? resolvePath(opfPath, decodedHref).normalize('NFC') : fullPath;
+        decodedHref !== itemHrefBase
+          ? resolvePath(opfPath, decodedHref).normalize('NFC')
+          : fullPath;
 
       if (
         !context.files.has(fullPath) &&
