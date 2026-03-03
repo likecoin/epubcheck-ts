@@ -84,24 +84,21 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'CSS-002');
     });
 
-    // Skip: CSS encoding detection (CSS-004) not implemented
-    it.skip('should report CSS encoded in latin1 (CSS-004)', async () => {
+    it('should report CSS encoded in latin1 (CSS-004)', async () => {
       const data = await loadEpub('invalid/content/content-css-encoding-latin1-error.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'CSS-004');
     });
 
-    // Skip: CSS UTF-16 encoding detection (CSS-003) not implemented
-    it.skip('should warn about CSS encoded in UTF-16 with @charset (CSS-003)', async () => {
+    it('should warn about CSS encoded in UTF-16 with @charset (CSS-003)', async () => {
       const data = await loadEpub('warnings/content-css-encoding-utf16-declared-warning.epub');
       const result = await EpubCheck.validate(data);
 
       expectWarning(result, 'CSS-003');
     });
 
-    // Skip: CSS UTF-16 encoding detection (CSS-003) not implemented
-    it.skip('should warn about CSS encoded in UTF-16 without @charset (CSS-003)', async () => {
+    it('should warn about CSS encoded in UTF-16 without @charset (CSS-003)', async () => {
       const data = await loadEpub('warnings/content-css-encoding-utf16-not-declared-warning.epub');
       const result = await EpubCheck.validate(data);
 
@@ -204,8 +201,7 @@ describe('Integration Tests - Content Documents', () => {
   });
 
   describe('Encoding validation', () => {
-    // Skip: UTF-16 encoding detection not implemented (HTM-058)
-    it.skip('should report XHTML document not encoded as UTF-8 (HTM-058)', async () => {
+    it('should report XHTML document not encoded as UTF-8 (HTM-058)', async () => {
       const data = await loadEpub('invalid/content/encoding-utf16-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -390,8 +386,7 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: EPUB wrapper creates false reference errors (OPF-096, RSC-007) from RDFa link elements
-    it.skip('should verify RDFa attributes are allowed on HTML elements', async () => {
+    it('should verify RDFa attributes are allowed on HTML elements', async () => {
       const data = await loadEpub('valid/rdfa-valid.epub');
       const result = await EpubCheck.validate(data);
 
@@ -1301,8 +1296,7 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: External base URL handling for relative paths not fully implemented
-    it.skip('should report relative paths as remote when base is external URL (RSC-006)', async () => {
+    it('should report relative paths as remote when base is external URL (RSC-006)', async () => {
       const data = await loadEpub(
         'invalid/content/content-xhtml-base-url-remote-relative-path-error.epub',
       );
@@ -1490,8 +1484,7 @@ describe('Integration Tests - Content Documents', () => {
 
   // ==================== Namespaces ====================
   describe('Namespace validation', () => {
-    // Skip: HTM-010 (unusual epub namespace) not implemented; our code false-positives HTM-004
-    it.skip('should report unknown epub namespace (HTM-010)', async () => {
+    it('should report unknown epub namespace (HTM-010)', async () => {
       const data = await loadEpub('valid/ns-epub-unknown-info.epub');
       const result = await EpubCheck.validate(data, { includeUsage: true });
 
@@ -1502,8 +1495,7 @@ describe('Integration Tests - Content Documents', () => {
 
   // ==================== RDFa ====================
   describe('RDFa validation', () => {
-    // Skip: OPF-096 fires for non-linear content linked only via <link rel="prev/next">
-    it.skip('should allow RDFa attributes on elements', async () => {
+    it('should allow RDFa attributes on elements', async () => {
       const data = await loadEpub('valid/rdfa-valid.epub');
       const result = await EpubCheck.validate(data);
 
@@ -1597,8 +1589,7 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: ACC-011 not reported for standalone SVG documents (only embedded SVG in XHTML)
-    it.skip('should report SVG link without label (ACC-011)', async () => {
+    it('should report SVG link without label (ACC-011)', async () => {
       const data = await loadEpub('valid/link-label-valid-svg.epub');
       const result = await EpubCheck.validate(data, { includeUsage: true });
 

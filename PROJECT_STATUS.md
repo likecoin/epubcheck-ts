@@ -8,15 +8,15 @@ Quick reference for implementation progress vs Java EPUBCheck.
 |----------|------------|--------|
 | OCF Validation | ~90% | 🟢 URL leaking, UTF-8, spaces, forbidden chars all done |
 | OPF Validation | ~90% | 🟢 Schematron-equivalent checks, refines cycles, duplicate IDs done |
-| Content (XHTML/SVG) | ~90% | 🟢 CSS url() references, @import, inline CSS remote font, SVG remote font, picture elements, SVG use, epub:type vocab, lang mismatch, switch/trigger, SVG epub:type, media magic numbers done |
-| CSS Validation | ~70% | 🟢 url() extraction from declarations, @font-face src |
+| Content (XHTML/SVG) | ~90% | 🟢 CSS url() references, @import, inline CSS remote font, SVG remote font, picture elements, SVG use, epub:type vocab, lang mismatch, switch/trigger, SVG epub:type, media magic numbers, UTF-16 BOM, base href, epub namespace done |
+| CSS Validation | ~75% | 🟢 url() extraction from declarations, @font-face src, encoding detection done |
 | Navigation (nav/NCX) | ~85% | 🟢 Content model, structural validation, landmarks, labels, reading order done |
 | Schema Validation | ~50% | 🟡 RelaxNG for OPF/container; XHTML/SVG disabled (libxml2 limitation) |
 | Media Overlays | 0% | ❌ Not implemented |
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~90% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs done |
 
-**Overall: ~89% complete (922 tests passing, 69 skipped)**
+**Overall: ~90% complete (931 tests passing, 60 skipped)**
 
 ---
 
@@ -27,8 +27,8 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 404 | 387 | 17 |
-| **Integration Tests** | 587 | 535 | 52 |
-| **Total** | **991** | **922** | **69** |
+| **Integration Tests** | 587 | 544 | 43 |
+| **Total** | **991** | **931** | **60** |
 
 ### Integration Test Files
 
@@ -37,7 +37,7 @@ test/integration/
 ├── epub.test.ts                 # 4 tests   (4 pass, 0 skip)  - Basic EPUB validation
 ├── ocf.integration.test.ts      # 56 tests  (46 pass, 10 skip) - OCF/ZIP/container
 ├── opf.integration.test.ts      # 167 tests (166 pass, 1 skip)  - Package document
-├── content.integration.test.ts  # 214 tests (183 pass, 31 skip)  - XHTML/CSS/SVG
+├── content.integration.test.ts  # 214 tests (192 pass, 22 skip)  - XHTML/CSS/SVG
 ├── nav.integration.test.ts      # 36 tests  (36 pass, 0 skip)  - Navigation
 └── resources.integration.test.ts # 110 tests (99 pass, 11 skip)  - Resources/fallbacks
 ```
@@ -70,8 +70,8 @@ test/fixtures/
 **Critical gaps:**
 - 🟡 **ARIA validation** - DPUB-ARIA deprecated roles done; full role/attribute checks not yet (Java has dozens)
 - 🟡 **ID/IDREF validation** - OPF + XHTML + SVG duplicate IDs done; IDREF resolution not yet
-- 🟡 **Entity validation** - RSC-016 for undefined/malformed entities; HTM-003 external entity declarations done; encoding detection HTM-058 not yet
-- ❌ **Base URL** - No xml:base or HTML base support
+- 🟡 **Entity validation** - RSC-016 for undefined/malformed entities; HTM-003 external entity declarations done; HTM-058 UTF-16 encoding detection done
+- 🟡 **Base URL** - HTML `<base href>` remote URL detection done (RSC-006); xml:base not yet
 - ❌ **Advanced accessibility** - Only 30% of Java coverage
 - ❌ **Media overlays** - Not implemented
 
@@ -81,17 +81,13 @@ test/fixtures/
 - **libxml2-wasm XPath limitations (3)** - OPF-014 inline event handlers, CSS-005 conflicting stylesheets, OPF-088 unknown epub:type prefix
 - **Messages suppressed in Java EPUBCheck (13)** - NCX-002 (2), NCX-003 (2), NAV-002 (1), ACC-004 (1), ACC-005 (1), HTM-012 (1), and parameterized variants
 
-**Integration tests (37)** - Unimplemented features and library limitations:
-- **Content (31 skipped)**:
+**Integration tests (28)** - Unimplemented features and library limitations:
+- **Content (22 skipped)**:
   - *RelaxNG/Schematron content schema (~11)*: image map, foreignObject/SVG title HTML validation, microdata, Schematron, IDREF resolution — requires XHTML/SVG schema (libxml2-wasm limitation)
-  - *CSS encoding/syntax (4)*: CSS-003/CSS-004 encoding detection, CSS syntax error ordering
-  - *URL/base handling (2)*: base/xml:base external URL RSC-006
+  - *CSS syntax error ordering (1)*: CSS syntax error ordering
+  - *URL/base handling (1)*: xml:base external URL RSC-006
   - *ARIA (1)*: aria-describedAt RSC-005
-  - *Encoding/entities (1)*: Encoding detection HTM-058
   - *SVG fixtures (~2)*: foreignObject HTML validation
-  - *Standalone SVG (1)*: ACC-011 accessibility check not wired for standalone SVG documents
-  - *Namespace (1)*: HTM-010 unusual epub namespace not implemented (false positive HTM-004)
-  - *RDFa (1)*: OPF-096 non-linear content linked only via `<link rel="prev/next">`
   - *Other (~6)*: file URL, SVG regression
 - **Resources (11 skipped)**:
   - *XML encoding detection (6)*: RSC-027/RSC-028 encoding detection not implemented (UTF-16, Latin-1, UTF-32, unknown)
@@ -162,7 +158,7 @@ test/fixtures/
 
 ### 🟡 Partially Implemented
 - **Schema validation** - RelaxNG for OPF/container works; XHTML/SVG RelaxNG disabled (libxml2-wasm doesn't support complex patterns)
-- **Content validation** - Core structure good; entity/title/XML version/SSML/discouraged elements/obsolete HTML/duplicate IDs/HTTP-equiv/img src/style-in-body/table border/time datetime/MathML annotations/Content MathML/reserved namespaces/data-* attributes/epub:type vocab/lang mismatch/DPUB-ARIA deprecated/inline CSS/epub:switch-trigger/style attrs/SVG epub:type checks done; missing full ARIA/DOCTYPE/external entities; Schematron validation works
+- **Content validation** - Core structure good; entity/title/XML version/SSML/discouraged elements/obsolete HTML/duplicate IDs/HTTP-equiv/img src/style-in-body/table border/time datetime/MathML annotations/Content MathML/reserved namespaces/data-* attributes/epub:type vocab/lang mismatch/DPUB-ARIA deprecated/inline CSS/epub:switch-trigger/style attrs/SVG epub:type/UTF-16 BOM/CSS encoding/epub namespace/base href checks done; missing full ARIA/DOCTYPE; Schematron validation works
 - **Image validation** - MED-001/OPF-051 work; MED-004/OPF-029/PKG-022 magic number checks done
 
 ### ❌ Not Implemented
@@ -174,7 +170,7 @@ test/fixtures/
 - Full ARIA roles and attributes (DPUB-ARIA deprecated roles done)
 - DOCTYPE obsolete identifiers
 - External entity validation
-- Base URL handling (xml:base, HTML base)
+- xml:base URL handling (HTML base href done)
 - Media format validation (beyond magic numbers — e.g., dimension checks, format-specific parsing)
 
 ---
@@ -202,13 +198,13 @@ test/fixtures/
 | 03-resources | 113 | 110 | 99 | 88% |
 | 04-ocf | 61 | 56 | 46 | 75% |
 | 05-package-document | 121 | 119 | 118 | 98% |
-| 06-content-document | 215 | 214 | 183 | 85% |
+| 06-content-document | 215 | 214 | 192 | 89% |
 | 07-navigation-document | 40 | 36 | 36 | 90% |
 | 08-layout | 51 | 0 | 0 | 0% |
 | 09-media-overlays | 51 | 0 | 0 | 0% |
 | D-vocabularies (ARIA) | 56 | 48 | 48 | 86% |
 | Other | 6 | 0 | 0 | 0% |
-| **Total** | **719** | **587** | **535** | **74%** |
+| **Total** | **719** | **587** | **544** | **76%** |
 
 ### E2E Porting Priorities
 
@@ -219,7 +215,7 @@ test/fixtures/
 4. **D-vocabularies** (56 scenarios) - 86% coverage (48 ported, 48 passing); remaining 8 need media overlays / rendition
 
 **High Priority** - Largest remaining gaps:
-5. **06-content-document** (215 scenarios) - 85% coverage, needs ARIA/DOCTYPE/entity validation
+5. **06-content-document** (215 scenarios) - 89% coverage, needs ARIA/DOCTYPE validation
 6. **03-resources** (113 scenarios) - 88% coverage, data/file URL checks, fallback chains, XML conformance done
 
 **Low Priority** - Specialized features:
@@ -234,7 +230,7 @@ All planned OPF (batches 1-5) and Nav (batches 6-8) tests have been ported. Rema
 
 | Area | Gap | Tests Blocked | Blocker |
 |------|-----|---------------|---------|
-| **06-content-document** | ARIA validation, DOCTYPE, entities | ~35 tests | Needs new validation subsystems |
+| **06-content-document** | ARIA validation, DOCTYPE | ~22 tests | Needs new validation subsystems |
 | **03-resources** | XML encoding detection, RSC-016 OPF parse, single-file mode | 11 skipped | Encoding detection, OPF parser architecture, single-file mode |
 | **D-vocabularies** | media-overlays-vocab, package-rendering-vocab | ~8 tests | Needs media overlay / rendition implementation |
 | **08-layout** | Rendition/viewport validation | ~51 tests | Not implemented |
@@ -247,8 +243,7 @@ All planned OPF (batches 1-5) and Nav (batches 6-8) tests have been ported. Rema
 ### High Priority (Core Validation)
 1. **ARIA validation** - Role and attribute validation (blocks ~56 D-vocabulary tests)
 2. **DOCTYPE validation** - Obsolete identifiers
-3. **Entity validation** - External entities
-4. **Base URL handling** - xml:base, HTML base
+3. **xml:base URL handling** - xml:base inheritance (HTML base done)
 
 ### Medium Priority (Completeness)
 
@@ -268,9 +263,9 @@ Ordered by severity impact (number of active error/warning messages not yet emit
 ## Message IDs
 
 **Defined**: 300 message IDs
-**Actively used**: 122 (41%)
+**Actively used**: 127 (42%)
 
-Active by prefix: OPF (50), RSC (26), PKG (13), CSS (10), HTM (11), NAV (4), NCX (3), ACC (4), MED (2)
+Active by prefix: OPF (50), RSC (26), PKG (13), CSS (12), HTM (13), NAV (4), NCX (3), ACC (4), MED (2)
 Unused prefixes: SCP (0), CHK (0), INF (0)
 
 ### Recent Message ID Fixes (aligned with Java EPUBCheck)
@@ -378,6 +373,13 @@ Unused prefixes: SCP (0), CHK (0), INF (0)
 - `RSC-020` - Malformed URL detection in content document hyperlinks (whitespace, missing `://` for special schemes)
 - `RSC-004` - Encrypted resource info message (non-IDPF-obfuscation encryption detected in encryption.xml)
 - `RSC-033` - Query component check extended to OPF manifest item hrefs and package link hrefs
+- `HTM-058` - UTF-16 BOM detection for XHTML documents (return early, no further validation)
+- `CSS-003` - UTF-16 BOM detection for CSS documents (warning, decode and continue)
+- `CSS-004` - Non-UTF-8 @charset declaration detection in CSS documents
+- `HTM-010` - Unusual epub namespace URI detection (scan raw content, fix namespace for parsing)
+- `ACC-011` - SVG link accessibility check extended to standalone SVG documents (was XHTML-embedded only)
+- `RSC-006` - Remote base URL detection for `<base href>` with relative stylesheet references
+- SVG link accessibility helper now checks `<text>` child and `xlink:title` attribute
 
 ---
 

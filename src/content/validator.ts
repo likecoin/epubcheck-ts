@@ -19,6 +19,10 @@ const ABSOLUTE_URI_RE = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
 
 const SPECIAL_URL_SCHEMES = new Set(['http', 'https', 'ftp', 'ws', 'wss']);
 
+const CSS_CHARSET_RE = /^@charset\s+"([^"]+)"\s*;/;
+
+const EPUB_XMLNS_RE = /xmlns:epub\s*=\s*"([^"]*)"/;
+
 function validateAbsoluteHyperlinkURL(
   context: ValidationContext,
   href: string,
@@ -516,6 +520,7 @@ export class ContentValidator {
       this.checkSVGInvalidIDs(context, path, root);
       this.validateSvgEpubType(context, path, root);
       this.checkUnknownEpubAttributes(context, path, root);
+      this.checkSVGLinkAccessibility(context, path, root);
     } finally {
       doc.dispose();
     }
@@ -763,7 +768,33 @@ export class ContentValidator {
       return;
     }
 
-    const cssContent = new TextDecoder().decode(cssData);
+    // Check for UTF-16 BOM
+    let cssContent: string;
+    const utf16Encoding =
+      cssData.length >= 2 && cssData[0] === 0xfe && cssData[1] === 0xff
+        ? 'utf-16be'
+        : cssData.length >= 2 && cssData[0] === 0xff && cssData[1] === 0xfe
+          ? 'utf-16le'
+          : null;
+    if (utf16Encoding) {
+      pushMessage(context.messages, {
+        id: MessageId.CSS_003,
+        message: 'CSS documents should be encoded in UTF-8, but UTF-16 was detected',
+        location: { path },
+      });
+      cssContent = new TextDecoder(utf16Encoding).decode(cssData);
+    } else {
+      cssContent = new TextDecoder().decode(cssData);
+      // Check @charset declaration for non-UTF-8 encoding
+      const charsetMatch = CSS_CHARSET_RE.exec(cssContent);
+      if (charsetMatch?.[1] && charsetMatch[1].toLowerCase() !== 'utf-8') {
+        pushMessage(context.messages, {
+          id: MessageId.CSS_004,
+          message: `CSS documents must be encoded in UTF-8, but detected "${charsetMatch[1]}"`,
+          location: { path },
+        });
+      }
+    }
 
     // Run CSS validation and get references
     const cssValidator = new CSSValidator();
@@ -875,10 +906,34 @@ export class ContentValidator {
       return;
     }
 
-    const content = new TextDecoder().decode(data);
+    // Check for UTF-16 BOM before decoding
+    if (
+      data.length >= 2 &&
+      ((data[0] === 0xfe && data[1] === 0xff) || (data[0] === 0xff && data[1] === 0xfe))
+    ) {
+      pushMessage(context.messages, {
+        id: MessageId.HTM_058,
+        message: 'HTML documents must be encoded in UTF-8, but UTF-16 was detected',
+        location: { path },
+      });
+      return;
+    }
+
+    let content = new TextDecoder().decode(data);
     const packageDoc = context.packageDocument;
     if (!packageDoc) {
       return;
+    }
+
+    // Check for unusual epub namespace before parsing (HTM-010)
+    const epubNsMatch = EPUB_XMLNS_RE.exec(content);
+    if (epubNsMatch?.[1] && epubNsMatch[1] !== 'http://www.idpf.org/2007/ops') {
+      pushMessage(context.messages, {
+        id: MessageId.HTM_010,
+        message: `Namespace URI "${epubNsMatch[1]}" is unusual for the "epub" prefix`,
+        location: { path },
+      });
+      content = content.replace(epubNsMatch[0], 'xmlns:epub="http://www.idpf.org/2007/ops"');
     }
 
     // Check for unescaped ampersands before parsing
@@ -1196,7 +1251,7 @@ export class ContentValidator {
       // Extract hyperlinks and register with reference validator
       if (refValidator && opfDir !== undefined) {
         this.extractAndRegisterHyperlinks(context, path, root, opfDir, refValidator, !!isNavItem);
-        this.extractAndRegisterStylesheets(path, root, opfDir, refValidator);
+        this.extractAndRegisterStylesheets(context, path, root, opfDir, refValidator);
         this.extractAndRegisterImages(context, path, root, opfDir, refValidator, registry);
         this.extractAndRegisterMathMLAltimg(path, root, opfDir, refValidator);
         this.extractAndRegisterScripts(path, root, opfDir, refValidator);
@@ -2715,22 +2770,7 @@ export class ContentValidator {
       }
     }
 
-    const svgLinks = root.find('.//svg:a', {
-      svg: 'http://www.w3.org/2000/svg',
-      xlink: 'http://www.w3.org/1999/xlink',
-    });
-    for (const svgLink of svgLinks) {
-      const svgElem = svgLink as XmlElement;
-      const title = svgElem.get('./svg:title', { svg: 'http://www.w3.org/2000/svg' });
-      const ariaLabel = this.getAttribute(svgElem, 'aria-label');
-      if (!title && !ariaLabel) {
-        pushMessage(context.messages, {
-          id: MessageId.ACC_011,
-          message: 'SVG hyperlink has no accessible name (missing title element or aria-label)',
-          location: { path },
-        });
-      }
-    }
+    this.checkSVGLinkAccessibility(context, path, root);
 
     const mathElements = root.find('.//math:math', { math: 'http://www.w3.org/1998/Math/MathML' });
     for (const mathElem of mathElements) {
@@ -2745,6 +2785,35 @@ export class ContentValidator {
         pushMessage(context.messages, {
           id: MessageId.ACC_009,
           message: 'MathML element should have alttext attribute or annotation for accessibility',
+          location: { path },
+        });
+      }
+    }
+  }
+
+  private hasSVGLinkAccessibleName(svgElem: XmlElement): boolean {
+    const ns = { svg: 'http://www.w3.org/2000/svg' };
+    if (svgElem.get('.//svg:title', ns)) return true;
+    if (svgElem.get('.//svg:text', ns)) return true;
+    if (this.getAttribute(svgElem, 'aria-label')) return true;
+    if (this.getAttribute(svgElem, 'xlink:title')) return true;
+    return false;
+  }
+
+  private checkSVGLinkAccessibility(
+    context: ValidationContext,
+    path: string,
+    root: XmlElement,
+  ): void {
+    const svgLinks = root.find('.//svg:a', {
+      svg: 'http://www.w3.org/2000/svg',
+      xlink: 'http://www.w3.org/1999/xlink',
+    });
+    for (const svgLink of svgLinks) {
+      if (!this.hasSVGLinkAccessibleName(svgLink as XmlElement)) {
+        pushMessage(context.messages, {
+          id: MessageId.ACC_011,
+          message: 'SVG hyperlink has no accessible name (missing title element or aria-label)',
           location: { path },
         });
       }
@@ -3233,6 +3302,7 @@ export class ContentValidator {
   }
 
   private extractAndRegisterStylesheets(
+    context: ValidationContext,
     path: string,
     root: XmlElement,
     opfDir: string,
@@ -3240,24 +3310,38 @@ export class ContentValidator {
   ): void {
     const docDir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
 
+    // Detect <base href> with remote URL
+    const baseElem = root.get('.//html:base[@href]', { html: 'http://www.w3.org/1999/xhtml' });
+    const baseHref = baseElem ? this.getAttribute(baseElem as XmlElement, 'href') : null;
+    const remoteBaseUrl =
+      baseHref?.startsWith('http://') || baseHref?.startsWith('https://') ? baseHref : null;
+
     const linkElements = root.find('.//html:link[@href]', { html: 'http://www.w3.org/1999/xhtml' });
     for (const linkElem of linkElements) {
       const href = this.getAttribute(linkElem as XmlElement, 'href');
       const rel = this.getAttribute(linkElem as XmlElement, 'rel');
       if (!href) continue;
-      // Java EPUBCheck only registers <link> references with rel="stylesheet"
-      // Skip <link> elements that only have itemprop or other non-rel attributes
       if (!rel?.toLowerCase().includes('stylesheet')) continue;
 
       const line = linkElem.line;
       const type = ReferenceType.STYLESHEET;
 
       if (href.startsWith('http://') || href.startsWith('https://')) {
-        // Still register remote resources
         refValidator.addReference({
           url: href,
           targetResource: href,
           type,
+          location: { path, line },
+        });
+        continue;
+      }
+
+      // When <base href> points to a remote URL, relative stylesheets resolve remotely
+      if (remoteBaseUrl && !ABSOLUTE_URI_RE.test(href)) {
+        const resolvedUrl = new URL(href, remoteBaseUrl).href;
+        pushMessage(context.messages, {
+          id: MessageId.RSC_006,
+          message: `Remote resource reference is not allowed; resource "${resolvedUrl}" must be located in the EPUB container`,
           location: { path, line },
         });
         continue;
