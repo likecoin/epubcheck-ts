@@ -772,4 +772,203 @@ describe('OPFValidator', () => {
       expect(errors).toHaveLength(0);
     });
   });
+
+  describe('rendition vocabulary validation', () => {
+    const makeOPF = (
+      metaLines: string,
+      spineProps = '',
+    ): string => `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:identifier id="uid">test-id</dc:identifier>
+    <dc:title>Test Book</dc:title>
+    <dc:language>en</dc:language>
+    <meta property="dcterms:modified">2024-01-01T00:00:00Z</meta>
+    ${metaLines}
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+    <item id="ch1" href="ch1.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine>
+    <itemref idref="ch1"${spineProps ? ` properties="${spineProps}"` : ''}/>
+  </spine>
+</package>`;
+
+    it('should accept valid rendition:layout', () => {
+      const context = createContext(
+        makeOPF('<meta property="rendition:layout">pre-paginated</meta>'),
+        {
+          'OEBPS/ch1.xhtml':
+            '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>T</title></head><body><p>x</p></body></html>',
+        },
+      );
+      validator.validate(context);
+      const rscErrors = context.messages.filter(
+        (m) => m.id === 'RSC-005' && m.message.includes('rendition:layout'),
+      );
+      expect(rscErrors).toHaveLength(0);
+    });
+
+    it('should report unknown rendition:layout value', () => {
+      const context = createContext(makeOPF('<meta property="rendition:layout">unknown</meta>'), {
+        'OEBPS/ch1.xhtml':
+          '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>T</title></head><body><p>x</p></body></html>',
+      });
+      validator.validate(context);
+      const rscErrors = context.messages.filter(
+        (m) => m.id === 'RSC-005' && m.message.includes('rendition:layout'),
+      );
+      expect(rscErrors.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should report duplicate rendition:layout', () => {
+      const context = createContext(
+        makeOPF(
+          '<meta property="rendition:layout">pre-paginated</meta>\n    <meta property="rendition:layout">reflowable</meta>',
+        ),
+        {
+          'OEBPS/ch1.xhtml':
+            '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>T</title></head><body><p>x</p></body></html>',
+        },
+      );
+      validator.validate(context);
+      const dupeErrors = context.messages.filter(
+        (m) => m.id === 'RSC-005' && m.message.includes('must not occur more than one time'),
+      );
+      expect(dupeErrors.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should report rendition:layout with refines', () => {
+      const context = createContext(
+        makeOPF('<meta property="rendition:layout" refines="#ch1">pre-paginated</meta>'),
+        {
+          'OEBPS/ch1.xhtml':
+            '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>T</title></head><body><p>x</p></body></html>',
+        },
+      );
+      validator.validate(context);
+      const refinesErrors = context.messages.filter(
+        (m) => m.id === 'RSC-005' && m.message.includes('refine'),
+      );
+      expect(refinesErrors.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should report deprecated rendition:spread portrait value', () => {
+      const context = createContext(makeOPF('<meta property="rendition:spread">portrait</meta>'), {
+        'OEBPS/ch1.xhtml':
+          '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>T</title></head><body><p>x</p></body></html>',
+      });
+      context.options = { ...defaultOptions, includeUsage: true };
+      validator.validate(context);
+      const deprecatedWarnings = context.messages.filter(
+        (m) => m.id === 'OPF-086' && m.message.includes('deprecated'),
+      );
+      expect(deprecatedWarnings.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should report deprecated rendition:viewport', () => {
+      const context = createContext(
+        makeOPF('<meta property="rendition:viewport">width=100, height=100</meta>'),
+        {
+          'OEBPS/ch1.xhtml':
+            '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>T</title></head><body><p>x</p></body></html>',
+        },
+      );
+      context.options = { ...defaultOptions, includeUsage: true };
+      validator.validate(context);
+      const deprecatedWarnings = context.messages.filter(
+        (m) => m.id === 'OPF-086' && m.message.includes('rendition:viewport'),
+      );
+      expect(deprecatedWarnings.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should report invalid rendition:viewport syntax', () => {
+      const context = createContext(
+        makeOPF('<meta property="rendition:viewport">invalid-syntax</meta>'),
+        {
+          'OEBPS/ch1.xhtml':
+            '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>T</title></head><body><p>x</p></body></html>',
+        },
+      );
+      validator.validate(context);
+      const syntaxErrors = context.messages.filter(
+        (m) => m.id === 'RSC-005' && m.message.includes('rendition:viewport'),
+      );
+      expect(syntaxErrors.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should accept valid rendition:flow values', () => {
+      const context = createContext(
+        makeOPF('<meta property="rendition:flow">scrolled-continuous</meta>'),
+        {
+          'OEBPS/ch1.xhtml':
+            '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>T</title></head><body><p>x</p></body></html>',
+        },
+      );
+      validator.validate(context);
+      const flowErrors = context.messages.filter(
+        (m) => m.id === 'RSC-005' && m.message.includes('rendition:flow'),
+      );
+      expect(flowErrors).toHaveLength(0);
+    });
+
+    it('should report mutually exclusive spine layout overrides', () => {
+      const context = createContext(
+        makeOPF('', 'rendition:layout-reflowable rendition:layout-pre-paginated'),
+        {
+          'OEBPS/ch1.xhtml':
+            '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>T</title></head><body><p>x</p></body></html>',
+        },
+      );
+      validator.validate(context);
+      const exclusiveErrors = context.messages.filter(
+        (m) => m.id === 'RSC-005' && m.message.includes('mutually exclusive'),
+      );
+      expect(exclusiveErrors.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should report mutually exclusive spine page-spread overrides', () => {
+      const context = createContext(makeOPF('', 'page-spread-left rendition:page-spread-center'), {
+        'OEBPS/ch1.xhtml':
+          '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>T</title></head><body><p>x</p></body></html>',
+      });
+      validator.validate(context);
+      const exclusiveErrors = context.messages.filter(
+        (m) => m.id === 'RSC-005' && m.message.includes('mutually exclusive'),
+      );
+      expect(exclusiveErrors.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should report deprecated rendition:spread-portrait on spine itemref', () => {
+      const context = createContext(makeOPF('', 'rendition:spread-portrait'), {
+        'OEBPS/ch1.xhtml':
+          '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>T</title></head><body><p>x</p></body></html>',
+      });
+      context.options = { ...defaultOptions, includeUsage: true };
+      validator.validate(context);
+      const deprecatedWarnings = context.messages.filter(
+        (m) => m.id === 'OPF-086' && m.message.includes('rendition:spread-portrait'),
+      );
+      expect(deprecatedWarnings.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should accept non-conflicting spine overrides', () => {
+      const context = createContext(
+        makeOPF(
+          '',
+          'rendition:layout-pre-paginated rendition:orientation-landscape page-spread-left',
+        ),
+        {
+          'OEBPS/ch1.xhtml':
+            '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>T</title></head><body><p>x</p></body></html>',
+        },
+      );
+      validator.validate(context);
+      const exclusiveErrors = context.messages.filter(
+        (m) => m.id === 'RSC-005' && m.message.includes('mutually exclusive'),
+      );
+      expect(exclusiveErrors).toHaveLength(0);
+    });
+  });
 });

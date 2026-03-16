@@ -5,7 +5,7 @@
 import { XmlDocument, type XmlElement, type XmlNode } from 'libxml2-wasm';
 import { CSSValidator } from '../css/validator.js';
 import { MessageId, pushMessage } from '../messages/index.js';
-import { isCoreMediaType } from '../opf/types.js';
+import { isCoreMediaType, type PackageDocument } from '../opf/types.js';
 import type { ResourceRegistry } from '../references/registry.js';
 import { ReferenceType } from '../references/types.js';
 import { isRegisteredScheme } from '../references/uri-schemes.js';
@@ -358,6 +358,20 @@ const HTML_ENTITIES = new Set([
   'yuml',
 ]);
 
+function isItemFixedLayout(
+  packageDoc: Pick<PackageDocument, 'metaElements' | 'spine'>,
+  itemId: string,
+): boolean {
+  const spineItem = packageDoc.spine.find((s) => s.idref === itemId);
+  if (!spineItem) return false;
+  if (spineItem.properties?.includes('rendition:layout-pre-paginated')) return true;
+  if (spineItem.properties?.includes('rendition:layout-reflowable')) return false;
+  const globalLayout = packageDoc.metaElements.find(
+    (m) => m.property === 'rendition:layout' && !m.refines,
+  );
+  return globalLayout?.value === 'pre-paginated';
+}
+
 export class ContentValidator {
   private cssWithRemoteResources = new Set<string>();
 
@@ -521,6 +535,19 @@ export class ContentValidator {
       this.validateSvgEpubType(context, path, root);
       this.checkUnknownEpubAttributes(context, path, root);
       this.checkSVGLinkAccessibility(context, path, root);
+
+      const packageDoc = context.packageDocument;
+      if (packageDoc && isItemFixedLayout(packageDoc, manifestItem.id)) {
+        const viewBox = this.getAttribute(root, 'viewBox');
+        if (!viewBox) {
+          pushMessage(context.messages, {
+            id: MessageId.HTM_048,
+            message:
+              'SVG Fixed-Layout Documents must have a viewBox attribute on the outermost svg element',
+            location: { path },
+          });
+        }
+      }
     } finally {
       doc.dispose();
     }
@@ -3017,48 +3044,148 @@ export class ContentValidator {
     context: ValidationContext,
     path: string,
     root: XmlElement,
-    manifestItem: { properties?: string[] } | undefined,
+    manifestItem: { id: string; properties?: string[] } | undefined,
   ): void {
-    const isFixedLayout = manifestItem?.properties?.includes('fixed-layout');
-    const metaTags = root.find('.//html:meta[@name]', { html: 'http://www.w3.org/1999/xhtml' });
+    const packageDoc = context.packageDocument;
+    const isFixedLayout =
+      manifestItem && packageDoc ? isItemFixedLayout(packageDoc, manifestItem.id) : false;
 
-    let hasViewportMeta = false;
+    const headMetas = root.find('.//html:head/html:meta[@name]', {
+      html: 'http://www.w3.org/1999/xhtml',
+    });
 
-    for (const meta of metaTags) {
+    let viewportCount = 0;
+
+    for (const meta of headMetas) {
       const nameAttr = this.getAttribute(meta as XmlElement, 'name');
-      if (nameAttr === 'viewport') {
-        hasViewportMeta = true;
-        const contentAttr = this.getAttribute(meta as XmlElement, 'content');
+      if (nameAttr !== 'viewport') continue;
 
-        if (isFixedLayout) {
-          // Fixed-layout viewport validation
-          if (!contentAttr) {
-            pushMessage(context.messages, {
-              id: MessageId.HTM_046,
-              message:
-                'Viewport meta element should have a content attribute in fixed-layout documents',
-              location: { path },
-            });
-            continue;
-          }
-        } else {
-          // Reflowable document viewport validation (HTM-060b)
+      viewportCount++;
+      const contentAttr = this.getAttribute(meta as XmlElement, 'content');
+
+      if (!isFixedLayout) {
+        pushMessage(context.messages, {
+          id: MessageId.HTM_060b,
+          message: `EPUB reading systems must ignore viewport meta elements in reflowable documents; viewport declaration "${contentAttr ?? ''}" will be ignored`,
+          location: { path, line: (meta as XmlElement).line },
+        });
+        continue;
+      }
+
+      if (viewportCount > 1) {
+        pushMessage(context.messages, {
+          id: MessageId.HTM_060a,
+          message: `EPUB reading systems must ignore secondary viewport meta elements in fixed-layout documents; viewport declaration "${contentAttr ?? ''}" will be ignored`,
+          location: { path, line: (meta as XmlElement).line },
+        });
+        continue;
+      }
+
+      if (!contentAttr?.trim()) {
+        pushMessage(context.messages, {
+          id: MessageId.HTM_046,
+          message: 'Fixed layout document has no viewport meta element',
+          location: { path, line: (meta as XmlElement).line },
+        });
+        continue;
+      }
+
+      this.parseViewportContent(context, path, contentAttr, (meta as XmlElement).line);
+    }
+
+    if (isFixedLayout && viewportCount === 0) {
+      pushMessage(context.messages, {
+        id: MessageId.HTM_046,
+        message: 'Fixed layout document has no viewport meta element',
+        location: { path },
+      });
+    }
+  }
+
+  private parseViewportContent(
+    context: ValidationContext,
+    path: string,
+    content: string,
+    line: number | undefined,
+  ): void {
+    const location = line != null ? { path, line } : { path };
+    const parts = content.split(/[,;]/);
+    const seenKeys = new Set<string>();
+    let hasWidth = false;
+    let hasHeight = false;
+    let hasSyntaxError = false;
+
+    for (const part of parts) {
+      const trimmed = part.trim();
+      if (!trimmed) continue;
+
+      const eqIndex = trimmed.indexOf('=');
+      let key: string;
+      let value: string;
+
+      if (eqIndex < 0) {
+        // No '=' — treat as a property name with no value (e.g. "height")
+        key = trimmed;
+        value = '';
+      } else {
+        key = trimmed.substring(0, eqIndex).trim();
+        const rawValue = trimmed.substring(eqIndex + 1);
+        // If value after '=' is empty or whitespace-only → syntax error
+        if (!rawValue.trim()) {
           pushMessage(context.messages, {
-            id: MessageId.HTM_060b,
-            message: `EPUB reading systems must ignore viewport meta elements in reflowable documents; viewport declaration "${contentAttr ?? ''}" will be ignored`,
-            location: { path },
+            id: MessageId.HTM_047,
+            message: `Viewport metadata "${content}" has a syntax error`,
+            location,
+          });
+          hasSyntaxError = true;
+          break;
+        }
+        value = rawValue.trim();
+      }
+
+      if (key === 'width' || key === 'height') {
+        if (seenKeys.has(key)) {
+          pushMessage(context.messages, {
+            id: MessageId.HTM_059,
+            message: `Viewport "${key}" property must not be defined more than once`,
+            location,
+          });
+        }
+        seenKeys.add(key);
+
+        if (key === 'width') hasWidth = true;
+        if (key === 'height') hasHeight = true;
+
+        const deviceKeyword = key === 'width' ? 'device-width' : 'device-height';
+        if (value === deviceKeyword) {
+          // Valid keyword
+        } else if (value === '' || !/^[0-9]*\.?[0-9]+$/.test(value)) {
+          pushMessage(context.messages, {
+            id: MessageId.HTM_057,
+            message: `Viewport "${key}" value must be a positive number or the keyword "${deviceKeyword}"`,
+            location,
           });
         }
       }
     }
 
-    // Only suggest viewport for fixed-layout documents
-    if (isFixedLayout && !hasViewportMeta) {
-      pushMessage(context.messages, {
-        id: MessageId.HTM_049,
-        message: 'Fixed-layout document should include a viewport meta element',
-        location: { path },
-      });
+    if (!hasSyntaxError) {
+      if (!hasWidth) {
+        pushMessage(context.messages, {
+          id: MessageId.HTM_056,
+          message:
+            'Viewport metadata has no "width" dimension (both "width" and "height" properties are required)',
+          location,
+        });
+      }
+      if (!hasHeight) {
+        pushMessage(context.messages, {
+          id: MessageId.HTM_056,
+          message:
+            'Viewport metadata has no "height" dimension (both "width" and "height" properties are required)',
+          location,
+        });
+      }
     }
   }
 

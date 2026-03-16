@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~90% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs done |
 
-**Overall: ~90% complete (931 tests passing, 60 skipped)**
+**Overall: ~90% complete (963 tests passing, 91 skipped)**
 
 ---
 
@@ -26,9 +26,9 @@ Quick reference for implementation progress vs Java EPUBCheck.
 
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
-| **Unit Tests** | 404 | 387 | 17 |
-| **Integration Tests** | 587 | 544 | 43 |
-| **Total** | **991** | **931** | **60** |
+| **Unit Tests** | 416 | 399 | 17 |
+| **Integration Tests** | 638 | 564 | 74 |
+| **Total** | **1054** | **963** | **91** |
 
 ### Integration Test Files
 
@@ -39,7 +39,8 @@ test/integration/
 ├── opf.integration.test.ts      # 167 tests (166 pass, 1 skip)  - Package document
 ├── content.integration.test.ts  # 214 tests (192 pass, 22 skip)  - XHTML/CSS/SVG
 ├── nav.integration.test.ts      # 36 tests  (36 pass, 0 skip)  - Navigation
-└── resources.integration.test.ts # 110 tests (99 pass, 11 skip)  - Resources/fallbacks
+├── resources.integration.test.ts # 110 tests (99 pass, 11 skip)  - Resources/fallbacks
+└── layout.integration.test.ts   # 52 tests  (20 pass, 32 skip)  - Layout/viewport/FXL
 ```
 
 **Note**: Integration tests imported from Java EPUBCheck test suite (`../epubcheck/src/test/resources/epub3/`).
@@ -48,16 +49,17 @@ test/integration/
 
 ```
 test/fixtures/
-├── valid/                 # 244 valid EPUBs
+├── valid/                 # 252 valid EPUBs
 ├── invalid/
 │   ├── ocf/              # 37 OCF error cases
 │   ├── opf/              # 113 OPF error cases
 │   ├── content/          # 133 content error cases
+│   ├── layout/           # 12 layout error cases
 │   └── nav/              # 18 navigation error cases
 └── warnings/             # 30 warning cases
 ```
 
-**Total**: 575 EPUB test fixtures (imported from Java EPUBCheck)
+**Total**: 595 EPUB test fixtures (imported from Java EPUBCheck)
 
 ### Quality: ⭐⭐⭐⭐ (4/5) for implemented features
 
@@ -81,7 +83,7 @@ test/fixtures/
 - **libxml2-wasm XPath limitations (3)** - OPF-014 inline event handlers, CSS-005 conflicting stylesheets, OPF-088 unknown epub:type prefix
 - **Messages suppressed in Java EPUBCheck (13)** - NCX-002 (2), NCX-003 (2), NAV-002 (1), ACC-004 (1), ACC-005 (1), HTM-012 (1), and parameterized variants
 
-**Integration tests (28)** - Unimplemented features and library limitations:
+**Integration tests (59)** - Unimplemented features and library limitations:
 - **Content (22 skipped)**:
   - *RelaxNG/Schematron content schema (~11)*: image map, foreignObject/SVG title HTML validation, microdata, Schematron, IDREF resolution — requires XHTML/SVG schema (libxml2-wasm limitation)
   - *CSS syntax error ordering (1)*: CSS syntax error ordering
@@ -96,6 +98,7 @@ test/fixtures/
   - *OPF-090 usage (1)*: not-preferred media type usage message not emitted
 - **OCF (10 skipped)**: OPF-060 duplicate ZIP entry (1), encryption/signatures schema (4), single-file/directory validation mode (5)
 - **OPF (1 skipped)**: OPF-014 remote audio overlays (1)
+- **Layout (32 skipped)**: Single-file (.opf) validation mode not supported — rendition meta validation, spine override conflicts (all covered by unit tests instead)
 
 ---
 
@@ -107,7 +110,11 @@ test/fixtures/
 - **Package attributes** (OPF-001/030/048/099 - self-referencing manifest)
 - **Required metadata** (OPF-015/016/017)
 - **Manifest validation** (RSC-001, OPF-012/013/014/074/091)
-- **Spine validation** (OPF-033/034/043/049/050)
+- **Spine validation** (OPF-033/034/043/049/050) + rendition override conflict checking
+- **Rendition property validation** (rendition:layout/orientation/spread/flow/viewport global meta + spine overrides)
+- **Fixed-layout detection** (per-item FXL via rendition:layout meta + spine overrides)
+- **Viewport meta validation** (HTM-046/047/056/057/059/060a/060b) - syntax, dimensions, keywords, duplicates
+- **SVG viewBox validation** (HTM-048) - FXL SVG documents require viewBox on outermost svg
 - **Fallback chains** (OPF-040/045)
 - **Collections** (OPF-071-084)
 - **NCX validation** (NCX-001/002/003/006)
@@ -200,11 +207,11 @@ test/fixtures/
 | 05-package-document | 121 | 119 | 118 | 98% |
 | 06-content-document | 215 | 214 | 192 | 89% |
 | 07-navigation-document | 40 | 36 | 36 | 90% |
-| 08-layout | 51 | 0 | 0 | 0% |
+| 08-layout | 51 | 52 | 20 | 39% |
 | 09-media-overlays | 51 | 0 | 0 | 0% |
 | D-vocabularies (ARIA) | 56 | 48 | 48 | 86% |
 | Other | 6 | 0 | 0 | 0% |
-| **Total** | **719** | **587** | **544** | **76%** |
+| **Total** | **719** | **638** | **564** | **78%** |
 
 ### E2E Porting Priorities
 
@@ -219,7 +226,7 @@ test/fixtures/
 6. **03-resources** (113 scenarios) - 88% coverage, data/file URL checks, fallback chains, XML conformance done
 
 **Low Priority** - Specialized features:
-7. **08-layout** (51 scenarios) - Rendition/viewport (not implemented)
+7. **08-layout** (51 scenarios) - 39% coverage (20 EPUB tests passing, 32 file-based skipped; rendition meta + viewport fully implemented)
 8. **09-media-overlays** (51 scenarios) - SMIL validation (not implemented)
 
 ---
@@ -233,7 +240,7 @@ All planned OPF (batches 1-5) and Nav (batches 6-8) tests have been ported. Rema
 | **06-content-document** | ARIA validation, DOCTYPE | ~22 tests | Needs new validation subsystems |
 | **03-resources** | XML encoding detection, RSC-016 OPF parse, single-file mode | 11 skipped | Encoding detection, OPF parser architecture, single-file mode |
 | **D-vocabularies** | media-overlays-vocab, package-rendering-vocab | ~8 tests | Needs media overlay / rendition implementation |
-| **08-layout** | Rendition/viewport validation | ~51 tests | Not implemented |
+| **08-layout** | Rendition meta file-based tests | 32 skipped | Single-file (.opf) validation mode; logic tested via unit tests |
 | **09-media-overlays** | SMIL validation | ~51 tests | Not implemented |
 
 ---
@@ -265,7 +272,7 @@ Ordered by severity impact (number of active error/warning messages not yet emit
 **Defined**: 300 message IDs
 **Actively used**: 127 (42%)
 
-Active by prefix: OPF (50), RSC (26), PKG (13), CSS (12), HTM (13), NAV (4), NCX (3), ACC (4), MED (2)
+Active by prefix: OPF (51), RSC (26), PKG (13), CSS (12), HTM (20), NAV (4), NCX (3), ACC (4), MED (2)
 Unused prefixes: SCP (0), CHK (0), INF (0)
 
 ### Recent Message ID Fixes (aligned with Java EPUBCheck)
@@ -380,6 +387,19 @@ Unused prefixes: SCP (0), CHK (0), INF (0)
 - `ACC-011` - SVG link accessibility check extended to standalone SVG documents (was XHTML-embedded only)
 - `RSC-006` - Remote base URL detection for `<base href>` with relative stylesheet references
 - SVG link accessibility helper now checks `<text>` child and `xlink:title` attribute
+- Rendition vocabulary validation (`rendition:layout/orientation/spread/flow/viewport`) — global meta value/multiplicity/refines checks
+- Spine itemref rendition override mutual exclusivity checking (layout, orientation, spread, page-spread, flow)
+- `rendition:spread-portrait` deprecation detection (global meta and spine override)
+- `rendition:viewport` deprecation detection
+- Fixed-layout (FXL) detection rewritten — uses `rendition:layout` meta + spine overrides instead of broken `fixed-layout` manifest property
+- `HTM-046` - Missing viewport meta in FXL XHTML documents (was broken due to FXL detection)
+- `HTM-047` - Viewport syntax error (empty value after `=`)
+- `HTM-048` - Missing viewBox on outermost `<svg>` in FXL SVG documents
+- `HTM-056` - Missing width/height dimension in viewport content
+- `HTM-057` - Invalid viewport dimension value (must be positive number or device keyword)
+- `HTM-059` - Duplicate width/height in single viewport meta tag
+- `HTM-060a` - Secondary viewport meta in FXL documents (usage)
+- `HTM-060b` - Viewport meta in reflowable documents (usage)
 
 ---
 

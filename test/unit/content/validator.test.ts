@@ -518,48 +518,12 @@ describe('ContentValidator', () => {
   });
 
   describe('Fixed-layout viewport validation', () => {
-    it('should add HTM-046 warning for viewport meta without content in fixed-layout', () => {
+    it('should add HTM-046 error for missing viewport in fixed-layout document', () => {
       const context = createValidationContext();
       const packageDoc = createMinimalPackage({
-        manifest: [
-          { id: 'nav', href: 'nav.xhtml', mediaType: 'application/xhtml+xml', properties: ['nav'] },
-          {
-            id: 'chapter1',
-            href: 'chapter1.xhtml',
-            mediaType: 'application/xhtml+xml',
-            properties: ['fixed-layout'],
-          },
-        ],
-      });
-      context.packageDocument = packageDoc;
-      addXHTMLToContext(
-        context,
-        'OEBPS/nav.xhtml',
-        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><head><title>Nav</title></head><body><nav epub:type="toc"><ol><li><a href="chapter1.xhtml">Chapter 1</a></li></ol></nav></body></html>\n',
-      );
-      addXHTMLToContext(
-        context,
-        'OEBPS/chapter1.xhtml',
-        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Test</title><meta name="viewport"/></head><body><p>Content</p></body></html>\n',
-      );
-
-      validator.validate(context);
-      expect(context.messages.some((m) => m.id === 'HTM-046')).toBe(true);
-    });
-
-    // TODO: HTM-049 is SUPPRESSED in Java EPUBCheck (for heading level skip, "Reported as RSC-005")
-    // This test uses wrong message ID - needs different ID for viewport meta recommendations
-    it.skip('should add HTM-049 info for missing viewport meta in fixed-layout', () => {
-      const context = createValidationContext();
-      const packageDoc = createMinimalPackage({
-        manifest: [
-          { id: 'nav', href: 'nav.xhtml', mediaType: 'application/xhtml+xml', properties: ['nav'] },
-          {
-            id: 'chapter1',
-            href: 'chapter1.xhtml',
-            mediaType: 'application/xhtml+xml',
-            properties: ['fixed-layout'],
-          },
+        metaElements: [
+          { property: 'dcterms:modified', value: '2023-01-01T00:00:00Z' },
+          { property: 'rendition:layout', value: 'pre-paginated' },
         ],
       });
       context.packageDocument = packageDoc;
@@ -575,7 +539,7 @@ describe('ContentValidator', () => {
       );
 
       validator.validate(context);
-      expect(context.messages.some((m) => m.id === 'HTM-049')).toBe(true);
+      expect(context.messages.some((m) => m.id === 'HTM-046')).toBe(true);
     });
   });
 

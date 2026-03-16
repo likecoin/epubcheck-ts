@@ -298,6 +298,55 @@ const DEPRECATED_LINK_REL = new Set([
   'xml-signature',
 ]);
 
+const EXCLUSIVE_SPINE_GROUPS: readonly string[][] = [
+  ['rendition:layout-reflowable', 'rendition:layout-pre-paginated'],
+  [
+    'rendition:orientation-auto',
+    'rendition:orientation-landscape',
+    'rendition:orientation-portrait',
+  ],
+  [
+    'rendition:spread-auto',
+    'rendition:spread-both',
+    'rendition:spread-landscape',
+    'rendition:spread-none',
+    'rendition:spread-portrait',
+  ],
+  ['page-spread-left', 'page-spread-right', 'rendition:page-spread-center'],
+  [
+    'rendition:flow-auto',
+    'rendition:flow-paginated',
+    'rendition:flow-scrolled-continuous',
+    'rendition:flow-scrolled-doc',
+  ],
+];
+
+const RENDITION_META_RULES: readonly {
+  property: string;
+  allowedValues: ReadonlySet<string>;
+  deprecated?: boolean;
+  deprecatedValues?: ReadonlySet<string>;
+  validateSyntax?: (value: string) => boolean;
+}[] = [
+  { property: 'rendition:layout', allowedValues: new Set(['reflowable', 'pre-paginated']) },
+  { property: 'rendition:orientation', allowedValues: new Set(['landscape', 'portrait', 'auto']) },
+  {
+    property: 'rendition:spread',
+    allowedValues: new Set(['none', 'landscape', 'portrait', 'both', 'auto']),
+    deprecatedValues: new Set(['portrait']),
+  },
+  {
+    property: 'rendition:flow',
+    allowedValues: new Set(['paginated', 'scrolled-continuous', 'scrolled-doc', 'auto']),
+  },
+  {
+    property: 'rendition:viewport',
+    deprecated: true,
+    allowedValues: new Set(),
+    validateSyntax: (v: string) => /^(width=\d+,\s*height=\d+|height=\d+,\s*width=\d+)$/.test(v),
+  },
+];
+
 const GRANDFATHERED_LANG_TAGS = new Set([
   'en-GB-oed',
   'i-ami',
@@ -723,6 +772,7 @@ export class OPFValidator {
     // EPUB 3: Validate meta element vocabulary (D-vocabularies Schematron)
     if (this.packageDoc.version !== '2.0') {
       this.validateMetaPropertiesVocab(context, opfPath, dcElements);
+      this.validateRenditionVocab(context, opfPath);
     }
 
     // EPUB 3: Check for dcterms:modified meta
@@ -1071,6 +1121,74 @@ export class OPFValidator {
           seenPropertyRefines.add(ttKey);
           break;
         }
+      }
+    }
+  }
+
+  /**
+   * Validate rendition vocabulary meta properties (rendition:layout, orientation, spread, flow, viewport).
+   * Ports the Schematron rules from package-30.sch for the rendition vocabulary.
+   */
+  private validateRenditionVocab(context: ValidationContext, opfPath: string): void {
+    if (!this.packageDoc) return;
+
+    const metas = this.packageDoc.metaElements;
+
+    for (const rp of RENDITION_META_RULES) {
+      const matching = metas.filter((m) => m.property === rp.property);
+
+      for (const meta of matching) {
+        // rendition properties must not refine a resource
+        if (meta.refines) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `The "${rp.property}" property must not refine a publication resource`,
+            location: { path: opfPath },
+          });
+          continue;
+        }
+
+        if (rp.deprecated) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_086,
+            message: `The "${rp.property}" property is deprecated`,
+            location: { path: opfPath },
+          });
+        }
+
+        if (rp.validateSyntax) {
+          if (!rp.validateSyntax(meta.value)) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message: `The value of the "${rp.property}" property must be of the form "width=x, height=y"`,
+              location: { path: opfPath },
+            });
+          }
+        } else if (!rp.allowedValues.has(meta.value)) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `The value of the "${rp.property}" property must be ${[...rp.allowedValues].map((v) => `"${v}"`).join(' or ')}`,
+            location: { path: opfPath },
+          });
+        }
+
+        if (rp.deprecatedValues?.has(meta.value)) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_086,
+            message: `The "${rp.property}" property value "${meta.value}" is deprecated`,
+            location: { path: opfPath },
+          });
+        }
+      }
+
+      // Check multiplicity — only non-refining metas count as global
+      const globalMatching = matching.filter((m) => !m.refines);
+      if (globalMatching.length > 1) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: `The "${rp.property}" property must not occur more than one time as a global value`,
+          location: { path: opfPath },
+        });
       }
     }
   }
@@ -1635,6 +1753,25 @@ export class OPFValidator {
             pushMessage(context.messages, {
               id: MessageId.OPF_012,
               message: `Unknown spine itemref property: "${prop}"`,
+              location: { path: opfPath },
+            });
+          }
+          if (prop === 'rendition:spread-portrait') {
+            pushMessage(context.messages, {
+              id: MessageId.OPF_086,
+              message: `The "rendition:spread-portrait" property is deprecated`,
+              location: { path: opfPath },
+            });
+          }
+        }
+
+        const props = new Set(itemref.properties);
+        for (const group of EXCLUSIVE_SPINE_GROUPS) {
+          const found = group.filter((p) => props.has(p));
+          if (found.length > 1) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message: `Properties "${found.join('", "')}" are mutually exclusive`,
               location: { path: opfPath },
             });
           }

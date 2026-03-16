@@ -237,4 +237,9 @@ export const SPINE_PROPERTIES = new Set([
   'rendition:orientation-auto',
   'rendition:orientation-landscape',
   'rendition:orientation-portrait',
+  'rendition:flow-auto',
+  'rendition:flow-paginated',
+  'rendition:flow-scrolled-continuous',
+  'rendition:flow-scrolled-doc',
+  'rendition:align-x-center',
 ]);

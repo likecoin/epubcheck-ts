@@ -1120,13 +1120,10 @@ describe('ContentValidator', () => {
 </html>`;
       const files = new Map([['OEBPS/chapter1.xhtml', toBytes(fixedXHTML)]]);
       const packageDoc = createPackageDoc([
-        {
-          id: 'ch1',
-          href: 'chapter1.xhtml',
-          mediaType: 'application/xhtml+xml',
-          properties: ['fixed-layout'],
-        },
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' },
       ]);
+      packageDoc.metaElements = [{ property: 'rendition:layout', value: 'pre-paginated' }];
+      packageDoc.spine = [{ idref: 'ch1', linear: true }];
       context = createContext(files, packageDoc);
       validator.validate(context);
 
@@ -1147,13 +1144,10 @@ describe('ContentValidator', () => {
 </html>`;
       const files = new Map([['OEBPS/chapter1.xhtml', toBytes(fixedXHTML)]]);
       const packageDoc = createPackageDoc([
-        {
-          id: 'ch1',
-          href: 'chapter1.xhtml',
-          mediaType: 'application/xhtml+xml',
-          properties: ['fixed-layout'],
-        },
+        { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' },
       ]);
+      packageDoc.metaElements = [{ property: 'rendition:layout', value: 'pre-paginated' }];
+      packageDoc.spine = [{ idref: 'ch1', linear: true }];
       context = createContext(files, packageDoc);
       validator.validate(context);
 

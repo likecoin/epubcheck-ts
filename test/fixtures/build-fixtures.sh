@@ -1287,6 +1287,45 @@ echo ""
 echo "=== Done ==="
 echo "Total OPF errors: ${#OPF_ERRORS[@]}"
 echo "Total OPF warnings: ${#OPF_WARNINGS[@]}"
+# --- Layout (08-layout) fixtures ---
+JAVA_LAYOUT_DIR="../epubcheck/src/test/resources/epub3/08-layout/files"
+
+LAYOUT_VALID=(
+  "content-fxl-svg-valid"
+  "content-fxl-svg-no-viewbox-on-inner-svg-valid"
+  "content-fxl-xhtml-viewport-valid"
+  "content-fxl-xhtml-viewport-float-valid"
+  "content-fxl-xhtml-viewport-whitespace-valid"
+  "content-fxl-xhtml-viewport-keywords-valid"
+  "content-fxl-xhtml-viewport-multiple-usage-valid"
+  "content-reflow-xhtml-viewport-height-missing-valid"
+)
+
+LAYOUT_ERRORS=(
+  "content-fxl-svg-no-viewbox-error"
+  "content-fxl-svg-no-viewbox-width-height-percent-error"
+  "content-fxl-svg-no-viewbox-width-height-units-error"
+  "content-fxl-xhtml-viewport-missing-error"
+  "content-fxl-xhtml-viewport-syntax-invalid-error"
+  "content-fxl-xhtml-viewport-height-missing-error"
+  "content-fxl-xhtml-viewport-width-missing-error"
+  "content-fxl-xhtml-viewport-height-empty-error"
+  "content-fxl-xhtml-viewport-units-invalid-error"
+  "content-fxl-xhtml-viewport-duplicate-width-height-error"
+  "content-fxl-xhtml-viewport-icb-missing-in-first-meta-error"
+  "content-fxl-item-xhtml-viewport-invalid-error"
+)
+
+for name in "${LAYOUT_VALID[@]}"; do
+  build_content_epub "$JAVA_LAYOUT_DIR/$name" "$FIXTURES_DIR/valid/layout-${name}.epub"
+done
+
+for name in "${LAYOUT_ERRORS[@]}"; do
+  build_content_epub "$JAVA_LAYOUT_DIR/$name" "$FIXTURES_DIR/invalid/layout/layout-${name}.epub"
+done
+
+echo "Total Layout valid: ${#LAYOUT_VALID[@]}"
+echo "Total Layout errors: ${#LAYOUT_ERRORS[@]}"
 echo "Total OPF valid: ${#OPF_VALIDS[@]}"
 echo "Total Nav errors: ${#NAV_ERRORS[@]}"
 echo "Total Nav valid: ${#NAV_VALIDS[@]}"
