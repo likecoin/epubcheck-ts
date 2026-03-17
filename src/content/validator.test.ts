@@ -1107,7 +1107,7 @@ describe('ContentValidator', () => {
   });
 
   describe('fixed-layout viewport meta', () => {
-    it('should warn about missing viewport content in fixed-layout (HTM-046)', () => {
+    it('should report syntax error for empty viewport content in fixed-layout (HTM-047)', () => {
       const fixedXHTML = `<?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
@@ -1127,8 +1127,8 @@ describe('ContentValidator', () => {
       context = createContext(files, packageDoc);
       validator.validate(context);
 
-      const warnings = context.messages.filter((m) => m.id === 'HTM-046');
-      expect(warnings).toHaveLength(1);
+      const errors = context.messages.filter((m) => m.id === 'HTM-047');
+      expect(errors).toHaveLength(1);
     });
 
     it('should accept proper viewport in fixed-layout', () => {

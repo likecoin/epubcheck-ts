@@ -3083,8 +3083,8 @@ export class ContentValidator {
 
       if (!contentAttr?.trim()) {
         pushMessage(context.messages, {
-          id: MessageId.HTM_046,
-          message: 'Fixed layout document has no viewport meta element',
+          id: MessageId.HTM_047,
+          message: `Viewport metadata "${contentAttr ?? ''}" has a syntax error`,
           location: { path, line: (meta as XmlElement).line },
         });
         continue;

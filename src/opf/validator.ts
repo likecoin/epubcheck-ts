@@ -325,19 +325,30 @@ const RENDITION_META_RULES: readonly {
   property: string;
   allowedValues: ReadonlySet<string>;
   deprecated?: boolean;
+  forbidRefines?: boolean;
   deprecatedValues?: ReadonlySet<string>;
   validateSyntax?: (value: string) => boolean;
 }[] = [
-  { property: 'rendition:layout', allowedValues: new Set(['reflowable', 'pre-paginated']) },
-  { property: 'rendition:orientation', allowedValues: new Set(['landscape', 'portrait', 'auto']) },
+  {
+    property: 'rendition:layout',
+    allowedValues: new Set(['reflowable', 'pre-paginated']),
+    forbidRefines: true,
+  },
+  {
+    property: 'rendition:orientation',
+    allowedValues: new Set(['landscape', 'portrait', 'auto']),
+    forbidRefines: true,
+  },
   {
     property: 'rendition:spread',
     allowedValues: new Set(['none', 'landscape', 'portrait', 'both', 'auto']),
+    forbidRefines: true,
     deprecatedValues: new Set(['portrait']),
   },
   {
     property: 'rendition:flow',
     allowedValues: new Set(['paginated', 'scrolled-continuous', 'scrolled-doc', 'auto']),
+    forbidRefines: true,
   },
   {
     property: 'rendition:viewport',
@@ -1138,8 +1149,7 @@ export class OPFValidator {
       const matching = metas.filter((m) => m.property === rp.property);
 
       for (const meta of matching) {
-        // rendition properties must not refine a resource
-        if (meta.refines) {
+        if (meta.refines && rp.forbidRefines) {
           pushMessage(context.messages, {
             id: MessageId.RSC_005,
             message: `The "${rp.property}" property must not refine a publication resource`,
@@ -1181,9 +1191,10 @@ export class OPFValidator {
         }
       }
 
-      // Check multiplicity — only non-refining metas count as global
-      const globalMatching = matching.filter((m) => !m.refines);
-      if (globalMatching.length > 1) {
+      // Check multiplicity — for viewport, only non-refining metas count;
+      // for other rendition properties, all occurrences count (per Schematron)
+      const countable = rp.forbidRefines ? matching : matching.filter((m) => !m.refines);
+      if (countable.length > 1) {
         pushMessage(context.messages, {
           id: MessageId.RSC_005,
           message: `The "${rp.property}" property must not occur more than one time as a global value`,
