@@ -358,6 +358,13 @@ const RENDITION_META_RULES: readonly {
   },
 ];
 
+const KNOWN_RENDITION_META_PROPERTIES = new Set(
+  RENDITION_META_RULES.map((r) => r.property.slice('rendition:'.length)),
+);
+
+const SMIL3_CLOCK_RE =
+  /^([0-9]+:[0-5][0-9]:[0-5][0-9](\.[0-9]+)?|[0-5][0-9]:[0-5][0-9](\.[0-9]+)?|[0-9]+(\.[0-9]+)?(h|min|s|ms)?)$/;
+
 const GRANDFATHERED_LANG_TAGS = new Set([
   'en-GB-oed',
   'i-ami',
@@ -784,6 +791,7 @@ export class OPFValidator {
     if (this.packageDoc.version !== '2.0') {
       this.validateMetaPropertiesVocab(context, opfPath, dcElements);
       this.validateRenditionVocab(context, opfPath);
+      this.validateMediaOverlaysVocab(context, opfPath);
     }
 
     // EPUB 3: Check for dcterms:modified meta
@@ -1200,6 +1208,53 @@ export class OPFValidator {
           message: `The "${rp.property}" property must not occur more than one time as a global value`,
           location: { path: opfPath },
         });
+      }
+    }
+
+    // OPF-027: Unknown rendition: prefix meta properties
+    for (const meta of metas) {
+      if (meta.property.startsWith('rendition:')) {
+        const localName = meta.property.slice('rendition:'.length);
+        if (!KNOWN_RENDITION_META_PROPERTIES.has(localName)) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_027,
+            message: `Undefined property: "${meta.property}"`,
+            location: { path: opfPath },
+          });
+        }
+      }
+    }
+  }
+
+  /**
+   * Validate media overlays vocabulary meta properties (media:active-class, playback-active-class, duration).
+   * Ports the Schematron rules from package-30.sch for the media overlays vocabulary.
+   */
+  private validateMediaOverlaysVocab(context: ValidationContext, opfPath: string): void {
+    if (!this.packageDoc) return;
+
+    const metas = this.packageDoc.metaElements;
+
+    for (const prop of ['media:active-class', 'media:playback-active-class'] as const) {
+      if (metas.filter((m) => m.property === prop).length > 1) {
+        const displayName = prop.slice('media:'.length);
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: `The '${displayName}' property must not occur more than one time in the package metadata`,
+          location: { path: opfPath },
+        });
+      }
+    }
+
+    for (const meta of metas) {
+      if (meta.property === 'media:duration') {
+        if (!SMIL3_CLOCK_RE.test(meta.value.trim())) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `The value of the "media:duration" property must be a valid SMIL3 clock value`,
+            location: { path: opfPath },
+          });
+        }
       }
     }
   }

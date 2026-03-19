@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~90% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs done |
 
-**Overall: ~90% complete (963 tests passing, 91 skipped)**
+**Overall: ~90% complete (969 tests passing, 91 skipped)**
 
 ---
 
@@ -27,8 +27,8 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 416 | 399 | 17 |
-| **Integration Tests** | 638 | 564 | 74 |
-| **Total** | **1054** | **963** | **91** |
+| **Integration Tests** | 644 | 570 | 74 |
+| **Total** | **1060** | **969** | **91** |
 
 ### Integration Test Files
 
@@ -36,7 +36,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 test/integration/
 ├── epub.test.ts                 # 4 tests   (4 pass, 0 skip)  - Basic EPUB validation
 ├── ocf.integration.test.ts      # 56 tests  (46 pass, 10 skip) - OCF/ZIP/container
-├── opf.integration.test.ts      # 167 tests (166 pass, 1 skip)  - Package document
+├── opf.integration.test.ts      # 173 tests (172 pass, 1 skip)  - Package document
 ├── content.integration.test.ts  # 214 tests (192 pass, 22 skip)  - XHTML/CSS/SVG
 ├── nav.integration.test.ts      # 36 tests  (36 pass, 0 skip)  - Navigation
 ├── resources.integration.test.ts # 110 tests (99 pass, 11 skip)  - Resources/fallbacks
@@ -49,7 +49,7 @@ test/integration/
 
 ```
 test/fixtures/
-├── valid/                 # 252 valid EPUBs
+├── valid/                 # 254 valid EPUBs
 ├── invalid/
 │   ├── ocf/              # 37 OCF error cases
 │   ├── opf/              # 113 OPF error cases
@@ -59,7 +59,7 @@ test/fixtures/
 └── warnings/             # 30 warning cases
 ```
 
-**Total**: 595 EPUB test fixtures (imported from Java EPUBCheck)
+**Total**: 601 EPUB test fixtures (imported from Java EPUBCheck)
 
 ### Quality: ⭐⭐⭐⭐ (4/5) for implemented features
 
@@ -123,6 +123,7 @@ test/fixtures/
 - **OPF Schematron-equivalent** (RSC-005 duplicate IDs/refines/modified/multiplicity, OPF-065 cycles, OPF-092 xml:lang, OPF-098 link-to-OPF, RSC-017 bindings/refines, RSC-020 spaces)
 - **Link element validation** (RSC-007w warning for missing resources, OPF-093 missing media-type, OPF-086 deprecated rel, OPF-089 alternate+others, OPF-094 record/voicing need media-type, OPF-095 voicing audio type, RSC-005 record/voicing refines)
 - **Meta-properties vocab validation** (D-vocabulary: authority/term/belongs-to-collection/collection-type/display-seq/file-as/group-position/identifier-type/meta-auth/role/source-of/title-type)
+- **Media overlays vocab validation** (media:active-class/playback-active-class multiplicity, media:duration SMIL3 clock value syntax)
 - **URL leaking detection** (RSC-026 for path-absolute URLs)
 - **Scripted property** (OPF-014)
 - **MathML/SVG properties** (OPF-014)
@@ -209,9 +210,9 @@ test/fixtures/
 | 07-navigation-document | 40 | 36 | 36 | 90% |
 | 08-layout | 51 | 52 | 20 | 39% |
 | 09-media-overlays | 51 | 0 | 0 | 0% |
-| D-vocabularies (ARIA) | 56 | 48 | 48 | 86% |
+| D-vocabularies (ARIA) | 56 | 54 | 54 | 96% |
 | Other | 6 | 0 | 0 | 0% |
-| **Total** | **719** | **638** | **564** | **78%** |
+| **Total** | **719** | **644** | **570** | **79%** |
 
 ### E2E Porting Priorities
 
@@ -219,7 +220,7 @@ test/fixtures/
 1. **05-package-document** (121 scenarios) - 98% coverage (119 ported, 118 passing)
 2. **07-navigation-document** (40 scenarios) - 90% coverage (36 ported, all passing)
 3. **04-ocf** (61 scenarios) - 75% coverage (56 ported, 46 passing)
-4. **D-vocabularies** (56 scenarios) - 86% coverage (48 ported, 48 passing); remaining 8 need media overlays / rendition
+4. **D-vocabularies** (56 scenarios) - 96% coverage (54 ported, 54 passing); remaining 2 need media overlays implementation
 
 **High Priority** - Largest remaining gaps:
 5. **06-content-document** (215 scenarios) - 89% coverage, needs ARIA/DOCTYPE validation
@@ -239,7 +240,7 @@ All planned OPF (batches 1-5) and Nav (batches 6-8) tests have been ported. Rema
 |------|-----|---------------|---------|
 | **06-content-document** | ARIA validation, DOCTYPE | ~22 tests | Needs new validation subsystems |
 | **03-resources** | XML encoding detection, RSC-016 OPF parse, single-file mode | 11 skipped | Encoding detection, OPF parser architecture, single-file mode |
-| **D-vocabularies** | media-overlays-vocab, package-rendering-vocab | ~8 tests | Needs media overlay / rendition implementation |
+| **D-vocabularies** | media-overlays-vocab (narrator/duration refinement) | ~2 tests | Needs media overlay document validation |
 | **08-layout** | Rendition meta file-based tests | 32 skipped | Single-file (.opf) validation mode; logic tested via unit tests |
 | **09-media-overlays** | SMIL validation | ~51 tests | Not implemented |
 
@@ -270,9 +271,9 @@ Ordered by severity impact (number of active error/warning messages not yet emit
 ## Message IDs
 
 **Defined**: 300 message IDs
-**Actively used**: 127 (42%)
+**Actively used**: 128 (43%)
 
-Active by prefix: OPF (51), RSC (26), PKG (13), CSS (12), HTM (20), NAV (4), NCX (3), ACC (4), MED (2)
+Active by prefix: OPF (52), RSC (26), PKG (13), CSS (12), HTM (20), NAV (4), NCX (3), ACC (4), MED (2)
 Unused prefixes: SCP (0), CHK (0), INF (0)
 
 ### Recent Message ID Fixes (aligned with Java EPUBCheck)
@@ -400,6 +401,10 @@ Unused prefixes: SCP (0), CHK (0), INF (0)
 - `HTM-059` - Duplicate width/height in single viewport meta tag
 - `HTM-060a` - Secondary viewport meta in FXL documents (usage)
 - `HTM-060b` - Viewport meta in reflowable documents (usage)
+- `OPF-027` - Unknown `rendition:*` prefix meta properties
+- `RSC-005` - `media:active-class` multiplicity check (must not occur more than once)
+- `RSC-005` - `media:playback-active-class` multiplicity check (must not occur more than once)
+- `RSC-005` - `media:duration` SMIL3 clock value syntax validation (full clock, timecount)
 
 ---
 

@@ -1138,6 +1138,12 @@ DVOCAB_ERRORS=(
   "link-rel-voicing-as-publication-metadata-error"
   "link-rel-voicing-mediatype-missing-error"
   "link-rel-voicing-mediatype-not-audio-error"
+  # rendering-vocab errors
+  "rendition-property-unknown-error"
+  # media-overlays-vocab errors
+  "mediaoverlays-active-class-more-than-once-error"
+  "mediaoverlays-playback-active-class-more-than-once-error"
+  "mediaoverlays-duration-clock-values-error"
 )
 
 DVOCAB_WARNINGS=(
@@ -1164,6 +1170,9 @@ DVOCAB_VALIDS=(
   "link-rel-record-with-other-keyword-valid"
   "link-rel-record-properties-valid"
   "link-rel-voicing-valid"
+  # media-overlays-vocab valid
+  "mediaoverlays-duration-fullclock-valid"
+  "mediaoverlays-duration-timecount-valid"
 )
 
 for name in "${DVOCAB_ERRORS[@]}"; do

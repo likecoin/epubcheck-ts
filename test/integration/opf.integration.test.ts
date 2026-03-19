@@ -1257,6 +1257,65 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectNoErrorsOrWarnings(result);
     });
   });
+
+  describe('D-vocabulary: package rendering vocab', () => {
+    it('should report unknown rendition property using rendition prefix (OPF-027)', async () => {
+      const data = await loadEpub('invalid/opf/rendition-property-unknown-error.epub');
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectError(result, 'OPF-027');
+    });
+  });
+
+  describe('D-vocabulary: media overlays vocab', () => {
+    it('should report media:active-class defined more than once (RSC-005)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/mediaoverlays-active-class-more-than-once-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectErrorContaining(
+        result,
+        'RSC-005',
+        "active-class' property must not occur more than one time",
+      );
+    });
+
+    it('should validate media:duration full clock value', async () => {
+      const data = await loadEpub('valid/mediaoverlays-duration-fullclock-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should validate media:duration timecount value', async () => {
+      const data = await loadEpub('valid/mediaoverlays-duration-timecount-valid.epub');
+      const result = await EpubCheck.validate(data);
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should report media:duration with non-clock values (RSC-005)', async () => {
+      const data = await loadEpub('invalid/opf/mediaoverlays-duration-clock-values-error.epub');
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      const durationErrors = result.messages.filter(
+        (m) => m.id === 'RSC-005' && m.message?.includes('SMIL3 clock value'),
+      );
+      expect(durationErrors).toHaveLength(3);
+    });
+
+    it('should report media:playback-active-class defined more than once (RSC-005)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/mediaoverlays-playback-active-class-more-than-once-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+      expect(result.valid).toBe(false);
+      expectErrorContaining(
+        result,
+        'RSC-005',
+        "playback-active-class' property must not occur more than one time",
+      );
+    });
+  });
 });
 
 /**
@@ -1314,4 +1373,21 @@ function expectNoErrorsOrWarnings(result: Awaited<ReturnType<typeof EpubCheck.va
     errorsOrWarnings,
     `Expected no errors or warnings. Got: ${JSON.stringify(errorsOrWarnings.map((m) => ({ id: m.id, severity: m.severity })))}`,
   ).toHaveLength(0);
+}
+
+function expectErrorContaining(
+  result: Awaited<ReturnType<typeof EpubCheck.validate>>,
+  errorId: string,
+  substring: string,
+): void {
+  const match = result.messages.find(
+    (m) =>
+      m.id === errorId &&
+      (m.severity === 'error' || m.severity === 'fatal') &&
+      m.message?.includes(substring),
+  );
+  expect(
+    match,
+    `Expected error ${errorId} containing "${substring}". Got: ${JSON.stringify(result.messages.map((m) => ({ id: m.id, message: m.message })))}`,
+  ).toBeDefined();
 }
