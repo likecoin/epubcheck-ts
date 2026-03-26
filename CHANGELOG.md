@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.8] - 2026-03-26
+
+### Added
+
+- **D-vocabulary rendering + media overlays vocab tests** (969 passing, 96% D-vocab coverage)
+- **Rendition property validation** and 08-layout tests (963 passing, 39% layout coverage)
+- **6 content checks** unblocking 9 skipped tests (931 passing, 89% content coverage)
+- **9 remaining OCF tests** and RSC-004/RSC-033 OPF checks (75% OCF coverage)
+- **HTM-025/RSC-020** content URL validation with 9 content-document tests (85% coverage)
+- **28 remaining 03-resources integration tests** (88% resources coverage)
+
+### Fixed
+
+- Viewport refines, empty content error code, and multiplicity filter issues
+
+### Changed
+
+- Extracted `validateAbsoluteHyperlinkURL` helper, removed unused `isURLParseable`
+- Test coverage: 969 tests passing (up from 892)
+- E2E coverage: ~65% of Java EPUBCheck scenarios (up from ~55%)
+
 ## [0.3.7] - 2026-02-20
 
 ### Added
