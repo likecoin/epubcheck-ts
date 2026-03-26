@@ -1298,7 +1298,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
       const result = await EpubCheck.validate(data);
       expect(result.valid).toBe(false);
       const durationErrors = result.messages.filter(
-        (m) => m.id === 'RSC-005' && m.message?.includes('SMIL3 clock value'),
+        (m) => m.id === 'RSC-005' && m.message.includes('SMIL3 clock value'),
       );
       expect(durationErrors).toHaveLength(3);
     });
@@ -1384,7 +1384,7 @@ function expectErrorContaining(
     (m) =>
       m.id === errorId &&
       (m.severity === 'error' || m.severity === 'fatal') &&
-      m.message?.includes(substring),
+      m.message.includes(substring),
   );
   expect(
     match,
