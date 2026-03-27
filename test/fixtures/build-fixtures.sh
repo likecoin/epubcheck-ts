@@ -248,12 +248,17 @@ NCXEOF
 SVGEOF
   fi
 
-  # SMIL media overlay
+  # SMIL media overlay — find the content doc that has media-overlay attribute
   if echo "$opf_content" | grep -q 'href="mediaoverlay_001.smil"'; then
-    cat > "$tmpdir/EPUB/mediaoverlay_001.smil" << 'SMILEOF'
+    local mo_content_href
+    mo_content_href=$(echo "$opf_content" | grep -o '<item[^>]*media-overlay="[^"]*"[^>]*>' | grep -o 'href="[^"]*"' | sed 's/href="//;s/"$//' | head -1 || true)
+    if [ -z "$mo_content_href" ]; then
+      mo_content_href="content_001.xhtml"
+    fi
+    cat > "$tmpdir/EPUB/mediaoverlay_001.smil" << SMILEOF
 <?xml version="1.0" encoding="UTF-8"?>
 <smil xmlns="http://www.w3.org/ns/SMIL" version="3.0">
-<body><seq><par><text src="contents.xhtml"/></par></seq></body>
+<body><seq><par><text src="${mo_content_href}"/></par></seq></body>
 </smil>
 SMILEOF
   fi

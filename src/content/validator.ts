@@ -4,6 +4,7 @@
 
 import { XmlDocument, type XmlElement, type XmlNode } from 'libxml2-wasm';
 import { CSSValidator } from '../css/validator.js';
+import { SMILValidator } from '../smil/validator.js';
 import { MessageId, pushMessage } from '../messages/index.js';
 import { isCoreMediaType, type PackageDocument } from '../opf/types.js';
 import type { ResourceRegistry } from '../references/registry.js';
@@ -398,6 +399,13 @@ export class ContentValidator {
       }
     }
 
+    const overlayDocMap = new Map<string, Set<string>>();
+
+    const manifestByPath = new Map<string, (typeof packageDoc.manifest)[0]>();
+    for (const item of packageDoc.manifest) {
+      manifestByPath.set(resolveManifestHref(opfDir, item.href), item);
+    }
+
     for (const item of packageDoc.manifest) {
       if (item.mediaType === 'application/xhtml+xml') {
         const fullPath = resolveManifestHref(opfDir, item.href);
@@ -413,9 +421,84 @@ export class ContentValidator {
         if (refValidator) {
           this.extractSVGReferences(context, fullPath, opfDir, refValidator);
         }
+      } else if (item.mediaType === 'application/smil+xml') {
+        const fullPath = resolveManifestHref(opfDir, item.href);
+        const smilValidator = new SMILValidator();
+        const result = smilValidator.validate(context, fullPath, manifestByPath);
+        overlayDocMap.set(item.id, result.referencedDocuments);
       }
 
       this.validateMediaFile(context, item, opfDir);
+    }
+
+    // Cross-reference: validate media-overlay attributes
+    this.validateMediaOverlayCrossRefs(context, packageDoc, opfDir, overlayDocMap);
+  }
+
+  private validateMediaOverlayCrossRefs(
+    context: ValidationContext,
+    packageDoc: PackageDocument,
+    opfDir: string,
+    overlayDocMap: Map<string, Set<string>>,
+  ): void {
+    if (overlayDocMap.size === 0) return;
+
+    // Build reverse map: content doc path → set of overlay IDs referencing it
+    const docToOverlays = new Map<string, string[]>();
+    for (const [overlayId, docPaths] of overlayDocMap) {
+      for (const docPath of docPaths) {
+        const existing = docToOverlays.get(docPath) ?? [];
+        existing.push(overlayId);
+        docToOverlays.set(docPath, existing);
+      }
+    }
+
+    const opfPath = context.opfPath ?? '';
+
+    for (const item of packageDoc.manifest) {
+      if (item.mediaType !== 'application/xhtml+xml' && item.mediaType !== 'image/svg+xml') {
+        continue;
+      }
+
+      const fullPath = resolveManifestHref(opfDir, item.href);
+      const referencingOverlays = docToOverlays.get(fullPath);
+
+      if (referencingOverlays && referencingOverlays.length > 0) {
+        // MED-011: Content doc referenced by multiple overlay documents
+        if (referencingOverlays.length > 1) {
+          pushMessage(context.messages, {
+            id: MessageId.MED_011,
+            message: `EPUB Content Document "${item.href}" referenced from multiple Media Overlay Documents`,
+            location: { path: opfPath },
+          });
+        }
+
+        // MED-010: Content doc referenced by overlay but missing media-overlay attribute
+        if (!item.mediaOverlay) {
+          pushMessage(context.messages, {
+            id: MessageId.MED_010,
+            message: `EPUB Content Document "${item.href}" referenced from a Media Overlay must specify the "media-overlay" attribute`,
+            location: { path: opfPath },
+          });
+        } else if (!referencingOverlays.includes(item.mediaOverlay)) {
+          // MED-012: media-overlay attribute value doesn't match
+          pushMessage(context.messages, {
+            id: MessageId.MED_012,
+            message: `The "media-overlay" attribute does not match the ID of the Media Overlay that refers to this document`,
+            location: { path: opfPath },
+          });
+        }
+      } else if (item.mediaOverlay) {
+        // MED-013: media-overlay attribute set but overlay doesn't reference this doc
+        const overlayDocs = overlayDocMap.get(item.mediaOverlay);
+        if (overlayDocs && !overlayDocs.has(fullPath)) {
+          pushMessage(context.messages, {
+            id: MessageId.MED_013,
+            message: `Media Overlay Document referenced from the "media-overlay" attribute does not contain a reference to this Content Document`,
+            location: { path: opfPath },
+          });
+        }
+      }
     }
   }
 

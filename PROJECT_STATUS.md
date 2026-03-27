@@ -12,11 +12,11 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | CSS Validation | ~75% | 🟢 url() extraction from declarations, @font-face src, encoding detection done |
 | Navigation (nav/NCX) | ~85% | 🟢 Content model, structural validation, landmarks, labels, reading order done |
 | Schema Validation | ~50% | 🟡 RelaxNG for OPF/container; XHTML/SVG disabled (libxml2 limitation) |
-| Media Overlays | 0% | ❌ Not implemented |
+| Media Overlays | ~40% | 🟡 SMIL structure/timing/audio validation, cross-ref checks (MED-005/008/009/010/011/012/013/014) done |
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~90% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs done |
 
-**Overall: ~90% complete (971 tests passing, 89 skipped)**
+**Overall: ~90% complete (988 tests passing, 93 skipped)**
 
 ---
 
@@ -26,9 +26,9 @@ Quick reference for implementation progress vs Java EPUBCheck.
 
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
-| **Unit Tests** | 416 | 399 | 17 |
-| **Integration Tests** | 644 | 572 | 72 |
-| **Total** | **1060** | **971** | **89** |
+| **Unit Tests** | 423 | 406 | 17 |
+| **Integration Tests** | 658 | 582 | 76 |
+| **Total** | **1081** | **988** | **93** |
 
 ### Integration Test Files
 
@@ -40,7 +40,8 @@ test/integration/
 ├── content.integration.test.ts  # 214 tests (194 pass, 20 skip)  - XHTML/CSS/SVG
 ├── nav.integration.test.ts      # 36 tests  (36 pass, 0 skip)  - Navigation
 ├── resources.integration.test.ts # 110 tests (99 pass, 11 skip)  - Resources/fallbacks
-└── layout.integration.test.ts   # 52 tests  (20 pass, 32 skip)  - Layout/viewport/FXL
+├── layout.integration.test.ts   # 52 tests  (20 pass, 32 skip)  - Layout/viewport/FXL
+└── mediaoverlays.integration.test.ts # 14 tests (10 pass, 4 skip) - Media overlays/SMIL
 ```
 
 **Note**: Integration tests imported from Java EPUBCheck test suite (`../epubcheck/src/test/resources/epub3/`).
@@ -169,7 +170,7 @@ test/fixtures/
 - **Image validation** - MED-001/OPF-051 work; MED-004/OPF-029/PKG-022 magic number checks done
 
 ### ❌ Not Implemented
-- Media overlays validation
+- Media overlays: fragment validation (MED-015/017/018), CSS active class checks (CSS-029/030), duration sum (MED-016)
 - Encryption.xml schema validation (obfuscation detection via PKG-026 is implemented)
 - Signatures.xml validation
 - Metadata.xml (multiple renditions)
@@ -208,10 +209,10 @@ test/fixtures/
 | 06-content-document | 215 | 214 | 194 | 90% |
 | 07-navigation-document | 40 | 36 | 36 | 90% |
 | 08-layout | 51 | 52 | 20 | 39% |
-| 09-media-overlays | 51 | 0 | 0 | 0% |
+| 09-media-overlays | 51 | 14 | 10 | 20% |
 | D-vocabularies (ARIA) | 56 | 54 | 54 | 96% |
 | Other | 6 | 0 | 0 | 0% |
-| **Total** | **719** | **644** | **572** | **80%** |
+| **Total** | **719** | **658** | **582** | **81%** |
 
 ### E2E Porting Priorities
 
@@ -241,7 +242,7 @@ All planned OPF (batches 1-5) and Nav (batches 6-8) tests have been ported. Rema
 | **03-resources** | XML encoding detection, RSC-016 OPF parse, single-file mode | 11 skipped | Encoding detection, OPF parser architecture, single-file mode |
 | **D-vocabularies** | media-overlays-vocab (narrator/duration refinement) | ~2 tests | Needs media overlay document validation |
 | **08-layout** | Rendition meta file-based tests | 32 skipped | Single-file (.opf) validation mode; logic tested via unit tests |
-| **09-media-overlays** | SMIL validation | ~51 tests | Not implemented |
+| **09-media-overlays** | Fragment validation, CSS class checks, duration sum, active class tests | ~37 tests | Fragment/reading-order validation, CSS-029/030 |
 
 ---
 
@@ -255,7 +256,7 @@ All planned OPF (batches 1-5) and Nav (batches 6-8) tests have been ported. Rema
 
 Ordered by severity impact (number of active error/warning messages not yet emitted):
 
-1. **Media overlays** - SMIL validation (10 errors: MED-003/005/007/008/009/010/011/012/013/014, 3 warnings: MED-016/017/018, 1 usage: MED-015, 3 suppressed: MED-001/002/006). Highest impact — 51 Java test scenarios, 0% implemented.
+1. **Media overlays** - Remaining: fragment validation (MED-015/017/018), CSS active class checks (CSS-029/030), duration sum (MED-016). Core SMIL validation done (MED-005/008/009/010/011/012/013/014). 20% of 51 Java test scenarios ported.
 2. **Advanced media** - Format validation, magic numbers (3 errors: MED-003/004, PKG-021, 1 warning: PKG-022, 2 suppressed: OPF-051/057).
 3. **Full WCAG 2.0** - Comprehensive accessibility. Lowest real-world impact — all 15 unimplemented ACC messages (ACC-001/002/003/005/006/007/008/010/012/013/014/015/016/017) are **suppressed** by default. Only fires if user explicitly enables via customMessages. ACC-009 and ACC-011 (usage) are already implemented.
 
@@ -269,9 +270,9 @@ Ordered by severity impact (number of active error/warning messages not yet emit
 ## Message IDs
 
 **Defined**: 300 message IDs
-**Actively used**: 128 (43%)
+**Actively used**: 136 (45%)
 
-Active by prefix: OPF (52), RSC (26), PKG (13), CSS (12), HTM (20), NAV (4), NCX (3), ACC (4), MED (2)
+Active by prefix: OPF (52), RSC (26), PKG (13), CSS (12), HTM (20), NAV (4), NCX (3), ACC (4), MED (10)
 Unused prefixes: SCP (0), CHK (0), INF (0)
 
 ### Recent Message ID Fixes (aligned with Java EPUBCheck)
@@ -407,6 +408,15 @@ Unused prefixes: SCP (0), CHK (0), INF (0)
 - `RSC-005` - aria-activedescendant must reference a descendant element
 - `RSC-005` - aria-describedat obsolete attribute detection
 - `RSC-005` - label[for], output[for], td/th[headers] IDREF validation
+- SMIL media overlay document validation (structure, nesting rules, clock values)
+- `MED-005` - Audio reference to non-standard audio type
+- `MED-008` - clipBegin after clipEnd
+- `MED-009` - clipBegin equals clipEnd
+- `MED-010` - Content document missing media-overlay attribute
+- `MED-011` - Content document referenced from multiple Media Overlay documents
+- `MED-012` - media-overlay attribute ID mismatch
+- `MED-013` - Media Overlay has no reference to content document
+- `MED-014` - Audio file URL must not have fragment
 
 ---
 

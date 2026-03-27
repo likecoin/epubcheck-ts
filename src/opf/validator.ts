@@ -1,5 +1,6 @@
 import { MessageId, pushMessage } from '../messages/index.js';
 import { checkUrlLeaking, isDataURL, isFileURL } from '../references/url.js';
+import { isValidSmilClock } from '../smil/clock.js';
 import type { ValidationContext } from '../types.js';
 import { parseOPF } from './parser.js';
 import type { ManifestItem, PackageDocument } from './types.js';
@@ -361,9 +362,6 @@ const RENDITION_META_RULES: readonly {
 const KNOWN_RENDITION_META_PROPERTIES = new Set(
   RENDITION_META_RULES.map((r) => r.property.slice('rendition:'.length)),
 );
-
-const SMIL3_CLOCK_RE =
-  /^([0-9]+:[0-5][0-9]:[0-5][0-9](\.[0-9]+)?|[0-5][0-9]:[0-5][0-9](\.[0-9]+)?|[0-9]+(\.[0-9]+)?(h|min|s|ms)?)$/;
 
 const GRANDFATHERED_LANG_TAGS = new Set([
   'en-GB-oed',
@@ -1248,7 +1246,7 @@ export class OPFValidator {
 
     for (const meta of metas) {
       if (meta.property === 'media:duration') {
-        if (!SMIL3_CLOCK_RE.test(meta.value.trim())) {
+        if (!isValidSmilClock(meta.value.trim())) {
           pushMessage(context.messages, {
             id: MessageId.RSC_005,
             message: `The value of the "media:duration" property must be a valid SMIL3 clock value`,
