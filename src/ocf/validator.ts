@@ -60,6 +60,12 @@ export class OCFValidator {
 
     // Parse encryption.xml for obfuscated resources
     this.parseEncryption(zip, context);
+
+    // Validate encryption.xml schema
+    this.validateEncryptionXml(context);
+
+    // Validate signatures.xml schema
+    this.validateSignaturesXml(context);
   }
 
   /**
@@ -487,6 +493,106 @@ export class OCFValidator {
 
     if (obfuscated.size > 0) {
       context.obfuscatedResources = obfuscated;
+    }
+  }
+
+  /**
+   * Validate encryption.xml structure:
+   * - Root element must be "encryption" in OCF namespace
+   * - Compression Method must be "0" or "8"
+   * - Compression OriginalLength must be a non-negative integer
+   * - All Id attributes must be unique
+   */
+  private extractRootElementName(xml: string): string | null {
+    const match = /<(\w+)[\s>]/.exec(xml.replace(/<\?xml[^?]*\?>/, '').trimStart());
+    return match?.[1] ?? null;
+  }
+
+  private validateEncryptionXml(context: ValidationContext): void {
+    const encPath = 'META-INF/encryption.xml';
+    const content = context.files.get(encPath);
+    if (!content) return;
+
+    const xml = new TextDecoder().decode(content);
+
+    const rootName = this.extractRootElementName(xml);
+    if (rootName !== null && rootName !== 'encryption') {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_005,
+        message: `expected element "encryption" but found "${rootName}"`,
+        location: { path: encPath },
+      });
+      return;
+    }
+
+    // Check for duplicate Id attributes
+    const idPattern = /\bId=["']([^"']+)["']/g;
+    const ids = new Map<string, number>();
+    let idMatch;
+    while ((idMatch = idPattern.exec(xml)) !== null) {
+      const id = idMatch[1] ?? '';
+      ids.set(id, (ids.get(id) ?? 0) + 1);
+    }
+    for (const [id, count] of ids) {
+      if (count > 1) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: `Duplicate "${id}"`,
+          location: { path: encPath },
+        });
+      }
+    }
+
+    // Check Compression attributes
+    const compressionPattern = /<(?:\w+:)?Compression\s+([^>]*)\/?>/g;
+    let compMatch;
+    while ((compMatch = compressionPattern.exec(xml)) !== null) {
+      const attrs = compMatch[1] ?? '';
+      const methodMatch = /Method=["']([^"']*)["']/.exec(attrs);
+      const lengthMatch = /OriginalLength=["']([^"']*)["']/.exec(attrs);
+
+      if (methodMatch) {
+        const method = methodMatch[1] ?? '';
+        if (method !== '0' && method !== '8') {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `value of attribute "Method" is invalid; must be "0" or "8"`,
+            location: { path: encPath },
+          });
+        }
+      }
+
+      if (lengthMatch) {
+        const length = lengthMatch[1] ?? '';
+        if (!/^\d+$/.test(length)) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `value of attribute "OriginalLength" is invalid; must be a non-negative integer`,
+            location: { path: encPath },
+          });
+        }
+      }
+    }
+  }
+
+  /**
+   * Validate signatures.xml structure:
+   * - Root element must be "signatures" in OCF namespace
+   */
+  private validateSignaturesXml(context: ValidationContext): void {
+    const sigPath = 'META-INF/signatures.xml';
+    const content = context.files.get(sigPath);
+    if (!content) return;
+
+    const xml = new TextDecoder().decode(content);
+
+    const rootName = this.extractRootElementName(xml);
+    if (rootName !== null && rootName !== 'signatures') {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_005,
+        message: `expected element "signatures" but found "${rootName}"`,
+        location: { path: sigPath },
+      });
     }
   }
 

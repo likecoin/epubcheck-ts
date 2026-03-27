@@ -6,17 +6,17 @@ Quick reference for implementation progress vs Java EPUBCheck.
 
 | Category | Completion | Status |
 |----------|------------|--------|
-| OCF Validation | ~90% | 🟢 URL leaking, UTF-8, spaces, forbidden chars all done |
-| OPF Validation | ~90% | 🟢 Schematron-equivalent checks, refines cycles, duplicate IDs done |
-| Content (XHTML/SVG) | ~90% | 🟢 CSS url() references, @import, inline CSS remote font, SVG remote font, picture elements, SVG use, epub:type vocab, lang mismatch, switch/trigger, SVG epub:type, media magic numbers, UTF-16 BOM, base href, epub namespace done |
+| OCF Validation | ~92% | 🟢 URL leaking, UTF-8, spaces, forbidden chars, encryption/signatures schema done |
+| OPF Validation | ~92% | 🟢 Schematron-equivalent checks, refines cycles, duplicate IDs, OPF-090 preferred media types done |
+| Content (XHTML/SVG) | ~90% | 🟢 CSS url() references, @import, inline CSS remote font, SVG remote font, picture elements, SVG use, epub:type vocab, lang mismatch, switch/trigger, SVG epub:type, media magic numbers, UTF-16 BOM, base href, xml:base, epub namespace done |
 | CSS Validation | ~75% | 🟢 url() extraction from declarations, @font-face src, encoding detection done |
 | Navigation (nav/NCX) | ~85% | 🟢 Content model, structural validation, landmarks, labels, reading order done |
-| Schema Validation | ~50% | 🟡 RelaxNG for OPF/container; XHTML/SVG disabled (libxml2 limitation) |
-| Media Overlays | ~40% | 🟡 SMIL structure/timing/audio validation, cross-ref checks (MED-005/008/009/010/011/012/013/014) done |
+| Schema Validation | ~55% | 🟡 RelaxNG for OPF/container/encryption/signatures; XHTML/SVG disabled (libxml2 limitation) |
+| Media Overlays | ~55% | 🟡 SMIL structure/timing/audio/remote-resources, cross-ref checks, fragment validation (MED-015/017/018), reading order done |
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
-| Cross-reference | ~90% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs done |
+| Cross-reference | ~92% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs, encoding detection done |
 
-**Overall: ~90% complete (988 tests passing, 93 skipped)**
+**Overall: ~91% complete (1005 tests passing, 76 skipped)**
 
 ---
 
@@ -27,21 +27,21 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 423 | 406 | 17 |
-| **Integration Tests** | 658 | 582 | 76 |
-| **Total** | **1081** | **988** | **93** |
+| **Integration Tests** | 658 | 599 | 59 |
+| **Total** | **1081** | **1005** | **76** |
 
 ### Integration Test Files
 
 ```
 test/integration/
 ├── epub.test.ts                 # 4 tests   (4 pass, 0 skip)  - Basic EPUB validation
-├── ocf.integration.test.ts      # 56 tests  (46 pass, 10 skip) - OCF/ZIP/container
-├── opf.integration.test.ts      # 173 tests (172 pass, 1 skip)  - Package document
-├── content.integration.test.ts  # 214 tests (194 pass, 20 skip)  - XHTML/CSS/SVG
+├── ocf.integration.test.ts      # 56 tests  (50 pass, 6 skip) - OCF/ZIP/container
+├── opf.integration.test.ts      # 173 tests (173 pass, 0 skip)  - Package document
+├── content.integration.test.ts  # 214 tests (195 pass, 19 skip)  - XHTML/CSS/SVG
 ├── nav.integration.test.ts      # 36 tests  (36 pass, 0 skip)  - Navigation
-├── resources.integration.test.ts # 110 tests (99 pass, 11 skip)  - Resources/fallbacks
+├── resources.integration.test.ts # 110 tests (106 pass, 4 skip)  - Resources/fallbacks
 ├── layout.integration.test.ts   # 52 tests  (20 pass, 32 skip)  - Layout/viewport/FXL
-└── mediaoverlays.integration.test.ts # 14 tests (10 pass, 4 skip) - Media overlays/SMIL
+└── mediaoverlays.integration.test.ts # 14 tests (14 pass, 0 skip) - Media overlays/SMIL
 ```
 
 **Note**: Integration tests imported from Java EPUBCheck test suite (`../epubcheck/src/test/resources/epub3/`).
@@ -50,17 +50,17 @@ test/integration/
 
 ```
 test/fixtures/
-├── valid/                 # 254 valid EPUBs
+├── valid/                 # 257 valid EPUBs
 ├── invalid/
 │   ├── ocf/              # 37 OCF error cases
 │   ├── opf/              # 113 OPF error cases
-│   ├── content/          # 133 content error cases
+│   ├── content/          # 137 content error cases
 │   ├── layout/           # 12 layout error cases
 │   └── nav/              # 18 navigation error cases
 └── warnings/             # 30 warning cases
 ```
 
-**Total**: 601 EPUB test fixtures (imported from Java EPUBCheck)
+**Total**: 608 EPUB test fixtures (imported from Java EPUBCheck)
 
 ### Quality: ⭐⭐⭐⭐ (4/5) for implemented features
 

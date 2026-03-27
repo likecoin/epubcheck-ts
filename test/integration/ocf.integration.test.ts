@@ -375,8 +375,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
   });
 
   describe('Encryption validation', () => {
-    // Skip: encryption.xml schema validation not yet implemented
-    it.skip('should report encryption.xml with invalid markup (RSC-005)', async () => {
+    it('should report encryption.xml with invalid markup (RSC-005)', async () => {
       const data = await loadEpub('invalid/ocf/ocf-encryption-content-model-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -384,8 +383,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: encryption.xml schema validation not yet implemented
-    it.skip('should report encryption.xml with duplicate IDs (RSC-005)', async () => {
+    it('should report encryption.xml with duplicate IDs (RSC-005)', async () => {
       const data = await loadEpub('invalid/ocf/ocf-encryption-duplicate-ids-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -393,8 +391,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: encryption.xml schema validation not yet implemented
-    it.skip('should report encryption.xml with invalid compression metadata (RSC-005)', async () => {
+    it('should report encryption.xml with invalid compression metadata (RSC-005)', async () => {
       const data = await loadEpub(
         'invalid/ocf/ocf-encryption-compression-attributes-invalid-error.epub',
       );
@@ -414,8 +411,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
   });
 
   describe('Signatures validation', () => {
-    // Skip: signatures.xml schema validation not yet implemented
-    it.skip('should report signatures.xml with invalid markup (RSC-005)', async () => {
+    it('should report signatures.xml with invalid markup (RSC-005)', async () => {
       const data = await loadEpub('invalid/ocf/ocf-signatures-content-model-error.epub');
       const result = await EpubCheck.validate(data);
 

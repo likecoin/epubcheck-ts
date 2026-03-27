@@ -374,8 +374,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
       expectError(result, 'OPF-014');
     });
 
-    // Skip: OPF-014 remote audio in media overlays detection not yet implemented
-    it.skip('should report remote audio in overlays missing property (OPF-014)', async () => {
+    it('should report remote audio in overlays missing property (OPF-014)', async () => {
       const data = await loadEpub(
         'invalid/opf/package-remote-audio-in-overlays-missing-property-error.epub',
       );

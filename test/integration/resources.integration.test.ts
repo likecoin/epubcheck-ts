@@ -99,9 +99,10 @@ describe('Integration Tests - Resources', () => {
         expectNoErrorsOrWarnings(result);
       });
 
-      it.skip('should allow non-preferred core media types (OPF-090)', async () => {
-        // OPF-090 usage not emitted
-        const result = await validate('valid/resources-core-media-types-not-preferred-valid.epub');
+      it('should allow non-preferred core media types (OPF-090)', async () => {
+        const result = await validate('valid/resources-core-media-types-not-preferred-valid.epub', {
+          includeUsage: true,
+        });
         expectUsage(result, 'OPF-090');
       });
     });
@@ -639,40 +640,34 @@ describe('Integration Tests - Resources', () => {
   // Skipped: XML Encoding Detection (RSC-027/RSC-028)
   // ==========================================================================
   describe('XML Encoding Detection', () => {
-    it.skip('should warn about UTF-16 encoding declaration (RSC-027)', async () => {
-      // Encoding detection not implemented
+    it('should warn about UTF-16 encoding declaration (RSC-027)', async () => {
       const result = await validate('valid/xml-encoding-utf16-declared-warning.epub');
       expectWarning(result, 'RSC-027');
     });
 
-    it.skip('should warn about UTF-16 BOM without declaration (RSC-027)', async () => {
-      // Encoding detection not implemented
+    it('should warn about UTF-16 BOM without declaration (RSC-027)', async () => {
       const result = await validate('valid/xml-encoding-utf16-BOM-no-declaration-warning.epub');
       expectWarning(result, 'RSC-027');
     });
 
-    it.skip('should warn about UTF-16 BOM with UTF-8 declaration (RSC-027 + RSC-016)', async () => {
-      // Encoding detection not implemented
+    it('should warn about UTF-16 BOM with UTF-8 declaration (RSC-027)', async () => {
       const result = await validate(
         'invalid/content/xml-encoding-utf16-BOM-and-utf8-declaration-warning.epub',
       );
       expectWarning(result, 'RSC-027');
     });
 
-    it.skip('should report Latin-1 encoding declaration (RSC-028)', async () => {
-      // Encoding detection not implemented
+    it('should report Latin-1 encoding declaration (RSC-028)', async () => {
       const result = await validate('invalid/content/xml-encoding-latin1-declaration-error.epub');
       expectError(result, 'RSC-028');
     });
 
-    it.skip('should report UTF-32 BOM (RSC-028)', async () => {
-      // Encoding detection not implemented
+    it('should report UTF-32 BOM (RSC-028)', async () => {
       const result = await validate('invalid/content/xml-encoding-utf32-BOM-error.epub');
       expectError(result, 'RSC-028');
     });
 
-    it.skip('should report unknown encoding declaration (RSC-028 + RSC-016)', async () => {
-      // Encoding detection not implemented
+    it('should report unknown encoding declaration (RSC-028)', async () => {
       const result = await validate('invalid/content/xml-encoding-unknown-declared-error.epub');
       expectError(result, 'RSC-028');
     });
@@ -699,7 +694,7 @@ describe('Integration Tests - Resources', () => {
 /**
  * Helper: validate an EPUB fixture
  */
-async function validate(path: string) {
+async function validate(path: string, options?: Parameters<typeof EpubCheck.validate>[1]) {
   const fs = await import('node:fs');
   const pathModule = await import('node:path');
   const url = await import('node:url');
@@ -708,7 +703,7 @@ async function validate(path: string) {
   const filePath = pathModule.resolve(currentDir, '../fixtures', path);
 
   const data = new Uint8Array(fs.readFileSync(filePath));
-  return EpubCheck.validate(data);
+  return EpubCheck.validate(data, options);
 }
 
 /**

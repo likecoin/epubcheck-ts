@@ -31,6 +31,8 @@ export interface SMILValidationResult {
   textReferences: SMILTextReference[];
   /** Set of content document paths (without fragments) referenced by this overlay */
   referencedDocuments: Set<string>;
+  /** Whether this overlay references remote audio resources */
+  hasRemoteResources: boolean;
 }
 
 export class SMILValidator {
@@ -50,6 +52,7 @@ export class SMILValidator {
     const result: SMILValidationResult = {
       textReferences: [],
       referencedDocuments: new Set(),
+      hasRemoteResources: false,
     };
 
     const data = context.files.get(path);
@@ -72,7 +75,7 @@ export class SMILValidator {
     try {
       const root = doc.root;
       this.validateStructure(context, path, root);
-      this.validateAudioElements(context, path, root, manifestByPath);
+      this.validateAudioElements(context, path, root, manifestByPath, result);
       this.extractTextReferences(path, root, result);
     } finally {
       doc.dispose();
@@ -121,8 +124,7 @@ export class SMILValidator {
           if (!extra) continue;
           pushMessage(context.messages, {
             id: MessageId.RSC_005,
-            message:
-              "element 'text' not allowed here; only one 'text' element is allowed in 'par'",
+            message: "element 'text' not allowed here; only one 'text' element is allowed in 'par'",
             location: { path, line: extra.line },
           });
         }
@@ -151,7 +153,8 @@ export class SMILValidator {
     context: ValidationContext,
     path: string,
     root: XmlElement,
-    manifestByPath?: Map<string, ManifestItem>,
+    manifestByPath: Map<string, ManifestItem> | undefined,
+    result: SMILValidationResult,
   ): void {
     try {
       const audioElements = root.find('.//smil:audio', SMIL_NS);
@@ -160,6 +163,10 @@ export class SMILValidator {
         const src = this.getAttribute(elem, 'src');
 
         if (src) {
+          if (/^https?:\/\//i.test(src)) {
+            result.hasRemoteResources = true;
+          }
+
           if (src.includes('#')) {
             pushMessage(context.messages, {
               id: MessageId.MED_014,
@@ -252,7 +259,9 @@ export class SMILValidator {
 
         const hashIndex = textref.indexOf('#');
         const docRef = hashIndex >= 0 ? textref.substring(0, hashIndex) : textref;
+        const fragment = hashIndex >= 0 ? textref.substring(hashIndex + 1) : undefined;
         const docPath = this.resolveRelativePath(path, docRef);
+        result.textReferences.push({ docPath, fragment, line: elem.line });
         result.referencedDocuments.add(docPath);
       }
     } catch {

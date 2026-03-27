@@ -8,6 +8,7 @@ import { SMILValidator } from '../smil/validator.js';
 import { MessageId, pushMessage } from '../messages/index.js';
 import { isCoreMediaType, type PackageDocument } from '../opf/types.js';
 import type { ResourceRegistry } from '../references/registry.js';
+import type { Reference } from '../references/types.js';
 import { ReferenceType } from '../references/types.js';
 import { isRegisteredScheme } from '../references/uri-schemes.js';
 import { resolveManifestHref } from '../references/url.js';
@@ -426,6 +427,46 @@ export class ContentValidator {
         const smilValidator = new SMILValidator();
         const result = smilValidator.validate(context, fullPath, manifestByPath);
         overlayDocMap.set(item.id, result.referencedDocuments);
+
+        // Register text references for fragment validation and reading order
+        if (refValidator) {
+          for (const textRef of result.textReferences) {
+            const refUrl = textRef.fragment
+              ? `${textRef.docPath}#${textRef.fragment}`
+              : textRef.docPath;
+            const location =
+              textRef.line != null ? { path: fullPath, line: textRef.line } : { path: fullPath };
+            const ref: Reference = {
+              url: refUrl,
+              targetResource: textRef.docPath,
+              type: ReferenceType.OVERLAY_TEXT_LINK,
+              location,
+            };
+            if (textRef.fragment !== undefined) ref.fragment = textRef.fragment;
+            refValidator.addReference(ref);
+
+            // Collect for reading order check
+            context.overlayTextLinks ??= [];
+            const link: (typeof context.overlayTextLinks)[number] = {
+              targetResource: textRef.docPath,
+              location,
+            };
+            if (textRef.fragment !== undefined) link.fragment = textRef.fragment;
+            context.overlayTextLinks.push(link);
+          }
+        }
+
+        // OPF-014: remote audio in overlay requires remote-resources property
+        if (result.hasRemoteResources) {
+          const properties = item.properties ?? [];
+          if (!properties.includes('remote-resources')) {
+            pushMessage(context.messages, {
+              id: MessageId.OPF_014,
+              message: `The "remote-resources" property must be set on the media overlay item "${item.href}" because it references remote audio resources`,
+              location: { path: context.opfPath ?? '' },
+            });
+          }
+        }
       }
 
       this.validateMediaFile(context, item, opfDir);
@@ -1363,8 +1404,24 @@ export class ContentValidator {
 
       // Extract hyperlinks and register with reference validator
       if (refValidator && opfDir !== undefined) {
-        this.extractAndRegisterHyperlinks(context, path, root, opfDir, refValidator, !!isNavItem);
-        this.extractAndRegisterStylesheets(context, path, root, opfDir, refValidator);
+        const remoteXmlBase = this.getRemoteXmlBase(root);
+        this.extractAndRegisterHyperlinks(
+          context,
+          path,
+          root,
+          opfDir,
+          refValidator,
+          !!isNavItem,
+          remoteXmlBase,
+        );
+        this.extractAndRegisterStylesheets(
+          context,
+          path,
+          root,
+          opfDir,
+          refValidator,
+          remoteXmlBase,
+        );
         this.extractAndRegisterImages(context, path, root, opfDir, refValidator, registry);
         this.extractAndRegisterMathMLAltimg(path, root, opfDir, refValidator);
         this.extractAndRegisterScripts(path, root, opfDir, refValidator);
@@ -3214,6 +3271,18 @@ export class ContentValidator {
     return attr?.value ?? null;
   }
 
+  /**
+   * Get remote xml:base URL from the document root element.
+   * Returns the URL if it's remote (http/https), or null otherwise.
+   */
+  private getRemoteXmlBase(root: XmlElement): string | null {
+    const xmlBase = root.attr('base', 'xml')?.value ?? null;
+    if (xmlBase?.startsWith('http://') || xmlBase?.startsWith('https://')) {
+      return xmlBase;
+    }
+    return null;
+  }
+
   private validateViewportMeta(
     context: ValidationContext,
     path: string,
@@ -3385,6 +3454,7 @@ export class ContentValidator {
     opfDir: string,
     refValidator: ReferenceValidator,
     isNavDocument = false,
+    remoteXmlBase: string | null = null,
   ): void {
     const docDir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
 
@@ -3470,6 +3540,17 @@ export class ContentValidator {
           targetResource,
           fragment,
           type: refType,
+          location: { path, line },
+        });
+        continue;
+      }
+
+      // When xml:base points to a remote URL, relative links resolve remotely
+      if (remoteXmlBase && !ABSOLUTE_URI_RE.test(href)) {
+        const resolvedUrl = new URL(href, remoteXmlBase).href;
+        pushMessage(context.messages, {
+          id: MessageId.RSC_006,
+          message: `Remote resource reference is not allowed; resource "${resolvedUrl}" must be located in the EPUB container`,
           location: { path, line },
         });
         continue;
@@ -3608,14 +3689,18 @@ export class ContentValidator {
     root: XmlElement,
     opfDir: string,
     refValidator: ReferenceValidator,
+    remoteXmlBase: string | null = null,
   ): void {
     const docDir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
 
-    // Detect <base href> with remote URL
+    // Detect <base href> with remote URL; fall back to xml:base
     const baseElem = root.get('.//html:base[@href]', { html: 'http://www.w3.org/1999/xhtml' });
     const baseHref = baseElem ? this.getAttribute(baseElem as XmlElement, 'href') : null;
+    const effectiveBase = baseHref ?? remoteXmlBase;
     const remoteBaseUrl =
-      baseHref?.startsWith('http://') || baseHref?.startsWith('https://') ? baseHref : null;
+      effectiveBase?.startsWith('http://') || effectiveBase?.startsWith('https://')
+        ? effectiveBase
+        : null;
 
     const linkElements = root.find('.//html:link[@href]', { html: 'http://www.w3.org/1999/xhtml' });
     for (const linkElem of linkElements) {

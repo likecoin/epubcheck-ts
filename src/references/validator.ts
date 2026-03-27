@@ -196,7 +196,11 @@ export class ReferenceValidator {
     }
 
     // Check if target resource exists in manifest
-    if (!this.registry.hasResource(resourcePath)) {
+    // Skip for overlay text links — their targets are validated elsewhere
+    if (
+      reference.type !== ReferenceType.OVERLAY_TEXT_LINK &&
+      !this.registry.hasResource(resourcePath)
+    ) {
       const fileExistsInContainer = context.files.has(resourcePath);
 
       if (fileExistsInContainer) {
@@ -387,6 +391,28 @@ export class ReferenceValidator {
       }
     }
 
+    // MED-017: Overlay text links to XHTML must use bare ID fragments, not scheme-based
+    if (reference.type === ReferenceType.OVERLAY_TEXT_LINK && resource) {
+      if (resource.mimeType === 'application/xhtml+xml' && /^\w+\(/.test(fragment)) {
+        pushMessage(context.messages, {
+          id: MessageId.MED_017,
+          message: `URL fragment should indicate an element ID, but found '#${fragment}'`,
+          location: reference.location,
+        });
+        return;
+      }
+
+      // MED-018: Overlay text links to SVG must use valid SVG fragment identifiers
+      if (resource.mimeType === 'image/svg+xml' && !this.isValidSVGFragment(fragment)) {
+        pushMessage(context.messages, {
+          id: MessageId.MED_018,
+          message: `URL fragment should be an SVG fragment identifier, but found '#${fragment}'`,
+          location: reference.location,
+        });
+        return;
+      }
+    }
+
     // Check if fragment target exists (only for resource types we parse for IDs)
     // Skip remote resources since we can't parse their content
     // Skip svgView() fragments — they are functional, not ID-based
@@ -406,6 +432,24 @@ export class ReferenceValidator {
         });
       }
     }
+  }
+
+  /**
+   * Check if a fragment is a valid SVG fragment identifier.
+   * Valid forms: bare NCName ID, svgView(...), t=..., xywh=..., id=...
+   */
+  private isValidSVGFragment(fragment: string): boolean {
+    // svgView() functional notation
+    if (/^svgView\(.*\)$/.test(fragment)) return true;
+    // Temporal media fragment
+    if (fragment.startsWith('t=')) return true;
+    // Spatial media fragment
+    if (fragment.startsWith('xywh=')) return true;
+    // ID media fragment
+    if (fragment.startsWith('id=')) return true;
+    // Bare shorthand ID: must be valid XML NCName (no = sign)
+    if (!fragment.includes('=') && /^[a-zA-Z_][\w.-]*$/.test(fragment)) return true;
+    return false;
   }
 
   /**
@@ -481,7 +525,7 @@ export class ReferenceValidator {
   }
 
   private checkReadingOrder(context: ValidationContext): void {
-    if (!context.tocLinks || !context.packageDocument) return;
+    if (!context.packageDocument) return;
 
     const packageDoc = context.packageDocument;
     const spine = packageDoc.spine;
@@ -496,17 +540,51 @@ export class ReferenceValidator {
       }
     }
 
+    // Check TOC reading order (NAV-011)
+    if (context.tocLinks) {
+      this.checkLinkReadingOrder(
+        context,
+        spinePositionMap,
+        context.tocLinks,
+        MessageId.NAV_011,
+        '"toc" nav',
+      );
+    }
+
+    // Check media overlay text reading order (MED-015)
+    if (context.overlayTextLinks) {
+      this.checkLinkReadingOrder(
+        context,
+        spinePositionMap,
+        context.overlayTextLinks,
+        MessageId.MED_015,
+        'Media overlay text',
+      );
+    }
+  }
+
+  private checkLinkReadingOrder(
+    context: ValidationContext,
+    spinePositionMap: Map<string, number>,
+    links: {
+      targetResource: string;
+      fragment?: string;
+      location: { path: string; line?: number };
+    }[],
+    messageId: MessageId,
+    label: string,
+  ): void {
     let lastSpinePosition = -1;
     let lastAnchorPosition = -1;
 
-    for (const link of context.tocLinks) {
+    for (const link of links) {
       const spinePos = spinePositionMap.get(link.targetResource);
       if (spinePos === undefined) continue;
 
       if (spinePos < lastSpinePosition) {
         pushMessage(context.messages, {
-          id: MessageId.NAV_011,
-          message: `"toc" nav must be in reading order; link target "${link.targetResource}" is before the previous link's target in spine order`,
+          id: messageId,
+          message: `${label} must be in reading order; link target "${link.targetResource}" is before the previous link's target in spine order`,
           location: link.location,
         });
         lastSpinePosition = spinePos;
@@ -526,8 +604,8 @@ export class ReferenceValidator {
               ? `${link.targetResource}#${link.fragment}`
               : link.targetResource;
             pushMessage(context.messages, {
-              id: MessageId.NAV_011,
-              message: `"toc" nav must be in reading order; link target "${target}" is before the previous link's target in document order`,
+              id: messageId,
+              message: `${label} must be in reading order; link target "${target}" is before the previous link's target in document order`,
               location: link.location,
             });
           }

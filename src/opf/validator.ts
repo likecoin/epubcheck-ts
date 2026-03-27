@@ -2,6 +2,7 @@ import { MessageId, pushMessage } from '../messages/index.js';
 import { checkUrlLeaking, isDataURL, isFileURL } from '../references/url.js';
 import { isValidSmilClock } from '../smil/clock.js';
 import type { ValidationContext } from '../types.js';
+import { sniffXmlEncoding } from '../util/encoding.js';
 import { parseOPF } from './parser.js';
 import type { ManifestItem, PackageDocument } from './types.js';
 import { ITEM_PROPERTIES, LINK_PROPERTIES, SPINE_PROPERTIES } from './types.js';
@@ -14,6 +15,26 @@ const DEPRECATED_MEDIA_TYPES = new Set([
   'application/x-oeb1-package',
   'text/x-oeb1-html',
 ]);
+
+function getPreferredMediaType(mimeType: string, path: string): string | null {
+  switch (mimeType) {
+    case 'application/font-sfnt':
+      if (path.endsWith('.ttf')) return 'font/ttf';
+      if (path.endsWith('.otf')) return 'font/otf';
+      return 'font/(ttf|otf)';
+    case 'application/vnd.ms-opentype':
+      return 'font/otf';
+    case 'application/font-woff':
+      return 'font/woff';
+    case 'application/x-font-ttf':
+      return 'font/ttf';
+    case 'text/javascript':
+    case 'application/ecmascript':
+      return 'application/javascript';
+    default:
+      return null;
+  }
+}
 
 const VALID_RELATOR_CODES = new Set([
   'abr',
@@ -429,6 +450,22 @@ export class OPFValidator {
         location: { path: opfPath },
       });
       return;
+    }
+
+    // Check XML encoding before parsing
+    const encoding = sniffXmlEncoding(opfData);
+    if (encoding === 'UTF-16') {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_027,
+        message: `Detected non-UTF-8 encoding "${encoding}" in "${opfPath}"`,
+        location: { path: opfPath },
+      });
+    } else if (encoding !== null) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_028,
+        message: `Detected non-UTF-8 encoding "${encoding}" in "${opfPath}"`,
+        location: { path: opfPath },
+      });
     }
 
     const opfXml = new TextDecoder().decode(opfData);
@@ -1572,6 +1609,16 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.OPF_037,
           message: `Found deprecated media-type "${item.mediaType}"`,
+          location: { path: opfPath },
+        });
+      }
+
+      // Check for non-preferred media types (OPF-090)
+      const preferred = getPreferredMediaType(item.mediaType, fullPath);
+      if (preferred !== null) {
+        pushMessage(context.messages, {
+          id: MessageId.OPF_090,
+          message: `Encouraged to use media type "${preferred}" instead of "${item.mediaType}"`,
           location: { path: opfPath },
         });
       }

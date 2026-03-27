@@ -96,7 +96,7 @@ describe('Integration Tests - Media Overlays', () => {
 
   // ==================== Fragment Validation ====================
   describe('Fragment validation', () => {
-    it.skip('should report unresolved fragment identifier (RSC-012)', async () => {
+    it('should report unresolved fragment identifier (RSC-012)', async () => {
       const data = await loadEpub(
         'invalid/mediaoverlays/mediaoverlays-textref-fragment-unresolved-error.epub',
       );
@@ -105,7 +105,7 @@ describe('Integration Tests - Media Overlays', () => {
       expectError(result, 'RSC-012');
     });
 
-    it.skip('should warn about scheme-based XHTML fragments (MED-017)', async () => {
+    it('should warn about scheme-based XHTML fragments (MED-017)', async () => {
       const data = await loadEpub(
         'invalid/mediaoverlays/mediaoverlays-textref-fragment-schemebased-warning.epub',
       );
@@ -114,7 +114,7 @@ describe('Integration Tests - Media Overlays', () => {
       expectWarning(result, 'MED-017');
     });
 
-    it.skip('should warn about invalid SVG fragment identifiers (MED-018)', async () => {
+    it('should warn about invalid SVG fragment identifiers (MED-018)', async () => {
       const data = await loadEpub(
         'invalid/mediaoverlays/mediaoverlays-textref-svg-fragment-invalid-warning.epub',
       );
@@ -126,11 +126,11 @@ describe('Integration Tests - Media Overlays', () => {
 
   // ==================== Reading Order ====================
   describe('Reading order', () => {
-    it.skip('should report text references not in reading order (MED-015)', async () => {
+    it('should report text references not in reading order (MED-015)', async () => {
       const data = await loadEpub(
         'invalid/mediaoverlays/mediaoverlays-text-reading-order-error.epub',
       );
-      const result = await EpubCheck.validate(data);
+      const result = await EpubCheck.validate(data, { includeUsage: true });
 
       expectUsage(result, 'MED-015');
     });

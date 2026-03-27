@@ -113,6 +113,8 @@ export interface ValidationContext {
   referencedUndeclaredResources?: Set<string>;
   /** TOC navigation link targets in order, for reading order validation (NAV-011) */
   tocLinks?: { targetResource: string; fragment?: string; location: EPUBLocation }[];
+  /** Media overlay text link targets in order, for reading order validation (MED-015) */
+  overlayTextLinks?: { targetResource: string; fragment?: string; location: EPUBLocation }[];
   /** Resources marked with IDPF font obfuscation in encryption.xml */
   obfuscatedResources?: Set<string>;
 }

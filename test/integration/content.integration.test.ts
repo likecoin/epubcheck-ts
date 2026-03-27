@@ -1304,8 +1304,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-006');
     });
 
-    // Skip: xml:base URL handling not implemented
-    it.skip('should report relative paths as remote when xml:base is external URL (RSC-006)', async () => {
+    it('should report relative paths as remote when xml:base is external URL (RSC-006)', async () => {
       const data = await loadEpub(
         'invalid/content/content-xhtml-xml-base-url-remote-relative-path-error.epub',
       );
