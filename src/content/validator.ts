@@ -1231,6 +1231,9 @@ export class ContentValidator {
       // Check DPUB-ARIA deprecated roles
       this.checkDpubAriaDeprecated(context, path, root);
 
+      // Validate ARIA and HTML IDREF attributes
+      this.validateIdRefs(context, path, root);
+
       // Check table border attribute
       this.checkTableBorder(context, path, root);
 
@@ -2272,6 +2275,104 @@ export class ContentValidator {
     }
   }
 
+  private collectIds(root: XmlElement): Set<string> {
+    const ids = new Set<string>();
+    try {
+      for (const el of root.find('.//*[@id]')) {
+        const id = this.getAttribute(el as XmlElement, 'id');
+        if (id) ids.add(id);
+      }
+    } catch {
+      // XPath may fail on malformed documents
+    }
+    return ids;
+  }
+
+  private validateIdRefs(context: ValidationContext, path: string, root: XmlElement): void {
+    try {
+      const allIds = this.collectIds(root);
+      const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
+
+      const idrefsChecks: { xpath: string; attr: string; ns?: Record<string, string> }[] = [
+        { xpath: './/*[@aria-describedby]', attr: 'aria-describedby' },
+        { xpath: './/*[@aria-flowto]', attr: 'aria-flowto' },
+        { xpath: './/*[@aria-labelledby]', attr: 'aria-labelledby' },
+        { xpath: './/*[@aria-owns]', attr: 'aria-owns' },
+        { xpath: './/*[@aria-controls]', attr: 'aria-controls' },
+        { xpath: './/html:output[@for]', attr: 'for', ns: HTML_NS },
+        {
+          xpath: './/html:td[@headers] | .//html:th[@headers]',
+          attr: 'headers',
+          ns: HTML_NS,
+        },
+      ];
+      for (const { xpath, attr, ns } of idrefsChecks) {
+        const elements = ns ? root.find(xpath, ns) : root.find(xpath);
+        for (const elem of elements) {
+          const value = this.getAttribute(elem as XmlElement, attr);
+          if (!value) continue;
+          const idrefs = value.trim().split(/\s+/);
+          if (idrefs.some((idref) => !allIds.has(idref))) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message: `The ${attr} attribute must refer to elements in the same document (target ID missing)`,
+              location: { path, line: elem.line },
+            });
+          }
+        }
+      }
+
+      // aria-activedescendant: must reference a descendant element
+      const activedescMsg =
+        'The aria-activedescendant attribute must refer to a descendant element.';
+      for (const elem of root.find('.//*[@aria-activedescendant]')) {
+        const idref = this.getAttribute(elem as XmlElement, 'aria-activedescendant');
+        if (!idref) continue;
+        if (!allIds.has(idref)) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: activedescMsg,
+            location: { path, line: elem.line },
+          });
+        } else {
+          try {
+            if ((elem as XmlElement).find(`.//*[@id="${idref}"]`).length === 0) {
+              pushMessage(context.messages, {
+                id: MessageId.RSC_005,
+                message: activedescMsg,
+                location: { path, line: elem.line },
+              });
+            }
+          } catch {
+            // XPath may fail
+          }
+        }
+      }
+
+      for (const elem of root.find('.//*[@aria-describedat]')) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: 'attribute "aria-describedat" not allowed here',
+          location: { path, line: elem.line },
+        });
+      }
+
+      // label[for]: single IDREF with specific message matching Java Schematron
+      for (const elem of root.find('.//html:label[@for]', HTML_NS)) {
+        const idref = this.getAttribute(elem as XmlElement, 'for');
+        if (idref && !allIds.has(idref)) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `The for attribute must refer to an element in the same document (the ID "${idref}" does not exist).`,
+            location: { path, line: elem.line },
+          });
+        }
+      }
+    } catch {
+      // XPath may fail on malformed documents
+    }
+  }
+
   private validateEpubSwitch(context: ValidationContext, path: string, root: XmlElement): void {
     const EPUB_NS = { epub: 'http://www.idpf.org/2007/ops' };
     try {
@@ -2380,17 +2481,7 @@ export class ContentValidator {
       const triggers = root.find('.//epub:trigger', EPUB_NS);
       if (triggers.length === 0) return;
 
-      // Collect all IDs in the document once for IDREF checking
-      const allIds = new Set<string>();
-      try {
-        const idElements = root.find('.//*[@id]');
-        for (const el of idElements) {
-          const idAttr = this.getAttribute(el as XmlElement, 'id');
-          if (idAttr) allIds.add(idAttr);
-        }
-      } catch {
-        // XPath may fail on malformed documents
-      }
+      const allIds = this.collectIds(root);
 
       for (const trigger of triggers) {
         pushMessage(context.messages, {

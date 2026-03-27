@@ -275,8 +275,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: RelaxNG content schema validation not wired
-    it.skip('should report ID-referencing attributes that refer to non-existing IDs (RSC-005)', async () => {
+    it('should report ID-referencing attributes that refer to non-existing IDs (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/id-ref-not-found-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -341,8 +340,7 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: RelaxNG content schema validation not wired — ARIA attribute check requires schema
-    it.skip('should report non-existent ARIA describedat attribute (RSC-005)', async () => {
+    it('should report non-existent ARIA describedat attribute (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/aria-describedAt-error.epub');
       const result = await EpubCheck.validate(data);
 
