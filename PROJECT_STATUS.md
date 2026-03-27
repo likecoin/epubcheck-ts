@@ -12,11 +12,11 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | CSS Validation | ~75% | 🟢 url() extraction from declarations, @font-face src, encoding detection done |
 | Navigation (nav/NCX) | ~85% | 🟢 Content model, structural validation, landmarks, labels, reading order done |
 | Schema Validation | ~55% | 🟡 RelaxNG for OPF/container/encryption/signatures; XHTML/SVG disabled (libxml2 limitation) |
-| Media Overlays | ~60% | 🟡 SMIL structure/timing/audio/remote-resources, cross-ref checks, fragment validation, reading order, CSS active class (CSS-029/030) done |
+| Media Overlays | ~70% | 🟡 SMIL structure/timing/audio/remote-resources, cross-ref checks, fragment validation, reading order, CSS active class (CSS-029/030), OPF metadata (refines/class-name/type/contentdoc/duration-defined), MED-016 duration sum done |
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~92% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs, encoding detection done |
 
-**Overall: ~92% complete (1015 tests passing, 76 skipped)**
+**Overall: ~93% complete (1025 tests passing, 92 skipped)**
 
 ---
 
@@ -27,8 +27,8 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 423 | 406 | 17 |
-| **Integration Tests** | 668 | 609 | 59 |
-| **Total** | **1091** | **1015** | **76** |
+| **Integration Tests** | 694 | 619 | 75 |
+| **Total** | **1117** | **1025** | **92** |
 
 ### Integration Test Files
 
@@ -41,7 +41,7 @@ test/integration/
 ├── nav.integration.test.ts      # 36 tests  (36 pass, 0 skip)  - Navigation
 ├── resources.integration.test.ts # 110 tests (106 pass, 4 skip)  - Resources/fallbacks
 ├── layout.integration.test.ts   # 52 tests  (20 pass, 32 skip)  - Layout/viewport/FXL
-└── mediaoverlays.integration.test.ts # 24 tests (24 pass, 0 skip) - Media overlays/SMIL
+└── mediaoverlays.integration.test.ts # 50 tests (34 pass, 16 skip) - Media overlays/SMIL
 ```
 
 **Note**: Integration tests imported from Java EPUBCheck test suite (`../epubcheck/src/test/resources/epub3/`).
@@ -76,7 +76,7 @@ test/fixtures/
 - 🟡 **Entity validation** - RSC-016 for undefined/malformed entities; HTM-003 external entity declarations done; HTM-058 UTF-16 encoding detection done
 - 🟡 **Base URL** - HTML `<base href>` remote URL detection done (RSC-006); xml:base not yet
 - ❌ **Advanced accessibility** - Only 30% of Java coverage
-- ❌ **Media overlays** - CSS active class checks not implemented
+- 🟢 **Media overlays** - SMIL validation, cross-refs, CSS active class, OPF metadata checks, MED-016 duration sum all done; 16 file-based SMIL tests skipped (covered by unit tests)
 
 ### Skipped Tests
 
@@ -84,7 +84,7 @@ test/fixtures/
 - **libxml2-wasm XPath limitations (3)** - OPF-014 inline event handlers, CSS-005 conflicting stylesheets, OPF-088 unknown epub:type prefix
 - **Messages suppressed in Java EPUBCheck (14)** - NCX-002 (2), NCX-003 (2), NAV-002 (1), ACC-004 (2), ACC-005 (2), HTM-012 (2), OPF-051 (1), OPF-088 (1), CSS-005 (1)
 
-**Integration tests (59)** - Unimplemented features and library limitations:
+**Integration tests (75)** - Unimplemented features and library limitations:
 - **Content (19 skipped)**:
   - *RelaxNG/Schematron content schema (~9)*: image map, foreignObject/SVG title HTML validation, microdata, Schematron — requires XHTML/SVG schema (libxml2-wasm limitation)
   - *CSS syntax error ordering (1)*: CSS syntax error ordering
@@ -95,6 +95,7 @@ test/fixtures/
   - *Single-file validation mode (2)*: remote XHTML/SVG font validation not supported
 - **OCF (6 skipped)**: OPF-060 duplicate ZIP entry (1), single-file/directory validation mode (5)
 - **Layout (32 skipped)**: Single-file (.opf) validation mode not supported — rendition meta validation, spine override conflicts (all covered by unit tests instead)
+- **Media overlays (16 skipped)**: File-based SMIL document validation (covered by unit tests in src/smil/validator.test.ts)
 
 ---
 
@@ -166,7 +167,6 @@ test/fixtures/
 - **Image validation** - MED-001/OPF-051 work; MED-004/OPF-029/PKG-022 magic number checks done
 
 ### ❌ Not Implemented
-- Media overlays: duration sum (MED-016)
 - Metadata.xml (multiple renditions)
 - Advanced accessibility (WCAG 2.0 comprehensive)
 - Full ARIA roles and attributes (DPUB-ARIA deprecated roles done)
@@ -202,10 +202,10 @@ test/fixtures/
 | 06-content-document | 215 | 214 | 195 | 91% |
 | 07-navigation-document | 40 | 36 | 36 | 90% |
 | 08-layout | 51 | 52 | 20 | 39% |
-| 09-media-overlays | 51 | 24 | 24 | 47% |
+| 09-media-overlays | 51 | 50 | 34 | 67% |
 | D-vocabularies (ARIA) | 56 | 54 | 54 | 96% |
 | Other | 6 | 0 | 0 | 0% |
-| **Total** | **719** | **668** | **609** | **85%** |
+| **Total** | **719** | **694** | **619** | **86%** |
 
 ### E2E Porting Priorities
 
@@ -235,7 +235,7 @@ All planned OPF (batches 1-5) and Nav (batches 6-8) tests have been ported. Rema
 | **03-resources** | RSC-016 OPF parse, single-file mode | 4 skipped | OPF parser architecture, single-file mode |
 | **D-vocabularies** | media-overlays-vocab (narrator/duration refinement) | ~2 tests | Needs media overlay document validation |
 | **08-layout** | Rendition meta file-based tests | 32 skipped | Single-file (.opf) validation mode; logic tested via unit tests |
-| **09-media-overlays** | Duration sum, file-based SMIL/OPF tests | ~27 tests | MED-016; 26 file-based (not portable), 1 duration |
+| **09-media-overlays** | File-based SMIL tests | 16 skipped | Single-file (.smil) validation mode; covered by unit tests |
 
 ---
 
@@ -248,7 +248,7 @@ All planned OPF (batches 1-5) and Nav (batches 6-8) tests have been ported. Rema
 
 Ordered by severity impact (number of active error/warning messages not yet emitted):
 
-1. **Media overlays** - Remaining: duration sum (MED-016). Core SMIL validation + fragment/reading-order + CSS active class done. 47% of 51 Java test scenarios ported (24/51).
+1. **Media overlays** - Core SMIL validation + fragment/reading-order + CSS active class + OPF metadata checks + MED-016 duration sum done. 67% of 51 Java test scenarios ported (50/51, 34 passing, 16 skipped file-based). Remaining: 1 unported (duration tolerance edge case already covered).
 2. **Advanced media** - Format validation, magic numbers (3 errors: MED-003/004, PKG-021, 1 warning: PKG-022, 2 suppressed: OPF-051/057).
 3. **Full WCAG 2.0** - Comprehensive accessibility. Lowest real-world impact — all 15 unimplemented ACC messages (ACC-001/002/003/005/006/007/008/010/012/013/014/015/016/017) are **suppressed** by default. Only fires if user explicitly enables via customMessages. ACC-009 and ACC-011 (usage) are already implemented.
 
@@ -262,9 +262,9 @@ Ordered by severity impact (number of active error/warning messages not yet emit
 ## Message IDs
 
 **Defined**: 300 message IDs
-**Actively used**: 153 (51%)
+**Actively used**: 154 (51%)
 
-Active by prefix: OPF (53), RSC (26), PKG (16), CSS (12), HTM (21), NAV (4), NCX (3), ACC (4), MED (14)
+Active by prefix: OPF (53), RSC (26), PKG (16), CSS (12), HTM (21), NAV (4), NCX (3), ACC (4), MED (15)
 Unused prefixes: SCP (0), CHK (0), INF (0)
 
 ### Recent Message ID Fixes (aligned with Java EPUBCheck)
@@ -409,6 +409,9 @@ Unused prefixes: SCP (0), CHK (0), INF (0)
 - `MED-012` - media-overlay attribute ID mismatch
 - `MED-013` - Media Overlay has no reference to content document
 - `MED-014` - Audio file URL must not have fragment
+- `MED-016` - Media Overlays total duration should be sum of all overlay durations (1-second tolerance)
+- `RSC-005` - Media overlay OPF metadata: active-class/playback-active-class refines and multiple class names
+- `RSC-005` - Media overlay manifest: invalid SMIL type, non-content-doc media-overlay, missing global/per-item duration
 
 ---
 

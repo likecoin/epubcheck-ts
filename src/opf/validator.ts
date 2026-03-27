@@ -1,6 +1,6 @@
 import { MessageId, pushMessage } from '../messages/index.js';
 import { checkUrlLeaking, isDataURL, isFileURL } from '../references/url.js';
-import { isValidSmilClock } from '../smil/clock.js';
+import { isValidSmilClock, parseSmilClock } from '../smil/clock.js';
 import type { ValidationContext } from '../types.js';
 import { sniffXmlEncoding } from '../util/encoding.js';
 import { parseOPF } from './parser.js';
@@ -827,6 +827,7 @@ export class OPFValidator {
       this.validateMetaPropertiesVocab(context, opfPath, dcElements);
       this.validateRenditionVocab(context, opfPath);
       this.validateMediaOverlaysVocab(context, opfPath);
+      this.validateMediaOverlayItems(context, opfPath);
     }
 
     // EPUB 3: Check for dcterms:modified meta
@@ -1270,22 +1271,42 @@ export class OPFValidator {
 
     const metas = this.packageDoc.metaElements;
 
-    for (const prop of ['media:active-class', 'media:playback-active-class'] as const) {
-      if (metas.filter((m) => m.property === prop).length > 1) {
-        const displayName = prop.slice('media:'.length);
+    const matchingActive = metas.filter((m) => m.property === 'media:active-class');
+    const matchingPlayback = metas.filter((m) => m.property === 'media:playback-active-class');
+
+    for (const [prop, matching] of [
+      ['media:active-class', matchingActive],
+      ['media:playback-active-class', matchingPlayback],
+    ] as const) {
+      const displayName = prop.slice('media:'.length);
+      if (matching.length > 1) {
         pushMessage(context.messages, {
           id: MessageId.RSC_005,
           message: `The '${displayName}' property must not occur more than one time in the package metadata`,
           location: { path: opfPath },
         });
       }
+      for (const meta of matching) {
+        if (meta.refines) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `@refines must not be used with the ${prop} property`,
+            location: { path: opfPath },
+          });
+        }
+        if (meta.value.trim().includes(' ')) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `the '${displayName}' property must define a single class name`,
+            location: { path: opfPath },
+          });
+        }
+      }
     }
 
     // Store active class values for CSS-029/CSS-030 validation in content documents
-    const activeClass = metas.find((m) => m.property === 'media:active-class');
-    if (activeClass) context.mediaActiveClass = activeClass.value.trim();
-    const playbackClass = metas.find((m) => m.property === 'media:playback-active-class');
-    if (playbackClass) context.mediaPlaybackActiveClass = playbackClass.value.trim();
+    if (matchingActive[0]) context.mediaActiveClass = matchingActive[0].value.trim();
+    if (matchingPlayback[0]) context.mediaPlaybackActiveClass = matchingPlayback[0].value.trim();
 
     for (const meta of metas) {
       if (meta.property === 'media:duration') {
@@ -1296,6 +1317,96 @@ export class OPFValidator {
             location: { path: opfPath },
           });
         }
+      }
+    }
+
+    // MED-016: Total duration should be the sum of individual overlay durations
+    const globalDuration = metas.find((m) => m.property === 'media:duration' && !m.refines);
+    if (globalDuration) {
+      const totalSeconds = parseSmilClock(globalDuration.value.trim());
+      if (!Number.isNaN(totalSeconds)) {
+        let sumSeconds = 0;
+        let allValid = true;
+        for (const meta of metas) {
+          if (meta.property === 'media:duration' && meta.refines) {
+            const s = parseSmilClock(meta.value.trim());
+            if (Number.isNaN(s)) {
+              allValid = false;
+              break;
+            }
+            sumSeconds += s;
+          }
+        }
+        if (allValid && Math.abs(totalSeconds - sumSeconds) > 1) {
+          pushMessage(context.messages, {
+            id: MessageId.MED_016,
+            message: `Media Overlays total duration should be the sum of the durations of all Media Overlays documents.`,
+            location: { path: opfPath },
+          });
+        }
+      }
+    }
+  }
+
+  /**
+   * Validate media-overlay manifest item constraints:
+   * - media-overlay must reference a SMIL item (application/smil+xml)
+   * - media-overlay attribute only allowed on XHTML and SVG content documents
+   * - Global media:duration required when overlays exist
+   * - Per-item media:duration required for each overlay
+   */
+  private validateMediaOverlayItems(context: ValidationContext, opfPath: string): void {
+    if (!this.packageDoc) return;
+
+    const manifest = this.packageDoc.manifest;
+    const metas = this.packageDoc.metaElements;
+
+    const itemsWithOverlay = manifest.filter((item) => item.mediaOverlay);
+    if (itemsWithOverlay.length === 0) return;
+
+    for (const item of itemsWithOverlay) {
+      const moId = item.mediaOverlay;
+      if (!moId) continue;
+      const moItem = this.manifestById.get(moId);
+
+      if (moItem && moItem.mediaType !== 'application/smil+xml') {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: `media overlay items must be of the "application/smil+xml" type (given type was "${moItem.mediaType}")`,
+          location: { path: opfPath },
+        });
+      }
+
+      if (item.mediaType !== 'application/xhtml+xml' && item.mediaType !== 'image/svg+xml') {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: `The media-overlay attribute is only allowed on XHTML and SVG content documents.`,
+          location: { path: opfPath },
+        });
+      }
+    }
+
+    if (!metas.some((m) => m.property === 'media:duration' && !m.refines)) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_005,
+        message: `global media:duration meta element not set`,
+        location: { path: opfPath },
+      });
+    }
+
+    const overlayIds = new Set(
+      itemsWithOverlay
+        .map((item) => item.mediaOverlay)
+        .filter((id): id is string => id != null && this.manifestById.has(id)),
+    );
+    for (const overlayId of overlayIds) {
+      const refinesUri = `#${overlayId}`;
+      if (!metas.some((m) => m.property === 'media:duration' && m.refines === refinesUri)) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: `item media:duration meta element not set (expecting: meta property='media:duration' refines='${refinesUri}')`,
+          location: { path: opfPath },
+        });
       }
     }
   }

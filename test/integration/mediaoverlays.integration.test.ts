@@ -223,6 +223,124 @@ describe('Integration Tests - Media Overlays', () => {
       expectError(result, 'CSS-030');
     });
   });
+
+  // ==================== OPF Metadata Validation ====================
+  describe('OPF metadata validation', () => {
+    it('should report media:active-class with refines attribute (RSC-005)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/mediaoverlays-active-class-refines-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expectError(result, 'RSC-005');
+    });
+
+    it('should report media:playback-active-class with refines attribute (RSC-005)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/mediaoverlays-playback-active-class-refines-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expectError(result, 'RSC-005');
+    });
+
+    it('should report media:active-class with multiple class names (RSC-005)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/mediaoverlays-active-class-multiple-class-names-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expectError(result, 'RSC-005');
+    });
+
+    it('should report media:playback-active-class with multiple class names (RSC-005)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/mediaoverlays-playback-active-class-multiple-class-names-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expectError(result, 'RSC-005');
+    });
+
+    it('should report media-overlay item with invalid type (RSC-005)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/mediaoverlays-type-invalid-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expectError(result, 'RSC-005');
+    });
+
+    it('should report media-overlay attribute on non-content document (RSC-005)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/mediaoverlays-non-contentdoc-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expectError(result, 'RSC-005');
+    });
+
+    it('should report missing global media:duration (RSC-005)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/mediaoverlays-duration-global-not-defined-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expectError(result, 'RSC-005');
+    });
+
+    it('should report missing per-item media:duration (RSC-005)', async () => {
+      const data = await loadEpub(
+        'invalid/opf/mediaoverlays-duration-single-not-defined-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expectError(result, 'RSC-005');
+    });
+  });
+
+  // ==================== Duration Sum (MED-016) ====================
+  describe('Duration sum validation', () => {
+    it('should warn when total duration does not match sum of overlay durations (MED-016)', async () => {
+      const data = await loadEpub(
+        'warnings/mediaoverlays-duration-total-not-sum-warning.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expectWarning(result, 'MED-016');
+    });
+
+    it('should allow total duration within 1-second tolerance of sum', async () => {
+      const data = await loadEpub(
+        'valid/mediaoverlays-duration-total-within-tolerance-valid.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
+  });
+
+  // ==================== SMIL File-Based Tests (skipped) ====================
+  // These test individual SMIL document validation without full EPUB wrapper.
+  // Already covered by unit tests in src/smil/validator.test.ts
+  describe('SMIL document validation (file-based)', () => {
+    it.skip('should validate a minimal Media Overlay document (file-based SMIL)', () => {});
+    it.skip('should report meta element in head container (file-based SMIL)', () => {});
+    it.skip('should allow metadata element with custom properties (file-based SMIL)', () => {});
+    it.skip('should report media clips as direct children of seq (file-based SMIL)', () => {});
+    it.skip('should report par with multiple text children (file-based SMIL)', () => {});
+    it.skip('should report par with seq child (file-based SMIL)', () => {});
+    it.skip('should report audio file URL with fragment (file-based SMIL)', () => {});
+    it.skip('should allow full clock syntax (file-based SMIL)', () => {});
+    it.skip('should allow partial clock syntax (file-based SMIL)', () => {});
+    it.skip('should allow timecount syntax (file-based SMIL)', () => {});
+    it.skip('should report invalid clock values (file-based SMIL)', () => {});
+    it.skip('should report clipBegin after clipEnd (file-based SMIL)', () => {});
+    it.skip('should report clipEnd equals clipBegin (file-based SMIL)', () => {});
+    it.skip('should allow epub:type in default vocabulary (file-based SMIL)', () => {});
+    it.skip('should allow custom epub:type with declared prefix (file-based SMIL)', () => {});
+    it.skip('should allow unknown epub:type in default vocabulary (file-based SMIL)', () => {});
+  });
 });
 
 // ==================== Helpers ====================
