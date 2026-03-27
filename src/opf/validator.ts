@@ -1281,6 +1281,12 @@ export class OPFValidator {
       }
     }
 
+    // Store active class values for CSS-029/CSS-030 validation in content documents
+    const activeClass = metas.find((m) => m.property === 'media:active-class');
+    if (activeClass) context.mediaActiveClass = activeClass.value.trim();
+    const playbackClass = metas.find((m) => m.property === 'media:playback-active-class');
+    if (playbackClass) context.mediaPlaybackActiveClass = playbackClass.value.trim();
+
     for (const meta of metas) {
       if (meta.property === 'media:duration') {
         if (!isValidSmilClock(meta.value.trim())) {

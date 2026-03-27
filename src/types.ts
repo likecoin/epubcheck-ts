@@ -115,6 +115,10 @@ export interface ValidationContext {
   tocLinks?: { targetResource: string; fragment?: string; location: EPUBLocation }[];
   /** Media overlay text link targets in order, for reading order validation (MED-015) */
   overlayTextLinks?: { targetResource: string; fragment?: string; location: EPUBLocation }[];
+  /** OPF media:active-class value (if declared) */
+  mediaActiveClass?: string;
+  /** OPF media:playback-active-class value (if declared) */
+  mediaPlaybackActiveClass?: string;
   /** Resources marked with IDPF font obfuscation in encryption.xml */
   obfuscatedResources?: Set<string>;
 }

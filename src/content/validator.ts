@@ -25,6 +25,8 @@ const CSS_CHARSET_RE = /^@charset\s+"([^"]+)"\s*;/;
 
 const EPUB_XMLNS_RE = /xmlns:epub\s*=\s*"([^"]*)"/;
 
+const XHTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
+
 function validateAbsoluteHyperlinkURL(
   context: ValidationContext,
   href: string,
@@ -629,7 +631,7 @@ export class ContentValidator {
   private validateSVGDocument(
     context: ValidationContext,
     path: string,
-    manifestItem: { id: string; properties?: string[] },
+    manifestItem: { id: string; properties?: string[]; mediaOverlay?: string },
   ): void {
     const svgData = context.files.get(path);
     if (!svgData) return;
@@ -672,6 +674,8 @@ export class ContentValidator {
           });
         }
       }
+
+      this.checkMediaOverlayActiveClassCSS(context, path, root, manifestItem, svgContent);
     } finally {
       doc.dispose();
     }
@@ -1436,8 +1440,80 @@ export class ContentValidator {
           registry,
         );
       }
+
+      this.checkMediaOverlayActiveClassCSS(context, path, root, manifestItem);
     } finally {
       doc.dispose();
+    }
+  }
+
+  /**
+   * CSS-030: If media:active-class or media:playback-active-class is declared in OPF,
+   * and this content document has a media-overlay, it must have at least some CSS.
+   */
+  private checkMediaOverlayActiveClassCSS(
+    context: ValidationContext,
+    path: string,
+    root: XmlElement,
+    manifestItem?: { mediaOverlay?: string },
+    decodedContent?: string,
+  ): void {
+    if (!manifestItem?.mediaOverlay) return;
+    if (!context.mediaActiveClass && !context.mediaPlaybackActiveClass) return;
+
+    const isSVG = root.name === 'svg' || root.name.endsWith(':svg');
+
+    let hasCSS = false;
+
+    if (isSVG) {
+      try {
+        const styles = root.find('.//svg:style', { svg: 'http://www.w3.org/2000/svg' });
+        if (styles.length > 0) hasCSS = true;
+      } catch {
+        // XPath may fail
+      }
+      if (!hasCSS) {
+        try {
+          const links = root.find('.//html:link', XHTML_NS);
+          if (links.length > 0) hasCSS = true;
+        } catch {
+          // XPath may fail
+        }
+      }
+      if (!hasCSS) {
+        const content = decodedContent ?? new TextDecoder().decode(context.files.get(path));
+        if (content.includes('<?xml-stylesheet')) hasCSS = true;
+      }
+    } else {
+      try {
+        const links = root.find('.//html:link[@rel]', XHTML_NS);
+        for (const link of links) {
+          const rel = this.getAttribute(link as XmlElement, 'rel');
+          if (rel?.toLowerCase().includes('stylesheet')) {
+            hasCSS = true;
+            break;
+          }
+        }
+      } catch {
+        // XPath may fail
+      }
+      if (!hasCSS) {
+        try {
+          const styles = root.find('.//html:style', XHTML_NS);
+          if (styles.length > 0) hasCSS = true;
+        } catch {
+          // XPath may fail
+        }
+      }
+    }
+
+    if (!hasCSS) {
+      pushMessage(context.messages, {
+        id: MessageId.CSS_030,
+        message:
+          'The "media:active-class" property is declared in the package document but no CSS was found in this content document',
+        location: { path },
+      });
     }
   }
 

@@ -135,6 +135,94 @@ describe('Integration Tests - Media Overlays', () => {
       expectUsage(result, 'MED-015');
     });
   });
+
+  // ==================== CSS Active Class ====================
+  describe('CSS active class validation', () => {
+    it('should allow inline CSS with active class when declared in OPF', async () => {
+      const data = await loadEpub('valid/mediaoverlays-active-class-inline-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should allow external stylesheet with active class when declared in OPF', async () => {
+      const data = await loadEpub('valid/mediaoverlays-active-class-stylesheet-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should report CSS-029 when active class found in CSS but not declared in OPF', async () => {
+      const data = await loadEpub(
+        'valid/mediaoverlays-active-class-stylesheet-undeclared-valid.epub',
+      );
+      const result = await EpubCheck.validate(data, { includeUsage: true });
+
+      expectNoErrorsOrWarnings(result);
+      expectUsage(result, 'CSS-029');
+    });
+
+    it('should allow SVG with inline style active class', async () => {
+      const data = await loadEpub('valid/mediaoverlays-active-class-svg-inline-style-valid.epub');
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should allow SVG with stylesheet link active class', async () => {
+      const data = await loadEpub(
+        'valid/mediaoverlays-active-class-svg-stylesheet-link-valid.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should allow SVG with @import stylesheet active class', async () => {
+      const data = await loadEpub(
+        'valid/mediaoverlays-active-class-svg-stylesheet-import-valid.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should allow SVG with xml-stylesheet PI active class', async () => {
+      const data = await loadEpub(
+        'valid/mediaoverlays-active-class-svg-stylesheet-xml-pi-valid.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should report CSS-030 when XHTML has no CSS but active-class declared (CSS-030)', async () => {
+      const data = await loadEpub(
+        'invalid/mediaoverlays/mediaoverlays-active-class-style-not-found-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expectError(result, 'CSS-030');
+    });
+
+    it('should report CSS-030 when SVG has no CSS but active-class declared (CSS-030)', async () => {
+      const data = await loadEpub(
+        'invalid/mediaoverlays/mediaoverlays-active-class-svg-style-not-found-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expectError(result, 'CSS-030');
+    });
+
+    it('should report CSS-030 when playback-active-class declared but no CSS (CSS-030)', async () => {
+      const data = await loadEpub(
+        'invalid/mediaoverlays/mediaoverlays-playback-active-class-style-not-found-error.epub',
+      );
+      const result = await EpubCheck.validate(data);
+
+      expectError(result, 'CSS-030');
+    });
+  });
 });
 
 // ==================== Helpers ====================

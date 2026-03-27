@@ -577,32 +577,38 @@ export class CSSValidator {
     ast: CssNode,
     resourcePath: string,
   ): void {
-    const reservedClassNames = new Set([
-      '-epub-media-overlay-active',
-      'media-overlay-active',
-      '-epub-media-overlay-playing',
-      'media-overlay-playing',
-    ]);
+    // Map CSS class names to the OPF property that declares them
+    const activeClassNames = new Set(['-epub-media-overlay-active', 'media-overlay-active']);
+    const playbackClassNames = new Set(['-epub-media-overlay-playing', 'media-overlay-playing']);
 
     walk(ast, (node) => {
       if (node.type === 'ClassSelector') {
         const className = node.name.toLowerCase();
 
-        if (reservedClassNames.has(className)) {
-          const loc = (node as CssNode & { loc?: CssLocation }).loc;
-          const start = loc?.start;
-          const location: { path: string; line?: number; column?: number } = { path: resourcePath };
-          if (start) {
-            location.line = start.line;
-            location.column = start.column;
-          }
+        // CSS-029: Only report when the class is found but NOT declared in OPF metadata
+        const isActive = activeClassNames.has(className);
+        const isPlayback = playbackClassNames.has(className);
+        if (!isActive && !isPlayback) return;
 
-          pushMessage(context.messages, {
-            id: MessageId.CSS_029,
-            message: `Class name "${className}" is reserved for media overlays`,
-            location,
-          });
+        const isDeclared = isActive
+          ? !!context.mediaActiveClass
+          : !!context.mediaPlaybackActiveClass;
+        if (isDeclared) return;
+
+        const loc = (node as CssNode & { loc?: CssLocation }).loc;
+        const start = loc?.start;
+        const location: { path: string; line?: number; column?: number } = { path: resourcePath };
+        if (start) {
+          location.line = start.line;
+          location.column = start.column;
         }
+
+        const property = isActive ? 'media:active-class' : 'media:playback-active-class';
+        pushMessage(context.messages, {
+          id: MessageId.CSS_029,
+          message: `Class name "${className}" is reserved for media overlays but "${property}" is not declared in the package document`,
+          location,
+        });
       }
     });
   }
