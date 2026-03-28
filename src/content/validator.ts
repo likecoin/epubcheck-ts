@@ -27,6 +27,10 @@ const EPUB_XMLNS_RE = /xmlns:epub\s*=\s*"([^"]*)"/;
 
 const XHTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
 
+const EPUB_TYPE_FORBIDDEN_ELEMENTS = new Set([
+  'head', 'meta', 'title', 'style', 'link', 'script', 'noscript', 'base',
+]);
+
 function validateAbsoluteHyperlinkURL(
   context: ValidationContext,
   href: string,
@@ -1382,6 +1386,8 @@ export class ContentValidator {
 
       // Validate images
       this.validateImages(context, path, root);
+
+      this.checkUsemapAttribute(context, path, root);
 
       // Validate epub:type attributes (EPUB 3)
       if (context.version.startsWith('3')) {
@@ -2862,6 +2868,24 @@ export class ContentValidator {
     }
   }
 
+  private checkUsemapAttribute(context: ValidationContext, path: string, root: XmlElement): void {
+    try {
+      const elements = root.find('.//html:*[@usemap]', XHTML_NS);
+      for (const elem of elements) {
+        const usemap = this.getAttribute(elem as XmlElement, 'usemap');
+        if (usemap !== null && !/^#.+$/.test(usemap)) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `value of attribute "usemap" is invalid; must be a string matching the regular expression "#.+"`,
+            location: { path, line: elem.line },
+          });
+        }
+      }
+    } catch {
+      // empty
+    }
+  }
+
   private checkTimeElement(context: ValidationContext, path: string, root: XmlElement): void {
     const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
 
@@ -3227,6 +3251,15 @@ export class ContentValidator {
       const elemTyped = elem as XmlElement;
       const epubTypeAttr = elemTyped.attr('type', 'epub');
       if (!epubTypeAttr?.value) continue;
+
+      if (EPUB_TYPE_FORBIDDEN_ELEMENTS.has(elemTyped.name)) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: `attribute "epub:type" not allowed here`,
+          location: { path, line: elem.line },
+        });
+        continue;
+      }
 
       for (const part of epubTypeAttr.value.split(/\s+/)) {
         if (!part) continue;

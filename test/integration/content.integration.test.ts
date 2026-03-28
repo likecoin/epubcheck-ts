@@ -112,7 +112,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-008');
     });
 
-    // Skip: CSS-008 not reported when syntax error precedes url error
+    // Skip: css-tree forgiving parser doesn't report @font-face-inside-selector as a syntax error
     it.skip('should report CSS url error even when preceded by syntax error', async () => {
       const data = await loadEpub(
         'invalid/content/content-css-url-not-present-preceded-by-invalid-syntax-error.epub',
@@ -679,8 +679,7 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: RelaxNG content schema validation not wired
-    it.skip('should report invalid image map (RSC-005)', async () => {
+    it('should report invalid image map (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/map-usemap-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -1155,6 +1154,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-005');
     });
 
+    // Skip: RelaxNG content schema — foreignObject content model validation
     it.skip('should report HTML validation errors within foreignObject (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/svg-foreignObject-html-invalid-error.epub');
       const result = await EpubCheck.validate(data);
@@ -1162,6 +1162,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-005');
     });
 
+    // Skip: RelaxNG content schema — foreignObject flow content check
     it.skip('should report foreignObject without flow content (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/svg-foreignObject-not-flow-content-error.epub');
       const result = await EpubCheck.validate(data);
@@ -1169,6 +1170,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-005');
     });
 
+    // Skip: RelaxNG content schema — SVG title content model
     it.skip('should report embedded SVG title with non-HTML elements (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/svg-title-content-not-html-error.epub');
       const result = await EpubCheck.validate(data);
@@ -1176,6 +1178,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-005');
     });
 
+    // Skip: RelaxNG content schema — SVG title HTML validation
     it.skip('should report HTML validation errors within SVG title (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/svg-title-content-invalid-html-error.epub');
       const result = await EpubCheck.validate(data);
@@ -1337,8 +1340,7 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: RelaxNG content schema validation not wired
-    it.skip('should report epub:type on head/metadata content (RSC-005)', async () => {
+    it('should report epub:type on head/metadata content (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/epubtype-disallowed-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -1615,6 +1617,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-005');
     });
 
+    // Skip: RelaxNG SVG schema — foreignObject content model validation
     it.skip('should report foreignObject with non-HTML content (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/foreignObject-not-html-error-svg.epub');
       const result = await EpubCheck.validate(data);
@@ -1622,6 +1625,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-005');
     });
 
+    // Skip: RelaxNG SVG schema — foreignObject flow content check
     it.skip('should report foreignObject with non-flow content in SVG (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/foreignObject-not-flow-content-error-svg.epub');
       const result = await EpubCheck.validate(data);
@@ -1629,6 +1633,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-005');
     });
 
+    // Skip: RelaxNG SVG schema — foreignObject multiple body
     it.skip('should report foreignObject with multiple body in SVG (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/foreignObject-multiple-body-error-svg.epub');
       const result = await EpubCheck.validate(data);
@@ -1636,6 +1641,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-005');
     });
 
+    // Skip: RelaxNG SVG schema — foreignObject HTML attribute validation
     it.skip('should report HTML validation errors in SVG foreignObject (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/foreignObject-html-invalid-error-svg.epub');
       const result = await EpubCheck.validate(data);
@@ -1643,6 +1649,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-005');
     });
 
+    // Skip: RelaxNG SVG schema — SVG title content model
     it.skip('should report SVG title with non-HTML elements (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/title-content-not-html-error-svg.epub');
       const result = await EpubCheck.validate(data);
@@ -1650,6 +1657,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-005');
     });
 
+    // Skip: RelaxNG SVG schema — SVG title HTML validation
     it.skip('should report HTML validation errors in SVG title (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/title-content-invalid-html-error-svg.epub');
       const result = await EpubCheck.validate(data);

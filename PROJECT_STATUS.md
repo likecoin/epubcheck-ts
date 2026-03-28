@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~92% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs, encoding detection done |
 
-**Overall: ~93% complete (1025 tests passing, 92 skipped)**
+**Overall: ~93% complete (1027 tests passing, 90 skipped)**
 
 ---
 
@@ -27,8 +27,8 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 423 | 406 | 17 |
-| **Integration Tests** | 694 | 619 | 75 |
-| **Total** | **1117** | **1025** | **92** |
+| **Integration Tests** | 694 | 621 | 73 |
+| **Total** | **1117** | **1027** | **90** |
 
 ### Integration Test Files
 
@@ -37,7 +37,7 @@ test/integration/
 ├── epub.test.ts                 # 4 tests   (4 pass, 0 skip)  - Basic EPUB validation
 ├── ocf.integration.test.ts      # 56 tests  (50 pass, 6 skip) - OCF/ZIP/container
 ├── opf.integration.test.ts      # 173 tests (173 pass, 0 skip)  - Package document
-├── content.integration.test.ts  # 214 tests (195 pass, 19 skip)  - XHTML/CSS/SVG
+├── content.integration.test.ts  # 214 tests (197 pass, 17 skip)  - XHTML/CSS/SVG
 ├── nav.integration.test.ts      # 36 tests  (36 pass, 0 skip)  - Navigation
 ├── resources.integration.test.ts # 110 tests (106 pass, 4 skip)  - Resources/fallbacks
 ├── layout.integration.test.ts   # 52 tests  (20 pass, 32 skip)  - Layout/viewport/FXL
@@ -85,11 +85,12 @@ test/fixtures/
 - **Messages suppressed in Java EPUBCheck (14)** - NCX-002 (2), NCX-003 (2), NAV-002 (1), ACC-004 (2), ACC-005 (2), HTM-012 (2), OPF-051 (1), OPF-088 (1), CSS-005 (1)
 
 **Integration tests (75)** - Unimplemented features and library limitations:
-- **Content (19 skipped)**:
-  - *RelaxNG/Schematron content schema (~9)*: image map, foreignObject/SVG title HTML validation, microdata, Schematron — requires XHTML/SVG schema (libxml2-wasm limitation)
-  - *CSS syntax error ordering (1)*: CSS syntax error ordering
-  - *SVG fixtures (~2)*: foreignObject HTML validation
-  - *Other (~7)*: file URL, SVG regression
+- **Content (17 skipped)**:
+  - *RelaxNG foreignObject/title content model (10)*: foreignObject body/flow/HTML validation, SVG title content — requires XHTML/SVG schema (libxml2-wasm limitation)
+  - *RelaxNG/Schematron other (4)*: RelaxNG schema, Schematron rules, data-* attr, microdata attributes
+  - *CSS parser limitation (1)*: css-tree forgiving parser doesn't report @font-face-inside-selector syntax error
+  - *Broken fixture (1)*: microdata-valid has unresolvable reference errors
+  - *Microdata attribute rules (1)*: itemprop co-occurrence validation requires RelaxNG
 - **Resources (4 skipped)**:
   - *XML conformance (2)*: RSC-016 for OPF XML parse errors (emits OPF-002/RSC-005 instead)
   - *Single-file validation mode (2)*: remote XHTML/SVG font validation not supported
@@ -199,7 +200,7 @@ test/fixtures/
 | 03-resources | 113 | 110 | 106 | 94% |
 | 04-ocf | 61 | 56 | 50 | 82% |
 | 05-package-document | 121 | 119 | 119 | 98% |
-| 06-content-document | 215 | 214 | 195 | 91% |
+| 06-content-document | 215 | 214 | 197 | 92% |
 | 07-navigation-document | 40 | 36 | 36 | 90% |
 | 08-layout | 51 | 52 | 20 | 39% |
 | 09-media-overlays | 51 | 50 | 34 | 67% |
@@ -231,7 +232,7 @@ All planned OPF (batches 1-5) and Nav (batches 6-8) tests have been ported. Rema
 
 | Area | Gap | Tests Blocked | Blocker |
 |------|-----|---------------|---------|
-| **06-content-document** | DOCTYPE, RelaxNG schema | ~20 tests | Needs new validation subsystems |
+| **06-content-document** | RelaxNG foreignObject/title, Schematron, microdata | 17 skipped | RelaxNG content model (libxml2-wasm limitation) |
 | **03-resources** | RSC-016 OPF parse, single-file mode | 4 skipped | OPF parser architecture, single-file mode |
 | **D-vocabularies** | media-overlays-vocab (narrator/duration refinement) | ~2 tests | Needs media overlay document validation |
 | **08-layout** | Rendition meta file-based tests | 32 skipped | Single-file (.opf) validation mode; logic tested via unit tests |
@@ -412,6 +413,8 @@ Unused prefixes: SCP (0), CHK (0), INF (0)
 - `MED-016` - Media Overlays total duration should be sum of all overlay durations (1-second tolerance)
 - `RSC-005` - Media overlay OPF metadata: active-class/playback-active-class refines and multiple class names
 - `RSC-005` - Media overlay manifest: invalid SMIL type, non-content-doc media-overlay, missing global/per-item duration
+- `RSC-005` - epub:type attribute forbidden on HTML metadata elements (head, meta, title, style, link, script, noscript, base)
+- `RSC-005` - usemap attribute format validation (must match `#.+`)
 
 ---
 
