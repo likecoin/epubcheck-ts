@@ -164,14 +164,13 @@ test/fixtures/
 
 ### 🟡 Partially Implemented
 - **Schema validation** - RelaxNG for OPF/container works; XHTML/SVG RelaxNG disabled (libxml2-wasm doesn't support complex patterns)
-- **Content validation** - Core structure good; entity/title/XML version/SSML/discouraged elements/obsolete HTML/duplicate IDs/HTTP-equiv/img src/style-in-body/table border/time datetime/MathML annotations/Content MathML/reserved namespaces/data-* attributes/epub:type vocab/lang mismatch/DPUB-ARIA deprecated/inline CSS/epub:switch-trigger/style attrs/SVG epub:type/UTF-16 BOM/CSS encoding/epub namespace/base href checks done; missing full ARIA/DOCTYPE; Schematron validation works
+- **Content validation** - Core structure good; entity/title/XML version/SSML/discouraged elements/obsolete HTML/duplicate IDs/HTTP-equiv/img src/style-in-body/table border/time datetime/MathML annotations/Content MathML/reserved namespaces/data-* attributes/epub:type vocab/lang mismatch/DPUB-ARIA deprecated/inline CSS/epub:switch-trigger/style attrs/SVG epub:type/UTF-16 BOM/CSS encoding/epub namespace/base href checks done; missing full ARIA; Schematron validation works
 - **Image validation** - MED-001/OPF-051 work; MED-004/OPF-029/PKG-022 magic number checks done
 
 ### ❌ Not Implemented
 - Metadata.xml (multiple renditions)
 - Advanced accessibility (WCAG 2.0 comprehensive)
 - Full ARIA roles and attributes (DPUB-ARIA deprecated roles done)
-- DOCTYPE obsolete identifiers
 - External entity validation
 - Media format validation (beyond magic numbers — e.g., dimension checks, format-specific parsing)
 
@@ -217,7 +216,7 @@ test/fixtures/
 4. **D-vocabularies** (56 scenarios) - 96% coverage (54 ported, 54 passing); remaining 2 need media overlays implementation
 
 **High Priority** - Largest remaining gaps:
-5. **06-content-document** (215 scenarios) - 90% coverage, needs DOCTYPE validation, RelaxNG schema
+5. **06-content-document** (215 scenarios) - 92% coverage, needs RelaxNG schema
 6. **03-resources** (113 scenarios) - 88% coverage, data/file URL checks, fallback chains, XML conformance done
 
 **Low Priority** - Specialized features:
@@ -241,9 +240,6 @@ All planned OPF (batches 1-5) and Nav (batches 6-8) tests have been ported. Rema
 ---
 
 ## Priority Next Steps
-
-### High Priority (Core Validation)
-1. **DOCTYPE validation** - Obsolete identifiers
 
 ### Medium Priority (Completeness)
 
