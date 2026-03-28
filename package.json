@@ -1,6 +1,6 @@
 {
   "name": "@likecoin/epubcheck-ts",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "description": "EPUB validation library for Node.js and browsers",
   "type": "module",
   "main": "./dist/index.cjs",

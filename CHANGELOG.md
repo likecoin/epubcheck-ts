@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.9] - 2026-03-28
+
+### Added
+
+- **SMIL media overlay validation** — structure, timing, audio, remote-resources, fragment validation, reading order (MED-005/008/009/010/011/012/013/014/015)
+- **CSS active class validation** (CSS-029/030) — media:active-class and playback-active-class checks in XHTML and SVG stylesheets
+- **OPF media overlay metadata checks** — active-class/playback-active-class refines and multiple class names, MO type validation, non-content-doc guard, missing global/per-item media:duration
+- **MED-016** — total media overlay duration must equal sum of individual durations (1-second tolerance)
+- **ARIA/HTML IDREF validation** — aria-describedby/labelledby/flowto/owns/controls/activedescendant, label[for], output[for], td/th[headers], aria-describedat detection
+- **epub:type forbidden-element check** — RSC-005 for epub:type on head/meta/title/style/link/script/noscript/base
+- **usemap attribute format check** — RSC-005 for invalid usemap values (must match `#.+`)
+- 7 additional validation features: UTF-16 BOM detection, CSS encoding, epub namespace, base href, rendition vocab, SVG epub:type, encoding detection
+
+### Changed
+
+- Test coverage: 1027 tests passing (up from 969), 90 skipped (down from 92)
+- E2E coverage: ~86% of Java EPUBCheck scenarios (up from ~65%)
+- Media overlays coverage: 67% (up from 0%)
+- Content document coverage: 92% (up from 91%)
+
 ## [0.3.8] - 2026-03-26
 
 ### Added
