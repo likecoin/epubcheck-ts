@@ -27,8 +27,8 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 423 | 406 | 17 |
-| **Integration Tests** | 694 | 621 | 73 |
-| **Total** | **1117** | **1027** | **90** |
+| **Integration Tests** | 694 | 632 | 62 |
+| **Total** | **1117** | **1038** | **79** |
 
 ### Integration Test Files
 
