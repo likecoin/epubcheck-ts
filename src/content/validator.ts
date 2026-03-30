@@ -28,7 +28,14 @@ const EPUB_XMLNS_RE = /xmlns:epub\s*=\s*"([^"]*)"/;
 const XHTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
 
 const EPUB_TYPE_FORBIDDEN_ELEMENTS = new Set([
-  'head', 'meta', 'title', 'style', 'link', 'script', 'noscript', 'base',
+  'head',
+  'meta',
+  'title',
+  'style',
+  'link',
+  'script',
+  'noscript',
+  'base',
 ]);
 
 function validateAbsoluteHyperlinkURL(
@@ -366,6 +373,123 @@ const HTML_ENTITIES = new Set([
   'yuml',
 ]);
 
+const HTML5_ELEMENTS = new Set([
+  'a',
+  'abbr',
+  'address',
+  'area',
+  'article',
+  'aside',
+  'audio',
+  'b',
+  'base',
+  'bdi',
+  'bdo',
+  'blockquote',
+  'body',
+  'br',
+  'button',
+  'canvas',
+  'caption',
+  'cite',
+  'code',
+  'col',
+  'colgroup',
+  'data',
+  'datalist',
+  'dd',
+  'del',
+  'details',
+  'dfn',
+  'dialog',
+  'div',
+  'dl',
+  'dt',
+  'em',
+  'embed',
+  'fieldset',
+  'figcaption',
+  'figure',
+  'footer',
+  'form',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'head',
+  'header',
+  'hgroup',
+  'hr',
+  'html',
+  'i',
+  'iframe',
+  'img',
+  'input',
+  'ins',
+  'kbd',
+  'label',
+  'legend',
+  'li',
+  'link',
+  'main',
+  'map',
+  'mark',
+  'math',
+  'menu',
+  'meta',
+  'meter',
+  'nav',
+  'noscript',
+  'object',
+  'ol',
+  'optgroup',
+  'option',
+  'output',
+  'p',
+  'picture',
+  'pre',
+  'progress',
+  'q',
+  'rp',
+  'rt',
+  'ruby',
+  's',
+  'samp',
+  'script',
+  'search',
+  'section',
+  'select',
+  'slot',
+  'small',
+  'source',
+  'span',
+  'strong',
+  'style',
+  'sub',
+  'summary',
+  'sup',
+  'svg',
+  'table',
+  'tbody',
+  'td',
+  'template',
+  'textarea',
+  'tfoot',
+  'th',
+  'thead',
+  'time',
+  'title',
+  'tr',
+  'track',
+  'u',
+  'ul',
+  'var',
+  'video',
+  'wbr',
+]);
+
 function isItemFixedLayout(
   packageDoc: Pick<PackageDocument, 'metaElements' | 'spine'>,
   itemId: string,
@@ -665,6 +789,8 @@ export class ContentValidator {
       this.validateSvgEpubType(context, path, root);
       this.checkUnknownEpubAttributes(context, path, root);
       this.checkSVGLinkAccessibility(context, path, root);
+      this.checkForeignObjectContent(context, path, root, true);
+      this.checkSVGTitleContent(context, path, root);
 
       const packageDoc = context.packageDocument;
       if (packageDoc && isItemFixedLayout(packageDoc, manifestItem.id)) {
@@ -1388,6 +1514,15 @@ export class ContentValidator {
       this.validateImages(context, path, root);
 
       this.checkUsemapAttribute(context, path, root);
+
+      // Schematron-equivalent checks (EPUB 3): disallowed descendants, microdata co-occurrence, unknown elements
+      if (context.version.startsWith('3')) {
+        this.checkDisallowedDescendants(context, path, root);
+        this.checkMicrodataCoOccurrence(context, path, root);
+        this.checkUnknownElements(context, path, root);
+        this.checkForeignObjectContent(context, path, root, false);
+        this.checkSVGTitleContent(context, path, root);
+      }
 
       // Validate epub:type attributes (EPUB 3)
       if (context.version.startsWith('3')) {
@@ -4652,5 +4787,322 @@ export class ContentValidator {
 
     const result = parts.join('/').normalize('NFC');
     return fragment ? `${result}#${fragment}` : result;
+  }
+
+  // ── Schematron-equivalent checks ──────────────────────────────────────────
+
+  private checkDisallowedDescendants(
+    context: ValidationContext,
+    path: string,
+    root: XmlElement,
+  ): void {
+    // Group descendant pairs by ancestor for batched XPath queries
+    const pairsByAncestor = new Map<string, string[]>([
+      ['dfn', ['dfn']],
+      ['form', ['form']],
+      ['progress', ['progress']],
+      ['meter', ['meter']],
+      ['header', ['header', 'footer']],
+      ['footer', ['footer', 'header']],
+      ['label', ['label']],
+      ['address', ['address', 'header', 'footer']],
+      ['caption', ['table']],
+      ['audio', ['audio', 'video']],
+      ['video', ['video', 'audio']],
+    ]);
+    for (const [ancestor, descendants] of pairsByAncestor) {
+      try {
+        if (root.find(`.//html:${ancestor}`, XHTML_NS).length === 0) continue;
+      } catch {
+        continue;
+      }
+      for (const descendant of descendants) {
+        try {
+          const matches = root.find(`.//html:${ancestor}//html:${descendant}`, XHTML_NS);
+          for (const el of matches) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message: `The ${descendant} element must not appear inside ${ancestor} elements`,
+              location: { path, line: el.line },
+            });
+          }
+        } catch {
+          // XPath may fail on malformed documents
+        }
+      }
+    }
+
+    // Interactive content must not appear inside <a> or <button>
+    const interactiveExprs = [
+      'html:a',
+      'html:audio[@controls]',
+      'html:button',
+      'html:details',
+      'html:embed',
+      'html:iframe',
+      'html:img[@usemap]',
+      "html:input[not(@type='hidden')]",
+      'html:label',
+      'html:select',
+      'html:textarea',
+      'html:video[@controls]',
+    ];
+    for (const ancestor of ['a', 'button']) {
+      try {
+        if (root.find(`.//html:${ancestor}`, XHTML_NS).length === 0) continue;
+      } catch {
+        continue;
+      }
+      for (const expr of interactiveExprs) {
+        try {
+          const matches = root.find(`.//html:${ancestor}//${expr}`, XHTML_NS);
+          for (const el of matches) {
+            const xmlEl = el as XmlElement;
+            const localName = xmlEl.name.includes(':')
+              ? xmlEl.name.substring(xmlEl.name.indexOf(':') + 1)
+              : xmlEl.name;
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message: `The ${localName} element must not appear inside ${ancestor} elements`,
+              location: { path, line: el.line },
+            });
+          }
+        } catch {
+          // XPath may fail on malformed documents
+        }
+      }
+    }
+
+    // bdo must have dir attribute
+    try {
+      const bdos = root.find('.//html:bdo[not(@dir)]', XHTML_NS);
+      for (const el of bdos) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: 'The bdo element must have a dir attribute',
+          location: { path, line: el.line },
+        });
+      }
+    } catch {
+      // XPath may fail on malformed documents
+    }
+
+    // map id and name must match
+    try {
+      const maps = root.find('.//html:map[@id and @name]', XHTML_NS);
+      for (const el of maps) {
+        const id = this.getAttribute(el as XmlElement, 'id');
+        const name = this.getAttribute(el as XmlElement, 'name');
+        if (id && name && id !== name) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message:
+              'The id attribute on the map element must have the same value as the name attribute',
+            location: { path, line: el.line },
+          });
+        }
+      }
+    } catch {
+      // XPath may fail on malformed documents
+    }
+  }
+
+  private checkMicrodataCoOccurrence(
+    context: ValidationContext,
+    path: string,
+    root: XmlElement,
+  ): void {
+    // a[@itemprop] and area[@itemprop] require href
+    try {
+      const els = root.find(
+        './/html:a[@itemprop and not(@href)] | .//html:area[@itemprop and not(@href)]',
+        XHTML_NS,
+      );
+      for (const el of els) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message:
+            'If the itemprop is specified on an a element, then the href attribute must also be specified',
+          location: { path, line: el.line },
+        });
+      }
+    } catch {
+      // XPath may fail on malformed documents
+    }
+
+    // iframe[@itemprop], embed[@itemprop], object[@itemprop] require data
+    try {
+      const els = root.find(
+        './/html:iframe[@itemprop and not(@data)] | .//html:embed[@itemprop and not(@data)] | .//html:object[@itemprop and not(@data)]',
+        XHTML_NS,
+      );
+      for (const el of els) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message:
+            'If the itemprop is specified on an iframe, embed or object element, then the data attribute must also be specified',
+          location: { path, line: el.line },
+        });
+      }
+    } catch {
+      // XPath may fail on malformed documents
+    }
+
+    // audio[@itemprop], video[@itemprop] require src
+    try {
+      const els = root.find(
+        './/html:audio[@itemprop and not(@src)] | .//html:video[@itemprop and not(@src)]',
+        XHTML_NS,
+      );
+      for (const el of els) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message:
+            'If the itemprop is specified on an video or audio element, then the src attribute must also be specified',
+          location: { path, line: el.line },
+        });
+      }
+    } catch {
+      // XPath may fail on malformed documents
+    }
+  }
+
+  private checkUnknownElements(context: ValidationContext, path: string, root: XmlElement): void {
+    const XHTML_NS = 'http://www.w3.org/1999/xhtml';
+    try {
+      const allElements = root.find('.//*');
+      for (const el of allElements) {
+        const xmlEl = el as XmlElement;
+        const ns = xmlEl.namespaceUri;
+        if (ns !== XHTML_NS) continue;
+
+        const localName = xmlEl.name.includes(':')
+          ? xmlEl.name.substring(xmlEl.name.indexOf(':') + 1)
+          : xmlEl.name;
+
+        // Custom elements (contain a hyphen) are allowed
+        if (localName.includes('-')) continue;
+
+        if (!HTML5_ELEMENTS.has(localName)) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `element "${localName}" not allowed here`,
+            location: { path, line: el.line },
+          });
+        }
+      }
+    } catch {
+      // XPath may fail on malformed documents
+    }
+  }
+
+  private checkForeignObjectContent(
+    context: ValidationContext,
+    path: string,
+    root: XmlElement,
+    isSVGDoc: boolean,
+  ): void {
+    const SVG_NS = { svg: 'http://www.w3.org/2000/svg' };
+    const XHTML_URI = 'http://www.w3.org/1999/xhtml';
+    const DISALLOWED_FO_CHILDREN = new Set(['body', 'head', 'html', 'title']);
+
+    let foreignObjects: ReturnType<typeof root.find>;
+    try {
+      foreignObjects = root.find('.//svg:foreignObject', SVG_NS);
+    } catch {
+      return;
+    }
+
+    for (const fo of foreignObjects) {
+      const foEl = fo as XmlElement;
+      let children: ReturnType<typeof root.find>;
+      try {
+        children = foEl.find('./*');
+      } catch {
+        continue;
+      }
+
+      let bodyCount = 0;
+      for (const child of children) {
+        const childEl = child as XmlElement;
+        const childNs = childEl.namespaceUri;
+        const childLocal = childEl.name.includes(':')
+          ? childEl.name.substring(childEl.name.indexOf(':') + 1)
+          : childEl.name;
+
+        if (isSVGDoc) {
+          // Standalone SVG: foreignObject allows body or flow content in XHTML namespace
+          if (childNs !== XHTML_URI) {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message: `element "${childLocal}" not allowed here`,
+              location: { path, line: child.line },
+            });
+            continue;
+          }
+          if (childLocal === 'body') {
+            bodyCount++;
+            if (bodyCount > 1) {
+              pushMessage(context.messages, {
+                id: MessageId.RSC_005,
+                message: 'element "body" not allowed here',
+                location: { path, line: child.line },
+              });
+            }
+          } else if (childLocal === 'title' || childLocal === 'head' || childLocal === 'html') {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message: `element "${childLocal}" not allowed here`,
+              location: { path, line: child.line },
+            });
+          }
+        } else if (childNs === XHTML_URI && DISALLOWED_FO_CHILDREN.has(childLocal)) {
+          // XHTML embedded SVG: foreignObject content is flow content, no body/head/html/title
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `element "${childLocal}" not allowed here`,
+            location: { path, line: child.line },
+          });
+        }
+      }
+    }
+  }
+
+  private checkSVGTitleContent(context: ValidationContext, path: string, root: XmlElement): void {
+    const SVG_NS = { svg: 'http://www.w3.org/2000/svg' };
+    const XHTML_URI = 'http://www.w3.org/1999/xhtml';
+
+    let svgTitles: ReturnType<typeof root.find>;
+    try {
+      svgTitles = root.find('.//svg:title', SVG_NS);
+    } catch {
+      return;
+    }
+
+    for (const titleNode of svgTitles) {
+      const titleEl = titleNode as XmlElement;
+      let descendants: ReturnType<typeof root.find>;
+      try {
+        descendants = titleEl.find('.//*');
+      } catch {
+        continue;
+      }
+
+      const reportedNamespaces = new Set<string>();
+      for (const desc of descendants) {
+        const descEl = desc as XmlElement;
+        const descNs = descEl.namespaceUri;
+
+        // svg:title allows any XHTML content (anyhtml model) but not non-XHTML elements
+        if (descNs && descNs !== XHTML_URI && !reportedNamespaces.has(descNs)) {
+          reportedNamespaces.add(descNs);
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `elements from namespace "${descNs}" are not allowed`,
+            location: { path, line: desc.line },
+          });
+        }
+      }
+    }
   }
 }

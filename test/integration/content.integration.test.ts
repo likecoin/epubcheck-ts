@@ -882,8 +882,7 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: RelaxNG content schema validation not wired
-    it.skip('should report microdata on elements where not allowed (RSC-005)', async () => {
+    it('should report microdata on elements where not allowed (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/microdata-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -952,8 +951,7 @@ describe('Integration Tests - Content Documents', () => {
   });
 
   describe('Schematron assertions', () => {
-    // Skip: RelaxNG content schema validation not fully wired
-    it.skip('should report RelaxNG schema errors (RSC-005)', async () => {
+    it('should report RelaxNG schema errors (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/content-xhtml-relaxng-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -961,8 +959,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: Schematron validation for content documents not fully wired
-    it.skip('should report Schematron schema errors (RSC-005)', async () => {
+    it('should report Schematron schema errors (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/content-xhtml-schematron-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -970,8 +967,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: data-* attribute handling in schema validation not implemented
-    it.skip('should report invalid elements after data-* attribute (RSC-005)', async () => {
+    it('should report invalid elements after data-* attribute (RSC-005)', async () => {
       const data = await loadEpub(
         'invalid/content/content-xhtml-data-attr-removal-markup-error.epub',
       );
@@ -1146,8 +1142,7 @@ describe('Integration Tests - Content Documents', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: RelaxNG content schema validation not wired — foreignObject/title error checks need schema
-    it.skip('should report foreignObject with body element (RSC-005)', async () => {
+    it('should report foreignObject with body element (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/svg-foreignObject-with-body-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -1162,16 +1157,14 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: RelaxNG content schema — foreignObject flow content check
-    it.skip('should report foreignObject without flow content (RSC-005)', async () => {
+    it('should report foreignObject without flow content (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/svg-foreignObject-not-flow-content-error.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
     });
 
-    // Skip: RelaxNG content schema — SVG title content model
-    it.skip('should report embedded SVG title with non-HTML elements (RSC-005)', async () => {
+    it('should report embedded SVG title with non-HTML elements (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/svg-title-content-not-html-error.epub');
       const result = await EpubCheck.validate(data);
 
@@ -1617,24 +1610,21 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: RelaxNG SVG schema — foreignObject content model validation
-    it.skip('should report foreignObject with non-HTML content (RSC-005)', async () => {
+    it('should report foreignObject with non-HTML content (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/foreignObject-not-html-error-svg.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
     });
 
-    // Skip: RelaxNG SVG schema — foreignObject flow content check
-    it.skip('should report foreignObject with non-flow content in SVG (RSC-005)', async () => {
+    it('should report foreignObject with non-flow content in SVG (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/foreignObject-not-flow-content-error-svg.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
     });
 
-    // Skip: RelaxNG SVG schema — foreignObject multiple body
-    it.skip('should report foreignObject with multiple body in SVG (RSC-005)', async () => {
+    it('should report foreignObject with multiple body in SVG (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/foreignObject-multiple-body-error-svg.epub');
       const result = await EpubCheck.validate(data);
 
@@ -1649,8 +1639,7 @@ describe('Integration Tests - Content Documents', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: RelaxNG SVG schema — SVG title content model
-    it.skip('should report SVG title with non-HTML elements (RSC-005)', async () => {
+    it('should report SVG title with non-HTML elements (RSC-005)', async () => {
       const data = await loadEpub('invalid/content/title-content-not-html-error-svg.epub');
       const result = await EpubCheck.validate(data);
 

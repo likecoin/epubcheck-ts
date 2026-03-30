@@ -227,9 +227,7 @@ describe('Integration Tests - Media Overlays', () => {
   // ==================== OPF Metadata Validation ====================
   describe('OPF metadata validation', () => {
     it('should report media:active-class with refines attribute (RSC-005)', async () => {
-      const data = await loadEpub(
-        'invalid/opf/mediaoverlays-active-class-refines-error.epub',
-      );
+      const data = await loadEpub('invalid/opf/mediaoverlays-active-class-refines-error.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
@@ -263,18 +261,14 @@ describe('Integration Tests - Media Overlays', () => {
     });
 
     it('should report media-overlay item with invalid type (RSC-005)', async () => {
-      const data = await loadEpub(
-        'invalid/opf/mediaoverlays-type-invalid-error.epub',
-      );
+      const data = await loadEpub('invalid/opf/mediaoverlays-type-invalid-error.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
     });
 
     it('should report media-overlay attribute on non-content document (RSC-005)', async () => {
-      const data = await loadEpub(
-        'invalid/opf/mediaoverlays-non-contentdoc-error.epub',
-      );
+      const data = await loadEpub('invalid/opf/mediaoverlays-non-contentdoc-error.epub');
       const result = await EpubCheck.validate(data);
 
       expectError(result, 'RSC-005');
@@ -302,18 +296,14 @@ describe('Integration Tests - Media Overlays', () => {
   // ==================== Duration Sum (MED-016) ====================
   describe('Duration sum validation', () => {
     it('should warn when total duration does not match sum of overlay durations (MED-016)', async () => {
-      const data = await loadEpub(
-        'warnings/mediaoverlays-duration-total-not-sum-warning.epub',
-      );
+      const data = await loadEpub('warnings/mediaoverlays-duration-total-not-sum-warning.epub');
       const result = await EpubCheck.validate(data);
 
       expectWarning(result, 'MED-016');
     });
 
     it('should allow total duration within 1-second tolerance of sum', async () => {
-      const data = await loadEpub(
-        'valid/mediaoverlays-duration-total-within-tolerance-valid.epub',
-      );
+      const data = await loadEpub('valid/mediaoverlays-duration-total-within-tolerance-valid.epub');
       const result = await EpubCheck.validate(data);
 
       expectNoErrorsOrWarnings(result);
