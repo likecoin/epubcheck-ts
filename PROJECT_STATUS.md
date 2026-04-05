@@ -9,14 +9,14 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | OCF Validation | ~92% | 🟢 URL leaking, UTF-8, spaces, forbidden chars, encryption/signatures schema done |
 | OPF Validation | ~92% | 🟢 Schematron-equivalent checks, refines cycles, duplicate IDs, OPF-090 preferred media types done |
 | Content (XHTML/SVG) | ~93% | 🟢 CSS url() references, @import, inline CSS remote font, SVG remote font, picture elements, SVG use, epub:type vocab, lang mismatch, switch/trigger, SVG epub:type, media magic numbers, UTF-16 BOM, base href, xml:base, epub namespace, Schematron disallowed descendants, microdata co-occurrence, unknown HTML elements, foreignObject/title content model done |
-| CSS Validation | ~75% | 🟢 url() extraction from declarations, @font-face src, encoding detection done |
+| CSS Validation | ~85% | 🟢 url() extraction from declarations, @font-face src, encoding detection, alt style tags (CSS-005), OPF-018 for CSS files done |
 | Navigation (nav/NCX) | ~85% | 🟢 Content model, structural validation, landmarks, labels, reading order done |
 | Schema Validation | ~55% | 🟡 RelaxNG for OPF/container/encryption/signatures; XHTML/SVG disabled (libxml2 limitation) |
 | Media Overlays | ~70% | 🟡 SMIL structure/timing/audio/remote-resources, cross-ref checks, fragment validation, reading order, CSS active class (CSS-029/030), OPF metadata (refines/class-name/type/contentdoc/duration-defined), MED-016 duration sum done |
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~92% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs, encoding detection done |
 
-**Overall: ~93% complete (1038 tests passing, 79 skipped)**
+**Overall: ~93% complete (1041 tests passing, 78 skipped)**
 
 ---
 
@@ -26,9 +26,9 @@ Quick reference for implementation progress vs Java EPUBCheck.
 
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
-| **Unit Tests** | 423 | 406 | 17 |
+| **Unit Tests** | 425 | 409 | 16 |
 | **Integration Tests** | 694 | 632 | 62 |
-| **Total** | **1117** | **1038** | **79** |
+| **Total** | **1119** | **1041** | **78** |
 
 ### Integration Test Files
 
@@ -80,9 +80,9 @@ test/fixtures/
 
 ### Skipped Tests
 
-**Unit tests (17)** - Various reasons:
-- **libxml2-wasm XPath limitations (3)** - OPF-014 inline event handlers, CSS-005 conflicting stylesheets, OPF-088 unknown epub:type prefix
-- **Messages suppressed in Java EPUBCheck (14)** - NCX-002 (2), NCX-003 (2), NAV-002 (1), ACC-004 (2), ACC-005 (2), HTM-012 (2), OPF-051 (1), OPF-088 (1), CSS-005 (1)
+**Unit tests (16)** - Various reasons:
+- **libxml2-wasm XPath limitations (2)** - OPF-014 inline event handlers, OPF-088 unknown epub:type prefix
+- **Messages not emitted in Java EPUBCheck (14)** - NCX-002 (2), NCX-003 (2), NAV-002 (1), ACC-004 (2), ACC-005 (2), HTM-012 (2), OPF-051 (1), OPF-088 (1)
 
 **Integration tests (75)** - Unimplemented features and library limitations:
 - **Content (17 skipped)**:
@@ -411,6 +411,8 @@ Unused prefixes: SCP (0), CHK (0), INF (0)
 - `RSC-005` - Media overlay manifest: invalid SMIL type, non-content-doc media-overlay, missing global/per-item duration
 - `RSC-005` - epub:type attribute forbidden on HTML metadata elements (head, meta, title, style, link, script, noscript, base)
 - `RSC-005` - usemap attribute format validation (must match `#.+`)
+- `CSS-005` - Alt Style Tag class conflict detection (vertical+horizontal, day+night) — fixed from incorrect title-based check
+- `OPF-018` - Standalone CSS files: declared `remote-resources` but no remote references found
 
 ---
 

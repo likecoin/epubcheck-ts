@@ -1081,32 +1081,34 @@ export class ContentValidator {
       }
     }
 
-    // Run CSS validation and get references
     const cssValidator = new CSSValidator();
     const result = cssValidator.validate(context, cssContent, path);
 
-    // Track CSS files with remote resources for XHTML manifest item checks
     const hasRemoteResources = result.references.some(
       (ref) => ref.url.startsWith('http://') || ref.url.startsWith('https://'),
     );
+    const cssManifestItem = context.packageDocument?.manifest.find(
+      (item) => path.endsWith(`/${item.href}`) || path === item.href,
+    );
+
     if (hasRemoteResources) {
       this.cssWithRemoteResources.add(path);
 
-      // Check the CSS manifest item itself for remote-resources property
-      const packageDoc = context.packageDocument;
-      if (packageDoc) {
-        const manifestItem = packageDoc.manifest.find(
-          (item) => path.endsWith(`/${item.href}`) || path === item.href,
-        );
-        if (manifestItem && !manifestItem.properties?.includes('remote-resources')) {
-          pushMessage(context.messages, {
-            id: MessageId.OPF_014,
-            message:
-              'CSS document references remote resources but manifest item is missing "remote-resources" property',
-            location: { path },
-          });
-        }
+      if (cssManifestItem && !cssManifestItem.properties?.includes('remote-resources')) {
+        pushMessage(context.messages, {
+          id: MessageId.OPF_014,
+          message:
+            'CSS document references remote resources but manifest item is missing "remote-resources" property',
+          location: { path },
+        });
       }
+    } else if (cssManifestItem?.properties?.includes('remote-resources')) {
+      pushMessage(context.messages, {
+        id: MessageId.OPF_018,
+        message:
+          'The "remote-resources" property was declared in the Package Document, but no reference to remote resources has been found',
+        location: { path },
+      });
     }
 
     const cssDir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
@@ -3435,47 +3437,37 @@ export class ContentValidator {
   ): void {
     const linkElements = root.find('.//html:link[@rel]', { html: 'http://www.w3.org/1999/xhtml' });
 
-    const stylesheetTitles = new Map<string, Set<string>>();
-
     for (const linkElem of linkElements) {
       const elem = linkElem as XmlElement;
       const relAttr = this.getAttribute(elem, 'rel');
-      const titleAttr = this.getAttribute(elem, 'title');
-      const hrefAttr = this.getAttribute(elem, 'href');
 
-      if (!relAttr || !hrefAttr) continue;
+      if (!relAttr) continue;
 
-      const rel = relAttr.toLowerCase();
-      const rels = rel.split(/\s+/);
+      const rels = relAttr.toLowerCase().split(/\s+/);
 
-      if (rels.includes('stylesheet')) {
-        const isAlternate = rels.includes('alternate');
+      // CSS-005: conflicting alt style tag classes apply to all <link> elements
+      const classAttr = this.getAttribute(elem, 'class');
+      if (classAttr) {
+        const classSet = new Set(classAttr.toLowerCase().split(/\s+/));
+        if (
+          (classSet.has('vertical') && classSet.has('horizontal')) ||
+          (classSet.has('day') && classSet.has('night'))
+        ) {
+          pushMessage(context.messages, {
+            id: MessageId.CSS_005,
+            message: `Conflicting Alt Style Tags found in class attribute: "${classAttr}"`,
+            location: { path },
+          });
+        }
+      }
 
-        if (isAlternate && !titleAttr) {
+      if (rels.includes('stylesheet') && rels.includes('alternate')) {
+        if (!this.getAttribute(elem, 'title')) {
           pushMessage(context.messages, {
             id: MessageId.CSS_015,
             message: 'Alternate stylesheet must have a title attribute',
             location: { path },
           });
-        }
-
-        if (titleAttr) {
-          const key = `${titleAttr}:${isAlternate ? 'alt' : 'persistent'}`;
-          const expectedRel = isAlternate ? 'alternate' : 'persistent';
-          const existing = stylesheetTitles.get(key);
-
-          if (existing) {
-            if (!existing.has(expectedRel)) {
-              pushMessage(context.messages, {
-                id: MessageId.CSS_005,
-                message: `Stylesheet with title "${titleAttr}" conflicts with another stylesheet with same title`,
-                location: { path },
-              });
-            }
-            existing.add(expectedRel);
-          } else {
-            stylesheetTitles.set(key, new Set([expectedRel]));
-          }
         }
       }
     }

@@ -495,25 +495,61 @@ describe('ContentValidator', () => {
       expect(context.messages.some((m) => m.id === 'CSS-015')).toBe(true);
     });
 
-    // TODO: XML library has limitations - .//html:link[@rel] XPath query doesn't properly find elements
-    // The validateStylesheetLinks implementation exists and is correct
-    it.skip('should add CSS-005 error for conflicting stylesheet titles', () => {
+    it('should add CSS-005 usage for conflicting alt style tag classes (vertical+horizontal)', () => {
       const context = createValidationContext();
       const packageDoc = createMinimalPackage();
       context.packageDocument = packageDoc;
       addXHTMLToContext(
         context,
-        'nav.xhtml',
+        'OEBPS/nav.xhtml',
         '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><head><title>Nav</title></head><body><nav epub:type="toc"><ol><li><a href="chapter1.xhtml">Chapter 1</a></li></ol></nav></body></html>\n',
       );
       addXHTMLToContext(
         context,
-        'chapter1.xhtml',
-        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Test</title><link rel="stylesheet" href="style1.css" title="main"/><link rel="alternate stylesheet" href="style2.css" title="main"/></head><body><p>Content</p></body></html>\n',
+        'OEBPS/chapter1.xhtml',
+        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Test</title><link rel="stylesheet" href="style.css" class="vertical horizontal"/></head><body><p>Content</p></body></html>\n',
       );
 
       validator.validate(context);
       expect(context.messages.some((m) => m.id === 'CSS-005')).toBe(true);
+    });
+
+    it('should add CSS-005 usage for conflicting alt style tag classes (day+night)', () => {
+      const context = createValidationContext();
+      const packageDoc = createMinimalPackage();
+      context.packageDocument = packageDoc;
+      addXHTMLToContext(
+        context,
+        'OEBPS/nav.xhtml',
+        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><head><title>Nav</title></head><body><nav epub:type="toc"><ol><li><a href="chapter1.xhtml">Chapter 1</a></li></ol></nav></body></html>\n',
+      );
+      addXHTMLToContext(
+        context,
+        'OEBPS/chapter1.xhtml',
+        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Test</title><link rel="stylesheet" href="style.css" class="day night"/></head><body><p>Content</p></body></html>\n',
+      );
+
+      validator.validate(context);
+      expect(context.messages.some((m) => m.id === 'CSS-005')).toBe(true);
+    });
+
+    it('should not add CSS-005 for non-conflicting alt style tag classes', () => {
+      const context = createValidationContext();
+      const packageDoc = createMinimalPackage();
+      context.packageDocument = packageDoc;
+      addXHTMLToContext(
+        context,
+        'OEBPS/nav.xhtml',
+        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><head><title>Nav</title></head><body><nav epub:type="toc"><ol><li><a href="chapter1.xhtml">Chapter 1</a></li></ol></nav></body></html>\n',
+      );
+      addXHTMLToContext(
+        context,
+        'OEBPS/chapter1.xhtml',
+        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Test</title><link rel="stylesheet" href="style.css" class="vertical day"/></head><body><p>Content</p></body></html>\n',
+      );
+
+      validator.validate(context);
+      expect(context.messages.some((m) => m.id === 'CSS-005')).toBe(false);
     });
   });
 
