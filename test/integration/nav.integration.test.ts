@@ -202,6 +202,12 @@ describe('Integration Tests - Navigation Documents', () => {
       expectError(result, 'RSC-005');
     });
 
+    it('report nested ol in page-list nav (RSC-017)', async () => {
+      const data = await loadEpub('warnings/nav-page-list-nested-warning.epub');
+      const result = await EpubCheck.validate(data);
+      expectWarning(result, 'RSC-017');
+    });
+
     it('allow a landmarks nav', async () => {
       const data = await loadEpub('valid/nav-landmarks-valid.epub');
       const result = await EpubCheck.validate(data);
@@ -230,6 +236,12 @@ describe('Integration Tests - Navigation Documents', () => {
       const data = await loadEpub('invalid/nav/nav-landmarks-type-twice-same-resource-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
+    });
+
+    it('report nested ol in landmarks nav (RSC-017)', async () => {
+      const data = await loadEpub('warnings/nav-landmarks-nested-warning.epub');
+      const result = await EpubCheck.validate(data);
+      expectWarning(result, 'RSC-017');
     });
 
     it('allow a lot (list of tables) nav', async () => {

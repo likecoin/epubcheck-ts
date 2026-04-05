@@ -10,13 +10,13 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | OPF Validation | ~92% | 🟢 Schematron-equivalent checks, refines cycles, duplicate IDs, OPF-090 preferred media types done |
 | Content (XHTML/SVG) | ~93% | 🟢 CSS url() references, @import, inline CSS remote font, SVG remote font, picture elements, SVG use, epub:type vocab, lang mismatch, switch/trigger, SVG epub:type, media magic numbers, UTF-16 BOM, base href, xml:base, epub namespace, Schematron disallowed descendants, microdata co-occurrence, unknown HTML elements, foreignObject/title content model done |
 | CSS Validation | ~85% | 🟢 url() extraction from declarations, @font-face src, encoding detection, alt style tags (CSS-005), OPF-018 for CSS files done |
-| Navigation (nav/NCX) | ~85% | 🟢 Content model, structural validation, landmarks, labels, reading order done |
+| Navigation (nav/NCX) | ~95% | 🟢 Content model, structural validation, landmarks, labels, reading order, nested-ol (RSC-017) done |
 | Schema Validation | ~55% | 🟡 RelaxNG for OPF/container/encryption/signatures; XHTML/SVG disabled (libxml2 limitation) |
 | Media Overlays | ~70% | 🟡 SMIL structure/timing/audio/remote-resources, cross-ref checks, fragment validation, reading order, CSS active class (CSS-029/030), OPF metadata (refines/class-name/type/contentdoc/duration-defined), MED-016 duration sum done |
 | Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
 | Cross-reference | ~92% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs, encoding detection done |
 
-**Overall: ~93% complete (1041 tests passing, 78 skipped)**
+**Overall: ~93% complete (1043 tests passing, 78 skipped)**
 
 ---
 
@@ -27,8 +27,8 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 425 | 409 | 16 |
-| **Integration Tests** | 694 | 632 | 62 |
-| **Total** | **1119** | **1041** | **78** |
+| **Integration Tests** | 696 | 634 | 62 |
+| **Total** | **1121** | **1043** | **78** |
 
 ### Integration Test Files
 
@@ -38,7 +38,7 @@ test/integration/
 ├── ocf.integration.test.ts      # 56 tests  (50 pass, 6 skip) - OCF/ZIP/container
 ├── opf.integration.test.ts      # 173 tests (173 pass, 0 skip)  - Package document
 ├── content.integration.test.ts  # 214 tests (197 pass, 17 skip)  - XHTML/CSS/SVG
-├── nav.integration.test.ts      # 36 tests  (36 pass, 0 skip)  - Navigation
+├── nav.integration.test.ts      # 38 tests  (38 pass, 0 skip)  - Navigation
 ├── resources.integration.test.ts # 110 tests (106 pass, 4 skip)  - Resources/fallbacks
 ├── layout.integration.test.ts   # 52 tests  (20 pass, 32 skip)  - Layout/viewport/FXL
 └── mediaoverlays.integration.test.ts # 50 tests (34 pass, 16 skip) - Media overlays/SMIL
@@ -200,18 +200,18 @@ test/fixtures/
 | 04-ocf | 61 | 56 | 50 | 82% |
 | 05-package-document | 121 | 119 | 119 | 98% |
 | 06-content-document | 215 | 214 | 208 | 97% |
-| 07-navigation-document | 40 | 36 | 36 | 90% |
+| 07-navigation-document | 40 | 38 | 38 | 95% |
 | 08-layout | 51 | 52 | 20 | 39% |
 | 09-media-overlays | 51 | 50 | 34 | 67% |
 | D-vocabularies (ARIA) | 56 | 54 | 54 | 96% |
 | Other | 6 | 0 | 0 | 0% |
-| **Total** | **719** | **694** | **619** | **86%** |
+| **Total** | **719** | **696** | **621** | **86%** |
 
 ### E2E Porting Priorities
 
 **Completed** - High coverage achieved:
 1. **05-package-document** (121 scenarios) - 98% coverage (119 ported, 118 passing)
-2. **07-navigation-document** (40 scenarios) - 90% coverage (36 ported, all passing)
+2. **07-navigation-document** (40 scenarios) - 95% coverage (38 ported, all passing)
 3. **04-ocf** (61 scenarios) - 75% coverage (56 ported, 46 passing)
 4. **D-vocabularies** (56 scenarios) - 96% coverage (54 ported, 54 passing); remaining 2 need media overlays implementation
 
@@ -233,7 +233,7 @@ All planned OPF (batches 1-5) and Nav (batches 6-8) tests have been ported. Rema
 |------|-----|---------------|---------|
 | **06-content-document** | RelaxNG attribute validation (foreignObject/title HTML attrs) | 6 skipped | RelaxNG per-element attribute allowlist (libxml2-wasm limitation), css-tree forgiving parser, broken fixture |
 | **03-resources** | RSC-016 OPF parse, single-file mode | 4 skipped | OPF parser architecture, single-file mode |
-| **D-vocabularies** | media-overlays-vocab (narrator/duration refinement) | ~2 tests | Needs media overlay document validation |
+| **D-vocabularies** | vocabularies.feature prefix tests (standalone .smil/.svg files) | 2 unported | Single-file validation mode not supported |
 | **08-layout** | Rendition meta file-based tests | 32 skipped | Single-file (.opf) validation mode; logic tested via unit tests |
 | **09-media-overlays** | File-based SMIL tests | 16 skipped | Single-file (.smil) validation mode; covered by unit tests |
 
@@ -413,6 +413,7 @@ Unused prefixes: SCP (0), CHK (0), INF (0)
 - `RSC-005` - usemap attribute format validation (must match `#.+`)
 - `CSS-005` - Alt Style Tag class conflict detection (vertical+horizontal, day+night) — fixed from incorrect title-based check
 - `OPF-018` - Standalone CSS files: declared `remote-resources` but no remote references found
+- `RSC-017` - Nested `<ol>` in page-list/landmarks nav (should be flat, no nested sublists)
 
 ---
 

@@ -1805,6 +1805,19 @@ export class ContentValidator {
         this.checkNavFirstChildHeading(context, path, navElem);
       }
 
+      const flatNavType = types.includes('page-list')
+        ? 'page-list'
+        : types.includes('landmarks')
+          ? 'landmarks'
+          : null;
+      if (flatNavType && navElem.find('.//html:ol', XHTML_NS).length > 1) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_017,
+          message: `A "${flatNavType}" nav element should contain only a single ol descendant (no nested sublists)`,
+          location: { path },
+        });
+      }
+
       // Check landmarks-specific rules
       if (types.includes('landmarks')) {
         this.checkNavLandmarks(context, path, navElem);
