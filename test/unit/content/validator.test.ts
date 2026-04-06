@@ -676,4 +676,123 @@ describe('ContentValidator', () => {
       expect(context.messages.some((m) => m.id === 'OPF-088')).toBe(true);
     });
   });
+
+  describe('Cross-document feature collection', () => {
+    it('should detect table elements', () => {
+      const context = createValidationContext();
+      context.packageDocument = createMinimalPackage();
+      addXHTMLToContext(
+        context,
+        'OEBPS/nav.xhtml',
+        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><head><title>Nav</title></head><body><nav epub:type="toc"><ol><li><a href="chapter1.xhtml">Ch 1</a></li></ol></nav></body></html>\n',
+      );
+      addXHTMLToContext(
+        context,
+        'OEBPS/chapter1.xhtml',
+        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Test</title></head><body><table><tr><th>H</th></tr><tr><td>D</td></tr></table></body></html>\n',
+      );
+
+      validator.validate(context);
+      expect(context.contentFeatures?.hasTable).toBe(true);
+    });
+
+    it('should detect figure elements', () => {
+      const context = createValidationContext();
+      context.packageDocument = createMinimalPackage();
+      addXHTMLToContext(
+        context,
+        'OEBPS/nav.xhtml',
+        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><head><title>Nav</title></head><body><nav epub:type="toc"><ol><li><a href="chapter1.xhtml">Ch 1</a></li></ol></nav></body></html>\n',
+      );
+      addXHTMLToContext(
+        context,
+        'OEBPS/chapter1.xhtml',
+        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Test</title></head><body><figure><img src="img.jpg" alt="test"/></figure></body></html>\n',
+      );
+
+      validator.validate(context);
+      expect(context.contentFeatures?.hasFigure).toBe(true);
+    });
+
+    it('should detect epub:type="pagebreak"', () => {
+      const context = createValidationContext();
+      context.packageDocument = createMinimalPackage();
+      addXHTMLToContext(
+        context,
+        'OEBPS/nav.xhtml',
+        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><head><title>Nav</title></head><body><nav epub:type="toc"><ol><li><a href="chapter1.xhtml">Ch 1</a></li></ol></nav></body></html>\n',
+      );
+      addXHTMLToContext(
+        context,
+        'OEBPS/chapter1.xhtml',
+        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><head><title>Test</title></head><body><span epub:type="pagebreak" id="p1">1</span></body></html>\n',
+      );
+
+      validator.validate(context);
+      expect(context.contentFeatures?.hasPageBreak).toBe(true);
+    });
+
+    it('should detect page-list nav', () => {
+      const context = createValidationContext();
+      context.packageDocument = createMinimalPackage();
+      addXHTMLToContext(
+        context,
+        'OEBPS/nav.xhtml',
+        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><head><title>Nav</title></head><body><nav epub:type="toc"><ol><li><a href="chapter1.xhtml">Ch 1</a></li></ol></nav><nav epub:type="page-list"><ol><li><a href="chapter1.xhtml#p1">1</a></li></ol></nav></body></html>\n',
+      );
+      addXHTMLToContext(
+        context,
+        'OEBPS/chapter1.xhtml',
+        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Test</title></head><body><p>Content</p></body></html>\n',
+      );
+
+      validator.validate(context);
+      expect(context.contentFeatures?.hasPageList).toBe(true);
+    });
+
+    it('should detect audio and video elements', () => {
+      const context = createValidationContext();
+      context.packageDocument = createMinimalPackage({
+        manifest: [
+          { id: 'nav', href: 'nav.xhtml', mediaType: 'application/xhtml+xml', properties: ['nav'] },
+          { id: 'chapter1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' },
+          { id: 'audio1', href: 'audio.mp3', mediaType: 'audio/mpeg' },
+          { id: 'video1', href: 'video.mp4', mediaType: 'video/mp4' },
+        ],
+      });
+      addXHTMLToContext(
+        context,
+        'OEBPS/nav.xhtml',
+        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><head><title>Nav</title></head><body><nav epub:type="toc"><ol><li><a href="chapter1.xhtml">Ch 1</a></li></ol></nav></body></html>\n',
+      );
+      addXHTMLToContext(
+        context,
+        'OEBPS/chapter1.xhtml',
+        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Test</title></head><body><audio src="audio.mp3"/><video src="video.mp4"/></body></html>\n',
+      );
+
+      validator.validate(context);
+      expect(context.contentFeatures?.hasAudio).toBe(true);
+      expect(context.contentFeatures?.hasVideo).toBe(true);
+    });
+
+    it('should detect loi/lot/loa/lov nav types', () => {
+      const context = createValidationContext();
+      context.packageDocument = createMinimalPackage();
+      addXHTMLToContext(
+        context,
+        'OEBPS/nav.xhtml',
+        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><head><title>Nav</title></head><body><nav epub:type="toc"><ol><li><a href="chapter1.xhtml">Ch 1</a></li></ol></nav><nav epub:type="loi"><ol><li><a href="chapter1.xhtml#f1">Fig 1</a></li></ol></nav><nav epub:type="lot"><ol><li><a href="chapter1.xhtml#t1">Table 1</a></li></ol></nav></body></html>\n',
+      );
+      addXHTMLToContext(
+        context,
+        'OEBPS/chapter1.xhtml',
+        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Test</title></head><body><p>Content</p></body></html>\n',
+      );
+
+      validator.validate(context);
+      expect(context.contentFeatures?.hasLOI).toBe(true);
+      expect(context.contentFeatures?.hasLOT).toBe(true);
+    });
+  });
 });

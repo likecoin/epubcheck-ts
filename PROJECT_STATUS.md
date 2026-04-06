@@ -14,9 +14,9 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Schema Validation | ~55% | 🟡 RelaxNG for OPF/container/encryption/signatures; XHTML/SVG disabled (libxml2 limitation) |
 | Media Overlays | ~70% | 🟡 SMIL structure/timing/audio/remote-resources, cross-ref checks, fragment validation, reading order, CSS active class (CSS-029/030), OPF metadata (refines/class-name/type/contentdoc/duration-defined), MED-016 duration sum done |
 | Accessibility | ~71% | 🟢 Content checks (table th/thead/caption/empty-th, epub:type usage, image alt, hyperlink text, MathML alt, SVG link name), OPF metadata (accessibilityFeature/accessMode/general a11y) done |
-| Cross-reference | ~92% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs, encoding detection done |
+| Cross-reference | ~92% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs, encoding detection, cross-document feature checks done |
 
-**Overall: ~93% complete (1043 tests passing, 78 skipped)**
+**Overall: ~93% complete (1049 tests passing, 86 skipped)**
 
 ---
 
@@ -26,9 +26,9 @@ Quick reference for implementation progress vs Java EPUBCheck.
 
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
-| **Unit Tests** | 433 | 409 | 24 |
+| **Unit Tests** | 439 | 415 | 24 |
 | **Integration Tests** | 696 | 634 | 62 |
-| **Total** | **1129** | **1043** | **86** |
+| **Total** | **1135** | **1049** | **86** |
 
 ### Integration Test Files
 
@@ -131,6 +131,7 @@ test/fixtures/
 - **Inline CSS remote font detection** (OPF-014 for @font-face with remote URLs in `<style>` blocks)
 - **SVG remote font detection** (OPF-014 for font-face-uri with remote xlink:href)
 - **Accessibility checks** (ACC-009/011 active; ACC-001/002/003/004/005/006/007/010/012/014 suppressed — table th/thead/caption/empty-th, epub:type usage, image alt, hyperlink text, a11y metadata)
+- **Cross-document feature checks** (NAV-003/005/006/007/008 EDUPUB page-break↔page-list, content↔LOX nav consistency; HTM-051 EDUPUB microdata+RDFa; OPF-078/079 dictionary content↔dc:type)
 - **Cross-references** (RSC-006/007/008/009/010/011/012/013/014/015/020/026/029/031/032/033)
 - **Filename validation** (PKG-009/010/011/027)
 - **Duplicate filename detection** (OPF-060) - Unicode NFC normalization, case folding
@@ -260,9 +261,9 @@ Ordered by severity impact (number of active error/warning messages not yet emit
 ## Message IDs
 
 **Defined**: 300 message IDs
-**Actively used**: 162 (54%)
+**Actively used**: 170 (57%)
 
-Active by prefix: OPF (53), RSC (26), PKG (16), CSS (12), HTM (21), NAV (4), NCX (3), ACC (12), MED (15)
+Active by prefix: OPF (55), RSC (26), PKG (16), CSS (12), HTM (22), NAV (9), NCX (3), ACC (12), MED (15)
 Unused prefixes: SCP (0), CHK (0), INF (0)
 
 ### Recent Message ID Fixes (aligned with Java EPUBCheck)

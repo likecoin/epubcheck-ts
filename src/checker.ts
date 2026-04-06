@@ -107,6 +107,9 @@ export class EpubCheck {
       const contentValidator = new ContentValidator();
       contentValidator.validate(context, registry, refValidator);
 
+      // Step 4.5: Cross-document feature validation
+      this.validateCrossDocumentFeatures(context);
+
       // Step 5: Validate NCX navigation (EPUB 2 always; EPUB 3 when NCX is present)
       if (context.packageDocument) {
         this.validateNCX(context, registry);
@@ -163,6 +166,103 @@ export class EpubCheck {
    */
   get version(): EPUBVersion {
     return this.options.version;
+  }
+
+  /**
+   * Cross-document feature validation (Pattern B from Java EPUBCheck)
+   */
+  private validateCrossDocumentFeatures(context: ValidationContext): void {
+    const features = context.contentFeatures;
+    if (!features || !context.version.startsWith('3')) return;
+
+    const profile = context.options.profile;
+    const opfPath = context.opfPath ?? '';
+
+    // EDUPUB-only checks
+    if (profile === 'edupub') {
+      // NAV-003: Page breaks require page-list nav
+      if (features.hasPageBreak && !features.hasPageList) {
+        pushMessage(context.messages, {
+          id: MessageId.NAV_003,
+          message:
+            'The Navigation Document must have a page list when content contains page breaks (epub:type="pagebreak")',
+          location: { path: opfPath },
+        });
+      }
+
+      // NAV-005: Audio elements without list of audio clips
+      if (features.hasAudio && !features.hasLOA) {
+        pushMessage(context.messages, {
+          id: MessageId.NAV_005,
+          message:
+            'Content documents contain "audio" elements but the Navigation Document does not have a listing of audio clips (epub:type="loa")',
+          location: { path: opfPath },
+        });
+      }
+
+      // NAV-006: Figure elements without list of illustrations
+      if (features.hasFigure && !features.hasLOI) {
+        pushMessage(context.messages, {
+          id: MessageId.NAV_006,
+          message:
+            'Content documents contain "figure" elements but the Navigation Document does not have a listing of figures (epub:type="loi")',
+          location: { path: opfPath },
+        });
+      }
+
+      // NAV-007: Table elements without list of tables
+      if (features.hasTable && !features.hasLOT) {
+        pushMessage(context.messages, {
+          id: MessageId.NAV_007,
+          message:
+            'Content documents contain "table" elements but the Navigation Document does not have a listing of tables (epub:type="lot")',
+          location: { path: opfPath },
+        });
+      }
+
+      // NAV-008: Video elements without list of video clips
+      if (features.hasVideo && !features.hasLOV) {
+        pushMessage(context.messages, {
+          id: MessageId.NAV_008,
+          message:
+            'Content documents contain "video" elements but the Navigation Document does not have a listing of video clips (epub:type="lov")',
+          location: { path: opfPath },
+        });
+      }
+
+      // HTM-051: Microdata without RDFa
+      if (features.hasMicrodata && !features.hasRDFa) {
+        pushMessage(context.messages, {
+          id: MessageId.HTM_051,
+          message: 'Found Microdata but no RDFa; EDUPUB recommends the use of RDFa Lite',
+          location: { path: opfPath },
+        });
+      }
+    }
+
+    // Dictionary content ↔ dc:type checks
+    const hasDictType =
+      context.packageDocument?.dcElements.some(
+        (dc) => dc.name === 'type' && dc.value === 'dictionary',
+      ) ?? false;
+
+    if (features.hasDictionary && !hasDictType) {
+      pushMessage(context.messages, {
+        id: MessageId.OPF_079,
+        message:
+          'Dictionary content was found (epub:type "dictionary"), the Package Document should declare the dc:type "dictionary"',
+        location: { path: opfPath },
+      });
+    }
+
+    if (profile === 'dict' && hasDictType && !features.hasDictionary) {
+      pushMessage(context.messages, {
+        id: MessageId.OPF_078,
+        message:
+          'An EPUB Dictionary must contain at least one Content Document with dictionary content (epub:type "dictionary")',
+        location: { path: opfPath },
+      });
+    }
   }
 
   /**

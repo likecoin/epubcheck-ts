@@ -121,6 +121,23 @@ export interface ValidationContext {
   mediaPlaybackActiveClass?: string;
   /** Resources marked with IDPF font obfuscation in encryption.xml */
   obfuscatedResources?: Set<string>;
+  /** Feature flags collected during content validation for cross-document checks */
+  contentFeatures?: {
+    hasPageBreak?: boolean;
+    hasPageList?: boolean;
+    hasTable?: boolean;
+    hasFigure?: boolean;
+    hasAudio?: boolean;
+    hasVideo?: boolean;
+    hasDictionary?: boolean;
+    hasIndex?: boolean;
+    hasLOI?: boolean;
+    hasLOT?: boolean;
+    hasLOA?: boolean;
+    hasLOV?: boolean;
+    hasMicrodata?: boolean;
+    hasRDFa?: boolean;
+  };
 }
 
 /**

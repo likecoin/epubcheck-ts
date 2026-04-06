@@ -26,6 +26,7 @@ const CSS_CHARSET_RE = /^@charset\s+"([^"]+)"\s*;/;
 const EPUB_XMLNS_RE = /xmlns:epub\s*=\s*"([^"]*)"/;
 
 const XHTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
+const EPUB_OPS_NS = { epub: 'http://www.idpf.org/2007/ops' };
 
 const EPUB_TYPE_FORBIDDEN_ELEMENTS = new Set([
   'head',
@@ -529,6 +530,9 @@ export class ContentValidator {
         }
       }
     }
+
+    // Initialize cross-document feature collection
+    context.contentFeatures = {};
 
     const overlayDocMap = new Map<string, Set<string>>();
 
@@ -1531,6 +1535,11 @@ export class ContentValidator {
         this.validateEpubTypes(context, path, root);
       }
 
+      // Collect features for cross-document validation (EPUB 3)
+      if (context.version.startsWith('3')) {
+        this.collectFeatures(context, root);
+      }
+
       // Validate epub:switch and epub:trigger (deprecated)
       this.validateEpubSwitch(context, path, root);
       this.validateEpubTrigger(context, path, root);
@@ -1754,8 +1763,15 @@ export class ContentValidator {
       if (types.includes('toc') && !tocNav) {
         tocNav = nav;
       }
-      if (types.includes('page-list')) pageListCount++;
+      if (types.includes('page-list')) {
+        pageListCount++;
+        if (context.contentFeatures) context.contentFeatures.hasPageList = true;
+      }
       if (types.includes('landmarks')) landmarksCount++;
+      if (types.includes('loi') && context.contentFeatures) context.contentFeatures.hasLOI = true;
+      if (types.includes('lot') && context.contentFeatures) context.contentFeatures.hasLOT = true;
+      if (types.includes('loa') && context.contentFeatures) context.contentFeatures.hasLOA = true;
+      if (types.includes('lov') && context.contentFeatures) context.contentFeatures.hasLOV = true;
     }
 
     if (!tocNav) {
@@ -3311,7 +3327,7 @@ export class ContentValidator {
         });
       }
       for (const th of thCells) {
-        if (!(th as XmlElement).content?.trim()) {
+        if (!(th as XmlElement).content.trim()) {
           pushMessage(context.messages, {
             id: MessageId.ACC_014,
             message: 'Table header cell is empty',
@@ -3336,7 +3352,7 @@ export class ContentValidator {
     }
 
     // ACC-007: Content document does not use epub:type for semantic inflection (EPUB 3 only)
-    if (context.packageDocument?.version?.startsWith('3.')) {
+    if (context.packageDocument?.version.startsWith('3.')) {
       const epubTypeElements = root.find('.//*[@epub:type]', {
         epub: 'http://www.idpf.org/2007/ops',
       });
@@ -3377,6 +3393,53 @@ export class ContentValidator {
           location: { path },
         });
       }
+    }
+  }
+
+  private collectFeatures(context: ValidationContext, root: XmlElement): void {
+    const features = context.contentFeatures;
+    if (!features) return;
+
+    if (!features.hasTable && root.get('.//html:table', XHTML_NS)) {
+      features.hasTable = true;
+    }
+    if (!features.hasFigure && root.get('.//html:figure', XHTML_NS)) {
+      features.hasFigure = true;
+    }
+    if (!features.hasAudio && root.get('.//html:audio', XHTML_NS)) {
+      features.hasAudio = true;
+    }
+    if (!features.hasVideo && root.get('.//html:video', XHTML_NS)) {
+      features.hasVideo = true;
+    }
+
+    if (!features.hasPageBreak || !features.hasDictionary || !features.hasIndex) {
+      const epubTypeElements = root.find('.//*[@epub:type]', EPUB_OPS_NS);
+      for (const el of epubTypeElements) {
+        const attr = (el as XmlElement).attr('type', 'epub');
+        if (!attr?.value) continue;
+        const tokens = attr.value.trim().split(/\s+/);
+        if (!features.hasPageBreak && tokens.includes('pagebreak')) {
+          features.hasPageBreak = true;
+        }
+        if (!features.hasDictionary && tokens.includes('dictionary')) {
+          features.hasDictionary = true;
+        }
+        if (!features.hasIndex && tokens.includes('index')) {
+          features.hasIndex = true;
+        }
+        if (features.hasPageBreak && features.hasDictionary && features.hasIndex) break;
+      }
+    }
+
+    // Detect microdata (itemscope attribute)
+    if (!features.hasMicrodata && root.get('.//*[@itemscope]')) {
+      features.hasMicrodata = true;
+    }
+
+    // Detect RDFa (property attribute)
+    if (!features.hasRDFa && root.get('.//*[@property]')) {
+      features.hasRDFa = true;
     }
   }
 
