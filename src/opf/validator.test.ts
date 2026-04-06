@@ -971,4 +971,27 @@ describe('OPFValidator', () => {
       expect(exclusiveErrors).toHaveLength(0);
     });
   });
+
+  describe('Accessibility metadata checks', () => {
+    // ACC-003 is suppressed in Java EPUBCheck
+    it.skip('should add ACC-003 for missing accessibility metadata (suppressed in Java)', () => {
+      const context = createContext(validOPF);
+      validator.validate(context);
+      expect(context.messages.some((m) => m.id === 'ACC-003')).toBe(true);
+    });
+
+    // ACC-002 is suppressed in Java EPUBCheck
+    it.skip('should add ACC-002 for missing schema:accessibilityFeature (suppressed in Java)', () => {
+      const context = createContext(validOPF);
+      validator.validate(context);
+      expect(context.messages.some((m) => m.id === 'ACC-002')).toBe(true);
+    });
+
+    // ACC-010 is suppressed in Java EPUBCheck
+    it.skip('should add ACC-010 for missing schema:accessMode (suppressed in Java)', () => {
+      const context = createContext(validOPF);
+      validator.validate(context);
+      expect(context.messages.some((m) => m.id === 'ACC-010')).toBe(true);
+    });
+  });
 });

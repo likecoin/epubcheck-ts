@@ -529,6 +529,11 @@ export class OPFValidator {
         }
       }
     }
+
+    // Accessibility metadata checks (EPUB 3 only)
+    if (this.packageDoc.version.startsWith('3.')) {
+      this.validateAccessibilityMetadata(context, opfPath);
+    }
   }
 
   /**
@@ -587,6 +592,46 @@ export class OPFValidator {
           location: { path: opfPath },
         });
       }
+    }
+  }
+
+  /**
+   * Validate accessibility metadata (ACC-002, ACC-003, ACC-010)
+   */
+  private validateAccessibilityMetadata(context: ValidationContext, opfPath: string): void {
+    if (!this.packageDoc) return;
+
+    const metaElements = this.packageDoc.metaElements;
+
+    const a11yProperties = [
+      'schema:accessMode',
+      'schema:accessibilityFeature',
+      'schema:accessibilityHazard',
+      'schema:accessibilitySummary',
+    ];
+    const hasAnyA11y = metaElements.some((m) => a11yProperties.includes(m.property));
+    if (!hasAnyA11y) {
+      pushMessage(context.messages, {
+        id: MessageId.ACC_003,
+        message: 'Publication does not include any accessibility metadata',
+        location: { path: opfPath },
+      });
+    }
+
+    if (!metaElements.some((m) => m.property === 'schema:accessibilityFeature')) {
+      pushMessage(context.messages, {
+        id: MessageId.ACC_002,
+        message: 'Missing "schema:accessibilityFeature" metadata',
+        location: { path: opfPath },
+      });
+    }
+
+    if (!metaElements.some((m) => m.property === 'schema:accessMode')) {
+      pushMessage(context.messages, {
+        id: MessageId.ACC_010,
+        message: 'Missing "schema:accessMode" metadata',
+        location: { path: opfPath },
+      });
     }
   }
 

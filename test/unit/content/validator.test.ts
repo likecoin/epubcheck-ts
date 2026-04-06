@@ -401,8 +401,8 @@ describe('ContentValidator', () => {
       expect(context.messages.some((m) => m.id === 'ACC-004')).toBe(true);
     });
 
-    // ACC-005 is suppressed in Java EPUBCheck
-    it.skip('should add ACC-005 warning for image without alt attribute (suppressed in Java)', () => {
+    // ACC-001 is suppressed in Java EPUBCheck
+    it.skip('should add ACC-001 warning for image without alt attribute (suppressed in Java)', () => {
       const context = createValidationContext();
       const packageDoc = createMinimalPackage();
       context.packageDocument = packageDoc;
@@ -413,7 +413,7 @@ describe('ContentValidator', () => {
       );
 
       validator.validate(context);
-      expect(context.messages.some((m) => m.id === 'ACC-005')).toBe(true);
+      expect(context.messages.some((m) => m.id === 'ACC-001')).toBe(true);
     });
 
     it('should add ACC-011 warning for SVG link without accessible name', () => {
@@ -442,6 +442,81 @@ describe('ContentValidator', () => {
 
       validator.validate(context);
       expect(context.messages.some((m) => m.id === 'ACC-009')).toBe(true);
+    });
+
+    // ACC-005 is suppressed in Java EPUBCheck
+    it.skip('should add ACC-005 for table without th elements (suppressed in Java)', () => {
+      const context = createValidationContext();
+      const packageDoc = createMinimalPackage();
+      context.packageDocument = packageDoc;
+      addXHTMLToContext(
+        context,
+        'OEBPS/chapter1.xhtml',
+        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Test</title></head><body><table><tr><td>Data</td></tr></table></body></html>\n',
+      );
+
+      validator.validate(context);
+      expect(context.messages.some((m) => m.id === 'ACC-005')).toBe(true);
+    });
+
+    // ACC-006 is suppressed in Java EPUBCheck
+    it.skip('should add ACC-006 for table without thead (suppressed in Java)', () => {
+      const context = createValidationContext();
+      const packageDoc = createMinimalPackage();
+      context.packageDocument = packageDoc;
+      addXHTMLToContext(
+        context,
+        'OEBPS/chapter1.xhtml',
+        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Test</title></head><body><table><tr><th>Header</th></tr><tr><td>Data</td></tr></table></body></html>\n',
+      );
+
+      validator.validate(context);
+      expect(context.messages.some((m) => m.id === 'ACC-006')).toBe(true);
+    });
+
+    // ACC-007 is suppressed in Java EPUBCheck
+    it.skip('should add ACC-007 for content doc without epub:type (suppressed in Java)', () => {
+      const context = createValidationContext();
+      const packageDoc = createMinimalPackage();
+      context.packageDocument = packageDoc;
+      addXHTMLToContext(
+        context,
+        'OEBPS/chapter1.xhtml',
+        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Test</title></head><body><p>No epub:type here</p></body></html>\n',
+      );
+
+      validator.validate(context);
+      expect(context.messages.some((m) => m.id === 'ACC-007')).toBe(true);
+    });
+
+    // ACC-012 is suppressed in Java EPUBCheck
+    it.skip('should add ACC-012 for table without caption (suppressed in Java)', () => {
+      const context = createValidationContext();
+      const packageDoc = createMinimalPackage();
+      context.packageDocument = packageDoc;
+      addXHTMLToContext(
+        context,
+        'OEBPS/chapter1.xhtml',
+        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Test</title></head><body><table><thead><tr><th>Header</th></tr></thead><tr><td>Data</td></tr></table></body></html>\n',
+      );
+
+      validator.validate(context);
+      expect(context.messages.some((m) => m.id === 'ACC-012')).toBe(true);
+    });
+
+    // ACC-014 is suppressed in Java EPUBCheck
+    it.skip('should add ACC-014 for empty table header cell (suppressed in Java)', () => {
+      const context = createValidationContext();
+      const packageDoc = createMinimalPackage();
+      context.packageDocument = packageDoc;
+      addXHTMLToContext(
+        context,
+        'OEBPS/chapter1.xhtml',
+        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Test</title></head><body><table><tr><th></th><td>Data</td></tr></table></body></html>\n',
+      );
+
+      validator.validate(context);
+      expect(context.messages.some((m) => m.id === 'ACC-014')).toBe(true);
     });
   });
 

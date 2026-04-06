@@ -3271,7 +3271,7 @@ export class ContentValidator {
       const altAttr = this.getAttribute(img as XmlElement, 'alt');
       if (altAttr === null) {
         pushMessage(context.messages, {
-          id: MessageId.ACC_005,
+          id: MessageId.ACC_001,
           message: 'Image is missing alt attribute',
           location: { path },
         });
@@ -3293,6 +3293,58 @@ export class ContentValidator {
         pushMessage(context.messages, {
           id: MessageId.ACC_009,
           message: 'MathML element should have alttext attribute or annotation for accessibility',
+          location: { path },
+        });
+      }
+    }
+
+    // Table accessibility checks (ACC-005, ACC-006, ACC-012, ACC-014)
+    const tables = root.find('.//html:table', XHTML_NS);
+    for (const table of tables) {
+      const tableElem = table as XmlElement;
+      const thCells = tableElem.find('.//html:th', XHTML_NS);
+      if (thCells.length === 0) {
+        pushMessage(context.messages, {
+          id: MessageId.ACC_005,
+          message: 'Table heading cells should be identified by "th" elements for accessibility',
+          location: { path },
+        });
+      }
+      for (const th of thCells) {
+        if (!(th as XmlElement).content?.trim()) {
+          pushMessage(context.messages, {
+            id: MessageId.ACC_014,
+            message: 'Table header cell is empty',
+            location: { path },
+          });
+        }
+      }
+      if (!tableElem.get('.//html:thead', XHTML_NS)) {
+        pushMessage(context.messages, {
+          id: MessageId.ACC_006,
+          message: 'Tables should include a "thead" element for accessibility',
+          location: { path },
+        });
+      }
+      if (!tableElem.get('./html:caption', XHTML_NS)) {
+        pushMessage(context.messages, {
+          id: MessageId.ACC_012,
+          message: 'Table elements should include a "caption" element',
+          location: { path },
+        });
+      }
+    }
+
+    // ACC-007: Content document does not use epub:type for semantic inflection (EPUB 3 only)
+    if (context.packageDocument?.version?.startsWith('3.')) {
+      const epubTypeElements = root.find('.//*[@epub:type]', {
+        epub: 'http://www.idpf.org/2007/ops',
+      });
+      if (epubTypeElements.length === 0) {
+        pushMessage(context.messages, {
+          id: MessageId.ACC_007,
+          message:
+            'Content Documents do not use "epub:type" attributes for semantic inflection',
           location: { path },
         });
       }

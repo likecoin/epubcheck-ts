@@ -13,7 +13,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Navigation (nav/NCX) | ~95% | 🟢 Content model, structural validation, landmarks, labels, reading order, nested-ol (RSC-017) done |
 | Schema Validation | ~55% | 🟡 RelaxNG for OPF/container/encryption/signatures; XHTML/SVG disabled (libxml2 limitation) |
 | Media Overlays | ~70% | 🟡 SMIL structure/timing/audio/remote-resources, cross-ref checks, fragment validation, reading order, CSS active class (CSS-029/030), OPF metadata (refines/class-name/type/contentdoc/duration-defined), MED-016 duration sum done |
-| Accessibility | ~30% | 🟡 Basic checks only (ACC-004/005/009/011) |
+| Accessibility | ~71% | 🟢 Content checks (table th/thead/caption/empty-th, epub:type usage, image alt, hyperlink text, MathML alt, SVG link name), OPF metadata (accessibilityFeature/accessMode/general a11y) done |
 | Cross-reference | ~92% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs, encoding detection done |
 
 **Overall: ~93% complete (1043 tests passing, 78 skipped)**
@@ -26,9 +26,9 @@ Quick reference for implementation progress vs Java EPUBCheck.
 
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
-| **Unit Tests** | 425 | 409 | 16 |
+| **Unit Tests** | 433 | 409 | 24 |
 | **Integration Tests** | 696 | 634 | 62 |
-| **Total** | **1121** | **1043** | **78** |
+| **Total** | **1129** | **1043** | **86** |
 
 ### Integration Test Files
 
@@ -75,14 +75,15 @@ test/fixtures/
 - 🟡 **ID/IDREF validation** - OPF + XHTML + SVG duplicate IDs done; ARIA IDREF + label/output/headers resolution done; MathML xref not yet
 - 🟡 **Entity validation** - RSC-016 for undefined/malformed entities; HTM-003 external entity declarations done; HTM-058 UTF-16 encoding detection done
 - 🟡 **Base URL** - HTML `<base href>` remote URL detection done (RSC-006); xml:base not yet
-- ❌ **Advanced accessibility** - Only 30% of Java coverage
+- 🟡 **Advanced accessibility** - 71% coverage (12/17 ACC checks); remaining: ACC-008 page gaps, ACC-013 complex image aria-describedby, ACC-015/016/017
 - 🟢 **Media overlays** - SMIL validation, cross-refs, CSS active class, OPF metadata checks, MED-016 duration sum all done; 16 file-based SMIL tests skipped (covered by unit tests)
 
 ### Skipped Tests
 
-**Unit tests (16)** - Various reasons:
+**Unit tests (24)** - Various reasons:
 - **libxml2-wasm XPath limitations (2)** - OPF-014 inline event handlers, OPF-088 unknown epub:type prefix
-- **Messages not emitted in Java EPUBCheck (14)** - NCX-002 (2), NCX-003 (2), NAV-002 (1), ACC-004 (2), ACC-005 (2), HTM-012 (2), OPF-051 (1), OPF-088 (1)
+- **Messages not emitted in Java EPUBCheck (14)** - NCX-002 (2), NCX-003 (2), NAV-002 (1), ACC-004 (2), ACC-001 (2), HTM-012 (2), OPF-051 (1), OPF-088 (1)
+- **Suppressed accessibility checks (8)** - ACC-005 (1), ACC-006 (1), ACC-007 (1), ACC-012 (1), ACC-014 (1), ACC-002 (1), ACC-003 (1), ACC-010 (1)
 
 **Integration tests (75)** - Unimplemented features and library limitations:
 - **Content (17 skipped)**:
@@ -129,7 +130,7 @@ test/fixtures/
 - **Switch property** (OPF-014 for epub:switch detection)
 - **Inline CSS remote font detection** (OPF-014 for @font-face with remote URLs in `<style>` blocks)
 - **SVG remote font detection** (OPF-014 for font-face-uri with remote xlink:href)
-- **Basic accessibility** (ACC-009/011 active; ACC-004/005 suppressed in Java)
+- **Accessibility checks** (ACC-009/011 active; ACC-001/002/003/004/005/006/007/010/012/014 suppressed — table th/thead/caption/empty-th, epub:type usage, image alt, hyperlink text, a11y metadata)
 - **Cross-references** (RSC-006/007/008/009/010/011/012/013/014/015/020/026/029/031/032/033)
 - **Filename validation** (PKG-009/010/011/027)
 - **Duplicate filename detection** (OPF-060) - Unicode NFC normalization, case folding
@@ -169,7 +170,7 @@ test/fixtures/
 
 ### ❌ Not Implemented
 - Metadata.xml (multiple renditions)
-- Advanced accessibility (WCAG 2.0 comprehensive)
+- Advanced accessibility (remaining 5 ACC checks: ACC-008/013/015/016/017)
 - Full ARIA roles and attributes (DPUB-ARIA deprecated roles done)
 - External entity validation
 - Media format validation (beyond magic numbers — e.g., dimension checks, format-specific parsing)
@@ -247,7 +248,7 @@ Ordered by severity impact (number of active error/warning messages not yet emit
 
 1. **Media overlays** - Core SMIL validation + fragment/reading-order + CSS active class + OPF metadata checks + MED-016 duration sum done. 67% of 51 Java test scenarios ported (50/51, 34 passing, 16 skipped file-based). Remaining: 1 unported (duration tolerance edge case already covered).
 2. **Advanced media** - Format validation, magic numbers (3 errors: MED-003/004, PKG-021, 1 warning: PKG-022, 2 suppressed: OPF-051/057).
-3. **Full WCAG 2.0** - Comprehensive accessibility. Lowest real-world impact — all 15 unimplemented ACC messages (ACC-001/002/003/005/006/007/008/010/012/013/014/015/016/017) are **suppressed** by default. Only fires if user explicitly enables via customMessages. ACC-009 and ACC-011 (usage) are already implemented.
+3. **Full WCAG 2.0** - Remaining accessibility. Low real-world impact — all 5 unimplemented ACC messages (ACC-008/013/015/016/017) are **suppressed** by default. 12 of 17 ACC checks now implemented (ACC-001/002/003/004/005/006/007/009/010/011/012/014).
 
 ### Low Priority (Specialized)
 - Dictionary/index advanced validation
@@ -259,9 +260,9 @@ Ordered by severity impact (number of active error/warning messages not yet emit
 ## Message IDs
 
 **Defined**: 300 message IDs
-**Actively used**: 154 (51%)
+**Actively used**: 162 (54%)
 
-Active by prefix: OPF (53), RSC (26), PKG (16), CSS (12), HTM (21), NAV (4), NCX (3), ACC (4), MED (15)
+Active by prefix: OPF (53), RSC (26), PKG (16), CSS (12), HTM (21), NAV (4), NCX (3), ACC (12), MED (15)
 Unused prefixes: SCP (0), CHK (0), INF (0)
 
 ### Recent Message ID Fixes (aligned with Java EPUBCheck)
