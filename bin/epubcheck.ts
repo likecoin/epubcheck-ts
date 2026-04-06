@@ -10,7 +10,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 import { basename } from 'node:path';
-import type { EpubCheckOptions, EPUBProfile, ValidationMessage } from '../src/types.js';
+import type { EpubCheckOptions, EPUBProfile, Severity, ValidationMessage } from '../src/types.js';
 
 // Dynamic import to support both ESM and CJS builds
 const { EpubCheck, toJSONReport } = await import('../dist/index.js');
@@ -24,6 +24,9 @@ const { values, positionals } = parseArgs({
     quiet: { type: 'boolean', short: 'q', default: false },
     profile: { type: 'string', short: 'p' },
     usage: { type: 'boolean', short: 'u', default: false },
+    fatal: { type: 'boolean', short: 'f', default: false },
+    error: { type: 'boolean', short: 'e', default: false },
+    warn: { type: 'boolean', default: false },
     version: { type: 'boolean', short: 'v', default: false },
     help: { type: 'boolean', short: 'h', default: false },
     'fail-on-warnings': { type: 'boolean', short: 'w', default: false },
@@ -65,6 +68,9 @@ Options:
   -q, --quiet              Suppress console output (errors only)
   -p, --profile <name>     Validation profile (default|dict|edupub|idx|preview)
   -u, --usage              Include usage messages (best practices)
+  -f, --fatal              Show only fatal errors
+  -e, --error              Show fatal errors and errors
+      --warn               Show fatal errors, errors, and warnings
   -w, --fail-on-warnings   Exit with code 1 if warnings are found
   -l, --listChecks         List all message IDs and severities
   -v, --version            Show version information
@@ -121,9 +127,21 @@ async function main(): Promise<void> {
     const result = await EpubCheck.validate(epubData, options);
     const elapsedMs = Date.now() - startTime;
 
+    // Most restrictive severity flag wins (--fatal overrides --error overrides --warn)
+    const severityRank: Record<Severity, number> = { fatal: 0, error: 1, warning: 2, info: 3, usage: 4 };
+    let maxRank = 4;
+    if (values.fatal) maxRank = 0;
+    else if (values.error) maxRank = 1;
+    else if (values.warn) maxRank = 2;
+    const isFiltered = values.fatal || values.error || values.warn;
+    const displayMessages = result.messages.filter(
+      (m: ValidationMessage) => severityRank[m.severity] <= maxRank,
+    );
+
     // Output JSON report if requested
     if (values.json !== undefined) {
-      const jsonContent = toJSONReport(result); // Already stringified
+      const filteredResult = isFiltered ? { ...result, messages: displayMessages } : result;
+      const jsonContent = toJSONReport(filteredResult); // Already stringified
 
       if (values.json === '-') {
         // Output to stdout - suppress other output
@@ -145,11 +163,11 @@ async function main(): Promise<void> {
     // Console output (unless quiet mode)
     if (!values.quiet) {
       // Group messages by severity
-      const fatal = result.messages.filter((m: ValidationMessage) => m.severity === 'fatal');
-      const errors = result.messages.filter((m: ValidationMessage) => m.severity === 'error');
-      const warnings = result.messages.filter((m: ValidationMessage) => m.severity === 'warning');
-      const info = result.messages.filter((m: ValidationMessage) => m.severity === 'info');
-      const usage = result.messages.filter((m: ValidationMessage) => m.severity === 'usage');
+      const fatal = displayMessages.filter((m: ValidationMessage) => m.severity === 'fatal');
+      const errors = displayMessages.filter((m: ValidationMessage) => m.severity === 'error');
+      const warnings = displayMessages.filter((m: ValidationMessage) => m.severity === 'warning');
+      const info = displayMessages.filter((m: ValidationMessage) => m.severity === 'info');
+      const usage = displayMessages.filter((m: ValidationMessage) => m.severity === 'usage');
 
       // Print messages with colors
       const printMessages = (
@@ -180,8 +198,7 @@ async function main(): Promise<void> {
       if (warnings.length > 0) {
         printMessages(warnings, '\x1b[33m', 'WARNING');
       }
-      if (info.length > 0 && result.messages.length < 20) {
-        // Only show info if total messages is small
+      if (info.length > 0 && displayMessages.length < 20) {
         printMessages(info, '\x1b[36m', 'INFO');
       }
       if (usage.length > 0) {
