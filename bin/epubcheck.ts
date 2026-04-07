@@ -15,7 +15,7 @@ import type { EpubCheckOptions, EPUBProfile, Severity, ValidationMessage } from 
 // Dynamic import to support both ESM and CJS builds
 const { EpubCheck, toJSONReport } = await import('../dist/index.js');
 
-const VERSION = '0.3.9';
+const VERSION = '0.4.0';
 
 // Parse command line arguments
 const { values, positionals } = parseArgs({

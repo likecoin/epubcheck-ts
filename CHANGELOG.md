@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-04-07
+
+### Added
+
+- **Cross-document feature validation** — validates features across content documents (8 new message IDs, 1049 passing)
+- **8 accessibility checks** with ACC-005/ACC-001 mismatch fix (71% ACC coverage)
+- **Schematron content checks** — unskip 11 tests (97% content coverage)
+- **RSC-017 nested-ol nav check** — port 2 nav tests (95% nav coverage)
+- **--customMessages severity override** CLI option — unskip 10 ACC tests
+- **--fatal, --error, --warn severity filters** to CLI
+- **npm Trusted Publishing workflow** with OIDC provenance
+
+### Fixed
+
+- **CSS-005** alt style tag check, add OPF-018 for CSS files (85% CSS coverage)
+- **ACC-005→ACC-001** mismatch in src tests
+
+### Changed
+
+- Test coverage: 1061 tests passing (up from 1027), 74 skipped (down from 90)
+- E2E coverage: ~93% of Java EPUBCheck scenarios (up from ~86%)
+- Accessibility coverage: 74% (up from 0% in 0.3.9 scope)
+- ESLint config: ignore docs/html/ directory
+- Dependency bumps: minimatch, vite, rollup, picomatch, flatted
+
 ## [0.3.9] - 2026-03-28
 
 ### Added
@@ -535,7 +560,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - No media overlays validation
 - No script detection/validation
 
-[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.7...HEAD
+[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.9...v0.4.0
+[0.3.9]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.8...v0.3.9
+[0.3.8]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.7...v0.3.8
 [0.3.7]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.6...v0.3.7
 [0.3.6]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.4...v0.3.5
