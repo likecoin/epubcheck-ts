@@ -1,5 +1,6 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { ManifestItem, PackageDocument } from '../opf/types.js';
+import { setSeverityOverrides, clearSeverityOverrides, type MessageSeverity } from '../messages/index.js';
 import { ResourceRegistry } from '../references/registry.js';
 import type { EpubCheckOptions, ValidationContext } from '../types.js';
 import { ContentValidator } from './validator.js';
@@ -725,8 +726,12 @@ describe('ContentValidator', () => {
   });
 
   describe('accessibility', () => {
-    // ACC-004 is suppressed in Java EPUBCheck
-    it.skip('should warn about empty links (ACC-004) (suppressed in Java)', () => {
+    afterEach(() => {
+      clearSeverityOverrides();
+    });
+
+    it('should warn about empty links (ACC-004) (with severity override)', () => {
+      setSeverityOverrides(new Map([['ACC-004', 'warning' as MessageSeverity]]));
       const emptyLinkXHTML = `<?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
@@ -790,8 +795,8 @@ describe('ContentValidator', () => {
       expect(accWarnings).toHaveLength(0);
     });
 
-    // ACC-005 is suppressed in Java EPUBCheck
-    it.skip('should warn about images without alt attribute (ACC-005) (suppressed in Java)', () => {
+    it('should warn about images without alt attribute (ACC-001) (with severity override)', () => {
+      setSeverityOverrides(new Map([['ACC-001', 'warning' as MessageSeverity]]));
       const noAltXHTML = `<?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
@@ -808,12 +813,13 @@ describe('ContentValidator', () => {
       context = createContext(files, packageDoc);
       validator.validate(context);
 
-      const accWarnings = context.messages.filter((m) => m.id === 'ACC-005');
+      const accWarnings = context.messages.filter((m) => m.id === 'ACC-001');
       expect(accWarnings).toHaveLength(1);
       expect(accWarnings[0]?.message).toContain('alt');
     });
 
     it('should accept images with alt attribute', () => {
+      setSeverityOverrides(new Map([['ACC-001', 'warning' as MessageSeverity]]));
       const withAltXHTML = `<?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
@@ -830,11 +836,12 @@ describe('ContentValidator', () => {
       context = createContext(files, packageDoc);
       validator.validate(context);
 
-      const accWarnings = context.messages.filter((m) => m.id === 'ACC-005');
+      const accWarnings = context.messages.filter((m) => m.id === 'ACC-001');
       expect(accWarnings).toHaveLength(0);
     });
 
     it('should accept images with empty alt for decorative images', () => {
+      setSeverityOverrides(new Map([['ACC-001', 'warning' as MessageSeverity]]));
       const emptyAltXHTML = `<?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
@@ -851,7 +858,7 @@ describe('ContentValidator', () => {
       context = createContext(files, packageDoc);
       validator.validate(context);
 
-      const accWarnings = context.messages.filter((m) => m.id === 'ACC-005');
+      const accWarnings = context.messages.filter((m) => m.id === 'ACC-001');
       expect(accWarnings).toHaveLength(0);
     });
   });
