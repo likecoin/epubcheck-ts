@@ -1,5 +1,10 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+import { afterEach, describe, expect, it, beforeEach } from 'vitest';
 import { NCXValidator } from '../../../src/ncx/validator.js';
+import {
+  setSeverityOverrides,
+  clearSeverityOverrides,
+  type MessageSeverity,
+} from '../../../src/messages/index.js';
 import type { ValidationContext } from '../../../src/types.js';
 
 function createValidationContext(): ValidationContext {
@@ -57,16 +62,20 @@ describe('NCXValidator', () => {
   });
 
   describe('Well-formedness validation', () => {
-    // NCX-002 is suppressed in Java EPUBCheck
-    it.skip('should add NCX-002 error for malformed NCX (suppressed in Java)', () => {
+    afterEach(() => {
+      clearSeverityOverrides();
+    });
+
+    it('should add NCX-002 error for malformed NCX (with severity override)', () => {
+      setSeverityOverrides(new Map([['NCX-002', 'error' as MessageSeverity]]));
       const malformedNCX = '<?xml version="1.0" encoding="UTF-8"?><ncx><unclosed>';
       validator.validate(context, malformedNCX, 'OEBPS/toc.ncx');
 
       expect(context.messages.some((m) => m.id === 'NCX-002')).toBe(true);
     });
 
-    // NCX-002 is suppressed in Java EPUBCheck
-    it.skip('should add NCX-002 error for invalid XML (suppressed in Java)', () => {
+    it('should add NCX-002 error for invalid XML (with severity override)', () => {
+      setSeverityOverrides(new Map([['NCX-002', 'error' as MessageSeverity]]));
       const invalidNCX = '<?xml version="1.0" encoding="UTF-8"?><ncx><unclosedTag></ncx>';
       validator.validate(context, invalidNCX, 'OEBPS/toc.ncx');
 

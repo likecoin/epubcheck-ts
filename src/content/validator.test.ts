@@ -90,6 +90,10 @@ describe('ContentValidator', () => {
     validator = new ContentValidator();
   });
 
+  afterEach(() => {
+    clearSeverityOverrides();
+  });
+
   describe('validate', () => {
     it('should skip validation when no package document is present', () => {
       context = createContext(new Map());
@@ -200,8 +204,8 @@ describe('ContentValidator', () => {
       expect(htmErrors[0]?.message).toContain('closing tag');
     });
 
-    // HTM-012 is suppressed in Java EPUBCheck
-    it.skip('should detect unescaped ampersands (suppressed in Java)', () => {
+    it('should detect unescaped ampersands (with severity override)', () => {
+      setSeverityOverrides(new Map([['HTM-012', 'error' as MessageSeverity]]));
       const badXHTML = `<?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
@@ -452,8 +456,8 @@ describe('ContentValidator', () => {
       expect(navErrors[0]?.message).toContain('epub:type="toc"');
     });
 
-    // NAV-002 is suppressed in Java EPUBCheck
-    it.skip('should require ol element inside nav toc (suppressed in Java)', () => {
+    it('should require ol element inside nav toc (with severity override)', () => {
+      setSeverityOverrides(new Map([['NAV-002', 'error' as MessageSeverity]]));
       const badNav = `<?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
   <head>
@@ -726,10 +730,6 @@ describe('ContentValidator', () => {
   });
 
   describe('accessibility', () => {
-    afterEach(() => {
-      clearSeverityOverrides();
-    });
-
     it('should warn about empty links (ACC-004) (with severity override)', () => {
       setSeverityOverrides(new Map([['ACC-004', 'warning' as MessageSeverity]]));
       const emptyLinkXHTML = `<?xml version="1.0" encoding="UTF-8"?>

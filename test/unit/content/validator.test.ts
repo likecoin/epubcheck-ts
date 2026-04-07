@@ -61,6 +61,10 @@ describe('ContentValidator', () => {
     validator = new ContentValidator();
   });
 
+  afterEach(() => {
+    clearSeverityOverrides();
+  });
+
   describe('XHTML document structure validation', () => {
     it('should add HTM-001 error for missing XHTML namespace', () => {
       const context = createValidationContext();
@@ -121,8 +125,8 @@ describe('ContentValidator', () => {
       expect(context.messages.length).toBeGreaterThanOrEqual(0);
     });
 
-    // HTM-012 is suppressed in Java EPUBCheck
-    it.skip('should add HTM-012 error for unescaped ampersands (suppressed in Java)', () => {
+    it('should add HTM-012 error for unescaped ampersands (with severity override)', () => {
+      setSeverityOverrides(new Map([['HTM-012', 'error' as MessageSeverity]]));
       const context = createValidationContext();
       const packageDoc = createMinimalPackage();
       context.packageDocument = packageDoc;
@@ -392,10 +396,6 @@ describe('ContentValidator', () => {
   });
 
   describe('Accessibility checks', () => {
-    afterEach(() => {
-      clearSeverityOverrides();
-    });
-
     it('should add ACC-004 warning for hyperlink without accessible text (with severity override)', () => {
       setSeverityOverrides(new Map([['ACC-004', 'warning' as MessageSeverity]]));
       const context = createValidationContext();
