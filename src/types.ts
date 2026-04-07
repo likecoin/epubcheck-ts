@@ -17,6 +17,11 @@ export type EPUBVersion = '2.0' | '3.0' | '3.1' | '3.2' | '3.3';
 export type EPUBProfile = 'default' | 'edupub' | 'idx' | 'dict' | 'preview';
 
 /**
+ * Validation modes for single-file and expanded directory validation
+ */
+export type ValidationMode = 'exp' | 'opf' | 'xhtml' | 'svg' | 'nav' | 'mo';
+
+/**
  * Location within an EPUB file
  */
 export interface EPUBLocation {
@@ -78,6 +83,8 @@ export interface EpubCheckOptions {
   version?: EPUBVersion;
   /** Validation profile */
   profile?: EPUBProfile;
+  /** Validation mode for single-file or expanded directory validation */
+  mode?: ValidationMode;
   /** Whether to include usage messages */
   includeUsage?: boolean;
   /** Whether to include info messages */
@@ -91,13 +98,19 @@ export interface EpubCheckOptions {
 }
 
 /**
+ * EpubCheckOptions with all fields required except mode (which is inherently optional)
+ */
+export type ResolvedEpubCheckOptions = Required<Omit<EpubCheckOptions, 'mode'>> &
+  Pick<EpubCheckOptions, 'mode'>;
+
+/**
  * Internal validation context passed through the validation pipeline
  */
 export interface ValidationContext {
   /** EPUB file data */
   data: Uint8Array;
   /** Validation options */
-  options: Required<EpubCheckOptions>;
+  options: ResolvedEpubCheckOptions;
   /** Detected EPUB version */
   version: EPUBVersion;
   /** Validation messages collected so far */

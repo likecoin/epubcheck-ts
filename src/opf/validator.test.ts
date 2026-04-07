@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { EpubCheckOptions, ValidationContext } from '../types.js';
+import type { ResolvedEpubCheckOptions, ValidationContext } from '../types.js';
 import {
   setSeverityOverrides,
   clearSeverityOverrides,
@@ -10,7 +10,7 @@ import { OPFValidator } from './validator.js';
 describe('OPFValidator', () => {
   let validator: OPFValidator;
 
-  const defaultOptions: Required<EpubCheckOptions> = {
+  const defaultOptions: ResolvedEpubCheckOptions = {
     version: '3.0',
     profile: 'default',
     includeUsage: false,

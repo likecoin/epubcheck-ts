@@ -1,15 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { ManifestItem, PackageDocument } from '../opf/types.js';
-import { setSeverityOverrides, clearSeverityOverrides, type MessageSeverity } from '../messages/index.js';
+import {
+  setSeverityOverrides,
+  clearSeverityOverrides,
+  type MessageSeverity,
+} from '../messages/index.js';
 import { ResourceRegistry } from '../references/registry.js';
-import type { EpubCheckOptions, ValidationContext } from '../types.js';
+import type { ResolvedEpubCheckOptions, ValidationContext } from '../types.js';
 import { ContentValidator } from './validator.js';
 
 describe('ContentValidator', () => {
   let validator: ContentValidator;
   let context: ValidationContext;
 
-  const defaultOptions: Required<EpubCheckOptions> = {
+  const defaultOptions: ResolvedEpubCheckOptions = {
     version: '3.0',
     profile: 'default',
     includeUsage: false,

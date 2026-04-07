@@ -508,6 +508,15 @@ function isItemFixedLayout(
 export class ContentValidator {
   private cssWithRemoteResources = new Set<string>();
 
+  /**
+   * Validate a single XHTML document without a full EPUB container.
+   * Used for --mode xhtml single-file validation.
+   */
+  validateSingleDocument(context: ValidationContext, path: string): void {
+    context.contentFeatures = {};
+    this.validateXHTMLDocument(context, path, '');
+  }
+
   validate(
     context: ValidationContext,
     registry?: ResourceRegistry,
@@ -1212,9 +1221,6 @@ export class ContentValidator {
 
     let content = new TextDecoder().decode(data);
     const packageDoc = context.packageDocument;
-    if (!packageDoc) {
-      return;
-    }
 
     // Check for unusual epub namespace before parsing (HTM-010)
     const epubNsMatch = EPUB_XMLNS_RE.exec(content);
@@ -1369,7 +1375,7 @@ export class ContentValidator {
       }
 
       // Check if it's a navigation document
-      const manifestItem = packageDoc.manifest.find(
+      const manifestItem = packageDoc?.manifest.find(
         (item: { id: string; properties?: string[] }) => item.id === itemId,
       );
       const isNavItem = manifestItem?.properties?.includes('nav');

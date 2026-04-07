@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { EpubCheckOptions, ValidationContext } from '../types.js';
+import type { ResolvedEpubCheckOptions, ValidationContext } from '../types.js';
 import { ResourceRegistry } from './registry.js';
 import { type Reference, ReferenceType, type Resource } from './types.js';
 import { ReferenceValidator } from './validator.js';
@@ -9,7 +9,7 @@ describe('ReferenceValidator', () => {
   let registry: ResourceRegistry;
   let context: ValidationContext;
 
-  const defaultOptions: Required<EpubCheckOptions> = {
+  const defaultOptions: ResolvedEpubCheckOptions = {
     version: '3.0',
     profile: 'default',
     includeUsage: false,

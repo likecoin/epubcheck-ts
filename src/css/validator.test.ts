@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { EpubCheckOptions, ValidationContext } from '../types.js';
+import type { ResolvedEpubCheckOptions, ValidationContext } from '../types.js';
 import { CSSValidator } from './validator.js';
 
 describe('CSSValidator', () => {
   let validator: CSSValidator;
   let context: ValidationContext;
 
-  const defaultOptions: Required<EpubCheckOptions> = {
+  const defaultOptions: ResolvedEpubCheckOptions = {
     version: '3.0',
     profile: 'default',
     includeUsage: false,

@@ -7,6 +7,11 @@ import {
   clearSeverityOverrides,
 } from './messages/index.js';
 import { NCXValidator } from './nav/index.js';
+import {
+  parseContainerContent,
+  validateDuplicateFilenames,
+  validateFilenameCharacters,
+} from './ocf/container.js';
 import { OCFValidator } from './ocf/index.js';
 import { OPFValidator } from './opf/index.js';
 import { isCoreMediaType } from './opf/types.js';
@@ -18,6 +23,7 @@ import type {
   EPUBVersion,
   EpubCheckOptions,
   EpubCheckResult,
+  ResolvedEpubCheckOptions,
   ValidationContext,
   ValidationMessage,
 } from './types.js';
@@ -25,7 +31,7 @@ import type {
 /**
  * Default options for EpubCheck
  */
-const DEFAULT_OPTIONS: Required<EpubCheckOptions> = {
+const DEFAULT_OPTIONS: ResolvedEpubCheckOptions = {
   version: '3.3',
   profile: 'default',
   includeUsage: false,
@@ -56,7 +62,7 @@ const DEFAULT_OPTIONS: Required<EpubCheckOptions> = {
  * ```
  */
 export class EpubCheck {
-  private readonly options: Required<EpubCheckOptions>;
+  private readonly options: ResolvedEpubCheckOptions;
 
   /**
    * Create a new EpubCheck instance with custom options
@@ -100,40 +106,9 @@ export class EpubCheck {
         return buildReport(context.messages, context.version, elapsedMs);
       }
 
-      // Step 2: Validate package document (OPF)
-      const opfValidator = new OPFValidator();
-      opfValidator.validate(context);
-
-      // Step 3: Create resource registry and reference validator
-      const registry = new ResourceRegistry();
-      const refValidator = new ReferenceValidator(registry, context.version);
-
-      // Populate registry from manifest
-      if (context.packageDocument) {
-        this.populateRegistry(context, registry);
-        this.validateObfuscatedResources(context);
-      }
-
-      // Step 4: Validate content documents (XHTML) and extract references
-      const contentValidator = new ContentValidator();
-      contentValidator.validate(context, registry, refValidator);
-
-      // Step 4.5: Cross-document feature validation
-      this.validateCrossDocumentFeatures(context);
-
-      // Step 5: Validate NCX navigation (EPUB 2 always; EPUB 3 when NCX is present)
-      if (context.packageDocument) {
-        this.validateNCX(context, registry);
-      }
-
-      // Step 6: Run cross-reference validation
-      refValidator.validate(context);
-
-      // Step 7: Run schema validations (RelaxNG, XSD, Schematron)
-      const schemaValidator = new SchemaValidator(context);
-      await schemaValidator.validate();
+      // Steps 2-7: Shared validation pipeline
+      await this.runPipeline(context);
     } catch (error) {
-      // Add fatal error for unexpected exceptions
       pushMessage(context.messages, {
         id: MessageId.PKG_025,
         message: error instanceof Error ? error.message : 'Unknown validation error',
@@ -143,20 +118,119 @@ export class EpubCheck {
     }
 
     const elapsedMs = performance.now() - startTime;
+    return this.buildFilteredReport(context, elapsedMs);
+  }
 
-    // Filter messages based on options
-    const filteredMessages = context.messages.filter((msg) => {
-      if (!this.options.includeUsage && msg.severity === 'usage') {
-        return false;
-      }
-      if (!this.options.includeInfo && msg.severity === 'info') {
-        return false;
-      }
-      return true;
-    });
+  /**
+   * Validate an expanded EPUB directory (pre-read file map)
+   *
+   * @param files - Map of relative file paths to their content
+   * @returns Validation result
+   */
+  async checkExpanded(files: Map<string, Uint8Array>): Promise<EpubCheckResult> {
+    const startTime = performance.now();
 
-    // Build and return result
-    return buildReport(filteredMessages, context.version, elapsedMs);
+    const context: ValidationContext = {
+      data: new Uint8Array(0),
+      options: this.options,
+      version: this.options.version,
+      messages: [],
+      files: new Map(),
+      rootfiles: [],
+    };
+
+    if (this.options.customMessages.size > 0) {
+      setSeverityOverrides(this.options.customMessages);
+    }
+
+    try {
+      // Populate context.files with NFC-normalized paths
+      for (const [path, data] of files) {
+        context.files.set(path.normalize('NFC'), data);
+      }
+
+      // Validate mimetype file content (skip ZIP-specific checks)
+      this.validateExpandedMimetype(context);
+
+      // Parse container.xml to find rootfiles and opfPath
+      this.parseContainerXml(context);
+
+      // Stop if fatal errors
+      if (context.messages.some((m) => m.severity === 'fatal')) {
+        const elapsedMs = performance.now() - startTime;
+        return buildReport(context.messages, context.version, elapsedMs);
+      }
+
+      // Validate filenames
+      this.validateExpandedFilenames(context);
+
+      // Run the shared pipeline (Steps 2-7)
+      await this.runPipeline(context);
+    } catch (error) {
+      pushMessage(context.messages, {
+        id: MessageId.PKG_025,
+        message: error instanceof Error ? error.message : 'Unknown validation error',
+      });
+    } finally {
+      clearSeverityOverrides();
+    }
+
+    const elapsedMs = performance.now() - startTime;
+    return this.buildFilteredReport(context, elapsedMs);
+  }
+
+  /**
+   * Validate a single file (OPF, XHTML, etc.) without a full EPUB container
+   *
+   * @param data - The file content
+   * @param filename - The filename (used for path in messages)
+   * @returns Validation result
+   */
+  async checkSingleFile(data: Uint8Array, filename: string): Promise<EpubCheckResult> {
+    const startTime = performance.now();
+    const mode = this.options.mode;
+
+    const context: ValidationContext = {
+      data: new Uint8Array(0),
+      options: this.options,
+      version: this.options.version,
+      messages: [],
+      files: new Map(),
+      rootfiles: [],
+    };
+
+    if (this.options.customMessages.size > 0) {
+      setSeverityOverrides(this.options.customMessages);
+    }
+
+    try {
+      context.files.set(filename, data);
+
+      if (mode === 'opf') {
+        context.opfPath = filename;
+        const opfValidator = new OPFValidator();
+        opfValidator.validate(context);
+
+        const schemaValidator = new SchemaValidator(context);
+        await schemaValidator.validate();
+      } else if (mode === 'xhtml') {
+        const contentValidator = new ContentValidator();
+        contentValidator.validateSingleDocument(context, filename);
+
+        const schemaValidator = new SchemaValidator(context);
+        await schemaValidator.validate();
+      }
+    } catch (error) {
+      pushMessage(context.messages, {
+        id: MessageId.PKG_025,
+        message: error instanceof Error ? error.message : 'Unknown validation error',
+      });
+    } finally {
+      clearSeverityOverrides();
+    }
+
+    const elapsedMs = performance.now() - startTime;
+    return this.buildFilteredReport(context, elapsedMs);
   }
 
   /**
@@ -172,6 +246,29 @@ export class EpubCheck {
   ): Promise<EpubCheckResult> {
     const checker = new EpubCheck(options);
     return checker.check(data);
+  }
+
+  /**
+   * Static method to validate an expanded EPUB (pre-read file map)
+   */
+  static async validateExpanded(
+    files: Map<string, Uint8Array>,
+    options: EpubCheckOptions = {},
+  ): Promise<EpubCheckResult> {
+    const checker = new EpubCheck(options);
+    return checker.checkExpanded(files);
+  }
+
+  /**
+   * Static method to validate a single file
+   */
+  static async validateSingleFile(
+    data: Uint8Array,
+    filename: string,
+    options: EpubCheckOptions = {},
+  ): Promise<EpubCheckResult> {
+    const checker = new EpubCheck(options);
+    return checker.checkSingleFile(data, filename);
   }
 
   /**
@@ -439,5 +536,112 @@ export class EpubCheck {
       currentId = item.fallback;
     }
     return false;
+  }
+
+  /**
+   * Shared validation pipeline (Steps 2-7) used by both check() and checkExpanded()
+   */
+  private async runPipeline(context: ValidationContext): Promise<void> {
+    // Step 2: Validate package document (OPF)
+    const opfValidator = new OPFValidator();
+    opfValidator.validate(context);
+
+    // Step 3: Create resource registry and reference validator
+    const registry = new ResourceRegistry();
+    const refValidator = new ReferenceValidator(registry, context.version);
+
+    // Populate registry from manifest
+    if (context.packageDocument) {
+      this.populateRegistry(context, registry);
+      this.validateObfuscatedResources(context);
+    }
+
+    // Step 4: Validate content documents (XHTML) and extract references
+    const contentValidator = new ContentValidator();
+    contentValidator.validate(context, registry, refValidator);
+
+    // Step 4.5: Cross-document feature validation
+    this.validateCrossDocumentFeatures(context);
+
+    // Step 5: Validate NCX navigation (EPUB 2 always; EPUB 3 when NCX is present)
+    if (context.packageDocument) {
+      this.validateNCX(context, registry);
+    }
+
+    // Step 6: Run cross-reference validation
+    refValidator.validate(context);
+
+    // Step 7: Run schema validations (RelaxNG, XSD, Schematron)
+    const schemaValidator = new SchemaValidator(context);
+    await schemaValidator.validate();
+  }
+
+  /**
+   * Build a filtered report from validation context
+   */
+  private buildFilteredReport(context: ValidationContext, elapsedMs: number): EpubCheckResult {
+    const filteredMessages = context.messages.filter((msg) => {
+      if (!this.options.includeUsage && msg.severity === 'usage') return false;
+      if (!this.options.includeInfo && msg.severity === 'info') return false;
+      return true;
+    });
+    return buildReport(filteredMessages, context.version, elapsedMs);
+  }
+
+  /**
+   * Validate mimetype file content for expanded EPUB (no ZIP-specific checks)
+   */
+  private validateExpandedMimetype(context: ValidationContext): void {
+    const mimetypeData = context.files.get('mimetype');
+    if (!mimetypeData) {
+      pushMessage(context.messages, {
+        id: MessageId.PKG_006,
+        message: 'Missing mimetype file',
+        location: { path: 'mimetype' },
+      });
+      return;
+    }
+
+    const content = new TextDecoder().decode(mimetypeData);
+    if (content !== 'application/epub+zip') {
+      pushMessage(context.messages, {
+        id: MessageId.PKG_007,
+        message: 'Mimetype file must contain exactly "application/epub+zip"',
+        location: { path: 'mimetype' },
+      });
+    }
+  }
+
+  /**
+   * Parse container.xml from context.files to find rootfiles and opfPath
+   */
+  private parseContainerXml(context: ValidationContext): void {
+    const containerPath = 'META-INF/container.xml';
+    const containerData = context.files.get(containerPath);
+
+    if (!containerData) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_002,
+        message: 'Required file META-INF/container.xml was not found',
+        location: { path: containerPath },
+      });
+      return;
+    }
+
+    const content = new TextDecoder().decode(containerData);
+    parseContainerContent(content, context, (path) => context.files.has(path));
+  }
+
+  /**
+   * Validate filenames for expanded EPUB
+   */
+  private validateExpandedFilenames(context: ValidationContext): void {
+    const filePaths: string[] = [];
+    for (const path of context.files.keys()) {
+      if (path === 'mimetype') continue;
+      validateFilenameCharacters(path, context.messages);
+      filePaths.push(path);
+    }
+    validateDuplicateFilenames(filePaths, context.messages);
   }
 }

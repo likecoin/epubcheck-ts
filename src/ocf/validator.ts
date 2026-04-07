@@ -1,5 +1,10 @@
 import { MessageId, pushMessage } from '../messages/index.js';
 import type { ValidationContext, ValidationMessage } from '../types.js';
+import {
+  parseContainerContent,
+  validateDuplicateFilenames,
+  validateFilenameCharacters,
+} from './container.js';
 import { ZipReader } from './zip.js';
 
 /**
@@ -50,7 +55,7 @@ export class OCFValidator {
     this.validateFilenames(zip, context.messages);
 
     // Check for duplicate filenames (case folding, Unicode normalization)
-    this.validateDuplicateFilenames(zip, context.messages);
+    this.checkZipDuplicateEntries(zip, context.messages);
 
     // Check for non-UTF8 filenames
     this.validateUtf8Filenames(zip, context.messages);
@@ -169,186 +174,31 @@ export class OCFValidator {
       return;
     }
 
-    // Parse container.xml to extract rootfiles
-    // TODO: Use libxml2-wasm for proper XML parsing and validation
-    // For now, use a simple regex extraction
-    const rootfileMatches = content.matchAll(
-      /<rootfile[^>]+full-path=["']([^"']+)["'][^>]*media-type=["']([^"']+)["'][^>]*\/?>/g,
-    );
-
-    for (const match of rootfileMatches) {
-      const [, path, mediaType] = match;
-      if (path && mediaType) {
-        context.rootfiles.push({ path, mediaType });
-
-        // Set the first OPF as the main package document
-        if (!context.opfPath && mediaType === 'application/oebps-package+xml') {
-          context.opfPath = path;
-        }
-      }
-    }
-
-    // Also try alternative attribute order
-    const altMatches = content.matchAll(
-      /<rootfile[^>]+media-type=["']([^"']+)["'][^>]*full-path=["']([^"']+)["'][^>]*\/?>/g,
-    );
-
-    for (const match of altMatches) {
-      const [, mediaType, path] = match;
-      if (path && mediaType) {
-        // Check if already added
-        const exists = context.rootfiles.some((r) => r.path === path);
-        if (!exists) {
-          context.rootfiles.push({ path, mediaType });
-          if (!context.opfPath && mediaType === 'application/oebps-package+xml') {
-            context.opfPath = path;
-          }
-        }
-      }
-    }
-
-    if (context.rootfiles.length === 0) {
-      pushMessage(context.messages, {
-        id: MessageId.PKG_004,
-        message: 'No rootfile found in container.xml',
-        location: { path: containerPath },
-      });
-    }
-
-    // Verify rootfile paths exist
-    for (const rootfile of context.rootfiles) {
-      if (!zip.has(rootfile.path)) {
-        pushMessage(context.messages, {
-          id: MessageId.PKG_010,
-          message: `Rootfile "${rootfile.path}" not found in EPUB`,
-          location: { path: containerPath },
-        });
-      }
-    }
+    parseContainerContent(content, context, (path) => zip.has(path));
   }
 
   /**
    * Validate filenames for invalid characters
-   *
-   * Per EPUB 3.3 spec and Java EPUBCheck:
-   * - PKG-009: Disallowed characters (ASCII special chars, control chars, private use, etc.)
-   * - PKG-010: Whitespace characters (warning)
-   * - PKG-011: Filename ends with period
-   * - PKG-012: Non-ASCII characters (usage info)
    */
   private validateFilenames(zip: ZipReader, messages: ValidationMessage[]): void {
-    // Disallowed ASCII characters: " * : < > ? \ |
-    const DISALLOWED_ASCII = new Set([0x22, 0x2a, 0x3a, 0x3c, 0x3e, 0x3f, 0x5c, 0x7c]);
-
     for (const path of zip.paths) {
       if (path === 'mimetype') continue;
-
-      // Skip directory entries (paths ending with /)
       if (path.endsWith('/')) continue;
-
-      const filename = path.includes('/') ? (path.split('/').pop() ?? path) : path;
-
-      if (filename === '' || filename === '.' || filename === '..') {
-        pushMessage(messages, {
-          id: MessageId.PKG_009,
-          message: `Invalid filename: "${path}"`,
-          location: { path },
-        });
-        continue;
-      }
-
-      const disallowed: string[] = [];
-      let hasSpaces = false;
-      let hasNonASCII = false;
-
-      for (let i = 0; i < filename.length; i++) {
-        const code = filename.charCodeAt(i);
-
-        // Check for disallowed ASCII characters
-        if (DISALLOWED_ASCII.has(code)) {
-          const char = filename[i] ?? '';
-          disallowed.push(`U+${code.toString(16).toUpperCase().padStart(4, '0')} (${char})`);
-        }
-        // Check for control characters (C0: 0x00-0x1F, DEL: 0x7F, C1: 0x80-0x9F)
-        else if (code <= 0x1f || code === 0x7f || (code >= 0x80 && code <= 0x9f)) {
-          disallowed.push(`U+${code.toString(16).toUpperCase().padStart(4, '0')} (CONTROL)`);
-        }
-        // Check for private use area (0xE000-0xF8FF)
-        else if (code >= 0xe000 && code <= 0xf8ff) {
-          disallowed.push(`U+${code.toString(16).toUpperCase().padStart(4, '0')} (PRIVATE USE)`);
-        }
-        // Check for specials block (0xFFF0-0xFFFF)
-        else if (code >= 0xfff0 && code <= 0xffff) {
-          disallowed.push(`U+${code.toString(16).toUpperCase().padStart(4, '0')} (SPECIALS)`);
-        }
-
-        // Check for non-ASCII (PKG-012 usage)
-        if (code > 0x7f) {
-          hasNonASCII = true;
-        }
-
-        // Check for whitespace
-        if (code === 0x20 || code === 0x09 || code === 0x0a || code === 0x0d) {
-          hasSpaces = true;
-        }
-      }
-
-      // Check if filename ends with period
-      if (filename.endsWith('.')) {
-        pushMessage(messages, {
-          id: MessageId.PKG_011,
-          message: `Filename must not end with a period: "${path}"`,
-          location: { path },
-        });
-      }
-
-      // Report disallowed characters (PKG-009)
-      if (disallowed.length > 0) {
-        pushMessage(messages, {
-          id: MessageId.PKG_009,
-          message: `Filename "${path}" contains disallowed characters: ${disallowed.join(', ')}`,
-          location: { path },
-        });
-      }
-
-      // Report whitespace (PKG-010 - warning)
-      if (hasSpaces) {
-        pushMessage(messages, {
-          id: MessageId.PKG_010,
-          message: `Filename "${path}" contains spaces`,
-          location: { path },
-          severityOverride: 'warning',
-        });
-      }
-
-      // Report non-ASCII characters (PKG-012 - usage)
-      if (hasNonASCII && disallowed.length === 0) {
-        pushMessage(messages, {
-          id: MessageId.PKG_012,
-          message: `Filename "${path}" contains non-ASCII characters`,
-          location: { path },
-        });
-      }
+      validateFilenameCharacters(path, messages);
     }
   }
 
   /**
    * Check for duplicate filenames after Unicode normalization and case folding
-   *
-   * Per EPUB spec, filenames must be unique after applying:
-   * - Unicode Canonical Case Fold Normalization (NFD + case folding)
-   *
-   * OPF-060: Duplicate filename after normalization
    */
-  private validateDuplicateFilenames(zip: ZipReader, messages: ValidationMessage[]): void {
-    const seenPaths = new Set<string>(); // exact paths
-    const normalizedPaths = new Map<string, string>(); // normalized -> original
+  private checkZipDuplicateEntries(zip: ZipReader, messages: ValidationMessage[]): void {
+    const seenPaths = new Set<string>();
+    const filePaths: string[] = [];
 
     for (const path of zip.paths) {
-      // Skip directory entries
       if (path.endsWith('/')) continue;
 
-      // First check for exact duplicate ZIP entries
+      // Check for exact duplicate ZIP entries (ZIP-specific, not in shared util)
       if (seenPaths.has(path)) {
         pushMessage(messages, {
           id: MessageId.OPF_060,
@@ -358,85 +208,10 @@ export class OCFValidator {
         continue;
       }
       seenPaths.add(path);
-
-      // Apply Unicode Canonical Case Fold Normalization:
-      // 1. NFD (Canonical Decomposition)
-      // 2. Case folding (using full Unicode case folding)
-      const normalized = this.canonicalCaseFold(path);
-
-      const existing = normalizedPaths.get(normalized);
-      if (existing !== undefined) {
-        pushMessage(messages, {
-          id: MessageId.OPF_060,
-          message: `Duplicate filename after Unicode normalization: "${path}" conflicts with "${existing}"`,
-          location: { path },
-        });
-      } else {
-        normalizedPaths.set(normalized, path);
-      }
+      filePaths.push(path);
     }
-  }
 
-  /**
-   * Apply Unicode Canonical Case Fold Normalization
-   *
-   * This applies:
-   * 1. NFD (Canonical Decomposition) - decomposes combined characters
-   * 2. Full Unicode case folding
-   *
-   * Based on Unicode case folding rules for filename comparison.
-   */
-  private canonicalCaseFold(str: string): string {
-    // NFD normalization first
-    let result = str.normalize('NFD');
-
-    // Apply full Unicode case folding
-    // This handles special cases like ß -> ss, ﬁ -> fi, etc.
-    result = this.unicodeCaseFold(result);
-
-    return result;
-  }
-
-  /**
-   * Perform Unicode full case folding
-   *
-   * Handles special Unicode case folding rules beyond simple toLowerCase:
-   * - ß (U+00DF) -> ss
-   * - ẞ (U+1E9E) -> ss (capital sharp s)
-   * - ﬁ (U+FB01) -> fi
-   * - ﬂ (U+FB02) -> fl
-   * - ﬀ (U+FB00) -> ff
-   * - ﬃ (U+FB03) -> ffi
-   * - ﬄ (U+FB04) -> ffl
-   * - ﬅ (U+FB05) -> st
-   * - ﬆ (U+FB06) -> st
-   * And other Unicode case folding rules
-   */
-  private unicodeCaseFold(str: string): string {
-    // Common full case folding mappings that toLowerCase doesn't handle
-    const caseFoldMap: Record<string, string> = {
-      '\u00DF': 'ss', // ß -> ss
-      '\u1E9E': 'ss', // ẞ -> ss (capital sharp s)
-      '\uFB00': 'ff', // ﬀ -> ff
-      '\uFB01': 'fi', // ﬁ -> fi
-      '\uFB02': 'fl', // ﬂ -> fl
-      '\uFB03': 'ffi', // ﬃ -> ffi
-      '\uFB04': 'ffl', // ﬄ -> ffl
-      '\uFB05': 'st', // ﬅ -> st
-      '\uFB06': 'st', // ﬆ -> st
-      '\u0130': 'i\u0307', // İ -> i + combining dot above
-    };
-
-    let result = '';
-    for (const char of str) {
-      const folded = caseFoldMap[char];
-      if (folded !== undefined) {
-        result += folded;
-      } else {
-        result += char.toLowerCase();
-      }
-    }
-    return result;
+    validateDuplicateFilenames(filePaths, messages);
   }
 
   /**

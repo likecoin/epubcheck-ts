@@ -11,10 +11,12 @@ export { EpubCheck } from './checker.js';
 export type {
   EpubCheckOptions,
   EpubCheckResult,
+  ResolvedEpubCheckOptions,
   ValidationMessage,
   Severity,
   EPUBVersion,
   EPUBProfile,
+  ValidationMode,
   ValidationContext,
 } from './types.js';
 

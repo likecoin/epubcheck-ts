@@ -1737,6 +1737,7 @@ export class OPFValidator {
           : fullPath;
 
       if (
+        context.options.mode !== 'opf' &&
         !context.files.has(fullPath) &&
         !context.files.has(fullPathDecoded) &&
         !item.href.startsWith('http')

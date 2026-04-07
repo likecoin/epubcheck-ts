@@ -7,15 +7,23 @@
  * https://github.com/w3c/epubcheck
  */
 
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
-import { basename } from 'node:path';
-import type { EpubCheckOptions, EPUBProfile, Severity, ValidationMessage } from '../src/types.js';
+import { basename, join, relative, sep } from 'node:path';
+import type {
+  EpubCheckOptions,
+  EPUBProfile,
+  EPUBVersion,
+  Severity,
+  ValidationMessage,
+  ValidationMode,
+} from '../src/types.js';
 
 // Dynamic import to support both ESM and CJS builds
 const { EpubCheck, toJSONReport } = await import('../dist/index.js');
 
 const VERSION = '0.4.0';
+const VALID_MODES = new Set(['exp', 'opf', 'xhtml', 'svg', 'nav', 'mo']);
 
 // Parse command line arguments
 const { values, positionals } = parseArgs({
@@ -23,12 +31,14 @@ const { values, positionals } = parseArgs({
     json: { type: 'string', short: 'j' },
     quiet: { type: 'boolean', short: 'q', default: false },
     profile: { type: 'string', short: 'p' },
+    mode: { type: 'string', short: 'm' },
+    'epub-version': { type: 'string', short: 'v' },
     usage: { type: 'boolean', short: 'u', default: false },
     fatal: { type: 'boolean', short: 'f', default: false },
     error: { type: 'boolean', short: 'e', default: false },
     warn: { type: 'boolean', default: false },
     customMessages: { type: 'string', short: 'c' },
-    version: { type: 'boolean', short: 'v', default: false },
+    version: { type: 'boolean', short: 'V', default: false },
     help: { type: 'boolean', short: 'h', default: false },
     'fail-on-warnings': { type: 'boolean', short: 'w', default: false },
     listChecks: { type: 'boolean', short: 'l', default: false },
@@ -59,15 +69,17 @@ if (values.listChecks) {
 if (values.help || positionals.length === 0) {
   console.log(`EPUBCheck-TS v${VERSION} - EPUB Validator
 
-Usage: epubcheck-ts <file.epub> [options]
+Usage: epubcheck-ts <file> [options]
 
 Arguments:
-  <file.epub>              Path to EPUB file to validate
+  <file>                   Path to EPUB file, directory, or single file to validate
 
 Options:
   -j, --json <file>        Output JSON report to file (use '-' for stdout)
   -q, --quiet              Suppress console output (errors only)
   -p, --profile <name>     Validation profile (default|dict|edupub|idx|preview)
+  -m, --mode <type>        Validation mode: exp (expanded directory), opf, xhtml
+  -v, --epub-version <ver> EPUB version for single-file mode (2.0|3.0|3.3)
   -u, --usage              Include usage messages (best practices)
   -f, --fatal              Show only fatal errors
   -e, --error              Show fatal errors and errors
@@ -75,27 +87,55 @@ Options:
   -c, --customMessages <file>  Override message severities (TSV: ID\\tSEVERITY)
   -w, --fail-on-warnings   Exit with code 1 if warnings are found
   -l, --listChecks         List all message IDs and severities
-  -v, --version            Show version information
+  -V, --version            Show version information
   -h, --help               Show this help message
+
+Modes:
+  --mode exp               Validate an expanded (unpacked) EPUB directory
+  --mode opf -v 3.0        Validate a standalone OPF package document
+  --mode xhtml -v 3.0      Validate a standalone XHTML content document
 
 Examples:
   epubcheck-ts book.epub
   epubcheck-ts book.epub --json report.json
   epubcheck-ts book.epub --quiet --fail-on-warnings
   epubcheck-ts book.epub --profile dict
+  epubcheck-ts ./unpacked-epub/ --mode exp
+  epubcheck-ts chapter.xhtml --mode xhtml -v 3.0
+  epubcheck-ts package.opf --mode opf -v 3.0
 
 Exit Codes:
   0  No errors (or only warnings if --fail-on-warnings not set)
   1  Validation errors found (or warnings with --fail-on-warnings)
   2  Runtime error (file not found, invalid arguments, etc.)
 
-Note: This tool provides ~93% coverage of Java EPUBCheck features.
-Missing features: single-file/directory validation, advanced ARIA, XHTML/SVG schema.
-For complete EPUB 3 conformance testing, use: https://github.com/w3c/epubcheck
-
 Report issues: https://github.com/likecoin/epubcheck-ts/issues
 `);
   process.exit(0);
+}
+
+/**
+ * Recursively read all files in a directory into a Map
+ */
+async function readDirectoryFiles(dirPath: string): Promise<Map<string, Uint8Array>> {
+  const files = new Map<string, Uint8Array>();
+
+  async function walk(dir: string): Promise<void> {
+    const entries = await readdir(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        await walk(fullPath);
+      } else if (entry.isFile()) {
+        const relPath = relative(dirPath, fullPath).split(sep).join('/');
+        const data = await readFile(fullPath);
+        files.set(relPath, data);
+      }
+    }
+  }
+
+  await walk(dirPath);
+  return files;
 }
 
 // Main validation logic
@@ -103,25 +143,47 @@ async function main(): Promise<void> {
   const filePath = positionals[0];
 
   if (!filePath) {
-    console.error('Error: No EPUB file specified');
+    console.error('Error: No file specified');
     console.error('Run with --help for usage information');
     process.exit(2);
   }
 
+  const mode = values.mode as ValidationMode | undefined;
+  if (mode && !VALID_MODES.has(mode)) {
+    console.error(`Error: Invalid mode "${mode}". Valid modes: ${[...VALID_MODES].join(', ')}`);
+    process.exit(2);
+  }
+
+  const epubVersion = values['epub-version'] as EPUBVersion | undefined;
+  if (epubVersion && !['2.0', '3.0', '3.1', '3.2', '3.3'].includes(epubVersion)) {
+    console.error(
+      `Error: Invalid EPUB version "${epubVersion}". Valid versions: 2.0, 3.0, 3.1, 3.2, 3.3`,
+    );
+    process.exit(2);
+  }
+
+  // Single-file modes require a version
+  if (mode && mode !== 'exp' && !epubVersion) {
+    console.error(`Error: --epub-version (-v) is required when using --mode ${mode}`);
+    process.exit(2);
+  }
+
   try {
-    // Read EPUB file
     if (!values.quiet) {
       console.log(`Validating: ${basename(filePath)}`);
       console.log();
     }
 
-    const epubData = await readFile(filePath);
-
-    // Validate
-    const startTime = Date.now();
+    // Build options
     const options: EpubCheckOptions = {};
     if (values.profile) {
       options.profile = values.profile as EPUBProfile;
+    }
+    if (epubVersion) {
+      options.version = epubVersion;
+    }
+    if (mode) {
+      options.mode = mode;
     }
     if (values.usage) {
       options.includeUsage = true;
@@ -131,7 +193,32 @@ async function main(): Promise<void> {
       const cmContent = await readFile(values.customMessages, 'utf-8');
       options.customMessages = parseCustomMessages(cmContent);
     }
-    const result = await EpubCheck.validate(epubData, options);
+
+    const startTime = Date.now();
+    let result;
+
+    // Determine effective mode (auto-detect directory as expanded)
+    let effectiveMode = mode;
+    if (!mode || mode === 'exp') {
+      const fileStat = await stat(filePath);
+      if (fileStat.isDirectory()) {
+        effectiveMode = 'exp';
+      } else if (mode === 'exp') {
+        console.error('Error: --mode exp requires a directory path');
+        process.exit(2);
+      }
+    }
+
+    if (effectiveMode === 'exp') {
+      const files = await readDirectoryFiles(filePath);
+      result = await EpubCheck.validateExpanded(files, options);
+    } else if (effectiveMode === 'opf' || effectiveMode === 'xhtml') {
+      const fileData = await readFile(filePath);
+      result = await EpubCheck.validateSingleFile(fileData, basename(filePath), options);
+    } else {
+      const epubData = await readFile(filePath);
+      result = await EpubCheck.validate(epubData, options);
+    }
     const elapsedMs = Date.now() - startTime;
 
     // Most restrictive severity flag wins (--fatal overrides --error overrides --warn)
