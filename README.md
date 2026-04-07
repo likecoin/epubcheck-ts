@@ -6,7 +6,7 @@ Validate EPUB files in Node.js and the browser. A TypeScript implementation of [
 [![npm](https://img.shields.io/npm/v/%40likecoin%2Fepubcheck-ts)](https://www.npmjs.com/package/@likecoin/epubcheck-ts)
 [![License](https://img.shields.io/npm/l/%40likecoin%2Fepubcheck-ts)](./LICENSE)
 
-> **Status**: 93% feature parity with Java EPUBCheck (1038 tests passing). See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for details. For full EPUB 3 conformance testing, use the official [Java EPUBCheck](https://github.com/w3c/epubcheck).
+> **Status**: 93% feature parity with Java EPUBCheck (1061 tests passing, 74 skipped). See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for details. For full EPUB 3 conformance testing, use the official [Java EPUBCheck](https://github.com/w3c/epubcheck).
 
 ## Features
 
@@ -49,7 +49,13 @@ Options:
   -j, --json <file>        Output JSON report to file (use '-' for stdout)
   -q, --quiet              Suppress console output (errors only)
   -p, --profile <name>     Validation profile (default|dict|edupub|idx|preview)
+  -u, --usage              Include usage messages (best practices)
+  -f, --fatal              Show only fatal errors
+  -e, --error              Show fatal errors and errors
+      --warn               Show fatal errors, errors, and warnings
+  -c, --customMessages <file>  Override message severities (TSV: ID<tab>SEVERITY)
   -w, --fail-on-warnings   Exit with code 1 if warnings are found
+  -l, --listChecks         List all message IDs and severities
   -v, --version            Show version information
   -h, --help               Show this help message
 ```
@@ -67,6 +73,13 @@ epubcheck-ts book.epub --quiet --fail-on-warnings
 
 # Validate with specific profile
 epubcheck-ts dictionary.epub --profile dict
+
+# Show only errors (hide warnings/info)
+epubcheck-ts book.epub --error
+
+# Enable suppressed accessibility checks
+printf "ACC-004\tWARNING\nACC-005\tWARNING\n" > overrides.txt
+epubcheck-ts book.epub -c overrides.txt
 ```
 
 ### ES Modules (recommended)
@@ -178,6 +191,9 @@ interface EpubCheckOptions {
   
   /** Locale for messages (default: 'en') */
   locale?: string;
+  
+  /** Custom message severity overrides (message ID → severity) */
+  customMessages?: Map<string, MessageSeverity>;
 }
 ```
 
@@ -266,11 +282,11 @@ This library is a TypeScript port of the Java-based [EPUBCheck](https://github.c
 | OCF Container | 🟢 Complete | ~92% | ZIP structure, mimetype, container.xml, encryption.xml obfuscation |
 | Package Document (OPF) | 🟢 Complete | ~92% | Metadata, manifest, spine, collections, Schematron-equivalent checks |
 | Content Documents | 🟢 Complete | ~93% | XHTML structure, CSS url(), @import, SVG, entities, title, SSML, XML version |
-| Navigation Document | 🟢 Complete | ~85% | Nav content model, landmarks, labels, reading order, hidden |
+| Navigation Document | 🟢 Complete | ~95% | Nav content model, landmarks, labels, reading order, hidden, nested-ol |
 | Schema Validation | 🟡 Partial | ~55% | RelaxNG for OPF/container; XHTML/SVG disabled (libxml2 limitation) |
-| CSS | 🟡 Partial | ~75% | @font-face, @import, url() extraction, position, forbidden properties |
-| Cross-reference Validation | 🟢 Complete | ~92% | Reference tracking, fragments, fallbacks, remote resources |
-| Accessibility Checks | 🟡 Partial | ~30% | Basic checks only (empty links, image alt, SVG titles) |
+| CSS | 🟡 Partial | ~85% | @font-face, @import, url() extraction, position, forbidden properties, alt style tags |
+| Cross-reference Validation | 🟢 Complete | ~92% | Reference tracking, fragments, fallbacks, remote resources, cross-document features |
+| Accessibility Checks | 🟢 Complete | ~71% | 12/17 ACC checks: table, image alt, hyperlink, MathML, SVG, epub:type, OPF metadata |
 | Media Overlays | 🟡 Partial | ~70% | SMIL structure, timing, audio, OPF metadata, duration validation |
 | Media Validation | ❌ Not Started | 0% | Planned |
 
