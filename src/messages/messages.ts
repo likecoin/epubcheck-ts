@@ -39,6 +39,17 @@ interface MessageDef {
   readonly description: string;
 }
 
+// Module-level severity overrides (set via --customMessages or API)
+let severityOverrides = new Map<string, MessageSeverity>();
+
+export function setSeverityOverrides(overrides: Map<string, MessageSeverity>): void {
+  severityOverrides = overrides;
+}
+
+export function clearSeverityOverrides(): void {
+  severityOverrides = new Map();
+}
+
 /**
  * All message definitions with their IDs, severities, and descriptions.
  * Severities match Java EPUBCheck DefaultSeverities.java
@@ -1298,13 +1309,20 @@ export function createMessage(options: CreateMessageOptions): ValidationMessage 
   const { id, message, location, suggestion, severityOverride } = options;
 
   const registeredSeverity = getDefaultSeverity(id);
+  const globalOverride = severityOverrides.get(id);
+  const effectiveOverride = severityOverride ?? globalOverride;
 
-  // Skip suppressed messages unless severity is overridden
-  if (registeredSeverity === 'suppressed' && !severityOverride) {
+  // Skip if suppressed (either by default or by global override) and no call-site override
+  if (effectiveOverride === 'suppressed') {
+    return null;
+  }
+  if (registeredSeverity === 'suppressed' && !effectiveOverride) {
     return null;
   }
 
-  const severity: Severity = severityOverride ?? (registeredSeverity as Severity);
+  const severity: Severity = effectiveOverride
+    ? (effectiveOverride as Severity)
+    : (registeredSeverity as Severity);
 
   const result: ValidationMessage = {
     id,
@@ -1341,4 +1359,45 @@ export function pushMessage(messages: ValidationMessage[], options: CreateMessag
   if (msg) {
     messages.push(msg);
   }
+}
+
+/**
+ * Parse a custom messages file (TSV format compatible with Java EPUBCheck).
+ *
+ * Format: one override per line, tab-separated: `ID\tSEVERITY`
+ * Lines starting with # are comments. A header line starting with "id" is skipped.
+ *
+ * @example
+ * ```
+ * ACC-004\tWARNING
+ * ACC-005\tWARNING
+ * RSC-008\tSUPPRESSED
+ * ```
+ */
+export function parseCustomMessages(content: string): Map<string, MessageSeverity> {
+  const overrides = new Map<string, MessageSeverity>();
+  const validSeverities = new Set<string>([
+    'fatal',
+    'error',
+    'warning',
+    'info',
+    'usage',
+    'suppressed',
+  ]);
+
+  for (const line of content.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    if (trimmed.toLowerCase().startsWith('id\t') || trimmed.toLowerCase() === 'id') continue;
+
+    const parts = trimmed.split('\t');
+    const id = parts[0]?.trim();
+    const severity = parts[1]?.trim().toLowerCase();
+    if (!id || !severity) continue;
+
+    if (validSeverities.has(severity)) {
+      overrides.set(id, severity as MessageSeverity);
+    }
+  }
+  return overrides;
 }

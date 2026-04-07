@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~71% | 🟢 Content checks (table th/thead/caption/empty-th, epub:type usage, image alt, hyperlink text, MathML alt, SVG link name), OPF metadata (accessibilityFeature/accessMode/general a11y) done |
 | Cross-reference | ~92% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs, encoding detection, cross-document feature checks done |
 
-**Overall: ~93% complete (1049 tests passing, 86 skipped)**
+**Overall: ~93% complete (1059 tests passing, 76 skipped)**
 
 ---
 
@@ -26,9 +26,9 @@ Quick reference for implementation progress vs Java EPUBCheck.
 
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
-| **Unit Tests** | 439 | 415 | 24 |
+| **Unit Tests** | 439 | 425 | 14 |
 | **Integration Tests** | 696 | 634 | 62 |
-| **Total** | **1135** | **1049** | **86** |
+| **Total** | **1135** | **1059** | **76** |
 
 ### Integration Test Files
 
@@ -80,10 +80,10 @@ test/fixtures/
 
 ### Skipped Tests
 
-**Unit tests (24)** - Various reasons:
+**Unit tests (14)** - Various reasons:
 - **libxml2-wasm XPath limitations (2)** - OPF-014 inline event handlers, OPF-088 unknown epub:type prefix
-- **Messages not emitted in Java EPUBCheck (14)** - NCX-002 (2), NCX-003 (2), NAV-002 (1), ACC-004 (2), ACC-001 (2), HTM-012 (2), OPF-051 (1), OPF-088 (1)
-- **Suppressed accessibility checks (8)** - ACC-005 (1), ACC-006 (1), ACC-007 (1), ACC-012 (1), ACC-014 (1), ACC-002 (1), ACC-003 (1), ACC-010 (1)
+- **Messages not emitted in Java EPUBCheck (8)** - NCX-002 (2), NCX-003 (2), NAV-002 (1), HTM-012 (2), OPF-051 (1)
+- **Content validator (4)** - OPF-014 (1), OPF-051 (1), OPF-088 (1), HTM-012 (1)
 
 **Integration tests (75)** - Unimplemented features and library limitations:
 - **Content (17 skipped)**:

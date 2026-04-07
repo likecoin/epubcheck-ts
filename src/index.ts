@@ -37,6 +37,7 @@ export {
   formatMessageList,
   createMessage,
   pushMessage,
+  parseCustomMessages,
 } from './messages/index.js';
 export type {
   MessageInfo,

@@ -1,6 +1,11 @@
 import { ContentValidator } from './content/index.js';
 import { buildReport } from './core/report.js';
-import { MessageId, pushMessage } from './messages/index.js';
+import {
+  MessageId,
+  pushMessage,
+  setSeverityOverrides,
+  clearSeverityOverrides,
+} from './messages/index.js';
 import { NCXValidator } from './nav/index.js';
 import { OCFValidator } from './ocf/index.js';
 import { OPFValidator } from './opf/index.js';
@@ -27,6 +32,7 @@ const DEFAULT_OPTIONS: Required<EpubCheckOptions> = {
   includeInfo: true,
   maxErrors: 0,
   locale: 'en',
+  customMessages: new Map(),
 };
 
 /**
@@ -78,6 +84,11 @@ export class EpubCheck {
       rootfiles: [],
     };
 
+    // Apply custom message severity overrides
+    if (this.options.customMessages.size > 0) {
+      setSeverityOverrides(this.options.customMessages);
+    }
+
     try {
       // Step 1: Validate OCF container (ZIP structure)
       const ocfValidator = new OCFValidator();
@@ -127,6 +138,8 @@ export class EpubCheck {
         id: MessageId.PKG_025,
         message: error instanceof Error ? error.message : 'Unknown validation error',
       });
+    } finally {
+      clearSeverityOverrides();
     }
 
     const elapsedMs = performance.now() - startTime;

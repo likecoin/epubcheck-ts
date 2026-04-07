@@ -15,6 +15,7 @@ describe('ContentValidator', () => {
     includeInfo: false,
     maxErrors: 0,
     locale: 'en',
+    customMessages: new Map(),
   };
 
   const createContext = (

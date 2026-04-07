@@ -9,4 +9,7 @@ export {
   formatMessageList,
   createMessage,
   pushMessage,
+  setSeverityOverrides,
+  clearSeverityOverrides,
+  parseCustomMessages,
 } from './messages.js';

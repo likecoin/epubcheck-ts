@@ -75,6 +75,7 @@ function createContext(data: Uint8Array): ValidationContext {
       includeInfo: true,
       maxErrors: 0,
       locale: 'en',
+      customMessages: new Map(),
     },
     version: '3.3',
     messages: [],

@@ -1,5 +1,10 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { EpubCheckOptions, ValidationContext } from '../types.js';
+import {
+  setSeverityOverrides,
+  clearSeverityOverrides,
+  type MessageSeverity,
+} from '../messages/index.js';
 import { OPFValidator } from './validator.js';
 
 describe('OPFValidator', () => {
@@ -12,6 +17,7 @@ describe('OPFValidator', () => {
     includeInfo: false,
     maxErrors: 0,
     locale: 'en',
+    customMessages: new Map(),
   };
 
   const toBytes = (str: string): Uint8Array => new TextEncoder().encode(str);
@@ -973,22 +979,26 @@ describe('OPFValidator', () => {
   });
 
   describe('Accessibility metadata checks', () => {
-    // ACC-003 is suppressed in Java EPUBCheck
-    it.skip('should add ACC-003 for missing accessibility metadata (suppressed in Java)', () => {
+    afterEach(() => {
+      clearSeverityOverrides();
+    });
+
+    it('should add ACC-003 for missing accessibility metadata (with severity override)', () => {
+      setSeverityOverrides(new Map([['ACC-003', 'warning' as MessageSeverity]]));
       const context = createContext(validOPF);
       validator.validate(context);
       expect(context.messages.some((m) => m.id === 'ACC-003')).toBe(true);
     });
 
-    // ACC-002 is suppressed in Java EPUBCheck
-    it.skip('should add ACC-002 for missing schema:accessibilityFeature (suppressed in Java)', () => {
+    it('should add ACC-002 for missing schema:accessibilityFeature (with severity override)', () => {
+      setSeverityOverrides(new Map([['ACC-002', 'warning' as MessageSeverity]]));
       const context = createContext(validOPF);
       validator.validate(context);
       expect(context.messages.some((m) => m.id === 'ACC-002')).toBe(true);
     });
 
-    // ACC-010 is suppressed in Java EPUBCheck
-    it.skip('should add ACC-010 for missing schema:accessMode (suppressed in Java)', () => {
+    it('should add ACC-010 for missing schema:accessMode (with severity override)', () => {
+      setSeverityOverrides(new Map([['ACC-010', 'warning' as MessageSeverity]]));
       const context = createContext(validOPF);
       validator.validate(context);
       expect(context.messages.some((m) => m.id === 'ACC-010')).toBe(true);

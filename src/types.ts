@@ -1,3 +1,4 @@
+import type { MessageSeverity } from './messages/index.js';
 import type { PackageDocument } from './opf/types.js';
 
 /**
@@ -85,6 +86,8 @@ export interface EpubCheckOptions {
   maxErrors?: number;
   /** Locale for messages (e.g., 'en', 'de', 'fr') */
   locale?: string;
+  /** Custom message severity overrides (message ID → severity) */
+  customMessages?: Map<string, MessageSeverity>;
 }
 
 /**

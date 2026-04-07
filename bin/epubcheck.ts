@@ -27,6 +27,7 @@ const { values, positionals } = parseArgs({
     fatal: { type: 'boolean', short: 'f', default: false },
     error: { type: 'boolean', short: 'e', default: false },
     warn: { type: 'boolean', default: false },
+    customMessages: { type: 'string', short: 'c' },
     version: { type: 'boolean', short: 'v', default: false },
     help: { type: 'boolean', short: 'h', default: false },
     'fail-on-warnings': { type: 'boolean', short: 'w', default: false },
@@ -71,6 +72,7 @@ Options:
   -f, --fatal              Show only fatal errors
   -e, --error              Show fatal errors and errors
       --warn               Show fatal errors, errors, and warnings
+  -c, --customMessages <file>  Override message severities (TSV: ID\\tSEVERITY)
   -w, --fail-on-warnings   Exit with code 1 if warnings are found
   -l, --listChecks         List all message IDs and severities
   -v, --version            Show version information
@@ -124,11 +126,22 @@ async function main(): Promise<void> {
     if (values.usage) {
       options.includeUsage = true;
     }
+    if (typeof values.customMessages === 'string') {
+      const { parseCustomMessages } = await import('../dist/index.js');
+      const cmContent = await readFile(values.customMessages, 'utf-8');
+      options.customMessages = parseCustomMessages(cmContent);
+    }
     const result = await EpubCheck.validate(epubData, options);
     const elapsedMs = Date.now() - startTime;
 
     // Most restrictive severity flag wins (--fatal overrides --error overrides --warn)
-    const severityRank: Record<Severity, number> = { fatal: 0, error: 1, warning: 2, info: 3, usage: 4 };
+    const severityRank: Record<Severity, number> = {
+      fatal: 0,
+      error: 1,
+      warning: 2,
+      info: 3,
+      usage: 4,
+    };
     let maxRank = 4;
     if (values.fatal) maxRank = 0;
     else if (values.error) maxRank = 1;

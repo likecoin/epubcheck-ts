@@ -15,6 +15,7 @@ function createValidationContext(): ValidationContext {
       includeInfo: false,
       maxErrors: 0,
       locale: 'en',
+      customMessages: new Map(),
     },
     version: '3.0',
     messages: [],
