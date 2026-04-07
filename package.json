@@ -63,7 +63,19 @@
     "typescript-eslint": "^8.18.1",
     "vitest": "^4.0.18"
   },
-  "keywords": ["epub", "epubcheck", "validation", "validator", "ebook", "publishing", "typescript", "browser", "w3c", "accessibility", "a11y"],
+  "keywords": [
+    "epub",
+    "epubcheck",
+    "validation",
+    "validator",
+    "ebook",
+    "publishing",
+    "typescript",
+    "browser",
+    "w3c",
+    "accessibility",
+    "a11y"
+  ],
   "author": "William Chong <williamchong@like.co>",
   "license": "GPL-3.0-only",
   "repository": {

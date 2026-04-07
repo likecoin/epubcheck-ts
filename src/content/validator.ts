@@ -3359,8 +3359,7 @@ export class ContentValidator {
       if (epubTypeElements.length === 0) {
         pushMessage(context.messages, {
           id: MessageId.ACC_007,
-          message:
-            'Content Documents do not use "epub:type" attributes for semantic inflection',
+          message: 'Content Documents do not use "epub:type" attributes for semantic inflection',
           location: { path },
         });
       }
