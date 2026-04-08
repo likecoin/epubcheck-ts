@@ -674,18 +674,17 @@ describe('Integration Tests - Resources', () => {
   });
 
   // ==========================================================================
-  // Skipped: Single-file validation mode
+  // Single-file validation mode — remote resource checks are skipped
+  // because they depend on publication-wide context (Java parity)
   // ==========================================================================
   describe('Single-file Validation Mode', () => {
-    it.skip('should report remote XHTML resource (RSC-006)', async () => {
-      // Single-file validation mode not supported
-      const result = await validate('invalid/content/resources-remote-xhtml-error.epub');
-      expectError(result, 'RSC-006');
+    it('should not detect remote XHTML resource in single-document mode', async () => {
+      const result = await validateOpf('resources-remote-xhtml-error');
+      expectNoErrorsOrWarnings(result);
     });
 
-    it.skip('should allow remote SVG font in single-file mode', async () => {
-      // Single-file validation mode not supported
-      const result = await validate('valid/resources-remote-svg-font-valid.epub');
+    it('should not detect remote SVG font in single-document mode', async () => {
+      const result = await validateOpf('resources-remote-svg-font-valid');
       expectNoErrorsOrWarnings(result);
     });
   });
@@ -704,6 +703,23 @@ async function validate(path: string, options?: Parameters<typeof EpubCheck.vali
 
   const data = new Uint8Array(fs.readFileSync(filePath));
   return EpubCheck.validate(data, options);
+}
+
+async function validateOpf(
+  fixture: string,
+): Promise<Awaited<ReturnType<typeof EpubCheck.validate>>> {
+  const fs = await import('node:fs');
+  const pathModule = await import('node:path');
+  const url = await import('node:url');
+
+  const currentDir = url.fileURLToPath(new URL('.', import.meta.url));
+  const filePath = pathModule.resolve(currentDir, '../fixtures/resources', `${fixture}.opf`);
+
+  const data = new Uint8Array(fs.readFileSync(filePath));
+  return EpubCheck.validateSingleFile(data, `${fixture}.opf`, {
+    mode: 'opf',
+    version: '3.0',
+  });
 }
 
 /**

@@ -64,54 +64,175 @@ describe('Integration Tests - Layout Rendering Control', () => {
   // ==================== 8.2.2 Fixed-layout package settings ====================
 
   describe('Rendition layout (global meta)', () => {
-    // All file-based (.opf) tests — cannot be ported to TS validator
-    it.skip('rendition:layout valid values - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:layout empty value error - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:layout unknown value error - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:layout duplicate error - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:layout refines error - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:layout itemref valid - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:layout itemref conflict error - Single-file (.opf) validation mode not supported', () => {});
+    it('should allow valid rendition:layout values', async () => {
+      const result = await validateOpf('rendition-layout-global-valid');
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should report empty rendition:layout value (RSC-005)', async () => {
+      const result = await validateOpf('rendition-layout-global-empty-error');
+      expectError(result, 'RSC-005');
+    });
+
+    it('should report unknown rendition:layout value (RSC-005)', async () => {
+      const result = await validateOpf('rendition-layout-global-unknown-value-error');
+      expectError(result, 'RSC-005');
+    });
+
+    it('should report duplicate rendition:layout (RSC-005)', async () => {
+      const result = await validateOpf('rendition-layout-global-duplicate-error');
+      expectError(result, 'RSC-005');
+    });
+
+    it('should report rendition:layout with refines (RSC-005)', async () => {
+      const result = await validateOpf('rendition-layout-global-refines-error');
+      expectError(result, 'RSC-005');
+    });
+
+    it('should allow rendition:layout as itemref override', async () => {
+      const result = await validateOpf('rendition-layout-itemref-valid');
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should report conflicting rendition:layout itemref overrides (RSC-005)', async () => {
+      const result = await validateOpf('rendition-layout-itemref-conflict-error');
+      expectError(result, 'RSC-005');
+    });
   });
 
   describe('Rendition orientation (global meta)', () => {
-    it.skip('rendition:orientation valid values - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:orientation unknown value error - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:orientation duplicate error - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:orientation refines error - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:orientation itemref valid - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:orientation itemref conflict error - Single-file (.opf) validation mode not supported', () => {});
+    it('should allow valid rendition:orientation values', async () => {
+      const result = await validateOpf('rendition-orientation-global-valid');
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should report unknown rendition:orientation value (RSC-005)', async () => {
+      const result = await validateOpf('rendition-orientation-global-unknown-value-error');
+      expectError(result, 'RSC-005');
+    });
+
+    it('should report duplicate rendition:orientation (RSC-005)', async () => {
+      const result = await validateOpf('rendition-orientation-global-duplicate-error');
+      expectError(result, 'RSC-005');
+    });
+
+    it('should report rendition:orientation with refines (RSC-005)', async () => {
+      const result = await validateOpf('rendition-orientation-global-refines-error');
+      expectError(result, 'RSC-005');
+    });
+
+    it('should allow rendition:orientation as itemref override', async () => {
+      const result = await validateOpf('rendition-orientation-itemref-valid');
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should report conflicting rendition:orientation itemref overrides (RSC-005)', async () => {
+      const result = await validateOpf('rendition-orientation-itemref-conflict-error');
+      expectError(result, 'RSC-005');
+    });
   });
 
   describe('Rendition spread (global meta)', () => {
-    it.skip('rendition:spread valid values - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:spread unknown value error - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:spread duplicate error - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:spread refines error - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:spread portrait deprecated - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:spread itemref valid - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:spread itemref conflict error - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:spread-portrait itemref deprecated - Single-file (.opf) validation mode not supported', () => {});
+    it('should allow valid rendition:spread values', async () => {
+      const result = await validateOpf('rendition-spread-global-valid');
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should report unknown rendition:spread value (RSC-005)', async () => {
+      const result = await validateOpf('rendition-spread-global-unknown-value-error');
+      expectError(result, 'RSC-005');
+    });
+
+    it('should report duplicate rendition:spread (RSC-005)', async () => {
+      const result = await validateOpf('rendition-spread-global-duplicate-error');
+      expectError(result, 'RSC-005');
+    });
+
+    it('should report rendition:spread with refines (RSC-005)', async () => {
+      const result = await validateOpf('rendition-spread-global-refines-error');
+      expectError(result, 'RSC-005');
+    });
+
+    it('should warn about deprecated rendition:spread portrait', async () => {
+      const result = await validateOpf('rendition-spread-portrait-global-deprecated-warning');
+      expectWarning(result, 'OPF-086');
+    });
+
+    it('should allow rendition:spread as itemref override', async () => {
+      const result = await validateOpf('rendition-spread-itemref-valid');
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should report conflicting rendition:spread itemref overrides (RSC-005)', async () => {
+      const result = await validateOpf('rendition-spread-itemref-conflict-error');
+      expectError(result, 'RSC-005');
+    });
+
+    it('should warn about deprecated rendition:spread-portrait itemref', async () => {
+      const result = await validateOpf('rendition-spread-portrait-itemref-deprecated-warning');
+      expectWarning(result, 'OPF-086');
+    });
   });
 
   describe('Rendition page-spread', () => {
-    it.skip('rendition:page-spread unprefixed valid - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:page-spread itemref conflict error - Single-file (.opf) validation mode not supported', () => {});
+    it('should allow unprefixed rendition:page-spread itemref', async () => {
+      const result = await validateOpf('rendition-page-spread-itemref-unprefixed-valid');
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should report conflicting rendition:page-spread itemref (RSC-005)', async () => {
+      const result = await validateOpf('rendition-page-spread-itemref-conflict-error');
+      expectError(result, 'RSC-005');
+    });
   });
 
   describe('Rendition viewport (deprecated)', () => {
-    it.skip('rendition:viewport deprecated - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:viewport syntax error - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:viewport duplicate error - Single-file (.opf) validation mode not supported', () => {});
+    it('should warn about deprecated rendition:viewport', async () => {
+      const result = await validateOpf('rendition-viewport-deprecated-warning');
+      expectWarning(result, 'OPF-086');
+    });
+
+    it('should report rendition:viewport syntax error (RSC-005)', async () => {
+      const result = await validateOpf('rendition-viewport-syntax-error');
+      expectError(result, 'RSC-005');
+    });
+
+    it('should report duplicate rendition:viewport (RSC-005)', async () => {
+      const result = await validateOpf('rendition-viewport-duplicate-error');
+      expectError(result, 'RSC-005');
+    });
   });
 
   describe('Rendition flow (global meta)', () => {
-    it.skip('rendition:flow valid values - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:flow unknown value error - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:flow duplicate error - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:flow refines error - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:flow itemref valid - Single-file (.opf) validation mode not supported', () => {});
-    it.skip('rendition:flow itemref conflict error - Single-file (.opf) validation mode not supported', () => {});
+    it('should allow valid rendition:flow values', async () => {
+      const result = await validateOpf('rendition-flow-global-valid');
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should report unknown rendition:flow value (RSC-005)', async () => {
+      const result = await validateOpf('rendition-flow-global-unknown-value-error');
+      expectError(result, 'RSC-005');
+    });
+
+    it('should report duplicate rendition:flow (RSC-005)', async () => {
+      const result = await validateOpf('rendition-flow-global-duplicate-error');
+      expectError(result, 'RSC-005');
+    });
+
+    it('should report rendition:flow with refines (RSC-005)', async () => {
+      const result = await validateOpf('rendition-flow-global-refines-error');
+      expectError(result, 'RSC-005');
+    });
+
+    it('should allow rendition:flow as itemref override', async () => {
+      const result = await validateOpf('rendition-flow-itemref-valid');
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should report conflicting rendition:flow itemref overrides (RSC-005)', async () => {
+      const result = await validateOpf('rendition-flow-itemref-conflict-error');
+      expectError(result, 'RSC-005');
+    });
   });
 
   // ==================== 8.2.2.6 Content document dimensions ====================
@@ -281,6 +402,27 @@ async function loadEpub(path: string): Promise<Uint8Array> {
   const filePath = pathModule.resolve(currentDir, '../fixtures', path);
 
   return new Uint8Array(fs.readFileSync(filePath));
+}
+
+async function validateOpf(
+  fixture: string,
+): Promise<Awaited<ReturnType<typeof EpubCheck.validate>>> {
+  const data = await loadEpub(`layout/${fixture}.opf`);
+  return EpubCheck.validateSingleFile(data, `${fixture}.opf`, {
+    mode: 'opf',
+    version: '3.0',
+  });
+}
+
+function expectWarning(
+  result: Awaited<ReturnType<typeof EpubCheck.validate>>,
+  warningId: string,
+): void {
+  const hasWarning = result.messages.some((m) => m.id === warningId && m.severity === 'warning');
+  expect(
+    hasWarning,
+    `Expected warning ${warningId} to be reported. Got: ${JSON.stringify(result.messages.map((m) => ({ id: m.id, severity: m.severity })))}`,
+  ).toBe(true);
 }
 
 function expectError(
