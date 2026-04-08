@@ -310,26 +310,93 @@ describe('Integration Tests - Media Overlays', () => {
     });
   });
 
-  // ==================== SMIL File-Based Tests (skipped) ====================
-  // These test individual SMIL document validation without full EPUB wrapper.
-  // Already covered by unit tests in src/smil/validator.test.ts
+  // ==================== SMIL File-Based Tests (--mode mo) ====================
+  // Standalone SMIL document validation via EpubCheck.validateSingleFile
   describe('SMIL document validation (file-based)', () => {
-    it.skip('should validate a minimal Media Overlay document (file-based SMIL)', () => {});
-    it.skip('should report meta element in head container (file-based SMIL)', () => {});
-    it.skip('should allow metadata element with custom properties (file-based SMIL)', () => {});
-    it.skip('should report media clips as direct children of seq (file-based SMIL)', () => {});
-    it.skip('should report par with multiple text children (file-based SMIL)', () => {});
-    it.skip('should report par with seq child (file-based SMIL)', () => {});
-    it.skip('should report audio file URL with fragment (file-based SMIL)', () => {});
-    it.skip('should allow full clock syntax (file-based SMIL)', () => {});
-    it.skip('should allow partial clock syntax (file-based SMIL)', () => {});
-    it.skip('should allow timecount syntax (file-based SMIL)', () => {});
-    it.skip('should report invalid clock values (file-based SMIL)', () => {});
-    it.skip('should report clipBegin after clipEnd (file-based SMIL)', () => {});
-    it.skip('should report clipEnd equals clipBegin (file-based SMIL)', () => {});
-    it.skip('should allow epub:type in default vocabulary (file-based SMIL)', () => {});
-    it.skip('should allow custom epub:type with declared prefix (file-based SMIL)', () => {});
-    it.skip('should allow unknown epub:type in default vocabulary (file-based SMIL)', () => {});
+    it('should validate a minimal Media Overlay document', async () => {
+      const result = await validateSmil('minimal');
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should report meta element in head container (RSC-005)', async () => {
+      const result = await validateSmil('metadata-syntax-invalid-error');
+      expectError(result, 'RSC-005');
+    });
+
+    it('should allow metadata element with custom properties', async () => {
+      const result = await validateSmil('metadata-properties-valid');
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should report media clips as direct children of seq (RSC-005)', async () => {
+      const result = await validateSmil('seq-with-direct-media-children-error');
+      expectErrorCount(result, 'RSC-005', 2);
+    });
+
+    it('should report par with multiple text children (RSC-005)', async () => {
+      const result = await validateSmil('par-with-multiple-text-elements-error');
+      expectError(result, 'RSC-005');
+    });
+
+    it('should report par with seq child (RSC-005)', async () => {
+      const result = await validateSmil('par-with-seq-child-error');
+      expectError(result, 'RSC-005');
+    });
+
+    it('should report audio file URL with fragment (MED-014)', async () => {
+      const result = await validateSmil('audio-src-fragment-error');
+      expectError(result, 'MED-014');
+    });
+
+    it('should allow full clock syntax', async () => {
+      const result = await validateSmil('clock-value-full-syntax-valid');
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should allow partial clock syntax', async () => {
+      const result = await validateSmil('clock-value-partial-syntax-valid');
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should allow timecount syntax', async () => {
+      const result = await validateSmil('clock-value-timecount-syntax-valid');
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: SMIL clock parser is more permissive than Java's — doesn't flag
+    // out-of-range values, invalid units, or missing integer parts.
+    // Pre-existing gap in src/smil/clock.ts, not a mo-mode issue.
+    it.skip('should report invalid clock values (RSC-005 x6)', async () => {
+      const result = await validateSmil('clock-value-syntax-invalid-error');
+      expectErrorCount(result, 'RSC-005', 6);
+    });
+
+    it('should report clipBegin after clipEnd (MED-008)', async () => {
+      const result = await validateSmil('clipBegin-after-clipEnd-error');
+      expectErrorCount(result, 'MED-008', 2);
+    });
+
+    it('should report clipEnd equals clipBegin (MED-009)', async () => {
+      const result = await validateSmil('clip-times-equal-error');
+      expectErrorCount(result, 'MED-009', 4);
+    });
+
+    it('should allow epub:type in default vocabulary', async () => {
+      const result = await validateSmil('epubtype-valid');
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should allow custom epub:type with declared prefix', async () => {
+      const result = await validateSmil('epubtype-prefix-declared-valid');
+      expectNoErrorsOrWarnings(result);
+    });
+
+    // Skip: SMIL validator doesn't check epub:type vocabulary.
+    // Pre-existing gap — OPF-088 usage check is only wired up for XHTML.
+    it.skip('should allow unknown epub:type (OPF-088 usage)', async () => {
+      const result = await validateSmil('epubtype-unknown-usage');
+      expectUsage(result, 'OPF-088');
+    });
   });
 });
 
@@ -344,6 +411,30 @@ async function loadEpub(path: string): Promise<Uint8Array> {
   const filePath = pathModule.resolve(currentDir, '../fixtures', path);
 
   return new Uint8Array(fs.readFileSync(filePath));
+}
+
+async function validateSmil(
+  fixture: string,
+): Promise<Awaited<ReturnType<typeof EpubCheck.validate>>> {
+  const data = await loadEpub(`mediaoverlays/${fixture}.smil`);
+  return EpubCheck.validateSingleFile(data, `${fixture}.smil`, {
+    mode: 'mo',
+    version: '3.0',
+  });
+}
+
+function expectErrorCount(
+  result: Awaited<ReturnType<typeof EpubCheck.validate>>,
+  errorId: string,
+  count: number,
+): void {
+  const actualCount = result.messages.filter(
+    (m) => m.id === errorId && (m.severity === 'error' || m.severity === 'fatal'),
+  ).length;
+  expect(
+    actualCount,
+    `Expected error ${errorId} to be reported ${String(count)} time(s), got ${String(actualCount)}`,
+  ).toBe(count);
 }
 
 function expectError(

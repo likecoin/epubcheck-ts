@@ -19,6 +19,7 @@ import { ResourceRegistry } from './references/registry.js';
 import { resolveManifestHref } from './references/url.js';
 import { ReferenceValidator } from './references/validator.js';
 import { SchemaValidator } from './schema/orchestrator.js';
+import { SMILValidator } from './smil/validator.js';
 import type {
   EPUBVersion,
   EpubCheckOptions,
@@ -219,6 +220,11 @@ export class EpubCheck {
 
         const schemaValidator = new SchemaValidator(context);
         await schemaValidator.validate();
+      } else if (mode === 'mo') {
+        // Media overlay (SMIL). SchemaValidator is a no-op here
+        // since there's no container/opf/manifest, so we skip it.
+        const smilValidator = new SMILValidator();
+        smilValidator.validate(context, filename);
       }
     } catch (error) {
       pushMessage(context.messages, {

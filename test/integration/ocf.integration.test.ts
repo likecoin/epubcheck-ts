@@ -479,9 +479,18 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       // Java: url-in-xhtml-valid.xhtml
     });
 
-    // Skip: Directory validation mode not supported (duplicate of existing PKG-006 .epub test)
-    it.skip('should report missing mimetype file in directory mode (PKG-006)', () => {
-      // Java: ocf-mimetype-file-missing-error (directory)
+    it('should report missing mimetype file in expanded mode (PKG-006)', async () => {
+      const data = await loadEpub('valid/ocf-minimal-valid.epub');
+      const { ZipReader } = await import('../../src/ocf/index.js');
+      const zip = ZipReader.open(data);
+      const files = new Map<string, Uint8Array>();
+      for (const path of zip.paths) {
+        if (path === 'mimetype') continue;
+        const content = zip.readBinary(path);
+        if (content) files.set(path, content);
+      }
+      const result = await EpubCheck.validateExpanded(files);
+      expectError(result, 'PKG-006');
     });
   });
 });
