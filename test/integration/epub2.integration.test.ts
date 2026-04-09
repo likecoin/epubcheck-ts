@@ -832,12 +832,23 @@ describe('Integration Tests - EPUB 2', () => {
   });
 
   describe('Ops Content Document Svg', () => {
-    // Skip: --mode svg not implemented
-    // Gap: checkSingleFile() has no 'svg' branch; SVG content is validated only when embedded in XHTML
-    it.skip('Verify that namespaced extensions are allowed', () => {});
+    it('Verify that namespaced extensions are allowed', async () => {
+      const data = loadFixture('epub2/ops-document-svg/namespace-extension-valid.svg');
+      const result = await EpubCheck.validateSingleFile(data, 'namespace-extension-valid.svg', {
+        mode: 'svg',
+        version: '2.0',
+      });
+      expectNoErrorsOrWarnings(result);
+    });
 
-    // Skip: --mode svg not implemented
-    it.skip('Verify font-face-src is allowed', () => {});
+    it('Verify font-face-src is allowed', async () => {
+      const data = loadFixture('epub2/ops-document-svg/font-face-src-valid.svg');
+      const result = await EpubCheck.validateSingleFile(data, 'font-face-src-valid.svg', {
+        mode: 'svg',
+        version: '2.0',
+      });
+      expectNoErrorsOrWarnings(result);
+    });
   });
 });
 

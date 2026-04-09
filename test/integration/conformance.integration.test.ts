@@ -49,10 +49,14 @@ describe('Integration Tests - Conformance', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: --mode svg not implemented
-    // Java: epub3/00-minimal/minimal.feature:27 "Verify a minimal SVG content document"
-    // Gap: checkSingleFile() has no 'svg' branch; SVG validation is XHTML-embedded only
-    it.skip('should validate a minimal SVG content document (--mode svg)', () => {});
+    it('should validate a minimal SVG content document (--mode svg)', async () => {
+      const data = loadFixture('conformance/00-minimal/minimal.svg');
+      const result = await EpubCheck.validateSingleFile(data, 'minimal.svg', {
+        mode: 'svg',
+        version: '3.0',
+      });
+      expectNoErrorsOrWarnings(result);
+    });
   });
 
   // ==================== 02-epub-publication-conformance ====================

@@ -78,7 +78,7 @@ Options:
   -j, --json <file>        Output JSON report to file (use '-' for stdout)
   -q, --quiet              Suppress console output (errors only)
   -p, --profile <name>     Validation profile (default|dict|edupub|idx|preview)
-  -m, --mode <type>        Validation mode: exp (expanded directory), opf, xhtml, mo
+  -m, --mode <type>        Validation mode: exp (expanded directory), opf, xhtml, svg, mo
   -v, --epub-version <ver> EPUB version for single-file mode (2.0|3.0|3.3)
   -u, --usage              Include usage messages (best practices)
   -f, --fatal              Show only fatal errors
@@ -94,6 +94,7 @@ Modes:
   --mode exp               Validate an expanded (unpacked) EPUB directory
   --mode opf -v 3.0        Validate a standalone OPF package document
   --mode xhtml -v 3.0      Validate a standalone XHTML content document
+  --mode svg -v 3.0        Validate a standalone SVG content document
   --mode mo -v 3.0         Validate a standalone SMIL media overlay document
 
 Examples:
@@ -104,6 +105,7 @@ Examples:
   epubcheck-ts ./unpacked-epub/ --mode exp
   epubcheck-ts chapter.xhtml --mode xhtml -v 3.0
   epubcheck-ts package.opf --mode opf -v 3.0
+  epubcheck-ts image.svg --mode svg -v 3.0
   epubcheck-ts overlay.smil --mode mo -v 3.0
 
 Exit Codes:
@@ -214,7 +216,12 @@ async function main(): Promise<void> {
     if (effectiveMode === 'exp') {
       const files = await readDirectoryFiles(filePath);
       result = await EpubCheck.validateExpanded(files, options);
-    } else if (effectiveMode === 'opf' || effectiveMode === 'xhtml' || effectiveMode === 'mo') {
+    } else if (
+      effectiveMode === 'opf' ||
+      effectiveMode === 'xhtml' ||
+      effectiveMode === 'svg' ||
+      effectiveMode === 'mo'
+    ) {
       const fileData = await readFile(filePath);
       result = await EpubCheck.validateSingleFile(fileData, basename(filePath), options);
     } else {

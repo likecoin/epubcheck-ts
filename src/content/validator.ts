@@ -517,6 +517,18 @@ export class ContentValidator {
     this.validateXHTMLDocument(context, path, '');
   }
 
+  /**
+   * Validate a single SVG content document without a full EPUB container.
+   * Used for --mode svg single-file validation. Mirrors Java OPSChecker
+   * SVG-mode path, running SVG-specific content checks without manifest-
+   * dependent cross-reference validation.
+   */
+  validateSingleSVG(context: ValidationContext, path: string): void {
+    context.contentFeatures = {};
+    // Synthetic manifest item — single-file mode has no manifest
+    this.validateSVGDocument(context, path, { id: '' });
+  }
+
   validate(
     context: ValidationContext,
     registry?: ResourceRegistry,
