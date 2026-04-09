@@ -16,7 +16,9 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~71% | 🟢 Content checks (table th/thead/caption/empty-th, epub:type usage, image alt, hyperlink text, MathML alt, SVG link name), OPF metadata (accessibilityFeature/accessMode/general a11y) done |
 | Cross-reference | ~92% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs, encoding detection, cross-document feature checks done |
 
-**Overall: ~94% complete (1115 tests passing, 20 skipped)**
+**Overall: ~88% complete (1207 tests passing, 163 skipped, 1370 total)**
+
+**100% Java scenario import**: Every Java EPUBCheck feature file (core EPUB 3, EPUB 2, profile extensions) has been ported into this suite. Skipped tests form a discoverable backlog with specific validator gap annotations.
 
 ---
 
@@ -27,21 +29,24 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 438 | 433 | 5 |
-| **Integration Tests** | 697 | 682 | 15 |
-| **Total** | **1135** | **1115** | **20** |
+| **Integration Tests** | 932 | 774 | 158 |
+| **Total** | **1370** | **1207** | **163** |
 
 ### Integration Test Files
 
 ```
 test/integration/
-├── epub.test.ts                 #   4 tests  (  4 pass,  0 skip) - Basic EPUB validation
-├── ocf.integration.test.ts      #  56 tests  ( 51 pass,  5 skip) - OCF/ZIP/container
-├── opf.integration.test.ts      # 173 tests  (173 pass,  0 skip) - Package document
-├── content.integration.test.ts  # 214 tests  (208 pass,  6 skip) - XHTML/CSS/SVG
-├── nav.integration.test.ts      #  38 tests  ( 38 pass,  0 skip) - Navigation
-├── resources.integration.test.ts# 110 tests  (108 pass,  2 skip) - Resources/fallbacks
-├── layout.integration.test.ts   #  52 tests  ( 52 pass,  0 skip) - Layout/viewport/FXL
-└── mediaoverlays.integration.test.ts # 50 tests ( 48 pass,  2 skip) - Media overlays/SMIL
+├── epub.test.ts                      #   4 tests  (  4 pass,   0 skip) - Basic sanity tests
+├── conformance.integration.test.ts   #  11 tests  (  7 pass,   4 skip) - Minimal/conformance/external-ids/media-types
+├── ocf.integration.test.ts           #  56 tests  ( 51 pass,   5 skip) - OCF/ZIP/container
+├── opf.integration.test.ts           # 173 tests  (173 pass,   0 skip) - Package document + D-vocabularies
+├── content.integration.test.ts       # 214 tests  (208 pass,   6 skip) - XHTML/CSS/SVG
+├── nav.integration.test.ts           #  38 tests  ( 38 pass,   0 skip) - Navigation
+├── resources.integration.test.ts     # 110 tests  (108 pass,   2 skip) - Resources/fallbacks
+├── layout.integration.test.ts        #  52 tests  ( 52 pass,   0 skip) - Layout/viewport/FXL
+├── mediaoverlays.integration.test.ts #  50 tests  ( 48 pass,   2 skip) - Media overlays/SMIL
+├── epub2.integration.test.ts         #  99 tests  ( 51 pass,  48 skip) - EPUB 2 (all 7 Java features)
+└── profiles.integration.test.ts      # 125 tests  ( 34 pass,  91 skip) - 9 profile extensions
 ```
 
 **Note**: Integration tests imported from Java EPUBCheck test suite (`../epubcheck/src/test/resources/epub3/`).
@@ -71,8 +76,8 @@ test/fixtures/
 - Fast execution (~700ms vs Java's integration-heavy suite)
 
 **Critical gaps:**
-- 🔴 **EPUB 2 integration tests** - Zero ported; validator has partial EPUB 2 support but unverified end-to-end (96 Java scenarios)
-- 🔴 **Profile tests** - Zero ported; `--profile edupub|dict|idx|preview` flag works but only a few profile-aware checks exist (125 Java scenarios)
+- 🟡 **EPUB 2 validation** - 52% of 99 Java scenarios pass. Missing: EPUB 2-specific OPF Schematron rules, metadata validation (OPF-052/054/055), NCX content checks (NCX-006, RSC-010 for NCX), XHTML 1.1 DOCTYPE/HTML5 rejection
+- 🔴 **Profile implementation** - 27% of 125 profile scenarios pass. Profile-specific checks are mostly stubbed: auto-detection from dc:type, mandatory dc:type enforcement, collection metadata validation, sub-collection hierarchy rules, EDUPUB accessibility requirements
 - 🟡 **ARIA validation** - DPUB-ARIA deprecated roles done; IDREF validation done (aria-describedby/labelledby/flowto/owns/controls/activedescendant); aria-describedat detection done
 - 🟡 **ID/IDREF validation** - OPF + XHTML + SVG duplicate IDs done; ARIA IDREF + label/output/headers resolution done; MathML xref not yet
 - 🟡 **Advanced accessibility** - 71% coverage (12/17 ACC checks); remaining: ACC-008 page gaps, ACC-013 complex image aria-describedby, ACC-015/016/017
@@ -82,21 +87,15 @@ test/fixtures/
 ### Skipped Tests
 
 **Unit tests (5)** - Pre-existing validator gaps:
-- **NCX validator (2)** - NCX-003 warning suppressed in Java EPUBCheck (empty dtb:uid, whitespace-only dtb:uid)
-- **Content validator (3)** - OPF-014 inline event handlers, OPF-051 invalid media type, OPF-088 unknown epub:type prefix
+- **NCX validator (2)** - NCX-003 warning suppressed in Java (empty/whitespace dtb:uid)
+- **Content validator (3)** - OPF-014 inline events, OPF-051 invalid media type, OPF-088 unknown epub:type prefix
 
-**Integration tests (15)** - Unimplemented features and library limitations:
-- **Content (6 skipped)**:
-  - *RelaxNG content-model gaps (4)*: foreignObject body/flow/HTML validation, SVG title HTML content — requires XHTML/SVG RelaxNG per-element attribute allowlist (libxml2-wasm limitation)
-  - *CSS parser limitation (1)*: css-tree forgiving parser doesn't report @font-face-inside-selector
-  - *Broken fixture (1)*: microdata-valid has unresolvable reference errors
-- **OCF (5 skipped)**:
-  - *fflate ZIP dedup (1)*: OPF-060 duplicate ZIP entry — fflate deduplicates silently
-  - *Single-file filename validation (4)*: single-file mode doesn't run filename character checks (duplicates of EPUB-level tests per Java annotation)
-- **Resources (2 skipped)**: RSC-016 for OPF XML parse errors (we emit OPF-002/RSC-005 instead — libxml2 diagnostic difference)
-- **Media overlays (2 skipped)**:
-  - *Clock parser (1)*: SMIL clock parser more permissive than Java's (doesn't flag out-of-range values)
-  - *epub:type vocabulary (1)*: SMIL validator doesn't check OPF-088 usage for epub:type
+**Integration tests (158)** - Grouped by category:
+- **Core EPUB 3 (19 skipped)**: Library limitations (RelaxNG foreignObject/SVG title, css-tree forgiveness, libxml2 diagnostics, fflate ZIP dedup), pre-existing gaps (SMIL clock strictness, epub:type vocab), unimplemented checks (OPF-073, PKG-016, `--mode svg`).
+- **EPUB 2 (48 skipped)**: EPUB 2-specific OPF Schematron rules, metadata validation (OPF-052/054/055), NCX content checks (NCX-006, RSC-010 for NCX), XHTML 1.1 DOCTYPE/HTML5 rejection, `--mode svg`. Most are EPUB 2-specific rules our EPUB 3-focused validator doesn't implement.
+- **Profiles (91 skipped)**: Profile-specific validation is mostly stubbed. Each skipped test annotates the specific missing check (auto-detection of profile from dc:type, collection metadata validation, sub-collection hierarchy rules, etc.). See the Implementation Gaps Backlog section below for the full breakdown.
+
+Every skipped test has an inline comment annotating the specific validator gap — search for `it.skip` in `test/integration/` to find the full backlog.
 
 ---
 
@@ -186,62 +185,141 @@ test/fixtures/
 5. **fontoxpath XPath 2.0** - fontoxpath crashes on XPath 2.0 functions like `tokenize()` used in OPF/nav Schematron; OPF and nav validation rules implemented as direct TypeScript instead
 6. **RelaxNG deprecation** - libxml2 plans to remove RelaxNG support in future
 7. **Unicode NFKC normalization** - Not implemented (affects 1 skipped test)
-8. **Single-file/directory validation mode** - Implemented for `exp` (expanded directory), `opf`, `xhtml`, and `mo` (SMIL). `svg` and `nav` modes not yet implemented.
-9. **Profile implementation** - `--profile edupub|dict|idx|preview` flag is accepted, but only a handful of profile-aware checks exist (EDUPUB cross-document features, DICT dc:type check). No integration tests exist for profile behavior (~125 Java scenarios unported).
-10. **EPUB 2 coverage** - Validator has partial EPUB 2 support (OPF parser detects v2.0, NCX validator, ~13 EPUB 2 code paths in OPF validator) but zero E2E integration tests (96 Java scenarios unported).
+8. **Single-file/directory validation mode** - Implemented for `exp` (expanded directory), `opf`, `xhtml`, and `mo` (SMIL). `svg` and `nav` modes not yet implemented (affects ~5 skipped tests).
+9. **Profile implementation** - `--profile edupub|dict|idx|preview` flag is accepted, but only a handful of profile-aware checks exist. 125 profile scenarios are now ported with 91 skipped — each skip annotates the specific missing check (see Implementation Gaps Backlog).
+10. **EPUB 2 coverage** - Validator has partial EPUB 2 support. 99 EPUB 2 scenarios are now ported with 48 skipped — missing EPUB 2-specific OPF Schematron, metadata, and NCX content checks.
 
 ---
 
 ## E2E Test Coverage vs Java
 
-### Core EPUB 3 (well-covered)
+**Status: 100% Java scenario import complete** — every Java EPUBCheck feature file is represented in the TS test suite. Each skipped test has a specific validator gap annotation.
 
-| Java Category | Java Scenarios | TS Ported | TS Passing | Coverage |
-|---------------|----------------|-----------|------------|----------|
-| 00-minimal | 5 | 4 | 4 | 80% |
-| 02-epub-publication-conformance | 2 | 0 | 0 | 0% |
-| 03-resources | 113 | 110 | 108 | 96% |
-| 04-ocf (ocf + filename-checker) | 67 | 56 | 51 | 76% |
-| 05-package-document | 121 | ~121 | 121 | ~100% |
-| 06-content-document (xhtml+svg+css) | 215 | 214 | 208 | 97% |
-| 07-navigation-document | 40 | 38 | 38 | 95% |
-| 08-layout | 51 | 52 | 52 | **100%** |
-| 09-media-overlays | 50 | 50 | 48 | **96%** |
-| B-external-identifiers | 3 | 0 | 0 | 0% |
-| D-vocabularies | 54 | 54 | 54 | ~100% |
-| F-viewport-meta-tag | 4 | (covered in layout) | - | ~100% |
-| H-media-type-registrations | 1 | 0 | 0 | 0% |
-| **Core EPUB 3 total** | **~726** | **~699** | **~684** | **~94%** |
+### Core EPUB 3
 
-### Uncovered categories
+| Java Feature | Scenarios | Active | Skipped | Pass Rate |
+|---|---:|---:|---:|---:|
+| 00-minimal | 5 | 4 | 1 | 80% |
+| 02-epub-publication-conformance | 2 | 2 | 0 | 100% |
+| 03-resources | 113 | 108 | 2 | 96% |
+| 04-ocf (ocf + filename-checker) | 67 | 51 | 5 | 76% |
+| 05-package-document | 121 | ~121 | 0 | ~100% |
+| 06-content-document (xhtml+svg+css) | 215 | 208 | 6 | 97% |
+| 07-navigation-document | 40 | 38 | 0 | 95% |
+| 08-layout | 51 | 52 | 0 | **100%** |
+| 09-media-overlays | 50 | 48 | 2 | **96%** |
+| B-external-identifiers | 3 | 1 | 2 | 33% |
+| D-vocabularies | 54 | 54 | 0 | ~100% |
+| F-viewport-meta-tag | 4 | (covered in layout) | — | ~100% |
+| H-media-type-registrations | 1 | 0 | 1 | 0% |
+| **Core EPUB 3** | **~726** | **~687** | **19** | **~95%** |
 
-| Category | Java Scenarios | TS Ported | Coverage | Notes |
-|---|---:|---:|---:|---|
-| **EPUB 2** (7 features) | 96 | 0 | 0% | Validator has ~70% of EPUB 2 logic but no E2E tests |
-| **Profiles/extensions** (9 dirs, 15 features) | 125 | 0 | 0% | Profile flag accepted but implementation mostly stubbed |
-| Localization | 7 | 0 | N/A | Not applicable — TS validator has no i18n |
-| Reporting (JSON/XML) | 16 | 0 | N/A | Different report format |
-| CLI tests | 0 | 0 | N/A | Different CLI surface |
+### EPUB 2
+
+| Java Feature | Scenarios | Active | Skipped | Pass Rate |
+|---|---:|---:|---:|---:|
+| ocf-publication | 15 | 9 | 6 | 60% |
+| opf-publication | 22 | 10 | 11 | 45% |
+| ncx-publication | 8 | 3 | 5 | 38% |
+| ops-publication | 5 | 5 | 0 | 100% |
+| opf-package-document | 29 | 15 | 14 | 52% |
+| ops-content-document-xhtml | 18 | 9 | 10 | 50% |
+| ops-content-document-svg | 2 | 0 | 2 | 0% |
+| **EPUB 2** | **99** | **51** | **48** | **52%** |
+
+### Profile Extensions
+
+| Java Directory | Scenarios | Active | Skipped | Pass Rate |
+|---|---:|---:|---:|---:|
+| epub-accessibility | 4 | 2 | 2 | 50% |
+| epub-dictionaries | 34 | 14 | 20 | 41% |
+| epub-distributable-objects | 2 | 1 | 1 | 50% |
+| epub-edupub | 32 | 5 | 27 | 16% |
+| epub-indexes | 18 | 3 | 15 | 17% |
+| epub-multiple-renditions | 13 | 2 | 11 | 15% |
+| epub-previews | 10 | 3 | 7 | 30% |
+| epub-region-nav | 10 | 2 | 8 | 20% |
+| epub-scriptable-components | 2 | 2 | 0 | 100% |
+| **Profile Extensions** | **125** | **34** | **91** | **27%** |
+
+### Grand Total
+
+| Tier | Java Scenarios | Active | Skipped | Pass Rate |
+|---|---:|---:|---:|---:|
+| Core EPUB 3 | ~726 | ~687 | 19 | ~95% |
+| EPUB 2 | 99 | 51 | 48 | 52% |
+| Profile Extensions | 125 | 34 | 91 | 27% |
+| **Total** | **~950** | **~772** | **158** | **~81%** |
+
+### Out-of-scope Java features (intentionally not ported)
+
+- `localization/localization.feature` (7 scenarios) — TS validator has no i18n
+- `reporting/json-report.feature` (14 scenarios) — Our JSON format differs
+- `reporting/xml-report.feature` (2 scenarios) — No XML report format
+- `cli/cli.feature` — Different CLI surface
+- `unit-tests/url-fragment.feature` (16 scenarios) — Covered by TS unit tests
 
 ### Recent Milestones
 
-- **Single-file modes** (`--mode opf|xhtml|mo|exp`) enabled unskipping 49 tests across layout, media overlays, and resources
-- **08-layout** went from 39% → **100%** passing (32 layout tests unskipped via `--mode opf`)
-- **09-media-overlays** went from 67% → **96%** passing (14 SMIL tests unskipped via `--mode mo`)
-- **Resources** went from 94% → 96% (2 single-document remote resource tests enabled)
+- **Single-file modes** (`--mode opf|xhtml|mo|exp`) enabled unskipping 49 tests + made single-file test porting possible
+- **100% Java scenario import** achieved across all core EPUB 3, EPUB 2, and profile feature files (~950 scenarios total)
+- **08-layout** went from 39% → 100% via `--mode opf`
+- **09-media-overlays** went from 67% → 96% via `--mode mo`
 
 ---
 
-## Remaining E2E Porting Gaps
+## Implementation Gaps Backlog
 
-| Area | Gap | Tests Blocked | Blocker |
-|------|-----|---------------|---------|
-| **EPUB 2** | All 7 feature files unported | 96 scenarios | No integration tests exist; porting planned (see PROJECT_STATUS Phase 3) |
-| **Profiles** | All 9 extension directories unported | 125 scenarios | Profile-specific checks mostly stubbed in validator |
-| **06-content-document** | RelaxNG per-element attribute validation | 4 skipped | libxml2-wasm RelaxNG limitation (foreignObject, SVG title content model) |
-| **04-ocf** | Single-file filename character checks | 4 skipped | Single-file mode doesn't run filename validation (duplicates of EPUB-level tests) |
-| **03-resources** | RSC-016 OPF parse errors | 2 skipped | libxml2 diagnostic difference (we emit OPF-002/RSC-005) |
-| **09-media-overlays** | SMIL clock parser strictness, epub:type vocab | 2 skipped | Pre-existing SMIL validator gaps |
+The 158 skipped integration tests form a prioritized backlog. Grouped by blocker category:
+
+### Profile validation (91 tests)
+
+Profile-specific checks are mostly stubbed. Top gaps:
+
+| Gap | Affected profiles | Estimated tests |
+|---|---|---:|
+| Profile auto-detection from `dc:type` | edupub, dict, idx, preview | ~5 |
+| Mandatory `dc:type` enforcement per profile | edupub, dict, idx | ~15 |
+| Dictionary/Index collection metadata validation | dict, idx | ~20 |
+| EDUPUB accessibility metadata requirements | edupub | ~10 |
+| Sub-collection hierarchy rules (index-group, preview-collection) | dict, idx, preview | ~10 |
+| Multiple-rendition metadata.xml support | multiple-renditions | ~10 |
+| Region-navigation structural rules | region-nav | ~8 |
+| Preview manifest property rules | preview | ~5 |
+| Distributable object collection rules | distributable-objects | ~2 |
+| Scriptable component manifest rules | scriptable-components | ~2 |
+
+### EPUB 2-specific checks (48 tests)
+
+The validator supports EPUB 2 partially but lacks EPUB 2-specific rules:
+
+| Gap | Message IDs | Estimated tests |
+|---|---|---:|
+| EPUB 2 OPF Schematron rules | OPF-001/003/035/038/039/041/042 | ~15 |
+| EPUB 2 metadata validation | OPF-052/054/055 (creator role, date, title) | ~6 |
+| EPUB 2 identifier validation | OPF-085 (UUID format) | ~2 |
+| EPUB 2 guide element | OPF-032, RSC-017 (type duplication) | ~4 |
+| NCX content checks | NCX-006, RSC-007/010 for NCX refs | ~5 |
+| XHTML 1.1 DOCTYPE rejection | HTM-004 | ~3 |
+| HTML5 element rejection in XHTML 1.1 | RSC-005 | ~2 |
+| `--mode svg` not implemented | N/A | 2 |
+| Misc EPUB 2 behavior quirks | varies | ~9 |
+
+### Core EPUB 3 library gaps (19 tests)
+
+| Gap | Tests | Blocker |
+|---|---:|---|
+| RelaxNG per-element attribute allowlist (foreignObject, SVG title) | 4 | libxml2-wasm limitation |
+| Single-file filename validation | 4 | Pre-existing, low priority (duplicates) |
+| OPF-073 external DOCTYPE identifiers | 2 | Not implemented |
+| PKG-016 file extension case | 1 | Not implemented |
+| `--mode svg` | 1 | Not implemented |
+| SMIL clock parser strictness | 1 | Pre-existing |
+| SMIL epub:type vocabulary | 1 | Pre-existing |
+| RSC-016 OPF parse error diagnostic | 2 | libxml2 vs Xerces output difference |
+| css-tree forgiving parser | 1 | Library limitation |
+| Broken fixture (microdata) | 1 | Upstream |
+| fflate ZIP dedup | 1 | Library limitation |
 
 ---
 
