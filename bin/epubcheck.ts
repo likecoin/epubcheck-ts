@@ -226,7 +226,7 @@ async function main(): Promise<void> {
       result = await EpubCheck.validateSingleFile(fileData, basename(filePath), options);
     } else {
       const epubData = await readFile(filePath);
-      result = await EpubCheck.validate(epubData, options);
+      result = await EpubCheck.validate(epubData, options, basename(filePath));
     }
     const elapsedMs = Date.now() - startTime;
 

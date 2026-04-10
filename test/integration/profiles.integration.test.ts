@@ -40,8 +40,7 @@ describe('Integration Tests - Profiles', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: expected 2x OPF-027, got 0; all={}
-    it.skip("Report unknown 'a11y' metadata", async () => {
+    it("Report unknown 'a11y' metadata", async () => {
       const data = loadFixture(
         'profiles/accessibility/property-prefix-a11y-unknown-value-error.opf',
       );
@@ -76,8 +75,7 @@ describe('Integration Tests - Profiles', () => {
   });
 
   describe('Dictionaries', () => {
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={"OPF-027":2}
-    it.skip("An EPUB Dictionary publication must have a 'dictionary' dc:type property", async () => {
+    it("An EPUB Dictionary publication must have a 'dictionary' dc:type property", async () => {
       const data = loadFixture(
         'profiles/dictionaries/package-document/dictionary-metadata-type-missing-error.opf',
       );
@@ -689,8 +687,7 @@ describe('Integration Tests - Profiles', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip("an EDUPUB teachers’s edition must declare the type 'edupub'", async () => {
+    it("an EDUPUB teachers’s edition must declare the type 'edupub'", async () => {
       const data = loadFixture(
         'profiles/edupub/package-document/edupub-teacher-edition-metadata-type-missing-error.opf',
       );
@@ -715,8 +712,7 @@ describe('Integration Tests - Profiles', () => {
       expectWarning(result, 'RSC-017');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip("an EDUPUB publication must declare the type 'edupub'", async () => {
+    it("an EDUPUB publication must declare the type 'edupub'", async () => {
       const data = loadFixture(
         'profiles/edupub/package-document/edupub-metadata-type-missing-error.opf',
       );
@@ -1126,8 +1122,7 @@ describe('Integration Tests - Profiles', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('Report a preview publication that does not identify itself in a dc:type element', async () => {
+    it('Report a preview publication that does not identify itself in a dc:type element', async () => {
       const data = loadFixture('profiles/previews/epub/preview-pub-dc-type-missing-error.epub');
       const result = await EpubCheck.validate(data, { profile: 'preview' });
       expectError(result, 'RSC-005');

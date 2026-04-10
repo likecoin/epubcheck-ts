@@ -363,10 +363,7 @@ describe('Integration Tests - Media Overlays', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: SMIL clock parser is more permissive than Java's — doesn't flag
-    // out-of-range values, invalid units, or missing integer parts.
-    // Pre-existing gap in src/smil/clock.ts, not a mo-mode issue.
-    it.skip('should report invalid clock values (RSC-005 x6)', async () => {
+    it('should report invalid clock values (RSC-005 x6)', async () => {
       const result = await validateSmil('clock-value-syntax-invalid-error');
       expectErrorCount(result, 'RSC-005', 6);
     });
@@ -391,9 +388,7 @@ describe('Integration Tests - Media Overlays', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: SMIL validator doesn't check epub:type vocabulary.
-    // Pre-existing gap — OPF-088 usage check is only wired up for XHTML.
-    it.skip('should allow unknown epub:type (OPF-088 usage)', async () => {
+    it('should allow unknown epub:type (OPF-088 usage)', async () => {
       const result = await validateSmil('epubtype-unknown-usage');
       expectUsage(result, 'OPF-088');
     });
@@ -420,6 +415,7 @@ async function validateSmil(
   return EpubCheck.validateSingleFile(data, `${fixture}.smil`, {
     mode: 'mo',
     version: '3.0',
+    includeUsage: true,
   });
 }
 

@@ -3,6 +3,7 @@
  */
 
 import { XmlDocument, type XmlElement } from 'libxml2-wasm';
+import { EPUB_SSV_ALL } from '../vocab/epub-ssv.js';
 import { MessageId, pushMessage } from '../messages/index.js';
 import type { ManifestItem } from '../opf/types.js';
 import type { ValidationContext } from '../types.js';
@@ -76,6 +77,7 @@ export class SMILValidator {
       const root = doc.root;
       this.validateStructure(context, path, root);
       this.validateAudioElements(context, path, root, manifestByPath, result);
+      this.validateEpubTypes(context, path, root);
       this.extractTextReferences(path, root, result);
     } finally {
       doc.dispose();
@@ -210,10 +212,26 @@ export class SMILValidator {
     const beginStr = clipBegin ?? '0';
     const start = parseSmilClock(beginStr);
     const end = parseSmilClock(clipEnd);
+    const location = line != null ? { path, line } : { path };
 
+    // RSC-005: report invalid clock values (mirrors Java's SMIL clock validator).
+    // Each clip attribute with a non-parseable value is reported separately.
+    if (clipBegin !== null && Number.isNaN(start)) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_005,
+        message: `Invalid SMIL clock value "${clipBegin}" in clipBegin attribute`,
+        location,
+      });
+    }
+    if (Number.isNaN(end)) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_005,
+        message: `Invalid SMIL clock value "${clipEnd}" in clipEnd attribute`,
+        location,
+      });
+    }
     if (Number.isNaN(start) || Number.isNaN(end)) return;
 
-    const location = line != null ? { path, line } : { path };
     if (start > end) {
       pushMessage(context.messages, {
         id: MessageId.MED_008,
@@ -226,6 +244,36 @@ export class SMILValidator {
         message: 'The time specified in the clipBegin attribute must not be the same as clipEnd',
         location,
       });
+    }
+  }
+
+  /**
+   * Validate epub:type attribute values against the EPUB SSV vocabulary.
+   * Only emits OPF-088 (usage) for unknown local names. Prefixed values
+   * from declared vocabularies are allowed.
+   */
+  private validateEpubTypes(context: ValidationContext, path: string, root: XmlElement): void {
+    try {
+      const epubTypeElements = root.find('.//*[@epub:type]', {
+        epub: 'http://www.idpf.org/2007/ops',
+      });
+      for (const elem of epubTypeElements) {
+        const elemTyped = elem as XmlElement;
+        const epubTypeAttr = elemTyped.attr('type', 'epub');
+        if (!epubTypeAttr?.value) continue;
+        for (const part of epubTypeAttr.value.split(/\s+/)) {
+          if (!part || part.includes(':')) continue;
+          if (!EPUB_SSV_ALL.has(part)) {
+            pushMessage(context.messages, {
+              id: MessageId.OPF_088,
+              message: `Unrecognized epub:type value "${part}"`,
+              location: { path, line: elem.line },
+            });
+          }
+        }
+      }
+    } catch {
+      // XPath may fail
     }
   }
 

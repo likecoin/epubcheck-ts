@@ -411,8 +411,7 @@ describe('Integration Tests - EPUB 2', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x HTM-009, got 0; all={}
-    it.skip('Report an invalid doctype in the OPF document', async () => {
+    it('Report an invalid doctype in the OPF document', async () => {
       const data = loadFixture('epub2/opf-document/doctype-invalid-error.opf');
       const result = await EpubCheck.validateSingleFile(data, 'doctype-invalid-error.opf', {
         mode: 'opf',
@@ -462,8 +461,7 @@ describe('Integration Tests - EPUB 2', () => {
       expectError(result, 'OPF-030');
     });
 
-    // Skip: FAIL: expected 1x OPF-052, got 0; all={}
-    it.skip("Report a 'dc:creator' metadata with an unknown role", async () => {
+    it("Report a 'dc:creator' metadata with an unknown role", async () => {
       const data = loadFixture('epub2/opf-document/metadata-creator-role-unknown-error.opf');
       const result = await EpubCheck.validateSingleFile(
         data,
@@ -495,8 +493,7 @@ describe('Integration Tests - EPUB 2', () => {
       expectWarning(result, 'OPF-085');
     });
 
-    // Skip: FAIL: expected 1x OPF-085, got 0; all={}
-    it.skip('an identifier with a "uuid" scheme should be a valid UUID', async () => {
+    it('an identifier with a "uuid" scheme should be a valid UUID', async () => {
       const data = loadFixture(
         'epub2/opf-document/metadata-identifier-uuid-as-scheme-invalid-warning.opf',
       );
@@ -508,8 +505,7 @@ describe('Integration Tests - EPUB 2', () => {
       expectWarning(result, 'OPF-085');
     });
 
-    // Skip: FAIL: expected 1x OPF-054, got 0; all={}
-    it.skip("report an empty 'dc:date' metadata", async () => {
+    it("report an empty 'dc:date' metadata", async () => {
       const data = loadFixture('epub2/opf-document/metadata-date-empty-error.opf');
       const result = await EpubCheck.validateSingleFile(data, 'metadata-date-empty-error.opf', {
         mode: 'opf',
@@ -518,8 +514,7 @@ describe('Integration Tests - EPUB 2', () => {
       expectError(result, 'OPF-054');
     });
 
-    // Skip: FAIL: expected 1x OPF-054, got 0; all={"OPF-053":1}
-    it.skip("report a 'dc:date' value not conforming to ISO-8601", async () => {
+    it("report a 'dc:date' value not conforming to ISO-8601", async () => {
       const data = loadFixture('epub2/opf-document/metadata-date-invalid-syntax-error.opf');
       const result = await EpubCheck.validateSingleFile(
         data,
@@ -529,8 +524,7 @@ describe('Integration Tests - EPUB 2', () => {
       expectError(result, 'OPF-054');
     });
 
-    // Skip: FAIL: expected 1x OPF-055, got 0; all={}
-    it.skip("report an empty 'dc:title' metadata", async () => {
+    it("report an empty 'dc:title' metadata", async () => {
       const data = loadFixture('epub2/opf-document/metadata-title-empty-warning.opf');
       const result = await EpubCheck.validateSingleFile(data, 'metadata-title-empty-warning.opf', {
         mode: 'opf',
@@ -638,8 +632,7 @@ describe('Integration Tests - EPUB 2', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 2x RSC-017, got 0; all={}
-    it.skip("'guide' should not contain two entries of the same type pointing to the same resource", async () => {
+    it("'guide' should not contain two entries of the same type pointing to the same resource", async () => {
       const data = loadFixture('epub2/opf-document/guide-duplicates-warning.opf');
       const result = await EpubCheck.validateSingleFile(data, 'guide-duplicates-warning.opf', {
         mode: 'opf',
@@ -669,8 +662,7 @@ describe('Integration Tests - EPUB 2', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: expected 1x HTM-004, got 0; all={}
-    it.skip('Report an unresolved entity reference in the doctype declaration', async () => {
+    it('Report an unresolved entity reference in the doctype declaration', async () => {
       const data = loadFixture('epub2/ops-document-xhtml/doctype-unresolved-entity-error.xhtml');
       const result = await EpubCheck.validateSingleFile(
         data,
@@ -680,8 +672,7 @@ describe('Integration Tests - EPUB 2', () => {
       expectError(result, 'HTM-004');
     });
 
-    // Skip: FAIL: expected 1x HTM-004, got 0; all={}
-    it.skip('Report a DOCTYPE declaration with an invalid public identifier', async () => {
+    it('Report a DOCTYPE declaration with an invalid public identifier', async () => {
       const data = loadFixture('epub2/ops-document-xhtml/doctype-public-id-error.xhtml');
       const result = await EpubCheck.validateSingleFile(data, 'doctype-public-id-error.xhtml', {
         mode: 'xhtml',
@@ -690,8 +681,7 @@ describe('Integration Tests - EPUB 2', () => {
       expectError(result, 'HTM-004');
     });
 
-    // Skip: FAIL: expected 1x HTM-004, got 0; all={}
-    it.skip('Report an HTML5 DOCTYPE declaration', async () => {
+    it('Report an HTML5 DOCTYPE declaration', async () => {
       const data = loadFixture('epub2/ops-document-xhtml/doctype-html5-error.xhtml');
       const result = await EpubCheck.validateSingleFile(data, 'doctype-html5-error.xhtml', {
         mode: 'xhtml',

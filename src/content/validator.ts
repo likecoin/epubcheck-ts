@@ -14,6 +14,12 @@ import { isRegisteredScheme } from '../references/uri-schemes.js';
 import { resolveManifestHref } from '../references/url.js';
 import type { ReferenceValidator } from '../references/validator.js';
 import type { ValidationContext } from '../types.js';
+import { parseDoctype } from '../util/doctype.js';
+import {
+  EPUB_SSV_ALL,
+  EPUB_SSV_DEPRECATED,
+  EPUB_SSV_DISALLOWED_ON_CONTENT,
+} from '../vocab/epub-ssv.js';
 
 const DISCOURAGED_ELEMENTS = new Set(['base', 'embed', 'rp']);
 
@@ -82,147 +88,6 @@ function stripMimeParams(t: string): string {
   return (idx >= 0 ? t.substring(0, idx) : t).trim();
 }
 
-// EPUB Structural Semantics Vocabulary — deprecated values (OPF-086b)
-const EPUB_SSV_DEPRECATED = new Set([
-  'annoref',
-  'annotation',
-  'biblioentry',
-  'bridgehead',
-  'endnote',
-  'help',
-  'marginalia',
-  'note',
-  'rearnote',
-  'rearnotes',
-  'sidebar',
-  'subchapter',
-  'warning',
-]);
-
-// EPUB SSV values disallowed on XHTML content documents (OPF-087)
-const EPUB_SSV_DISALLOWED_ON_CONTENT = new Set([
-  'aside',
-  'figure',
-  'list',
-  'list-item',
-  'table',
-  'table-cell',
-  'table-row',
-]);
-
-// All known EPUB SSV values (non-exhaustive, for OPF-088 unknown detection)
-const EPUB_SSV_ALL = new Set([
-  ...EPUB_SSV_DEPRECATED,
-  ...EPUB_SSV_DISALLOWED_ON_CONTENT,
-  'abstract',
-  'acknowledgments',
-  'afterword',
-  'appendix',
-  'assessment',
-  'assessments',
-  'backlink',
-  'backmatter',
-  'balloon',
-  'bibliography',
-  'biblioref',
-  'bodymatter',
-  'case-study',
-  'chapter',
-  'colophon',
-  'concluding-sentence',
-  'conclusion',
-  'contributors',
-  'copyright-page',
-  'cover',
-  'covertitle',
-  'credit',
-  'credits',
-  'dedication',
-  'division',
-  'endnotes',
-  'epigraph',
-  'epilogue',
-  'errata',
-  'fill-in-the-blank-problem',
-  'footnote',
-  'footnotes',
-  'foreword',
-  'frontmatter',
-  'fulltitle',
-  'general-problem',
-  'glossary',
-  'glossdef',
-  'glossref',
-  'glossterm',
-  'halftitle',
-  'halftitlepage',
-  'imprimatur',
-  'imprint',
-  'index',
-  'index-editor-note',
-  'index-entry',
-  'index-entry-list',
-  'index-group',
-  'index-headnotes',
-  'index-legend',
-  'index-locator',
-  'index-locator-list',
-  'index-locator-range',
-  'index-term',
-  'index-term-categories',
-  'index-term-category',
-  'index-xref-preferred',
-  'index-xref-related',
-  'introduction',
-  'keyword',
-  'keywords',
-  'label',
-  'landmarks',
-  'learning-objective',
-  'learning-objectives',
-  'learning-outcome',
-  'learning-outcomes',
-  'learning-resource',
-  'learning-resources',
-  'learning-standard',
-  'learning-standards',
-  'loa',
-  'loi',
-  'lot',
-  'lov',
-  'match-problem',
-  'multiple-choice-problem',
-  'noteref',
-  'notice',
-  'ordinal',
-  'other-credits',
-  'page-list',
-  'pagebreak',
-  'panel',
-  'panel-group',
-  'part',
-  'practice',
-  'practices',
-  'preamble',
-  'preface',
-  'prologue',
-  'pullquote',
-  'qna',
-  'question',
-  'referrer',
-  'revision-history',
-  'seriespage',
-  'sound-area',
-  'subtitle',
-  'tip',
-  'title',
-  'titlepage',
-  'toc',
-  'toc-brief',
-  'topic-sentence',
-  'true-false-problem',
-  'volume',
-]);
 
 // HTML5 valid datetime for <time datetime="...">
 // See https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-time-element
@@ -1248,21 +1113,28 @@ export class ContentValidator {
     // Check for unescaped ampersands before parsing
     this.checkUnescapedAmpersands(context, path, content);
 
-    // HTM-004 (EPUB 3): Obsolete/irregular DOCTYPE — scan raw string since libxml2 doesn't expose DOCTYPE
-    if (context.version !== '2.0') {
-      const doctypeMatch = /<!DOCTYPE\s+html\b([\s\S]*?)>/i.exec(content);
-      if (doctypeMatch) {
-        const inner = doctypeMatch[1] ?? '';
-        const hasPublic = /\bPUBLIC\b/i.test(inner);
-        const hasSystem = /\bSYSTEM\b/i.test(inner);
-        const isLegacyCompat = /['"]about:legacy-compat['"]/.test(inner);
-        if (hasPublic || (hasSystem && !isLegacyCompat)) {
+    // HTM-004: Obsolete/irregular DOCTYPE for html root element.
+    const doctypeInfo = parseDoctype(content, { expectedRoot: 'html' });
+    if (doctypeInfo) {
+      if (context.version === '2.0') {
+        const expectedPublic = '-//W3C//DTD XHTML 1.1//EN';
+        const expectedSystem = 'http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd';
+        if (doctypeInfo.publicId !== expectedPublic || doctypeInfo.systemId !== expectedSystem) {
           pushMessage(context.messages, {
             id: MessageId.HTM_004,
-            message: 'Irregular DOCTYPE found; expected "<!DOCTYPE html>"',
+            message: `Irregular DOCTYPE found; expected '<!DOCTYPE html PUBLIC "${expectedPublic}" "${expectedSystem}">'`,
             location: { path },
           });
         }
+      } else if (
+        doctypeInfo.publicId !== '' ||
+        (doctypeInfo.systemId !== '' && doctypeInfo.systemId !== 'about:legacy-compat')
+      ) {
+        pushMessage(context.messages, {
+          id: MessageId.HTM_004,
+          message: 'Irregular DOCTYPE found; expected "<!DOCTYPE html>"',
+          location: { path },
+        });
       }
     }
 

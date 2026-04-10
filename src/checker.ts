@@ -20,6 +20,7 @@ import { resolveManifestHref } from './references/url.js';
 import { ReferenceValidator } from './references/validator.js';
 import { SchemaValidator } from './schema/orchestrator.js';
 import { SMILValidator } from './smil/validator.js';
+import { parseDoctype } from './util/doctype.js';
 import type {
   EPUBVersion,
   EpubCheckOptions,
@@ -40,6 +41,31 @@ const DEFAULT_OPTIONS: ResolvedEpubCheckOptions = {
   maxErrors: 0,
   locale: 'en',
   customMessages: new Map(),
+};
+
+// OPF-073: DOCTYPE external identifiers are only allowed for a small set of
+// legacy XML media types. Source: ../epubcheck DeclarationHandler.
+const OPF_073_ALLOWED_DOCTYPES: Record<string, { publicId: string; systemId: string }> = {
+  'image/svg+xml': {
+    publicId: '-//W3C//DTD SVG 1.1//EN',
+    systemId: 'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd',
+  },
+  'application/mathml+xml': {
+    publicId: '-//W3C//DTD MathML 3.0//EN',
+    systemId: 'http://www.w3.org/Math/DTD/mathml3/mathml3.dtd',
+  },
+  'application/mathml-content+xml': {
+    publicId: '-//W3C//DTD MathML 3.0//EN',
+    systemId: 'http://www.w3.org/Math/DTD/mathml3/mathml3.dtd',
+  },
+  'application/mathml-presentation+xml': {
+    publicId: '-//W3C//DTD MathML 3.0//EN',
+    systemId: 'http://www.w3.org/Math/DTD/mathml3/mathml3.dtd',
+  },
+  'application/x-dtbncx+xml': {
+    publicId: '-//NISO//DTD ncx 2005-1//EN',
+    systemId: 'http://www.daisy.org/z3986/2005/ncx-2005-1.dtd',
+  },
 };
 
 /**
@@ -76,9 +102,10 @@ export class EpubCheck {
    * Validate an EPUB file
    *
    * @param data - The EPUB file as a Uint8Array
+   * @param filename - Optional filename, used for file-extension checks (PKG-016/017/024)
    * @returns Validation result
    */
-  async check(data: Uint8Array): Promise<EpubCheckResult> {
+  async check(data: Uint8Array, filename?: string): Promise<EpubCheckResult> {
     const startTime = performance.now();
 
     // Initialize validation context
@@ -97,6 +124,11 @@ export class EpubCheck {
     }
 
     try {
+      // Check filename extension (PKG-016/017/024) before unzipping
+      if (filename) {
+        this.checkFilenameExtension(context, filename);
+      }
+
       // Step 1: Validate OCF container (ZIP structure)
       const ocfValidator = new OCFValidator();
       ocfValidator.validate(context);
@@ -250,14 +282,16 @@ export class EpubCheck {
    *
    * @param data - The EPUB file as a Uint8Array
    * @param options - Optional validation options
+   * @param filename - Optional filename, used for file-extension checks
    * @returns Validation result
    */
   static async validate(
     data: Uint8Array,
     options: EpubCheckOptions = {},
+    filename?: string,
   ): Promise<EpubCheckResult> {
     const checker = new EpubCheck(options);
-    return checker.check(data);
+    return checker.check(data, filename);
   }
 
   /**
@@ -566,6 +600,7 @@ export class EpubCheck {
     if (context.packageDocument) {
       this.populateRegistry(context, registry);
       this.validateObfuscatedResources(context);
+      this.checkExternalIdentifiers(context);
     }
 
     // Step 4: Validate content documents (XHTML) and extract references
@@ -586,6 +621,67 @@ export class EpubCheck {
     // Step 7: Run schema validations (RelaxNG, XSD, Schematron)
     const schemaValidator = new SchemaValidator(context);
     await schemaValidator.validate();
+  }
+
+  /**
+   * Check DOCTYPE external identifiers (OPF-073).
+   *
+   * Mirrors Java's DeclarationHandler: external identifiers (PUBLIC/SYSTEM)
+   * must not appear in DOCTYPE declarations except for specific media-type
+   * combinations (SVG 1.1, MathML 3.0, NCX 2005-1).
+   */
+  private checkExternalIdentifiers(context: ValidationContext): void {
+    if (!context.packageDocument) return;
+    // EPUB 3 only — EPUB 2 has distinct DOCTYPE rules (DTBook, OEB 1.2, XHTML 1.1)
+    if (context.version === '2.0') return;
+
+    const opfPath = context.opfPath ?? '';
+    const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/')) : '';
+
+    for (const item of context.packageDocument.manifest) {
+      const mediaType = item.mediaType;
+      if (mediaType === 'application/xhtml+xml') continue;
+      if (!mediaType.endsWith('+xml') && mediaType !== 'application/x-dtbncx+xml') continue;
+
+      const fullPath = resolveManifestHref(opfDir, item.href);
+      const data = context.files.get(fullPath);
+      if (!data) continue;
+
+      const info = parseDoctype(new TextDecoder().decode(data.slice(0, 2048)));
+      if (!info) continue;
+
+      const allowed = OPF_073_ALLOWED_DOCTYPES[mediaType];
+      if (allowed?.publicId !== info.publicId || allowed.systemId !== info.systemId) {
+        pushMessage(context.messages, {
+          id: MessageId.OPF_073,
+          message: 'External identifiers must not appear in the document type declaration.',
+          location: { path: fullPath },
+        });
+      }
+    }
+  }
+
+  /**
+   * Check file extension for EPUB naming conventions.
+   *
+   * Mirrors Java's OCFExtensionChecker (src/main/java/com/adobe/epubcheck/ocf/OCFExtensionChecker.java):
+   * - PKG-016 (warning): case-variant of "epub" (e.g. ".ePub", ".EPUB")
+   * - PKG-017 (EPUB 2) / PKG-024 (EPUB 3): non-epub extension
+   */
+  private checkFilenameExtension(context: ValidationContext, filename: string): void {
+    const dotIdx = filename.lastIndexOf('.');
+    if (dotIdx < 0) return;
+    const extension = filename.slice(dotIdx + 1);
+    if (extension === 'epub') return;
+
+    if (/^[Ee][Pp][Uu][Bb]$/.test(extension)) {
+      pushMessage(context.messages, {
+        id: MessageId.PKG_016,
+        message: 'For maximum compatibility, use only lowercase characters for the EPUB file extension.',
+        location: { path: filename },
+      });
+    }
+    // PKG-017/024 for other extensions could be added here later.
   }
 
   /**

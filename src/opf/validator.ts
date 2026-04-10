@@ -1,7 +1,8 @@
 import { MessageId, pushMessage } from '../messages/index.js';
 import { checkUrlLeaking, isDataURL, isFileURL } from '../references/url.js';
 import { isValidSmilClock, parseSmilClock } from '../smil/clock.js';
-import type { ValidationContext } from '../types.js';
+import type { EPUBProfile, ValidationContext } from '../types.js';
+import { parseDoctype } from '../util/doctype.js';
 import { sniffXmlEncoding } from '../util/encoding.js';
 import { parseOPF } from './parser.js';
 import type { ManifestItem, PackageDocument } from './types.js';
@@ -384,6 +385,24 @@ const KNOWN_RENDITION_META_PROPERTIES = new Set(
   RENDITION_META_RULES.map((r) => r.property.slice('rendition:'.length)),
 );
 
+// a11y: vocabulary (EPUB Accessibility 1.1)
+// Source: ../epubcheck/src/main/java/com/adobe/epubcheck/vocab/AccessibilityVocab.java
+const KNOWN_A11Y_META_PROPERTIES = new Set([
+  'certifiedBy',
+  'certifierCredential',
+  'exemption',
+]);
+const KNOWN_A11Y_LINKREL_PROPERTIES = new Set(['certifierCredential', 'certifierReport']);
+
+// Required dc:type identifier per validation profile.
+// Sources: ../epubcheck/src/main/resources/com/adobe/epubcheck/schema/30/
+//   edupub/edu-opf.sch, dict/dict-opf.sch, previews/preview-pub-opf.sch
+const PROFILE_DC_TYPE: Partial<Record<EPUBProfile, string>> = {
+  edupub: 'edupub',
+  dict: 'dictionary',
+  preview: 'preview',
+};
+
 const GRANDFATHERED_LANG_TAGS = new Set([
   'en-GB-oed',
   'i-ami',
@@ -470,6 +489,27 @@ export class OPFValidator {
 
     const opfXml = new TextDecoder().decode(opfData);
 
+    // HTM-009: EPUB 2 OPF DOCTYPE check.
+    // Only the OEB 1.2 package DOCTYPE is allowed; any other PUBLIC/SYSTEM
+    // identifier on an OPF file is reported. Mirrors Java DeclarationHandler:76-97.
+    if (context.version === '2.0') {
+      const info = parseDoctype(opfXml);
+      if (
+        info &&
+        !(
+          info.root === 'package' &&
+          info.publicId === '+//ISBN 0-9673008-1-9//DTD OEB 1.2 Package//EN' &&
+          info.systemId === 'http://openebook.org/dtds/oeb-1.2/oebpkg12.dtd'
+        )
+      ) {
+        pushMessage(context.messages, {
+          id: MessageId.HTM_009,
+          message: 'Obsolete or irregular DOCTYPE declaration in OPF package document',
+          location: { path: opfPath },
+        });
+      }
+    }
+
     // Parse OPF
     try {
       this.packageDoc = parseOPF(opfXml);
@@ -533,6 +573,24 @@ export class OPFValidator {
     // Accessibility metadata checks (EPUB 3 only)
     if (this.packageDoc.version.startsWith('3.')) {
       this.validateAccessibilityMetadata(context, opfPath);
+      this.validateProfileDcType(context, opfPath);
+    }
+  }
+
+  private validateProfileDcType(context: ValidationContext, opfPath: string): void {
+    if (!this.packageDoc) return;
+    const expected = PROFILE_DC_TYPE[context.options.profile];
+    if (!expected) return;
+
+    const hasType = this.packageDoc.dcElements.some(
+      (dc) => dc.name === 'type' && dc.value.trim() === expected,
+    );
+    if (!hasType) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_005,
+        message: `The dc:type identifier "${expected}" is required.`,
+        location: { path: opfPath },
+      });
     }
   }
 
@@ -693,22 +751,45 @@ export class OPFValidator {
         }
       }
 
-      // Validate dc:date format (OPF-053)
-      if (dc.name === 'date' && dc.value) {
-        if (!isValidW3CDateFormat(dc.value)) {
+      // Validate dc:date: empty or invalid format
+      // EPUB 3 -> OPF-053, EPUB 2 -> OPF-054 (mirrors Java OPFHandler:730-774)
+      if (dc.name === 'date') {
+        const value = dc.value.trim();
+        const isInvalid = value === '' || !isValidW3CDateFormat(value);
+        if (isInvalid) {
+          const messageId = context.version === '2.0' ? MessageId.OPF_054 : MessageId.OPF_053;
+          const detail = value === '' ? 'zero-length string' : `invalid format "${value}"`;
           pushMessage(context.messages, {
-            id: MessageId.OPF_053,
-            message: `Invalid date format "${dc.value}"; must be W3C date format (ISO 8601)`,
+            id: messageId,
+            message: `Invalid date: ${detail}; must be W3C date format (ISO 8601)`,
             location: { path: opfPath },
           });
         }
       }
 
-      // OPF-085: Validate UUID format for dc:identifier starting with urn:uuid:
+      // OPF-055 (EPUB 2 only, warning): dc:title must not be empty
+      // Mirrors Java OPFHandler:776-808
+      if (context.version === '2.0' && dc.name === 'title') {
+        const value = dc.value.trim();
+        if (value === '') {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_055,
+            message: 'dc:title must not be empty',
+            location: { path: opfPath },
+          });
+        }
+      }
+
+      // OPF-085: Validate UUID format for dc:identifier when:
+      //   - value starts with 'urn:uuid:', OR
+      //   - opf:scheme attribute is 'uuid' (case-insensitive)
+      // Mirrors Java OPFHandler:714-726
       if (dc.name === 'identifier' && dc.value) {
         const val = dc.value.trim();
-        if (val.startsWith('urn:uuid:')) {
-          const uuid = val.substring(9);
+        const scheme = dc.attributes?.['opf:scheme'] ?? dc.attributes?.scheme;
+        const isUuidScheme = scheme?.toLowerCase() === 'uuid';
+        if (val.startsWith('urn:uuid:') || isUuidScheme) {
+          const uuid = val.replace(/^urn:uuid:/, '');
           if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid)) {
             pushMessage(context.messages, {
               id: MessageId.OPF_085,
@@ -719,9 +800,11 @@ export class OPFValidator {
         }
       }
 
-      // OPF-052: Validate dc:creator with opf:role attribute
+      // OPF-052: Validate dc:creator with role attribute (OPF namespace).
+      // Fixtures may use any prefix bound to the OPF namespace (e.g. opf:role, epub:role);
+      // our parser stores both the prefixed and local name, so fall back to 'role' local name.
       if (dc.name === 'creator' && dc.attributes) {
-        const role = dc.attributes['opf:role'];
+        const role = dc.attributes['opf:role'] ?? dc.attributes.role;
         if (role && !VALID_RELATOR_CODES.has(role) && !role.startsWith('oth.')) {
           pushMessage(context.messages, {
             id: MessageId.OPF_052,
@@ -1303,6 +1386,15 @@ export class OPFValidator {
             location: { path: opfPath },
           });
         }
+      } else if (
+        meta.property.startsWith('a11y:') &&
+        !KNOWN_A11Y_META_PROPERTIES.has(meta.property.slice('a11y:'.length))
+      ) {
+        pushMessage(context.messages, {
+          id: MessageId.OPF_027,
+          message: `Undefined property: "${meta.property}"`,
+          location: { path: opfPath },
+        });
       }
     }
   }
@@ -1515,6 +1607,16 @@ export class OPFValidator {
           pushMessage(context.messages, {
             id: MessageId.OPF_086,
             message: `The rel keyword "${kw}" is deprecated`,
+            location: { path: opfPath },
+          });
+        }
+      }
+
+      for (const kw of relKeywords) {
+        if (kw.startsWith('a11y:') && !KNOWN_A11Y_LINKREL_PROPERTIES.has(kw.slice('a11y:'.length))) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_027,
+            message: `Undefined property: "${kw}"`,
             location: { path: opfPath },
           });
         }
@@ -2098,6 +2200,28 @@ export class OPFValidator {
    */
   private validateGuide(context: ValidationContext, opfPath: string): void {
     if (!this.packageDoc) return;
+
+    // RSC-017 (warning): duplicate <reference> elements with same (type, href).
+    // Mirrors Java opf.sch pattern 'opf_guideReferenceUnique' — every matching
+    // duplicate reports once (so N dupes produce N warnings, not N-1).
+    for (const ref of this.packageDoc.guide) {
+      const type = ref.type.trim().toLowerCase();
+      const href = ref.href.trim().toLowerCase();
+      let matchCount = 0;
+      for (const other of this.packageDoc.guide) {
+        if (other.type.trim().toLowerCase() === type && other.href.trim().toLowerCase() === href) {
+          matchCount++;
+        }
+      }
+      if (matchCount > 1) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_017,
+          message: `Duplicate "reference" elements with the same "type" and "href" attributes (${ref.type}, ${ref.href})`,
+          location: { path: opfPath },
+          severityOverride: 'warning',
+        });
+      }
+    }
 
     for (const ref of this.packageDoc.guide) {
       // Strip fragment from href for lookup

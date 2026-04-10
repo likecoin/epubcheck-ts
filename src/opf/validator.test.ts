@@ -339,7 +339,7 @@ describe('OPFValidator', () => {
 
       const errors = context.messages.filter((m) => m.id === 'OPF-053');
       expect(errors).toHaveLength(1);
-      expect(errors[0]?.message).toContain('Invalid date format');
+      expect(errors[0]?.message).toContain('Invalid date');
     });
 
     it('should accept valid W3C date formats', () => {

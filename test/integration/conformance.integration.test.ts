@@ -87,11 +87,7 @@ describe('Integration Tests - Conformance', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: OPF-073 (external identifier validation) not implemented
-    // Java: epub3/B-external-identifiers/external-identifiers.feature:18
-    // Expected: error OPF-073 (External identifiers must not appear in DOCTYPE)
-    // Gap: No DOCTYPE external identifier check in content or OPF validator
-    it.skip('should report disallowed DOCTYPE external identifier on wrong media type (OPF-073)', async () => {
+    it('should report disallowed DOCTYPE external identifier on wrong media type (OPF-073)', async () => {
       const files = readDirectoryFiles(
         'conformance/B-external-identifiers/xml-external-identifier-bad-mediatype-error',
       );
@@ -99,9 +95,7 @@ describe('Integration Tests - Conformance', () => {
       expectError(result, 'OPF-073');
     });
 
-    // Skip: OPF-073 not implemented (see above)
-    // Java: epub3/B-external-identifiers/external-identifiers.feature:24
-    it.skip('should report disallowed DOCTYPE external identifier (OPF-073)', async () => {
+    it('should report disallowed DOCTYPE external identifier (OPF-073)', async () => {
       const files = readDirectoryFiles(
         'conformance/B-external-identifiers/xml-external-identifier-disallowed-error',
       );
@@ -112,15 +106,15 @@ describe('Integration Tests - Conformance', () => {
 
   // ==================== H-media-type-registrations ====================
   describe('Media type registrations (H)', () => {
-    // Skip: PKG-016 (file extension case check) not implemented
-    // Java: epub3/H-media-type-registrations/media-types-registrations.feature:13
-    // Expected: warning PKG-016 (EPUB file extension must be lowercase)
-    // Gap: OCFValidator doesn't check the input filename's extension case
-    it.skip('should warn about non-lowercase .epub extension (PKG-016)', async () => {
+    it('should warn about non-lowercase .epub extension (PKG-016)', async () => {
       const data = loadFixture(
         'conformance/H-media-type-registrations/ocf-extension-not-lower-case-warning.ePub',
       );
-      const result = await EpubCheck.validate(data);
+      const result = await EpubCheck.validate(
+        data,
+        {},
+        'ocf-extension-not-lower-case-warning.ePub',
+      );
       expectWarning(result, 'PKG-016');
     });
   });
