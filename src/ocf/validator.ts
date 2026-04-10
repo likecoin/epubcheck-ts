@@ -192,22 +192,19 @@ export class OCFValidator {
    * Check for duplicate filenames after Unicode normalization and case folding
    */
   private checkZipDuplicateEntries(zip: ZipReader, messages: ValidationMessage[]): void {
-    const seenPaths = new Set<string>();
-    const filePaths: string[] = [];
+    // Byte-level ZIP entry duplicates: fflate silently merges these, so we
+    // walk the raw central directory to find them.
+    for (const duplicate of zip.getDuplicateFilenames()) {
+      pushMessage(messages, {
+        id: MessageId.OPF_060,
+        message: `Duplicate ZIP entry: "${duplicate}"`,
+        location: { path: duplicate },
+      });
+    }
 
+    const filePaths: string[] = [];
     for (const path of zip.paths) {
       if (path.endsWith('/')) continue;
-
-      // Check for exact duplicate ZIP entries (ZIP-specific, not in shared util)
-      if (seenPaths.has(path)) {
-        pushMessage(messages, {
-          id: MessageId.OPF_060,
-          message: `Duplicate ZIP entry: "${path}"`,
-          location: { path },
-        });
-        continue;
-      }
-      seenPaths.add(path);
       filePaths.push(path);
     }
 

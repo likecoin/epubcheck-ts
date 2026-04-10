@@ -175,9 +175,10 @@ describe('OPFValidator', () => {
       const context = createContext(opf);
       validator.validate(context);
 
-      const errors = context.messages.filter((m) => m.id === 'OPF-073');
+      // Index collections: missing or non-XHTML items are reported as OPF-071
+      // (see ../epubcheck/src/main/java/com/adobe/epubcheck/opf/OPFChecker30.java:373)
+      const errors = context.messages.filter((m) => m.id === 'OPF-071');
       expect(errors).toHaveLength(1);
-      expect(errors[0]?.message).toContain('non-existent');
     });
 
     it('should validate dictionary collection items are XHTML or SVG (OPF-074)', () => {
@@ -211,7 +212,7 @@ describe('OPFValidator', () => {
       expect(errors[0]?.message).toContain('XHTML or SVG');
     });
 
-    it('should validate index collection items are XHTML (OPF-075)', () => {
+    it('should validate index collection items are XHTML (OPF-071)', () => {
       const opf = `<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
@@ -234,7 +235,7 @@ describe('OPFValidator', () => {
       const context = createContext(opf, { 'OEBPS/index.svg': '<svg/>' });
       validator.validate(context);
 
-      const errors = context.messages.filter((m) => m.id === 'OPF-075');
+      const errors = context.messages.filter((m) => m.id === 'OPF-071');
       expect(errors).toHaveLength(1);
       expect(errors[0]?.message).toContain('XHTML');
     });

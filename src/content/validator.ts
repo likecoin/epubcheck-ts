@@ -88,7 +88,6 @@ function stripMimeParams(t: string): string {
   return (idx >= 0 ? t.substring(0, idx) : t).trim();
 }
 
-
 // HTML5 valid datetime for <time datetime="...">
 // See https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-time-element
 const TIME_RE = /^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d{1,3})?)?$/;

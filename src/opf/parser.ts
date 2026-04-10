@@ -153,10 +153,7 @@ function parsePrefixes(xml: string): Record<string, string> {
   return prefixes;
 }
 
-/**
- * Strip XML comments from a string
- */
-function stripXmlComments(xml: string): string {
+export function stripXmlComments(xml: string): string {
   return xml.replace(/<!--[\s\S]*?-->/g, '');
 }
 
@@ -461,50 +458,55 @@ function decodeXmlEntities(str: string): string {
     .replace(/&quot;/g, '"');
 }
 
+// Only these roles need innerXml captured for later content inspection
+// (distributable-object metadata requires dc:identifier scanning).
+const ROLES_NEEDING_INNER_XML = new Set(['distributable-object']);
+
 function parseCollections(xml: string): Collection[] {
-  const collections: Collection[] = [];
-  const collectionRegex = /<collection[^>]*\srole=["']([^"']+)["'][^>]*>/g;
-  let collectionMatch: RegExpExecArray | null;
+  if (!xml.includes('<collection')) return [];
 
-  while ((collectionMatch = collectionRegex.exec(xml)) !== null) {
-    const role = collectionMatch[1];
-    if (!role) continue;
+  // Walk <collection> open/close tags in document order, building a tree
+  // based on nesting depth. Links attach to the innermost currently-open
+  // collection only (not to parents).
+  const tokenRegex = /<collection(\s[^>]*)?>|<\/collection\s*>|<link(\s[^>]*?)\/?>/g;
+  const stack: { collection: Collection; contentStart: number }[] = [];
+  const roots: Collection[] = [];
 
-    const collectionStart = collectionMatch.index;
-    const collectionStartTag = collectionMatch[0];
-
-    const idMatch = /id=["']([^"']+)["']/.exec(collectionStartTag);
-    const id = idMatch?.[1];
-
-    const nameMatch = /name=["']([^"']+)["']/.exec(collectionStartTag);
-    const name = nameMatch?.[1];
-
-    const links: string[] = [];
-
-    const linkRegex = /<link[^>]*\shref=["']([^"']+)["'][^>]*\/?>/g;
-    const closingTag = `</collection>`;
-    const closingIndex = xml.indexOf(closingTag, collectionStart);
-    const collectionEnd = closingIndex >= 0 ? closingIndex + closingTag.length : xml.length;
-
-    const collectionXml = xml.slice(collectionStart, collectionEnd);
-
-    let linkMatch: RegExpExecArray | null;
-    while ((linkMatch = linkRegex.exec(collectionXml)) !== null) {
-      const href = linkMatch[1];
-      if (href) {
-        links.push(decodeXmlEntities(href));
+  for (const match of xml.matchAll(tokenRegex)) {
+    const text = match[0];
+    const matchIndex = match.index;
+    if (text.startsWith('</collection')) {
+      const frame = stack.pop();
+      if (frame && ROLES_NEEDING_INNER_XML.has(frame.collection.role)) {
+        frame.collection.innerXml = xml.slice(frame.contentStart, matchIndex);
       }
+      continue;
     }
-
-    const collection: Collection = {
-      role,
-      links,
-    };
-    if (id) collection.id = id;
-    if (name) collection.name = name;
-
-    collections.push(collection);
+    if (text.startsWith('<collection')) {
+      const attrs = match[1] ?? '';
+      const role = /\brole=["']([^"']+)["']/.exec(attrs)?.[1];
+      if (!role) continue;
+      const collection: Collection = { role, links: [], children: [] };
+      const idValue = /\bid=["']([^"']+)["']/.exec(attrs)?.[1];
+      if (idValue) collection.id = idValue;
+      const nameValue = /\bname=["']([^"']+)["']/.exec(attrs)?.[1];
+      if (nameValue) collection.name = nameValue;
+      const parent = stack[stack.length - 1];
+      if (parent) {
+        parent.collection.children.push(collection);
+      } else {
+        roots.push(collection);
+      }
+      stack.push({ collection, contentStart: matchIndex + text.length });
+      continue;
+    }
+    const top = stack[stack.length - 1];
+    if (!top) continue;
+    const href = /\bhref=["']([^"']+)["']/.exec(match[2] ?? '')?.[1];
+    if (href) {
+      top.collection.links.push(decodeXmlEntities(href));
+    }
   }
 
-  return collections;
+  return roots;
 }

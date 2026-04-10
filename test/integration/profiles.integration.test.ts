@@ -87,8 +87,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: got {"OPF-027":2}
-    it.skip('A publication with single EPUB Dictionary is valid', async () => {
+    it('A publication with single EPUB Dictionary is valid', async () => {
       const data = loadFixture(
         'profiles/dictionaries/package-document/dictionary-single-valid.opf',
       );
@@ -100,8 +99,7 @@ describe('Integration Tests - Profiles', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('A single EPUB Dictionary must declare a search key map', async () => {
+    it('A single EPUB Dictionary must declare a search key map', async () => {
       const data = loadFixture(
         'profiles/dictionaries/package-document/dictionary-single-skm-missing-error.opf',
       );
@@ -113,8 +111,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={"OPF-027":1}
-    it.skip("A single EPUB Dictionary search key map must have the 'dictionary' property", async () => {
+    it("A single EPUB Dictionary search key map must have the 'dictionary' property", async () => {
       const data = loadFixture(
         'profiles/dictionaries/package-document/dictionary-single-skm-property-dictionary-missing-error.opf',
       );
@@ -216,8 +213,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'OPF-084');
     });
 
-    // Skip: FAIL: got {"OPF-027":2}
-    it.skip('A dictionary-type property monolingual is valid', async () => {
+    it('A dictionary-type property monolingual is valid', async () => {
       const data = loadFixture(
         'profiles/dictionaries/package-document/dictionary-metadata-dictionary-type-monolingual-valid.opf',
       );
@@ -229,8 +225,7 @@ describe('Integration Tests - Profiles', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={"OPF-027":2}
-    it.skip('A dictionary-type property with an unknown value is reported', async () => {
+    it('A dictionary-type property with an unknown value is reported', async () => {
       const data = loadFixture(
         'profiles/dictionaries/package-document/dictionary-metadata-dictionary-type-unknown-error.opf',
       );
@@ -242,8 +237,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={"OPF-027":2}
-    it.skip('The source language of a single-dictionary publication must be defined', async () => {
+    it('The source language of a single-dictionary publication must be defined', async () => {
       const data = loadFixture(
         'profiles/dictionaries/package-document/dictionary-metadata-languages-missing-source-error.opf',
       );
@@ -255,8 +249,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={"OPF-027":2}
-    it.skip('The source language of a single-dictionary publication must not be defined more than once', async () => {
+    it('The source language of a single-dictionary publication must not be defined more than once', async () => {
       const data = loadFixture(
         'profiles/dictionaries/package-document/dictionary-metadata-languages-multiple-source-error.opf',
       );
@@ -268,8 +261,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={"OPF-027":2}
-    it.skip("The target language of a single-dictionary publication must one of the declared 'dc:language' values", async () => {
+    it("The target language of a single-dictionary publication must one of the declared 'dc:language' values", async () => {
       const data = loadFixture(
         'profiles/dictionaries/package-document/dictionary-metadata-languages-undeclared-lang-target-error.opf',
       );
@@ -699,8 +691,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x RSC-017, got 0; all={}
-    it.skip('an EDUPUB teachers’s edition should declare the source student edition', async () => {
+    it('an EDUPUB teachers’s edition should declare the source student edition', async () => {
       const data = loadFixture(
         'profiles/edupub/package-document/edupub-teacher-edition-metadata-source-missing-warning.opf',
       );
@@ -724,8 +715,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('an EDUPUB’s accessibility features must be declared', async () => {
+    it('an EDUPUB’s accessibility features must be declared', async () => {
       const data = loadFixture(
         'profiles/edupub/package-document/edupub-metadata-accessibilityFeature-missing-error.opf',
       );
@@ -737,8 +727,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip("an EDUPUB’s accessibility features must at least include 'tableOfContents'", async () => {
+    it("an EDUPUB’s accessibility features must at least include 'tableOfContents'", async () => {
       const data = loadFixture(
         'profiles/edupub/package-document/edupub-metadata-accessibilityFeature-none-error.opf',
       );
@@ -877,8 +866,7 @@ describe('Integration Tests - Profiles', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: expected 1x OPF-071, got 0; all={"OPF-075":1}
-    it.skip('An index collection must only contain links to XHTML Content Documents', async () => {
+    it('An index collection must only contain links to XHTML Content Documents', async () => {
       const data = loadFixture(
         'profiles/indexes/package-document/index-collection-resource-not-xhtml-error.opf',
       );
@@ -890,8 +878,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'OPF-071');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={"OPF-073":1}
-    it.skip('An index collection must not contain child collections other than index-group', async () => {
+    it('An index collection must not contain child collections other than index-group', async () => {
       const data = loadFixture(
         'profiles/indexes/package-document/index-collection-subcollection-error.opf',
       );
@@ -903,8 +890,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={"OPF-073":1}
-    it.skip('An index-group collection must not contain child collections', async () => {
+    it('An index-group collection must not contain child collections', async () => {
       const data = loadFixture(
         'profiles/indexes/package-document/index-collection-index-group-subcollection-error.opf',
       );
@@ -916,8 +902,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('An index-group collection must be a child collection of an index collection', async () => {
+    it('An index-group collection must be a child collection of an index collection', async () => {
       const data = loadFixture(
         'profiles/indexes/package-document/index-collection-index-group-top-level-error.opf',
       );
@@ -1128,15 +1113,13 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x RSC-017, got 0; all={}
-    it.skip('Report a preview pubication that does not identify its source publication', async () => {
+    it('Report a preview pubication that does not identify its source publication', async () => {
       const data = loadFixture('profiles/previews/epub/preview-pub-source-missing-warning.epub');
       const result = await EpubCheck.validate(data, { profile: 'preview' });
       expectWarning(result, 'RSC-017');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('Report a preview publication that uses its own identifier as the source publication', async () => {
+    it('Report a preview publication that uses its own identifier as the source publication', async () => {
       const data = loadFixture('profiles/previews/epub/preview-pub-self-as-source-error.epub');
       const result = await EpubCheck.validate(data, { profile: 'preview' });
       expectError(result, 'RSC-005');

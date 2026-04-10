@@ -677,7 +677,8 @@ export class EpubCheck {
     if (/^[Ee][Pp][Uu][Bb]$/.test(extension)) {
       pushMessage(context.messages, {
         id: MessageId.PKG_016,
-        message: 'For maximum compatibility, use only lowercase characters for the EPUB file extension.',
+        message:
+          'For maximum compatibility, use only lowercase characters for the EPUB file extension.',
         location: { path: filename },
       });
     }

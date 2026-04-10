@@ -822,7 +822,7 @@ describe('OPFValidator', () => {
     it('should accept unknown collection role (EPUB 3.3)', () => {
       const context = createValidationContext();
       const packageDoc = createMinimalPackage({
-        collections: [{ role: 'unknown-role', links: ['chapter1.xhtml'] }],
+        collections: [{ role: 'unknown-role', links: ['chapter1.xhtml'], children: [] }],
       });
       addFileToContext(context, 'OEBPS/nav.xhtml', '<html></html>');
       addFileToContext(context, 'OEBPS/chapter1.xhtml', '<html></html>');
@@ -837,7 +837,7 @@ describe('OPFValidator', () => {
     it('should add OPF-072 error when dictionary collection has no name', () => {
       const context = createValidationContext();
       const packageDoc = createMinimalPackage({
-        collections: [{ role: 'dictionary', links: [] }],
+        collections: [{ role: 'dictionary', links: [], children: [] }],
       });
       addFileToContext(context, 'OEBPS/nav.xhtml', '<html></html>');
 
@@ -850,7 +850,9 @@ describe('OPFValidator', () => {
     it('should add OPF-073 error when collection link references non-existent manifest item', () => {
       const context = createValidationContext();
       const packageDoc = createMinimalPackage({
-        collections: [{ role: 'dictionary', name: 'Test', links: ['nonexistent.xhtml'] }],
+        collections: [
+          { role: 'dictionary', name: 'Test', links: ['nonexistent.xhtml'], children: [] },
+        ],
       });
       addFileToContext(context, 'OEBPS/nav.xhtml', '<html></html>');
 
@@ -868,7 +870,7 @@ describe('OPFValidator', () => {
           { id: 'nav', href: 'nav.xhtml', mediaType: 'application/xhtml+xml', properties: ['nav'] },
           { id: 'entry1', href: 'entry1.png', mediaType: 'image/png' },
         ],
-        collections: [{ role: 'dictionary', name: 'Test', links: ['entry1.png'] }],
+        collections: [{ role: 'dictionary', name: 'Test', links: ['entry1.png'], children: [] }],
       });
       addFileToContext(context, 'OEBPS/nav.xhtml', '<html></html>');
       addFileToContext(context, 'OEBPS/entry1.png', 'png');
@@ -880,14 +882,14 @@ describe('OPFValidator', () => {
       expect(context.messages.some((m) => m.id === 'OPF-074')).toBe(true);
     });
 
-    it('should add OPF-075 error when index collection item is not XHTML', () => {
+    it('should add OPF-071 error when index collection item is not XHTML', () => {
       const context = createValidationContext();
       const packageDoc = createMinimalPackage({
         manifest: [
           { id: 'nav', href: 'nav.xhtml', mediaType: 'application/xhtml+xml', properties: ['nav'] },
           { id: 'index1', href: 'index1.svg', mediaType: 'image/svg+xml' },
         ],
-        collections: [{ role: 'index', links: ['index1.svg'] }],
+        collections: [{ role: 'index', links: ['index1.svg'], children: [] }],
       });
       addFileToContext(context, 'OEBPS/nav.xhtml', '<html></html>');
       addFileToContext(context, 'OEBPS/index1.svg', '<svg></svg>');
@@ -896,7 +898,7 @@ describe('OPFValidator', () => {
       validatorTest.buildManifestMaps();
       validatorTest.validateCollections(context, 'OEBPS/content.opf');
 
-      expect(context.messages.some((m) => m.id === 'OPF-075')).toBe(true);
+      expect(context.messages.some((m) => m.id === 'OPF-071')).toBe(true);
     });
 
     it('should validate valid collections', () => {
@@ -906,7 +908,9 @@ describe('OPFValidator', () => {
           { id: 'nav', href: 'nav.xhtml', mediaType: 'application/xhtml+xml', properties: ['nav'] },
           { id: 'entry1', href: 'entry1.xhtml', mediaType: 'application/xhtml+xml' },
         ],
-        collections: [{ role: 'dictionary', name: 'Test Dictionary', links: ['entry1.xhtml'] }],
+        collections: [
+          { role: 'dictionary', name: 'Test Dictionary', links: ['entry1.xhtml'], children: [] },
+        ],
       });
       addFileToContext(context, 'OEBPS/nav.xhtml', '<html></html>');
       addFileToContext(context, 'OEBPS/entry1.xhtml', '<html></html>');

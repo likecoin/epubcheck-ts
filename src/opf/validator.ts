@@ -4,8 +4,8 @@ import { isValidSmilClock, parseSmilClock } from '../smil/clock.js';
 import type { EPUBProfile, ValidationContext } from '../types.js';
 import { parseDoctype } from '../util/doctype.js';
 import { sniffXmlEncoding } from '../util/encoding.js';
-import { parseOPF } from './parser.js';
-import type { ManifestItem, PackageDocument } from './types.js';
+import { parseOPF, stripXmlComments } from './parser.js';
+import type { Collection, ManifestItem, PackageDocument } from './types.js';
 import { ITEM_PROPERTIES, LINK_PROPERTIES, SPINE_PROPERTIES } from './types.js';
 
 const VALID_VERSIONS = new Set(['2.0', '3.0', '3.1', '3.2', '3.3']);
@@ -387,11 +387,7 @@ const KNOWN_RENDITION_META_PROPERTIES = new Set(
 
 // a11y: vocabulary (EPUB Accessibility 1.1)
 // Source: ../epubcheck/src/main/java/com/adobe/epubcheck/vocab/AccessibilityVocab.java
-const KNOWN_A11Y_META_PROPERTIES = new Set([
-  'certifiedBy',
-  'certifierCredential',
-  'exemption',
-]);
+const KNOWN_A11Y_META_PROPERTIES = new Set(['certifiedBy', 'certifierCredential', 'exemption']);
 const KNOWN_A11Y_LINKREL_PROPERTIES = new Set(['certifierCredential', 'certifierReport']);
 
 // Required dc:type identifier per validation profile.
@@ -402,6 +398,18 @@ const PROFILE_DC_TYPE: Partial<Record<EPUBProfile, string>> = {
   dict: 'dictionary',
   preview: 'preview',
 };
+
+// Mirrors ../epubcheck/src/main/resources/com/adobe/epubcheck/schema/30/dict/dict-opf.sch
+const DICTIONARY_TYPE_VALUES = new Set([
+  'monolingual',
+  'bilingual',
+  'multilingual',
+  'thesaurus',
+  'encyclopedia',
+  'spelling',
+  'pronouncing',
+  'etymological',
+]);
 
 const GRANDFATHERED_LANG_TAGS = new Set([
   'en-GB-oed',
@@ -574,6 +582,183 @@ export class OPFValidator {
     if (this.packageDoc.version.startsWith('3.')) {
       this.validateAccessibilityMetadata(context, opfPath);
       this.validateProfileDcType(context, opfPath);
+      this.validateEdupubMetadata(context, opfPath);
+      this.validateDictionaryMetadata(context, opfPath);
+      this.validatePreviewMetadata(context, opfPath);
+    }
+  }
+
+  // Mirrors ../epubcheck/src/main/resources/com/adobe/epubcheck/schema/30/previews/preview-pub-opf.sch
+  private validatePreviewMetadata(context: ValidationContext, opfPath: string): void {
+    if (!this.packageDoc) return;
+    if (context.options.profile !== 'preview') return;
+
+    const sources = this.packageDoc.dcElements.filter((dc) => dc.name === 'source');
+    if (sources.length === 0) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_017,
+        message:
+          'An EPUB Preview publication should link back to its source Publication using a "dc:source" element.',
+        location: { path: opfPath },
+      });
+      return;
+    }
+
+    // Self-source check: dc:source value must not equal the unique identifier value
+    const uidRef = this.packageDoc.uniqueIdentifier;
+    if (!uidRef) return;
+    const uidElement = this.packageDoc.dcElements.find(
+      (dc) => dc.name === 'identifier' && dc.id === uidRef,
+    );
+    const uidValue = uidElement?.value.trim();
+    if (!uidValue) return;
+    for (const source of sources) {
+      if (source.value.trim() === uidValue) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message:
+            'A Preview Publication must not use the same package identifier as its source Publication.',
+          location: { path: opfPath },
+        });
+      }
+    }
+  }
+
+  // Mirrors ../epubcheck/src/main/resources/com/adobe/epubcheck/schema/30/dict/dict-opf.sch
+  private validateDictionaryMetadata(context: ValidationContext, opfPath: string): void {
+    if (!this.packageDoc) return;
+
+    // dict.type: dictionary-type value must be in the controlled vocabulary.
+    // This check fires regardless of profile — the meta property is part of
+    // the default package vocabulary.
+    for (const meta of this.packageDoc.metaElements) {
+      if (meta.property.trim() !== 'dictionary-type') continue;
+      const value = meta.value.trim();
+      if (!DICTIONARY_TYPE_VALUES.has(value)) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: `EPUB Dictionaries "dictionary-type" metadata must be one of ${[...DICTIONARY_TYPE_VALUES].map((v) => `"${v}"`).join(', ')}. Found: "${value}"`,
+          location: { path: opfPath },
+        });
+      }
+    }
+
+    if (context.options.profile !== 'dict') return;
+
+    // dict.single-dict: when fewer than 2 dictionary collections exist, the
+    // publication must contain exactly one manifest item with both
+    // "search-key-map" and "dictionary" properties.
+    const dictCollectionCount = this.packageDoc.collections.filter(
+      (c) => c.role === 'dictionary',
+    ).length;
+    if (dictCollectionCount < 2) {
+      const skmItems = this.packageDoc.manifest.filter(
+        (item) =>
+          item.properties?.includes('search-key-map') && item.properties.includes('dictionary'),
+      );
+      if (skmItems.length !== 1) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message:
+            'An EPUB Publication consisting of a single EPUB Dictionary must contain exactly one Search Key Map document for this dictionary (i.e. exactly one item with properties "search-key-map" and "dictionary").',
+          location: { path: opfPath },
+        });
+      }
+    }
+
+    // dict.single-dict.lang: when no dictionary collections exist, the
+    // single-dictionary package must declare source-language and target-language
+    // metas. Also, source-language must not be declared more than once.
+    const hasDictCollection = this.packageDoc.collections.some((c) => c.role === 'dictionary');
+    if (!hasDictCollection) {
+      const sourceLangs = this.packageDoc.metaElements.filter(
+        (m) => m.property.trim() === 'source-language',
+      );
+      const targetLangs = this.packageDoc.metaElements.filter(
+        (m) => m.property.trim() === 'target-language',
+      );
+      if (sourceLangs.length === 0) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message:
+            'An EPUB Dictionary must declare its source language using a "source-language" metadata.',
+          location: { path: opfPath },
+        });
+      } else if (sourceLangs.length > 1) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: 'An EPUB Dictionary must not declare more than one source language.',
+          location: { path: opfPath },
+        });
+      }
+      if (targetLangs.length === 0) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message:
+            'An EPUB Dictionary must declare its target language using a "target-language" metadata.',
+          location: { path: opfPath },
+        });
+      }
+    }
+
+    // dict.lang: source-language and target-language meta values must also be
+    // declared as dc:language in package-level metadata.
+    const declaredLangs = new Set(
+      this.packageDoc.dcElements
+        .filter((dc) => dc.name === 'language')
+        .map((dc) => dc.value.trim()),
+    );
+    for (const meta of this.packageDoc.metaElements) {
+      const property = meta.property.trim();
+      if (property !== 'source-language' && property !== 'target-language') continue;
+      const value = meta.value.trim();
+      if (value && !declaredLangs.has(value)) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: `EPUB Dictionaries "source-language" and "target-language" must also be declared as "dc:language" in package-level metadata. Found: "${value}"`,
+          location: { path: opfPath },
+        });
+      }
+    }
+  }
+
+  // Mirrors ../epubcheck/src/main/resources/com/adobe/epubcheck/schema/30/edupub/edu-opf.sch
+  private validateEdupubMetadata(context: ValidationContext, opfPath: string): void {
+    if (!this.packageDoc) return;
+    if (context.options.profile !== 'edupub') return;
+
+    const a11yFeatures = this.packageDoc.metaElements.filter(
+      (m) => m.property.trim() === 'schema:accessibilityFeature',
+    );
+    if (a11yFeatures.length === 0) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_005,
+        message: 'At least one schema:accessibilityFeature declaration is required.',
+        location: { path: opfPath },
+      });
+    } else if (a11yFeatures.some((m) => m.value.trim() === 'none')) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_005,
+        message:
+          'The schema:accessibilityFeature property value "none" is not valid in edupub. Use "tableOfContents" if no other values are applicable.',
+        location: { path: opfPath },
+      });
+    }
+
+    // edu.teacher.edition: a dc:type='teacher-edition' must be paired with dc:source
+    const isTeacherEdition = this.packageDoc.dcElements.some(
+      (dc) => dc.name === 'type' && dc.value.trim() === 'teacher-edition',
+    );
+    if (isTeacherEdition) {
+      const hasSource = this.packageDoc.dcElements.some((dc) => dc.name === 'source');
+      if (!hasSource) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_017,
+          message:
+            "A teacher's edition should identify the corresponding student edition in a dc:source element.",
+          location: { path: opfPath },
+        });
+      }
     }
   }
 
@@ -1613,7 +1798,10 @@ export class OPFValidator {
       }
 
       for (const kw of relKeywords) {
-        if (kw.startsWith('a11y:') && !KNOWN_A11Y_LINKREL_PROPERTIES.has(kw.slice('a11y:'.length))) {
+        if (
+          kw.startsWith('a11y:') &&
+          !KNOWN_A11Y_LINKREL_PROPERTIES.has(kw.slice('a11y:'.length))
+        ) {
           pushMessage(context.messages, {
             id: MessageId.OPF_027,
             message: `Undefined property: "${kw}"`,
@@ -2297,6 +2485,91 @@ export class OPFValidator {
     }
   }
 
+  // Mirrors ../epubcheck/src/main/resources/com/adobe/epubcheck/schema/30/collection-do-30.sch
+  private validateDistributableObject(
+    context: ValidationContext,
+    opfPath: string,
+    collection: Collection,
+  ): void {
+    const inner = collection.innerXml ?? '';
+    // Extract the collection's top-level <metadata>...</metadata> block.
+    // We want the metadata directly inside this collection (not inside
+    // child <collection> elements). Child metadata would belong to a nested
+    // distributable-object, which the recursion into children handles.
+    const metadataOpen = /<metadata(\s[^>]*)?>/.exec(inner);
+    if (!metadataOpen) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_005,
+        message: 'A distributable-object collection must include a child metadata element.',
+        location: { path: opfPath },
+      });
+      return;
+    }
+    const metadataStart = metadataOpen.index + metadataOpen[0].length;
+    const metadataEnd = inner.indexOf('</metadata>', metadataStart);
+    if (metadataEnd < 0) return;
+    const metadataXml = stripXmlComments(inner.slice(metadataStart, metadataEnd));
+
+    const hasIdentifier = /<dc:identifier[\s>]/.test(metadataXml);
+    if (!hasIdentifier) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_005,
+        message:
+          'The distributable-object metadata must include exactly one identifier (dc:identifier).',
+        location: { path: opfPath },
+      });
+    }
+  }
+
+  private validateCollectionHierarchy(
+    context: ValidationContext,
+    opfPath: string,
+    collections: readonly Collection[],
+    parent: Collection | null,
+  ): void {
+    for (const collection of collections) {
+      if (collection.role === 'distributable-object') {
+        this.validateDistributableObject(context, opfPath, collection);
+      }
+      if (collection.role === 'dictionary' && collection.children.length > 0) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: 'An EPUB Dictionary collection must not have sub-collections.',
+          location: { path: opfPath },
+        });
+      }
+      if (collection.role === 'index') {
+        for (const child of collection.children) {
+          if (child.role !== 'index-group') {
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message:
+                'An "index" collection must not have sub-collections other than "index-group" collections.',
+              location: { path: opfPath },
+            });
+          }
+        }
+      }
+      if (collection.role === 'index-group') {
+        if (parent?.role !== 'index') {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: 'An "index-group" collection must be a child of an "index" collection.',
+            location: { path: opfPath },
+          });
+        }
+        if (collection.children.length > 0) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: 'An "index-group" collection must not have child collections.',
+            location: { path: opfPath },
+          });
+        }
+      }
+      this.validateCollectionHierarchy(context, opfPath, collection.children, collection);
+    }
+  }
+
   private validateCollections(context: ValidationContext, opfPath: string): void {
     if (!this.packageDoc) return;
 
@@ -2304,6 +2577,10 @@ export class OPFValidator {
     if (collections.length === 0) {
       return;
     }
+
+    // Hierarchy checks across nested collections.
+    // Mirrors ../epubcheck/src/main/resources/com/adobe/epubcheck/schema/30/idx/idx-collection.sch
+    this.validateCollectionHierarchy(context, opfPath, collections, null);
 
     for (const collection of collections) {
       // RSC-005: manifest collection must not be at the top level
@@ -2364,18 +2641,10 @@ export class OPFValidator {
       if (collection.role === 'index') {
         for (const linkHref of collection.links) {
           const manifestItem = this.manifestByHref.get(linkHref);
-          if (!manifestItem) {
+          if (manifestItem?.mediaType !== 'application/xhtml+xml') {
+            // Mirrors ../epubcheck/src/main/java/com/adobe/epubcheck/opf/OPFChecker30.java:373
             pushMessage(context.messages, {
-              id: MessageId.OPF_073,
-              message: `Collection link "${linkHref}" references non-existent manifest item`,
-              location: { path: opfPath },
-            });
-            continue;
-          }
-
-          if (manifestItem.mediaType !== 'application/xhtml+xml') {
-            pushMessage(context.messages, {
-              id: MessageId.OPF_075,
+              id: MessageId.OPF_071,
               message: `Index collection item "${linkHref}" must be an XHTML document`,
               location: { path: opfPath },
             });

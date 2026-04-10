@@ -142,6 +142,10 @@ export interface Collection {
   name?: string;
   /** Resource hrefs in this collection (from link elements) */
   links: string[];
+  /** Nested sub-collections (EPUB 3) */
+  children: Collection[];
+  /** Raw XML inside this collection's tags (used for targeted sub-checks) */
+  innerXml?: string;
 }
 
 /**
@@ -205,12 +209,19 @@ export function isCoreMediaType(mimeType: string): boolean {
 /**
  * Known item property values (EPUB 3)
  */
+// Mirrors ../epubcheck/src/main/java/com/adobe/epubcheck/vocab/PackageVocabs.java
+// ITEM_PROPERTIES enum — all properties in the default package vocabulary.
 export const ITEM_PROPERTIES = new Set([
   'cover-image',
+  'data-nav',
+  'dictionary',
+  'glossary',
+  'index',
   'mathml',
   'nav',
   'remote-resources',
   'scripted',
+  'search-key-map',
   'svg',
   'switch',
 ]);

@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~71% | 🟢 Content checks (table th/thead/caption/empty-th, epub:type usage, image alt, hyperlink text, MathML alt, SVG link name), OPF metadata (accessibilityFeature/accessMode/general a11y) done |
 | Cross-reference | ~92% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs, encoding detection, cross-document feature checks done |
 
-**Overall: ~88% complete (1207 tests passing, 163 skipped, 1370 total)**
+**Overall: ~91% complete (1248 tests passing, 122 skipped, 1370 total)**
 
 **100% Java scenario import**: Every Java EPUBCheck feature file (core EPUB 3, EPUB 2, profile extensions) has been ported into this suite. Skipped tests form a discoverable backlog with specific validator gap annotations.
 
@@ -29,8 +29,8 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 438 | 433 | 5 |
-| **Integration Tests** | 932 | 774 | 158 |
-| **Total** | **1370** | **1207** | **163** |
+| **Integration Tests** | 932 | 815 | 117 |
+| **Total** | **1370** | **1248** | **122** |
 
 ### Integration Test Files
 

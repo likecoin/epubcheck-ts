@@ -230,8 +230,7 @@ describe('Integration Tests - OCF (Open Container Format)', () => {
       expectError(result, 'OPF-060');
     });
 
-    // Skip: fflate deduplicates ZIP entries, can't detect duplicates without raw ZIP parsing
-    it.skip('should report duplicate ZIP entry for same file (OPF-060)', async () => {
+    it('should report duplicate ZIP entry for same file (OPF-060)', async () => {
       const data = await loadEpub('invalid/ocf/ocf-filename-duplicate-zip-entry-error.epub');
       const result = await EpubCheck.validate(data);
 

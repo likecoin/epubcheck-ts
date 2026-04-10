@@ -151,19 +151,14 @@ export class ZipReader {
   }
 
   /**
-   * Check for filenames that are not valid UTF-8 by parsing raw ZIP data
-   *
-   * ZIP files store filenames as bytes. The EPUB spec requires filenames to be UTF-8.
-   * This method parses the ZIP central directory to find filenames with invalid UTF-8.
-   *
-   * @returns Array of filenames with invalid UTF-8 encoding
+   * Walk the raw ZIP central directory, invoking `onEntry` for each file
+   * header found. Silently returns if the End of Central Directory record
+   * can't be located — fflate will surface the underlying error.
    */
-  getInvalidUtf8Filenames(): InvalidUtf8Filename[] {
-    const invalid: InvalidUtf8Filename[] = [];
+  private walkCentralDirectory(onEntry: (filenameBytes: Uint8Array) => void): void {
     const data = this._rawData;
 
-    // Find the End of Central Directory record
-    // Signature: 0x06054b50, located at end of file (may have comment after)
+    // EOCD signature (0x06054b50) sits near the end; may have trailing comment.
     let eocdOffset = -1;
     for (let i = data.length - 22; i >= 0; i--) {
       if (
@@ -176,20 +171,15 @@ export class ZipReader {
         break;
       }
     }
+    if (eocdOffset === -1) return;
 
-    if (eocdOffset === -1) {
-      return invalid; // Can't find EOCD, fflate will handle this error
-    }
-
-    // Get offset to start of central directory
     const cdOffset =
       (data[eocdOffset + 16] ?? 0) |
       ((data[eocdOffset + 17] ?? 0) << 8) |
       ((data[eocdOffset + 18] ?? 0) << 16) |
       ((data[eocdOffset + 19] ?? 0) << 24);
 
-    // Parse central directory file headers
-    // Signature: 0x02014b50
+    // Central directory file header signature: 0x02014b50
     let offset = cdOffset;
     while (offset < eocdOffset) {
       if (
@@ -198,28 +188,50 @@ export class ZipReader {
         data[offset + 2] !== 0x01 ||
         data[offset + 3] !== 0x02
       ) {
-        break; // Not a central directory header
+        break;
       }
 
       const filenameLength = (data[offset + 28] ?? 0) | ((data[offset + 29] ?? 0) << 8);
       const extraLength = (data[offset + 30] ?? 0) | ((data[offset + 31] ?? 0) << 8);
       const commentLength = (data[offset + 32] ?? 0) | ((data[offset + 33] ?? 0) << 8);
 
-      // Extract raw filename bytes
-      const filenameBytes = data.slice(offset + 46, offset + 46 + filenameLength);
+      onEntry(data.slice(offset + 46, offset + 46 + filenameLength));
 
-      // Check if filename is valid UTF-8
-      const utf8Error = this.validateUtf8(filenameBytes);
-      if (utf8Error) {
-        // Decode filename as best we can for error reporting
-        const filename = strFromU8(filenameBytes);
-        invalid.push({ filename, reason: utf8Error });
-      }
-
-      // Move to next central directory entry
       offset += 46 + filenameLength + extraLength + commentLength;
     }
+  }
 
+  /**
+   * Walk the raw central directory and return any filenames that appear
+   * more than once. fflate's unzipSync silently merges duplicate entries
+   * (later wins), so this is the only reliable way to detect OPF-060.
+   */
+  getDuplicateFilenames(): string[] {
+    const seen = new Set<string>();
+    const duplicates = new Set<string>();
+    this.walkCentralDirectory((filenameBytes) => {
+      const name = reDecodeFilename(strFromU8(filenameBytes));
+      if (seen.has(name)) {
+        duplicates.add(name);
+      } else {
+        seen.add(name);
+      }
+    });
+    return Array.from(duplicates);
+  }
+
+  /**
+   * Find filenames in the central directory that are not valid UTF-8.
+   * EPUB spec requires UTF-8 filenames.
+   */
+  getInvalidUtf8Filenames(): InvalidUtf8Filename[] {
+    const invalid: InvalidUtf8Filename[] = [];
+    this.walkCentralDirectory((filenameBytes) => {
+      const reason = this.validateUtf8(filenameBytes);
+      if (reason) {
+        invalid.push({ filename: strFromU8(filenameBytes), reason });
+      }
+    });
     return invalid;
   }
 
