@@ -17,11 +17,14 @@ interface OPFValidatorTest {
   buildManifestMaps(): void;
 }
 
-function createValidationContext(): ValidationContext {
+function createValidationContext(
+  overrides?: { version?: '2.0' | '3.0' | '3.1' | '3.2' | '3.3' },
+): ValidationContext {
+  const version = overrides?.version ?? '3.0';
   return {
     data: new Uint8Array(),
     options: {
-      version: '3.0',
+      version,
       profile: 'default',
       includeUsage: false,
       includeInfo: false,
@@ -29,7 +32,7 @@ function createValidationContext(): ValidationContext {
       locale: 'en',
       customMessages: new Map(),
     },
-    version: '3.0',
+    version,
     messages: [],
     files: new Map(),
     rootfiles: [],
@@ -153,7 +156,7 @@ describe('OPFValidator', () => {
       expect(context.messages.some((m) => m.id === 'OPF-015')).toBe(true);
     });
 
-    it('should add OPF-016 error when dc:title is missing', () => {
+    it('should add RSC-005 error when dc:title is missing', () => {
       const context = createValidationContext();
       const packageDoc = createMinimalPackage({
         dcElements: [
@@ -166,10 +169,14 @@ describe('OPFValidator', () => {
       validatorTest.packageDoc = packageDoc;
       validatorTest.validateMetadata(context, 'OEBPS/content.opf');
 
-      expect(context.messages.some((m) => m.id === 'OPF-016')).toBe(true);
+      expect(
+        context.messages.some(
+          (m) => m.id === 'RSC-005' && m.message.includes('dc:title'),
+        ),
+      ).toBe(true);
     });
 
-    it('should add OPF-017 error when dc:language is missing', () => {
+    it('should add RSC-005 error when dc:language is missing', () => {
       const context = createValidationContext();
       const packageDoc = createMinimalPackage({
         dcElements: [
@@ -182,7 +189,11 @@ describe('OPFValidator', () => {
       validatorTest.packageDoc = packageDoc;
       validatorTest.validateMetadata(context, 'OEBPS/content.opf');
 
-      expect(context.messages.some((m) => m.id === 'OPF-017')).toBe(true);
+      expect(
+        context.messages.some(
+          (m) => m.id === 'RSC-005' && m.message.includes('dc:language'),
+        ),
+      ).toBe(true);
     });
 
     it('should add OPF-092 error for invalid language tag', () => {
@@ -420,7 +431,7 @@ describe('OPFValidator', () => {
       expect(context.messages.some((m) => m.id === 'OPF-014')).toBe(true);
     });
 
-    it('should add OPF-035 warning for deprecated OEB 1.0 media types', () => {
+    it('should add OPF-037 warning for deprecated OEB 1.0 media types in EPUB 2', () => {
       const deprecatedTypes = [
         'text/x-oeb1-document',
         'text/x-oeb1-css',
@@ -429,15 +440,11 @@ describe('OPFValidator', () => {
       ];
 
       for (const mediaType of deprecatedTypes) {
-        const context = createValidationContext();
+        const context = createValidationContext({ version: '2.0' });
         const packageDoc = createMinimalPackage({
+          version: '2.0',
           manifest: [
-            {
-              id: 'nav',
-              href: 'nav.xhtml',
-              mediaType: 'application/xhtml+xml',
-              properties: ['nav'],
-            },
+            { id: 'nav', href: 'nav.xhtml', mediaType: 'application/xhtml+xml' },
             { id: 'chapter1', href: 'chapter1.xhtml', mediaType },
           ],
         });
@@ -448,8 +455,8 @@ describe('OPFValidator', () => {
         validatorTest.validateManifest(context, 'OEBPS/content.opf');
 
         expect(
-          context.messages.some((m) => m.severity === 'warning' && m.id.startsWith('OPF-0')),
-          `Should warn about deprecated type "${mediaType}"`,
+          context.messages.some((m) => m.id === 'OPF-037'),
+          `Should warn OPF-037 about deprecated type "${mediaType}"`,
         ).toBe(true);
       }
     });

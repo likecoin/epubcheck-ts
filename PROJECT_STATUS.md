@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~71% | 🟢 Content checks (table th/thead/caption/empty-th, epub:type usage, image alt, hyperlink text, MathML alt, SVG link name), OPF metadata (accessibilityFeature/accessMode/general a11y) done |
 | Cross-reference | ~92% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs, encoding detection, cross-document feature checks done |
 
-**Overall: ~91% complete (1248 tests passing, 122 skipped, 1370 total)**
+**Overall: ~93% complete (1268 tests passing, 102 skipped, 1370 total)**
 
 **100% Java scenario import**: Every Java EPUBCheck feature file (core EPUB 3, EPUB 2, profile extensions) has been ported into this suite. Skipped tests form a discoverable backlog with specific validator gap annotations.
 
@@ -29,8 +29,8 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 438 | 433 | 5 |
-| **Integration Tests** | 932 | 815 | 117 |
-| **Total** | **1370** | **1248** | **122** |
+| **Integration Tests** | 932 | 835 | 97 |
+| **Total** | **1370** | **1268** | **102** |
 
 ### Integration Test Files
 
@@ -45,7 +45,7 @@ test/integration/
 ├── resources.integration.test.ts     # 110 tests  (108 pass,   2 skip) - Resources/fallbacks
 ├── layout.integration.test.ts        #  52 tests  ( 52 pass,   0 skip) - Layout/viewport/FXL
 ├── mediaoverlays.integration.test.ts #  50 tests  ( 48 pass,   2 skip) - Media overlays/SMIL
-├── epub2.integration.test.ts         #  99 tests  ( 51 pass,  48 skip) - EPUB 2 (all 7 Java features)
+├── epub2.integration.test.ts         #  99 tests  ( 71 pass,  28 skip) - EPUB 2 (all 7 Java features)
 └── profiles.integration.test.ts      # 125 tests  ( 34 pass,  91 skip) - 9 profile extensions
 ```
 

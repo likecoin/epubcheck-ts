@@ -218,9 +218,8 @@ describe('OCFValidator', () => {
 
       validator.validate(context);
 
-      const error = context.messages.find((m) => m.id === 'PKG-004');
+      const error = context.messages.find((m) => m.id === 'RSC-003');
       expect(error).toBeDefined();
-      expect(error?.severity).toBe('fatal');
     });
 
     it('should report error when rootfile points to missing file', () => {

@@ -26,16 +26,22 @@ export function parseOPF(xml: string): PackageDocument {
   const packageMatchAlt = packageRegexAlt.exec(xml);
 
   let version: EPUBVersion = '3.0';
+  let versionDeclared = false;
   let uniqueIdentifier = '';
 
   if (packageMatch?.[1]) {
     version = normalizeVersion(packageMatch[1]);
+    versionDeclared = true;
     uniqueIdentifier = packageMatch[2] ?? '';
   }
   if (!uniqueIdentifier && packageMatchAlt?.[1]) {
     uniqueIdentifier = packageMatchAlt[1];
     if (!packageMatch) {
-      version = normalizeVersion(packageMatchAlt[2] ?? '3.0');
+      const altVersion = packageMatchAlt[2];
+      if (altVersion) {
+        version = normalizeVersion(altVersion);
+        versionDeclared = true;
+      }
     }
   }
 
@@ -95,6 +101,9 @@ export function parseOPF(xml: string): PackageDocument {
   };
 
   // Only add optional properties if they have values
+  if (!versionDeclared) {
+    result.versionDeclared = false;
+  }
   if (Object.keys(prefixes).length > 0) {
     result.prefixes = prefixes;
   }
@@ -326,6 +335,9 @@ function parseManifestItems(manifestXml: string): ManifestItem[] {
 
       if (attrs.fallback) {
         item.fallback = attrs.fallback;
+      }
+      if (attrs['fallback-style']) {
+        item.fallbackStyle = attrs['fallback-style'];
       }
       if (attrs['media-overlay']) {
         item.mediaOverlay = attrs['media-overlay'];

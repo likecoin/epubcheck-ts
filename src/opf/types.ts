@@ -12,6 +12,8 @@ export interface ManifestItem {
   mediaType: string;
   /** Fallback item ID for non-standard media types */
   fallback?: string;
+  /** Fallback stylesheet item ID (EPUB 2 only) */
+  fallbackStyle?: string;
   /** Media overlay ID */
   mediaOverlay?: string;
   /** Item properties (EPUB 3) - e.g., 'nav', 'scripted', 'svg', 'remote-resources' */
@@ -100,6 +102,8 @@ export interface LinkElement {
 export interface PackageDocument {
   /** EPUB version from package@version */
   version: EPUBVersion;
+  /** Whether the package@version attribute was present in the source (omitted = true) */
+  versionDeclared?: boolean;
   /** Unique identifier reference (package@unique-identifier) */
   uniqueIdentifier: string;
   /** Package prefix declarations (EPUB 3) */

@@ -174,11 +174,11 @@ describe('NCXValidator', () => {
   });
 
   describe('content src validation', () => {
-    it('should add NCX-006 error for missing content src file', () => {
+    it('should add RSC-007 error for missing content src file', () => {
       const missingFile = createValidNCX({ contentSrc: 'missing.xhtml' });
       validator.validate(context, missingFile, 'OEBPS/toc.ncx');
 
-      expect(context.messages.some((m) => m.id === 'NCX-006')).toBe(true);
+      expect(context.messages.some((m) => m.id === 'RSC-007')).toBe(true);
     });
 
     it('should not error for existing content src file', () => {
@@ -265,7 +265,7 @@ describe('NCXValidator', () => {
       validator.validate(context, multiContent, 'OEBPS/toc.ncx');
 
       expect(
-        context.messages.some((m) => m.id === 'NCX-006' && m.message.includes('chapter2.xhtml')),
+        context.messages.some((m) => m.id === 'RSC-007' && m.message.includes('chapter2.xhtml')),
       ).toBe(true);
     });
   });

@@ -2378,20 +2378,27 @@ export class ContentValidator {
   }
 
   private checkDuplicateIDs(context: ValidationContext, path: string, root: XmlElement): void {
-    const seen = new Map<string, number>();
+    // Schematron-equivalent: emit one RSC-005 per element carrying a duplicated id.
+    const occurrences = new Map<string, { line: number }[]>();
     const elements = root.find('.//*[@id]');
     for (const elem of elements) {
       const id = this.getAttribute(elem as XmlElement, 'id');
-      if (id) {
-        if (seen.has(id)) {
-          pushMessage(context.messages, {
-            id: MessageId.RSC_005,
-            message: `Duplicate ID "${id}"`,
-            location: { path, line: elem.line },
-          });
-        } else {
-          seen.set(id, elem.line);
-        }
+      if (!id) continue;
+      const entry = occurrences.get(id);
+      if (entry) {
+        entry.push({ line: elem.line });
+      } else {
+        occurrences.set(id, [{ line: elem.line }]);
+      }
+    }
+    for (const [id, lines] of occurrences) {
+      if (lines.length < 2) continue;
+      for (const { line } of lines) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: `The "id" attribute value "${id}" is not unique`,
+          location: { path, line },
+        });
       }
     }
   }

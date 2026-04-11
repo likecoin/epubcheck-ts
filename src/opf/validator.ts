@@ -540,12 +540,18 @@ export class OPFValidator {
     context.packageDocument = this.packageDoc;
 
     // Run validations
+    // EPUB 3 duplicate-id detection lives in validateMetadata (uses parsed data).
+    // EPUB 2 has no such pass, so mirror Java's id-unique.sch Schematron here.
+    if (this.packageDoc.version === '2.0') {
+      this.validateOpfIdUniqueness(context, opfPath, opfXml);
+    }
     this.validatePackageAttributes(context, opfPath);
     this.validateMetadata(context, opfPath);
     this.validateLinkElements(context, opfPath);
     this.validateManifest(context, opfPath);
     this.validateSpine(context, opfPath);
     this.validateFallbackChains(context, opfPath);
+    this.validateUndeclaredResources(context, opfPath);
 
     if (this.packageDoc.version === '2.0') {
       this.validateGuide(context, opfPath);
@@ -802,7 +808,13 @@ export class OPFValidator {
   private validatePackageAttributes(context: ValidationContext, opfPath: string): void {
     if (!this.packageDoc) return;
 
-    if (!VALID_VERSIONS.has(this.packageDoc.version)) {
+    if (this.packageDoc.versionDeclared === false) {
+      pushMessage(context.messages, {
+        id: MessageId.OPF_001,
+        message: 'The package element is missing the required "version" attribute.',
+        location: { path: opfPath },
+      });
+    } else if (!VALID_VERSIONS.has(this.packageDoc.version)) {
       pushMessage(context.messages, {
         id: MessageId.OPF_001,
         message: `Invalid package version "${this.packageDoc.version}"; must be one of: ${Array.from(VALID_VERSIONS).join(', ')}`,
@@ -910,7 +922,7 @@ export class OPFValidator {
 
     if (!hasTitle) {
       pushMessage(context.messages, {
-        id: MessageId.OPF_016,
+        id: MessageId.RSC_005,
         message: 'Metadata must include at least one dc:title element',
         location: { path: opfPath },
       });
@@ -918,7 +930,7 @@ export class OPFValidator {
 
     if (!hasLanguage) {
       pushMessage(context.messages, {
-        id: MessageId.OPF_017,
+        id: MessageId.RSC_005,
         message: 'Metadata must include at least one dc:language element',
         location: { path: opfPath },
       });
@@ -2057,13 +2069,21 @@ export class OPFValidator {
         });
       }
 
-      // Check for deprecated media types (OEB 1.x)
-      if (DEPRECATED_MEDIA_TYPES.has(item.mediaType)) {
-        pushMessage(context.messages, {
-          id: MessageId.OPF_037,
-          message: `Found deprecated media-type "${item.mediaType}"`,
-          location: { path: opfPath },
-        });
+      // Deprecated media types (OEB 1.x + text/html) only warn in EPUB 2.
+      if (DEPRECATED_MEDIA_TYPES.has(item.mediaType) || item.mediaType === 'text/html') {
+        if (this.packageDoc.version === '2.0' && item.mediaType === 'text/html') {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_035,
+            message: `XHTML Content Document "${item.id}" is declared as "text/html"`,
+            location: { path: opfPath },
+          });
+        } else if (this.packageDoc.version === '2.0') {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_037,
+            message: `Found deprecated media-type "${item.mediaType}"`,
+            location: { path: opfPath },
+          });
+        }
       }
 
       // Check for non-preferred media types (OPF-090)
@@ -2116,11 +2136,30 @@ export class OPFValidator {
         }
       }
 
+      // OPF-041 (EPUB 2): fallback-style must reference an existing manifest item
+      if (item.fallbackStyle && !this.manifestById.has(item.fallbackStyle)) {
+        pushMessage(context.messages, {
+          id: MessageId.OPF_041,
+          message: `Manifest item "${item.id}" fallback-style references non-existent item: "${item.fallbackStyle}"`,
+          location: { path: opfPath },
+        });
+      }
+
       // RSC-020: Check for unencoded spaces in href
       if (item.href.includes(' ')) {
         pushMessage(context.messages, {
           id: MessageId.RSC_020,
           message: `"${item.href}" is not a valid URL (Illegal character in path segment: space is not allowed)`,
+          location: { path: opfPath },
+        });
+      } else if (
+        !isRemoteItem &&
+        (item.href.includes('%20') || item.href.includes('%09'))
+      ) {
+        // PKG-010: filename contains spaces even when properly percent-encoded
+        pushMessage(context.messages, {
+          id: MessageId.PKG_010,
+          message: `Filename "${item.href}" contains spaces`,
           location: { path: opfPath },
         });
       }
@@ -2200,6 +2239,69 @@ export class OPFValidator {
           location: { path: opfPath },
         });
       }
+    }
+  }
+
+  /**
+   * RSC-005: all id attributes on elements in the OPF document must be unique.
+   * Mirrors Java's id-unique.sch / opf.sch opf_idAttrUnique pattern, which
+   * emits one assertion failure per offending element (so two duplicate ids
+   * produce two RSC-005 messages).
+   */
+  private validateOpfIdUniqueness(
+    context: ValidationContext,
+    opfPath: string,
+    opfXml: string,
+  ): void {
+    const stripped = stripXmlComments(opfXml);
+    const counts = new Map<string, number>();
+    for (const match of stripped.matchAll(/\sid\s*=\s*["']([^"']+)["']/g)) {
+      const id = match[1]?.trim();
+      if (!id) continue;
+      counts.set(id, (counts.get(id) ?? 0) + 1);
+    }
+    for (const [id, count] of counts) {
+      if (count < 2) continue;
+      for (let i = 0; i < count; i++) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: `The "id" attribute value "${id}" is not unique`,
+          location: { path: opfPath },
+        });
+      }
+    }
+  }
+
+  /**
+   * OPF-003: Report (usage) each resource that exists in the container but is
+   * not declared in the manifest. Ignores mimetype, META-INF/* files, the OPF
+   * document(s), and common OS files.
+   */
+  private validateUndeclaredResources(context: ValidationContext, opfPath: string): void {
+    if (!this.packageDoc) return;
+    if (context.options.mode === 'opf') return;
+
+    const manifestPaths = new Set<string>();
+    for (const item of this.packageDoc.manifest) {
+      const hrefBase = item.href.split('?')[0] ?? item.href;
+      if (/^[a-zA-Z][a-zA-Z0-9+\-.]*:/.test(hrefBase)) continue;
+      manifestPaths.add(resolvePath(opfPath, hrefBase).normalize('NFC'));
+    }
+
+    const rootfilePaths = new Set(context.rootfiles.map((r) => r.path.normalize('NFC')));
+
+    for (const path of context.files.keys()) {
+      if (path === 'mimetype') continue;
+      if (path.startsWith('META-INF/')) continue;
+      if (rootfilePaths.has(path)) continue;
+      if (manifestPaths.has(path)) continue;
+      if (isOSFile(path)) continue;
+
+      pushMessage(context.messages, {
+        id: MessageId.OPF_003,
+        message: `Item "${path}" exists in the EPUB, but is not declared in the OPF manifest`,
+        location: { path },
+      });
     }
   }
 
@@ -2295,7 +2397,18 @@ export class OPFValidator {
 
       // Check that spine items have appropriate media types
       if (!isSpineMediaType(item.mediaType)) {
-        if (!item.fallback) {
+        // OPF-042 (EPUB 2 only): styles and images are never valid as spine items,
+        // even with a fallback. EPUB 3 only requires a content-document fallback.
+        if (
+          this.packageDoc.version === '2.0' &&
+          isStyleOrImageMediaType(item.mediaType)
+        ) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_042,
+            message: `"${item.mediaType}" is not a permissible spine media type`,
+            location: { path: opfPath },
+          });
+        } else if (!item.fallback) {
           pushMessage(context.messages, {
             id: MessageId.OPF_043,
             message: `Spine item "${item.id}" has non-standard media type "${item.mediaType}" without fallback`,
@@ -2411,21 +2524,40 @@ export class OPFValidator {
       }
     }
 
+    const blessedContentTypes =
+      context.version === '2.0'
+        ? new Set(['application/xhtml+xml', 'application/x-dtbook+xml'])
+        : new Set(['application/xhtml+xml', 'image/svg+xml']);
+    const deprecatedBlessedTypes = new Set(['text/x-oeb1-document', 'text/html']);
+
     for (const ref of this.packageDoc.guide) {
       // Strip fragment from href for lookup
       const hrefBase = ref.href.split('#')[0] ?? ref.href;
       const fullPath = resolvePath(opfPath, hrefBase);
 
       // Check that href references a manifest item
-      const found = Array.from(this.manifestByHref.entries()).some(([href]) => {
-        const itemFullPath = resolvePath(opfPath, href);
-        return itemFullPath === fullPath;
-      });
+      let matchedItem: ManifestItem | undefined;
+      for (const [href, item] of this.manifestByHref) {
+        if (resolvePath(opfPath, href) === fullPath) {
+          matchedItem = item;
+          break;
+        }
+      }
 
-      if (!found) {
+      if (!matchedItem) {
         pushMessage(context.messages, {
           id: MessageId.OPF_031,
           message: `Guide reference "${ref.type}" references item not in manifest: ${ref.href}`,
+          location: { path: opfPath },
+        });
+        continue;
+      }
+
+      const type = matchedItem.mediaType;
+      if (!blessedContentTypes.has(type) && !deprecatedBlessedTypes.has(type)) {
+        pushMessage(context.messages, {
+          id: MessageId.OPF_032,
+          message: `Guide references resource of non-OPS media type "${type}": ${ref.href}`,
           location: { path: opfPath },
         });
       }
@@ -2694,6 +2826,30 @@ function isSpineMediaType(mediaType: string): boolean {
   );
 }
 
+const OS_FILE_NAMES = new Set([
+  '.DS_Store',
+  'Thumbs.db',
+  'thumbs.db',
+  'ehthumbs.db',
+  '.localized',
+]);
+
+function isOSFile(path: string): boolean {
+  const name = path.includes('/') ? (path.split('/').pop() ?? path) : path;
+  return OS_FILE_NAMES.has(name);
+}
+
+function isStyleOrImageMediaType(mediaType: string): boolean {
+  return (
+    mediaType === 'text/css' ||
+    mediaType === 'text/x-oeb1-css' ||
+    mediaType === 'image/gif' ||
+    mediaType === 'image/png' ||
+    mediaType === 'image/jpeg' ||
+    mediaType === 'image/webp'
+  );
+}
+
 /**
  * Validate a BCP 47 language tag (simplified check)
  */
@@ -2712,7 +2868,7 @@ function isValidLanguageTag(tag: string): boolean {
 /**
  * Resolve a relative path against a base path
  */
-function resolvePath(basePath: string, relativePath: string): string {
+export function resolvePath(basePath: string, relativePath: string): string {
   if (relativePath.startsWith('/')) {
     return relativePath.slice(1);
   }

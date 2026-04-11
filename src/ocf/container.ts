@@ -1,9 +1,14 @@
 import { MessageId, pushMessage } from '../messages/index.js';
+import { stripXmlComments } from '../opf/parser.js';
 import type { ValidationContext, ValidationMessage } from '../types.js';
+
+const OPF_MEDIA_TYPE = 'application/oebps-package+xml';
+
+const FULL_PATH_ATTR = /\bfull-path\s*=\s*["']([^"']*)["']/;
+const MEDIA_TYPE_ATTR = /\bmedia-type\s*=\s*["']([^"']*)["']/;
 
 /**
  * Parse container.xml content to extract rootfiles and set opfPath on the context.
- * Verifies rootfile paths exist using the provided `fileExists` callback.
  */
 export function parseContainerContent(
   content: string,
@@ -11,40 +16,51 @@ export function parseContainerContent(
   fileExists: (path: string) => boolean,
 ): void {
   const containerPath = 'META-INF/container.xml';
+  const stripped = stripXmlComments(content);
 
-  const rootfileMatches = content.matchAll(
-    /<rootfile[^>]+full-path=["']([^"']+)["'][^>]*media-type=["']([^"']+)["'][^>]*\/?>/g,
-  );
-  for (const match of rootfileMatches) {
-    const [, path, mediaType] = match;
-    if (path && mediaType) {
-      context.rootfiles.push({ path, mediaType });
-      if (!context.opfPath && mediaType === 'application/oebps-package+xml') {
-        context.opfPath = path;
-      }
+  let opfRootfileCount = 0;
+  for (const tagMatch of stripped.matchAll(/<rootfile\b([^>]*?)\/?>/g)) {
+    const attrs = tagMatch[1] ?? '';
+    const fullPathMatch = FULL_PATH_ATTR.exec(attrs);
+    const mediaTypeMatch = MEDIA_TYPE_ATTR.exec(attrs);
+
+    if (!fullPathMatch) {
+      pushMessage(context.messages, {
+        id: MessageId.OPF_016,
+        message: 'The "rootfile" element is missing the required "full-path" attribute.',
+        location: { path: containerPath },
+      });
+      continue;
+    }
+
+    const path = fullPathMatch[1] ?? '';
+    if (path.trim() === '') {
+      pushMessage(context.messages, {
+        id: MessageId.OPF_017,
+        message: 'The "full-path" attribute on the "rootfile" element must not be empty.',
+        location: { path: containerPath },
+      });
+      continue;
+    }
+
+    const mediaType = (mediaTypeMatch?.[1] ?? 'unknown').trim();
+    context.rootfiles.push({ path, mediaType });
+    if (mediaType === OPF_MEDIA_TYPE) {
+      opfRootfileCount++;
+      context.opfPath ??= path;
     }
   }
 
-  const altMatches = content.matchAll(
-    /<rootfile[^>]+media-type=["']([^"']+)["'][^>]*full-path=["']([^"']+)["'][^>]*\/?>/g,
-  );
-  for (const match of altMatches) {
-    const [, mediaType, path] = match;
-    if (path && mediaType) {
-      const exists = context.rootfiles.some((r) => r.path === path);
-      if (!exists) {
-        context.rootfiles.push({ path, mediaType });
-        if (!context.opfPath && mediaType === 'application/oebps-package+xml') {
-          context.opfPath = path;
-        }
-      }
-    }
-  }
-
-  if (context.rootfiles.length === 0) {
+  if (opfRootfileCount === 0) {
     pushMessage(context.messages, {
-      id: MessageId.PKG_004,
-      message: 'No rootfile found in container.xml',
+      id: MessageId.RSC_003,
+      message: 'No Package Document is declared in the container.xml file.',
+      location: { path: containerPath },
+    });
+  } else if (opfRootfileCount > 1 && context.version === '2.0') {
+    pushMessage(context.messages, {
+      id: MessageId.PKG_013,
+      message: 'The EPUB 2 publication declares more than one Package Document.',
       location: { path: containerPath },
     });
   }

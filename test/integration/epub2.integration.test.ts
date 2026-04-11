@@ -77,22 +77,19 @@ describe('Integration Tests - EPUB 2', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: expected 1x PKG-013, got 0; all={}
-    it.skip("Report multiple OPF rootfiles in the 'container.xml' file", async () => {
+    it("Report multiple OPF rootfiles in the 'container.xml' file", async () => {
       const data = loadFixture('epub2/epub/ocf-metainf-container-multiple-opf-error.epub');
       const result = await EpubCheck.validate(data, { version: '2.0' });
       expectError(result, 'PKG-013');
     });
 
-    // Skip: FAIL: expected 1x RSC-003, got 0; all={"OPF-002":1,"RSC-005":1}
-    it.skip("Report a wrong media type on the 'rootfile' element of the 'container.xml' file", async () => {
+    it("Report a wrong media type on the 'rootfile' element of the 'container.xml' file", async () => {
       const data = loadFixture('epub2/epub/ocf-metainf-container-mediatype-invalid-error.epub');
       const result = await EpubCheck.validate(data, { version: '2.0' });
       expectError(result, 'RSC-003');
     });
 
-    // Skip: FAIL: expected 1x OPF-016, got 0; all={"PKG-004":1}
-    it.skip("Report a missing 'full-path' attribute on the rootfile element of the 'container.xml' file", async () => {
+    it("Report a missing 'full-path' attribute on the rootfile element of the 'container.xml' file", async () => {
       const data = loadFixture(
         'epub2/epub/ocf-metainf-container-rootfile-full-path-missing-error.epub',
       );
@@ -100,8 +97,7 @@ describe('Integration Tests - EPUB 2', () => {
       expectError(result, 'OPF-016');
     });
 
-    // Skip: FAIL: expected 1x OPF-017, got 0; all={"PKG-004":1}
-    it.skip("Report an empty 'full-path' attribute on the rootfile element of the 'container.xml' file", async () => {
+    it("Report an empty 'full-path' attribute on the rootfile element of the 'container.xml' file", async () => {
       const data = loadFixture(
         'epub2/epub/ocf-metainf-container-rootfile-full-path-empty-error.epub',
       );
@@ -132,8 +128,7 @@ describe('Integration Tests - EPUB 2', () => {
       expectError(result, 'PKG-001');
     });
 
-    // Skip: FAIL: expected 1x OPF-001, got 0; all={"RSC-005":3,"OPF-054":1,"HTM-004":1}
-    it.skip('Report a missing version attribute', async () => {
+    it('Report a missing version attribute', async () => {
       const data = loadFixture('epub2/epub/opf-version-missing-error.epub');
       const result = await EpubCheck.validate(data, { version: '2.0' });
       expectError(result, 'OPF-001');
@@ -169,17 +164,15 @@ describe('Integration Tests - EPUB 2', () => {
       expectError(result, 'RSC-001');
     });
 
-    // Skip: FAIL: expected 1x OPF-035, got 0; all={}
-    it.skip("Report an XHTML OPS document declard as 'text/html'", async () => {
+    it("Report an XHTML OPS document declard as 'text/html'", async () => {
       const data = loadFixture('epub2/epub/opf-manifest-item-xhtml-mediatype-html-warning.epub');
       const result = await EpubCheck.validate(data, { version: '2.0' });
       expectWarning(result, 'OPF-035');
     });
 
-    // Skip: FAIL: expected 1x OPF-003, got 0; all={}
-    it.skip('Report (usage) a resource that is not listed in the manifest', async () => {
+    it('Report (usage) a resource that is not listed in the manifest', async () => {
       const data = loadFixture('epub2/epub/opf-manifest-resource-undeclared-usage.epub');
-      const result = await EpubCheck.validate(data, { version: '2.0' });
+      const result = await EpubCheck.validate(data, { version: '2.0', includeUsage: true });
       expectUsage(result, 'OPF-003');
     });
 
@@ -213,8 +206,7 @@ describe('Integration Tests - EPUB 2', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x CHK-008, got 0; all={"OPF-050":1,"RSC-005":1}
-    it.skip('Report a toc attribute pointing to something else than the NCX', async () => {
+    it('Report a toc attribute pointing to something else than the NCX', async () => {
       const data = loadFixture('epub2/epub/opf-spine-toc-attribute-to-non-ncx-error.epub');
       const result = await EpubCheck.validate(data, { version: '2.0' });
       expectError(result, 'OPF-050');
@@ -232,22 +224,19 @@ describe('Integration Tests - EPUB 2', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x OPF-063, got 0; all={"RSC-005":1}
-    it.skip("Report a 'page-map' attribute (invalid Adobe extension) pointing to nowhere", async () => {
+    it("Report a 'page-map' attribute (invalid Adobe extension) pointing to nowhere", async () => {
       const data = loadFixture('epub2/epub/opf-pagemap-ref-not-found-warning.epub');
       const result = await EpubCheck.validate(data, { version: '2.0' });
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x RSC-007, got 0; all={"OPF-031":1}
-    it.skip("Report 'guide' references that are not in the manifest", async () => {
+    it("Report 'guide' references that are not in the manifest", async () => {
       const data = loadFixture('epub2/epub/opf-guide-reference-undeclared-error.epub');
       const result = await EpubCheck.validate(data, { version: '2.0' });
       expectError(result, 'OPF-031');
     });
 
-    // Skip: FAIL: expected 1x OPF-032, got 0; all={}
-    it.skip("Report 'guide' references to non-OPS resources", async () => {
+    it("Report 'guide' references to non-OPS resources", async () => {
       const data = loadFixture('epub2/epub/opf-guide-reference-to-image-error.epub');
       const result = await EpubCheck.validate(data, { version: '2.0' });
       expectError(result, 'OPF-032');
@@ -289,29 +278,25 @@ describe('Integration Tests - EPUB 2', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 2x NCX-006, got 0; all={}
-    it.skip('Report empty text labels as usage', async () => {
+    it('Report empty text labels as usage', async () => {
       const data = loadFixture('epub2/epub/ncx-label-empty-valid.epub');
-      const result = await EpubCheck.validate(data, { version: '2.0' });
+      const result = await EpubCheck.validate(data, { version: '2.0', includeUsage: true });
       expectErrorCount(result, 'NCX-006', 2, 'usage');
     });
 
-    // Skip: FAIL: expected 1x RSC-010, got 0; all={}
-    it.skip('Report a link to a resource that is not an OPS document', async () => {
+    it('Report a link to a resource that is not an OPS document', async () => {
       const data = loadFixture('epub2/epub/ncx-link-to-non-ops-error.epub');
       const result = await EpubCheck.validate(data, { version: '2.0' });
       expectError(result, 'RSC-010');
     });
 
-    // Skip: FAIL: expected 1x RSC-007, got 0; all={}
-    it.skip('Report an NCX reference to a resource that is not in the publication', async () => {
+    it('Report an NCX reference to a resource that is not in the publication', async () => {
       const data = loadFixture('epub2/epub/ncx-missing-resource-error.epub');
       const result = await EpubCheck.validate(data, { version: '2.0' });
       expectError(result, 'RSC-007');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('Report an NCX pageTarget with a type attribute value that is not one of "front", "normal" or "special"', async () => {
+    it('Report an NCX pageTarget with a type attribute value that is not one of "front", "normal" or "special"', async () => {
       const data = loadFixture('epub2/epub/ncx-pagetarget-type-error.epub');
       const result = await EpubCheck.validate(data, { version: '2.0' });
       expectError(result, 'RSC-005');
@@ -392,8 +377,7 @@ describe('Integration Tests - EPUB 2', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 2x RSC-005, got 1; all={"OPF-074":1,"RSC-005":1}
-    it.skip('duplicate IDs are reported', async () => {
+    it('duplicate IDs are reported', async () => {
       const data = loadFixture('epub2/opf-document/xml-id-duplicate-error.opf');
       const result = await EpubCheck.validateSingleFile(data, 'xml-id-duplicate-error.opf', {
         mode: 'opf',
@@ -543,8 +527,7 @@ describe('Integration Tests - EPUB 2', () => {
       expectWarning(result, 'OPF-037');
     });
 
-    // Skip: FAIL: expected 1x PKG-010, got 0; all={}
-    it.skip('item paths should not contain spaces (even when properly encoded)', async () => {
+    it('item paths should not contain spaces (even when properly encoded)', async () => {
       const data = loadFixture('epub2/opf-document/item-href-contains-spaces-warning.opf');
       const result = await EpubCheck.validateSingleFile(
         data,
@@ -554,8 +537,7 @@ describe('Integration Tests - EPUB 2', () => {
       expectWarning(result, 'PKG-010');
     });
 
-    // Skip: FAIL: expected 1x PKG-010, got 0; all={"RSC-020":1}
-    it.skip('item paths should not contain spaces', async () => {
+    it('item paths should not contain spaces', async () => {
       const data = loadFixture('epub2/opf-document/item-href-contains-spaces-unencoded-error.opf');
       const result = await EpubCheck.validateSingleFile(
         data,
@@ -574,8 +556,7 @@ describe('Integration Tests - EPUB 2', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: expected 1x OPF-041, got 0; all={"RSC-005":1}
-    it.skip("Report a 'fallback-style' attribute pointing to a non-existing ID", async () => {
+    it("Report a 'fallback-style' attribute pointing to a non-existing ID", async () => {
       const data = loadFixture('epub2/opf-document/fallback-style-not-found-error.opf');
       const result = await EpubCheck.validateSingleFile(
         data,
@@ -585,8 +566,7 @@ describe('Integration Tests - EPUB 2', () => {
       expectError(result, 'OPF-041');
     });
 
-    // Skip: FAIL: expected 1x OPF-042, got 0; all={"OPF-043":1}
-    it.skip('Report an image used as a spine item', async () => {
+    it('Report an image used as a spine item', async () => {
       const data = loadFixture('epub2/opf-document/spine-image-error.opf');
       const result = await EpubCheck.validateSingleFile(data, 'spine-image-error.opf', {
         mode: 'opf',
@@ -761,8 +741,7 @@ describe('Integration Tests - EPUB 2', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: expected 2x RSC-005, got 1; all={"RSC-005":1}
-    it.skip('Report duplicate ID values', async () => {
+    it('Report duplicate ID values', async () => {
       const data = loadFixture('epub2/ops-document-xhtml/id-duplicate-error.xhtml');
       const result = await EpubCheck.validateSingleFile(data, 'id-duplicate-error.xhtml', {
         mode: 'xhtml',
