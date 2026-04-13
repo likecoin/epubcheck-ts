@@ -726,6 +726,57 @@ export class OPFValidator {
         });
       }
     }
+
+    // Mirrors ../epubcheck/src/main/resources/com/adobe/epubcheck/schema/30/dict/dict-collection.sch
+    // dict.collection.lang: each dictionary collection must have source-language
+    // and target-language declared either in its own metadata or in package metadata.
+    const dictCollections = this.packageDoc.collections.filter((c) => c.role === 'dictionary');
+    const pkgHasSource = this.packageDoc.metaElements.some(
+      (m) => m.property.trim() === 'source-language',
+    );
+    const pkgHasTarget = this.packageDoc.metaElements.some(
+      (m) => m.property.trim() === 'target-language',
+    );
+    for (const collection of dictCollections) {
+      const collMetas = collection.innerXml ? parseCollectionMetas(collection.innerXml) : [];
+      const collHasSource = collMetas.some((m) => m.property === 'source-language');
+      const collHasTarget = collMetas.some((m) => m.property === 'target-language');
+      const srcLangs = collMetas.filter((m) => m.property === 'source-language');
+
+      if (!pkgHasSource && !collHasSource) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message:
+            'An EPUB Dictionary must declare its source language using a "source-language" metadata.',
+          location: { path: opfPath },
+        });
+      }
+      if (!pkgHasTarget && !collHasTarget) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message:
+            'An EPUB Dictionary must declare its target language using a "target-language" metadata.',
+          location: { path: opfPath },
+        });
+      }
+      if (srcLangs.length > 1) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: 'An EPUB Dictionary must not declare more than one source language.',
+          location: { path: opfPath },
+        });
+      }
+      for (const m of collMetas) {
+        if (m.property !== 'source-language' && m.property !== 'target-language') continue;
+        if (m.value && !declaredLangs.has(m.value)) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `EPUB Dictionaries "source-language" and "target-language" must also be declared as "dc:language" in package-level metadata. Found: "${m.value}"`,
+            location: { path: opfPath },
+          });
+        }
+      }
+    }
   }
 
   // Mirrors ../epubcheck/src/main/resources/com/adobe/epubcheck/schema/30/edupub/edu-opf.sch
@@ -2134,6 +2185,36 @@ export class OPFValidator {
             });
           }
         }
+
+        // OPF-012: search-key-map requires application/vnd.epub.search-key-map+xml
+        if (item.properties.includes('search-key-map')) {
+          if (item.mediaType !== 'application/vnd.epub.search-key-map+xml') {
+            pushMessage(context.messages, {
+              id: MessageId.OPF_012,
+              message: `The property "search-key-map" is not defined for media type "${item.mediaType}"`,
+              location: { path: opfPath },
+            });
+          } else if (!item.href.toLowerCase().endsWith('.xml')) {
+            // OPF-080: SKM document file should have .xml extension
+            pushMessage(context.messages, {
+              id: MessageId.OPF_080,
+              message: 'A Search Key Map document file name should have the extension ".xml".',
+              location: { path: opfPath },
+              severityOverride: 'warning',
+            });
+          }
+        }
+
+        // OPF-012: data-nav requires application/xhtml+xml
+        if (item.properties.includes('data-nav')) {
+          if (item.mediaType !== 'application/xhtml+xml') {
+            pushMessage(context.messages, {
+              id: MessageId.OPF_012,
+              message: `The property "data-nav" is not defined for media type "${item.mediaType}"`,
+              location: { path: opfPath },
+            });
+          }
+        }
       }
 
       // OPF-041 (EPUB 2): fallback-style must reference an existing manifest item
@@ -2152,10 +2233,7 @@ export class OPFValidator {
           message: `"${item.href}" is not a valid URL (Illegal character in path segment: space is not allowed)`,
           location: { path: opfPath },
         });
-      } else if (
-        !isRemoteItem &&
-        (item.href.includes('%20') || item.href.includes('%09'))
-      ) {
+      } else if (!isRemoteItem && (item.href.includes('%20') || item.href.includes('%09'))) {
         // PKG-010: filename contains spaces even when properly percent-encoded
         pushMessage(context.messages, {
           id: MessageId.PKG_010,
@@ -2238,6 +2316,41 @@ export class OPFValidator {
           message: `Multiple occurrences of the "cover-image" property (number of "cover-image" items: ${String(coverItems.length)}).`,
           location: { path: opfPath },
         });
+      }
+
+      // RSC-005: multiple data-nav items
+      const dataNavItems = this.packageDoc.manifest.filter((item) =>
+        item.properties?.includes('data-nav'),
+      );
+      if (dataNavItems.length > 1) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: 'The manifest must not include more than one Data Navigation Document.',
+          location: { path: opfPath },
+        });
+      }
+    }
+
+    // dict.skm: SKM shared between multiple dictionary collections
+    if (context.options.profile === 'dict') {
+      const dictCollections = this.packageDoc.collections.filter((c) => c.role === 'dictionary');
+      const skmCollectionCount = new Map<string, number>();
+      for (const coll of dictCollections) {
+        for (const href of coll.links) {
+          const item = this.manifestByHref.get(href);
+          if (item?.mediaType === 'application/vnd.epub.search-key-map+xml') {
+            skmCollectionCount.set(href, (skmCollectionCount.get(href) ?? 0) + 1);
+          }
+        }
+      }
+      for (const [href, count] of skmCollectionCount) {
+        if (count > 1) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: `Search Key Map Document "${href}" is referenced in more than one dictionary collection.`,
+            location: { path: opfPath },
+          });
+        }
       }
     }
   }
@@ -2395,14 +2508,21 @@ export class OPFValidator {
       }
       seenIdrefs.add(itemref.idref);
 
+      // OPF-077: data-nav should not be in the spine
+      if (item.properties?.includes('data-nav')) {
+        pushMessage(context.messages, {
+          id: MessageId.OPF_077,
+          message: 'A Data Navigation Document should not be included in the spine.',
+          location: { path: opfPath },
+          severityOverride: 'warning',
+        });
+      }
+
       // Check that spine items have appropriate media types
       if (!isSpineMediaType(item.mediaType)) {
         // OPF-042 (EPUB 2 only): styles and images are never valid as spine items,
         // even with a fallback. EPUB 3 only requires a content-document fallback.
-        if (
-          this.packageDoc.version === '2.0' &&
-          isStyleOrImageMediaType(item.mediaType)
-        ) {
+        if (this.packageDoc.version === '2.0' && isStyleOrImageMediaType(item.mediaType)) {
           pushMessage(context.messages, {
             id: MessageId.OPF_042,
             message: `"${item.mediaType}" is not a permissible spine media type`,
@@ -2738,35 +2858,40 @@ export class OPFValidator {
       }
 
       if (collection.role === 'dictionary') {
-        if (!collection.name || collection.name.trim() === '') {
-          pushMessage(context.messages, {
-            id: MessageId.OPF_072,
-            message: 'Dictionary collection must have a name attribute',
-            location: { path: opfPath },
-          });
-        }
-
+        // Mirrors ../epubcheck/src/main/java/com/adobe/epubcheck/opf/OPFChecker30.java:296-330
+        let skmFound = false;
         for (const linkHref of collection.links) {
           const manifestItem = this.manifestByHref.get(linkHref);
           if (!manifestItem) {
             pushMessage(context.messages, {
-              id: MessageId.OPF_073,
-              message: `Collection link "${linkHref}" references non-existent manifest item`,
+              id: MessageId.OPF_081,
+              message: `Dictionary collection resource "${linkHref}" was not found in the package manifest`,
               location: { path: opfPath },
             });
-            continue;
-          }
-
-          if (
-            manifestItem.mediaType !== 'application/xhtml+xml' &&
-            manifestItem.mediaType !== 'image/svg+xml'
-          ) {
+          } else if (manifestItem.mediaType === 'application/vnd.epub.search-key-map+xml') {
+            if (skmFound) {
+              pushMessage(context.messages, {
+                id: MessageId.OPF_082,
+                message:
+                  'A dictionary collection must not contain more than one Search Key Map Document',
+                location: { path: opfPath },
+              });
+            }
+            skmFound = true;
+          } else if (manifestItem.mediaType !== 'application/xhtml+xml') {
             pushMessage(context.messages, {
-              id: MessageId.OPF_074,
-              message: `Dictionary collection item "${linkHref}" must be an XHTML or SVG document`,
+              id: MessageId.OPF_084,
+              message: `Dictionary collection resource "${linkHref}" is neither a Search Key Map Document nor an XHTML Content Document`,
               location: { path: opfPath },
             });
           }
+        }
+        if (!skmFound) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_083,
+            message: 'A dictionary collection contains no Search Key Map Document',
+            location: { path: opfPath },
+          });
         }
       }
 
@@ -2785,12 +2910,46 @@ export class OPFValidator {
       }
 
       if (collection.role === 'preview') {
+        // Mirrors ../epubcheck/src/main/resources/com/adobe/epubcheck/schema/30/previews/preview-collection.sch
+        const manifestChildren = collection.children.filter((c) => c.role === 'manifest');
+        if (manifestChildren.length !== 1) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: 'A "preview" collection must include exactly one child "manifest" collection',
+            location: { path: opfPath },
+          });
+        }
+        if (collection.links.length === 0) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message:
+              'A "preview" collection must include at least one child "link" element, pointing to an EPUB Content Document.',
+            location: { path: opfPath },
+          });
+        }
+
+        // Mirrors ../epubcheck/src/main/java/com/adobe/epubcheck/opf/OPFChecker30.java:383-407
         for (const linkHref of collection.links) {
-          const manifestItem = this.manifestByHref.get(linkHref);
+          const manifestItem = this.manifestByHref.get(linkHref.split('#')[0] ?? linkHref);
           if (!manifestItem) {
             pushMessage(context.messages, {
               id: MessageId.OPF_073,
               message: `Collection link "${linkHref}" references non-existent manifest item`,
+              location: { path: opfPath },
+            });
+          } else if (
+            manifestItem.mediaType !== 'application/xhtml+xml' &&
+            manifestItem.mediaType !== 'image/svg+xml'
+          ) {
+            pushMessage(context.messages, {
+              id: MessageId.OPF_075,
+              message: `Preview collection resource "${linkHref}" must be an XHTML or SVG content document`,
+              location: { path: opfPath },
+            });
+          } else if (linkHref.includes('#epubcfi(')) {
+            pushMessage(context.messages, {
+              id: MessageId.OPF_076,
+              message: `Preview collection link "${linkHref}" must not use EPUB CFI fragment identifiers`,
               location: { path: opfPath },
             });
           }
@@ -2826,13 +2985,24 @@ function isSpineMediaType(mediaType: string): boolean {
   );
 }
 
-const OS_FILE_NAMES = new Set([
-  '.DS_Store',
-  'Thumbs.db',
-  'thumbs.db',
-  'ehthumbs.db',
-  '.localized',
-]);
+const OS_FILE_NAMES = new Set(['.DS_Store', 'Thumbs.db', 'thumbs.db', 'ehthumbs.db', '.localized']);
+
+/**
+ * Parse meta property/value pairs from a collection's inner XML.
+ * Used for dictionary collection source-language/target-language checks.
+ */
+function parseCollectionMetas(innerXml: string): { property: string; value: string }[] {
+  const results: { property: string; value: string }[] = [];
+  const metaRegex = /<meta[^>]*\bproperty=["']([^"']+)["'][^>]*>([^<]*)<\/meta>/g;
+  for (const match of innerXml.matchAll(metaRegex)) {
+    const property = match[1]?.trim();
+    const value = match[2]?.trim();
+    if (property && value !== undefined) {
+      results.push({ property, value });
+    }
+  }
+  return results;
+}
 
 function isOSFile(path: string): boolean {
   const name = path.includes('/') ? (path.split('/').pop() ?? path) : path;

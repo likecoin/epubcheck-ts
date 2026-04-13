@@ -174,7 +174,12 @@ export class OCFValidator {
       return;
     }
 
-    parseContainerContent(content, context, (path) => zip.has(path));
+    parseContainerContent(
+      content,
+      context,
+      (path) => zip.has(path),
+      (path) => zip.readText(path),
+    );
   }
 
   /**

@@ -164,11 +164,7 @@ export class NCXValidator {
   /**
    * NCX-006: navLabel/docTitle/docAuthor text with empty content.
    */
-  private checkEmptyLabels(
-    context: ValidationContext,
-    root: XmlElement,
-    ncxPath: string,
-  ): void {
+  private checkEmptyLabels(context: ValidationContext, root: XmlElement, ncxPath: string): void {
     const ns = { ncx: 'http://www.daisy.org/z3986/2005/ncx/' };
     const labelTextNodes = root.find(
       './/ncx:navLabel/ncx:text | .//ncx:docTitle/ncx:text | .//ncx:docAuthor/ncx:text',
@@ -191,11 +187,7 @@ export class NCXValidator {
    * pageTarget@type must be one of "front", "normal", "special".
    * Reported via RSC-005 to mirror Java Schematron output.
    */
-  private checkPageTargets(
-    context: ValidationContext,
-    root: XmlElement,
-    ncxPath: string,
-  ): void {
+  private checkPageTargets(context: ValidationContext, root: XmlElement, ncxPath: string): void {
     const pageTargets = root.find('.//ncx:pageTarget[@type]', {
       ncx: 'http://www.daisy.org/z3986/2005/ncx/',
     });

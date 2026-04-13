@@ -123,8 +123,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: got {"OPF-027":4,"OPF-074":2}
-    it.skip('A dictionary collection can be used to define multiple EPUB Dictionaries', async () => {
+    it('A dictionary collection can be used to define multiple EPUB Dictionaries', async () => {
       const data = loadFixture(
         'profiles/dictionaries/package-document/dictionary-collection-valid.opf',
       );
@@ -136,8 +135,7 @@ describe('Integration Tests - Profiles', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: expected 1x OPF-083, got 0; all={"OPF-027":4,"OPF-074":2}
-    it.skip('A dictionary collection must contain a search key map', async () => {
+    it('A dictionary collection must contain a search key map', async () => {
       const data = loadFixture(
         'profiles/dictionaries/package-document/dictionary-collection-skm-missing-error.opf',
       );
@@ -149,8 +147,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'OPF-083');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={"OPF-027":4,"OPF-074":2}
-    it.skip('A dictionary collection must not contain a search key map used by another collection', async () => {
+    it('A dictionary collection must not contain a search key map used by another collection', async () => {
       const data = loadFixture(
         'profiles/dictionaries/package-document/dictionary-collection-skm-shared-error.opf',
       );
@@ -162,8 +159,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x OPF-082, got 0; all={"OPF-027":6,"OPF-074":3}
-    it.skip('A dictionary collection must not contain more than one search key map', async () => {
+    it('A dictionary collection must not contain more than one search key map', async () => {
       const data = loadFixture(
         'profiles/dictionaries/package-document/dictionary-collection-skm-multiple-error.opf',
       );
@@ -187,8 +183,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x OPF-081, got 0; all={"OPF-027":4,"OPF-074":2,"OPF-073":1}
-    it.skip('A dictionary collection must not contain resources not in the manifest', async () => {
+    it('A dictionary collection must not contain resources not in the manifest', async () => {
       const data = loadFixture(
         'profiles/dictionaries/package-document/dictionary-collection-resource-missing-error.opf',
       );
@@ -200,8 +195,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'OPF-081');
     });
 
-    // Skip: FAIL: expected 1x OPF-084, got 0; all={"OPF-027":6,"OPF-074":3}
-    it.skip('A dictionary collection must not contain resources other than XHTML Content Documents and Search Key Map', async () => {
+    it('A dictionary collection must not contain resources other than XHTML Content Documents and Search Key Map', async () => {
       const data = loadFixture(
         'profiles/dictionaries/package-document/dictionary-collection-resource-not-xhtml-error.opf',
       );
@@ -273,8 +267,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: got {"OPF-027":4,"OPF-074":2}
-    it.skip('The source/target languages of a multiple-dictionary publication can be defined in the collections', async () => {
+    it('The source/target languages of a multiple-dictionary publication can be defined in the collections', async () => {
       const data = loadFixture(
         'profiles/dictionaries/package-document/dictionary-metadata-languages-collection-valid.opf',
       );
@@ -286,8 +279,7 @@ describe('Integration Tests - Profiles', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={"OPF-027":4,"OPF-074":2}
-    it.skip('The target language of a dictionary collection must be defined', async () => {
+    it('The target language of a dictionary collection must be defined', async () => {
       const data = loadFixture(
         'profiles/dictionaries/package-document/dictionary-metadata-languages-collection-missing-target-error.opf',
       );
@@ -299,8 +291,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={"OPF-027":4,"OPF-074":2}
-    it.skip('The source language of a dictionary collection must not be defined more than once', async () => {
+    it('The source language of a dictionary collection must not be defined more than once', async () => {
       const data = loadFixture(
         'profiles/dictionaries/package-document/dictionary-metadata-languages-collection-multiple-source-error.opf',
       );
@@ -312,8 +303,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={"OPF-027":4,"OPF-074":2}
-    it.skip("The target language of a dictionary collection must one of the declared 'dc:language' values", async () => {
+    it("The target language of a dictionary collection must one of the declared 'dc:language' values", async () => {
       const data = loadFixture(
         'profiles/dictionaries/package-document/dictionary-metadata-languages-collection-undeclared-lang-target-error.opf',
       );
@@ -325,8 +315,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x OPF-012, got 0; all={"OPF-027":3}
-    it.skip('A Search Key Map document must have the correct media type', async () => {
+    it('A Search Key Map document must have the correct media type', async () => {
       const data = loadFixture(
         'profiles/dictionaries/package-document/dictionary-item-property-skm-mediatype-unknown-error.opf',
       );
@@ -345,8 +334,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x OPF-080, got 0; all={"OPF-027":2}
-    it.skip('Report a search key map file that does not have an .xml extension', async () => {
+    it('Report a search key map file that does not have an .xml extension', async () => {
       const data = loadFixture(
         'profiles/dictionaries/epub/dictionary-search-key-map-extension-error.epub',
       );
@@ -381,8 +369,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-021');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={"OPF-027":2,"OPF-079":1}
-    it.skip('Report a dictionary that does not identify itself in a dc:type element', async () => {
+    it('Report a dictionary that does not identify itself in a dc:type element', async () => {
       const data = loadFixture('profiles/dictionaries/epub/dictionary-dc-type-missing-error.epub');
       const result = await EpubCheck.validate(data, { profile: 'dict' });
       expectError(result, 'RSC-005');
@@ -396,8 +383,7 @@ describe('Integration Tests - Profiles', () => {
       expectWarning(result, 'OPF-079');
     });
 
-    // Skip: FAIL: got {"OPF-027":2}
-    it.skip('Verify a publication with a single dictionary', async () => {
+    it('Verify a publication with a single dictionary', async () => {
       const data = loadFixture('profiles/dictionaries/epub/dictionary-single-valid.epub');
       const result = await EpubCheck.validate(data, { profile: 'dict' });
       expectNoErrorsOrWarnings(result);
@@ -411,8 +397,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'OPF-078');
     });
 
-    // Skip: FAIL: got {"OPF-027":4,"OPF-074":2}
-    it.skip('Verify a publication with multiple dictionaries', async () => {
+    it('Verify a publication with multiple dictionaries', async () => {
       const data = loadFixture('profiles/dictionaries/epub/dictionary-multiple-valid.epub');
       const result = await EpubCheck.validate(data, { profile: 'dict' });
       expectNoErrorsOrWarnings(result);
@@ -427,19 +412,17 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'OPF-078');
     });
 
-    // Skip: FAIL: got {"OPF-027":3}
-    it.skip('Verify a publication with a single glossary', async () => {
+    it('Verify a publication with a single glossary', async () => {
       const data = loadFixture('profiles/dictionaries/epub/glossary-single-valid.epub');
-      const result = await EpubCheck.validate(data, { profile: 'dict' });
+      const result = await EpubCheck.validate(data);
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: got {"OPF-027":2}
-    it.skip("Verify the 'glossary' manifest item property is not mandatory in the default checking profile", async () => {
+    it("Verify the 'glossary' manifest item property is not mandatory in the default checking profile", async () => {
       const data = loadFixture(
         'profiles/dictionaries/epub/glossary-single-package-property-not-defined-error.epub',
       );
-      const result = await EpubCheck.validate(data, { profile: 'dict' });
+      const result = await EpubCheck.validate(data);
       expectNoErrorsOrWarnings(result);
     });
   });
@@ -799,8 +782,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'NAV-003');
     });
 
-    // Skip: FAIL: expected 1x OPF-066, got 0; all={}
-    it.skip('Report an edupub publication with a page list but the source of the pagination is not identified', async () => {
+    it('Report an edupub publication with a page list but the source of the pagination is not identified', async () => {
       const data = loadFixture('profiles/edupub/epub/edupub-pagelist-no-source-error.epub');
       const result = await EpubCheck.validate(data, { profile: 'edupub' });
       expectError(result, 'OPF-066');
@@ -818,8 +800,7 @@ describe('Integration Tests - Profiles', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('Report document without an index declaration', async () => {
+    it('Report document without an index declaration', async () => {
       const data = loadFixture(
         'profiles/indexes/content-document-xhtml/index-declaration-none-error.xhtml',
       );
@@ -831,8 +812,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('Report index semantic not declared on body element', async () => {
+    it('Report index semantic not declared on body element', async () => {
       const data = loadFixture(
         'profiles/indexes/content-document-xhtml/index-declaration-body-error.xhtml',
       );
@@ -914,22 +894,19 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('Report an index publication with an invalid content model', async () => {
+    it('Report an index publication with an invalid content model', async () => {
       const data = loadFixture('profiles/indexes/epub/index-whole-pub-content-model-error.epub');
       const result = await EpubCheck.validate(data, { profile: 'idx' });
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={"OPF-027":1}
-    it.skip('Report a single-file index with an invalid content model', async () => {
+    it('Report a single-file index with an invalid content model', async () => {
       const data = loadFixture('profiles/indexes/epub/index-single-file-content-model-error.epub');
       const result = await EpubCheck.validate(data, { profile: 'idx' });
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('Report an index collection with an invalid content model', async () => {
+    it('Report an index collection with an invalid content model', async () => {
       const data = loadFixture('profiles/indexes/epub/index-collection-content-model-error.epub');
       const result = await EpubCheck.validate(data, { profile: 'idx' });
       expectError(result, 'RSC-005');
@@ -941,22 +918,19 @@ describe('Integration Tests - Profiles', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('Report an index publication without an index', async () => {
+    it('Report an index publication without an index', async () => {
       const data = loadFixture('profiles/indexes/epub/index-whole-pub-no-index-error.epub');
       const result = await EpubCheck.validate(data, { profile: 'idx' });
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: got {"OPF-027":1}
-    it.skip('Verify a single-file index', async () => {
+    it('Verify a single-file index', async () => {
       const data = loadFixture('profiles/indexes/epub/index-single-file-valid.epub');
       const result = await EpubCheck.validate(data, { profile: 'idx' });
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: expected 1x OPF-015, got 0; all={"OPF-027":1}
-    it.skip('Report a single-file index without an index', async () => {
+    it('Report a single-file index without an index', async () => {
       const data = loadFixture('profiles/indexes/epub/index-single-file-no-index-error.epub');
       const result = await EpubCheck.validate(data, { profile: 'idx' });
       expectError(result, 'OPF-015');
@@ -968,8 +942,7 @@ describe('Integration Tests - Profiles', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('Report an index collection without an index', async () => {
+    it('Report an index collection without an index', async () => {
       const data = loadFixture('profiles/indexes/epub/index-collection-no-index-error.epub');
       const result = await EpubCheck.validate(data, { profile: 'idx' });
       expectError(result, 'RSC-005');
@@ -983,8 +956,7 @@ describe('Integration Tests - Profiles', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: expected 1x RSC-019, got 0; all={}
-    it.skip("Report a multiple-rendition publication with no 'metadata.xml' file", async () => {
+    it("Report a multiple-rendition publication with no 'metadata.xml' file", async () => {
       const data = loadFixture(
         'profiles/multiple-renditions/epub/renditions-metadata-file-missing-warning.epub',
       );
@@ -992,8 +964,7 @@ describe('Integration Tests - Profiles', () => {
       expectWarning(result, 'RSC-019');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip("Report an incomplete identifier in multiple-rendition 'metadata.xml' file", async () => {
+    it("Report an incomplete identifier in multiple-rendition 'metadata.xml' file", async () => {
       const data = loadFixture(
         'profiles/multiple-renditions/epub/renditions-metadata-identifier-incomplete-error.epub',
       );
@@ -1017,8 +988,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x RSC-017, got 0; all={}
-    it.skip('Report a non-primary rootfile element without a rendition selection attribute', async () => {
+    it('Report a non-primary rootfile element without a rendition selection attribute', async () => {
       const data = loadFixture(
         'profiles/multiple-renditions/epub/renditions-selection-attribute-missing-error.epub',
       );
@@ -1034,8 +1004,7 @@ describe('Integration Tests - Profiles', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('Report a mapping document that is not identified as XHTML in the container document', async () => {
+    it('Report a mapping document that is not identified as XHTML in the container document', async () => {
       const data = loadFixture(
         'profiles/multiple-renditions/epub/renditions-mapping-non-xhtml-error.epub',
       );
@@ -1043,8 +1012,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('Report a container with more than one mapping document', async () => {
+    it('Report a container with more than one mapping document', async () => {
       const data = loadFixture(
         'profiles/multiple-renditions/epub/renditions-mapping-multiple-docs-error.epub',
       );
@@ -1052,8 +1020,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x RSC-019, got 0; all={}
-    it.skip('Report a container with multiple renditions but missing all the core identifying features', async () => {
+    it('Report a container with multiple renditions but missing all the core identifying features', async () => {
       const data = loadFixture(
         'profiles/multiple-renditions/epub/renditions-unmanifested-warning.epub',
       );
@@ -1061,8 +1028,7 @@ describe('Integration Tests - Profiles', () => {
       expectWarning(result, 'RSC-019');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('Report a mapping document without a version identifier', async () => {
+    it('Report a mapping document without a version identifier', async () => {
       const data = loadFixture(
         'profiles/multiple-renditions/epub/renditions-mapping-no-version-error.epub',
       );
@@ -1070,8 +1036,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('Report a mapping document without a resource map', async () => {
+    it('Report a mapping document without a resource map', async () => {
       const data = loadFixture(
         'profiles/multiple-renditions/epub/renditions-mapping-no-resourcemap-error.epub',
       );
@@ -1079,8 +1044,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('Report a mapping document with an unknown nav type', async () => {
+    it('Report a mapping document with an unknown nav type', async () => {
       const data = loadFixture(
         'profiles/multiple-renditions/epub/renditions-mapping-untyped-nav-error.epub',
       );
@@ -1090,13 +1054,11 @@ describe('Integration Tests - Profiles', () => {
   });
 
   describe('Previews', () => {
-    // Skip: FAIL: got {"RSC-005":1}
-    it.skip('an embedded EPUB preview collection', async () => {
+    it('an embedded EPUB preview collection', async () => {
       const data = loadFixture('profiles/previews/package-document/preview-embedded-valid.opf');
       const result = await EpubCheck.validateSingleFile(data, 'preview-embedded-valid.opf', {
         mode: 'opf',
         version: '3.0',
-        profile: 'preview',
       });
       expectNoErrorsOrWarnings(result);
     });
@@ -1125,88 +1087,77 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: got {"RSC-005":1}
-    it.skip('Verify an embedded preview', async () => {
+    it('Verify an embedded preview', async () => {
       const data = loadFixture('profiles/previews/epub/preview-embedded-valid.epub');
-      const result = await EpubCheck.validate(data, { profile: 'preview' });
+      const result = await EpubCheck.validate(data);
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('Report an embedded preview that does not have a manifest', async () => {
+    it('Report an embedded preview that does not have a manifest', async () => {
       const data = loadFixture('profiles/previews/epub/preview-embedded-no-manifest-error.epub');
-      const result = await EpubCheck.validate(data, { profile: 'preview' });
+      const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
     });
 
     it('Report an embedded preview without any links to preview content', async () => {
       const data = loadFixture('profiles/previews/epub/preview-embedded-no-links-error.epub');
-      const result = await EpubCheck.validate(data, { profile: 'preview' });
+      const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x OPF-075, got 0; all={"RSC-005":1}
-    it.skip('Report an embedded preview without that links to non-xhtml content documents', async () => {
+    it('Report an embedded preview without that links to non-xhtml content documents', async () => {
       const data = loadFixture(
         'profiles/previews/epub/preview-embedded-no-content-doc-link-error.epub',
       );
-      const result = await EpubCheck.validate(data, { profile: 'preview' });
+      const result = await EpubCheck.validate(data);
       expectError(result, 'OPF-075');
     });
 
-    // Skip: FAIL: expected 1x OPF-076, got 0; all={"RSC-005":1}
-    it.skip('Report an embedded preview that uses EPUB CFIs in the links to xhtml content documents', async () => {
+    it('Report an embedded preview that uses EPUB CFIs in the links to xhtml content documents', async () => {
       const data = loadFixture('profiles/previews/epub/preview-embedded-link-cfi-error.epub');
-      const result = await EpubCheck.validate(data, { profile: 'preview' });
+      const result = await EpubCheck.validate(data);
       expectError(result, 'OPF-076');
     });
   });
 
   describe('Region Nav', () => {
-    // Skip: FAIL: got {"OPF-027":1}
-    it.skip('Verify a basic data nav file', async () => {
+    it('Verify a basic data nav file', async () => {
       const data = loadFixture('profiles/region-nav/epub/data-nav-valid.epub');
       const result = await EpubCheck.validate(data);
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: expected 1x OPF-012, got 0; all={"OPF-027":1}
-    it.skip('Report a data nav file that is not encoded as application/xhtml+xml', async () => {
+    it('Report a data nav file that is not encoded as application/xhtml+xml', async () => {
       const data = loadFixture('profiles/region-nav/epub/data-nav-not-xhtml-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'OPF-012');
     });
 
-    // Skip: FAIL: expected 1x OPF-077, got 0; all={"OPF-027":1}
-    it.skip('Report a data nav file included in the spine', async () => {
+    it('Report a data nav file included in the spine', async () => {
       const data = loadFixture('profiles/region-nav/epub/data-nav-in-spine-warning.epub');
       const result = await EpubCheck.validate(data);
       expectWarning(result, 'OPF-077');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={"OPF-027":1}
-    it.skip('Report a data nav with an unidentified nav element in it', async () => {
+    it('Report a data nav with an unidentified nav element in it', async () => {
       const data = loadFixture('profiles/region-nav/epub/data-nav-missing-type-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={"OPF-027":2}
-    it.skip('Report the inclusion of more than one data nav file', async () => {
+    it('Report the inclusion of more than one data nav file', async () => {
       const data = loadFixture('profiles/region-nav/epub/data-nav-multiple-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: got {"OPF-027":1,"RSC-012":1}
-    it.skip('Verify a data nav that defines region-based navgiation', async () => {
+    it('Verify a data nav that defines region-based navgiation', async () => {
       const data = loadFixture('profiles/region-nav/epub/region-based-nav-valid.epub');
       const result = await EpubCheck.validate(data);
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: expected 1x HTM-052, got 0; all={}
-    it.skip('Report region-based navigation not defined on a nav element', async () => {
+    it('Report region-based navigation not defined on a nav element', async () => {
       const data = loadFixture(
         'profiles/region-nav/epub/region-based-nav-wrong-element-error.epub',
       );
@@ -1230,8 +1181,7 @@ describe('Integration Tests - Profiles', () => {
       expectWarning(result, 'RSC-017');
     });
 
-    // Skip: FAIL: got {"OPF-027":1,"RSC-012":4}
-    it.skip('Verify subregion navigation using comics semantics', async () => {
+    it('Verify subregion navigation using comics semantics', async () => {
       const data = loadFixture('profiles/region-nav/epub/region-based-nav-comics-valid.epub');
       const result = await EpubCheck.validate(data);
       expectNoErrorsOrWarnings(result);

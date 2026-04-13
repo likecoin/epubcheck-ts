@@ -7,6 +7,7 @@ import { CSSValidator } from '../css/validator.js';
 import { SMILValidator } from '../smil/validator.js';
 import { MessageId, pushMessage } from '../messages/index.js';
 import { isCoreMediaType, type PackageDocument } from '../opf/types.js';
+import { resolvePath } from '../opf/validator.js';
 import type { ResourceRegistry } from '../references/registry.js';
 import type { Reference } from '../references/types.js';
 import { ReferenceType } from '../references/types.js';
@@ -1352,6 +1353,80 @@ export class ContentValidator {
             location: { path },
           });
         }
+
+        // OPF-015: index/glossary/dictionary properties declared but content lacks the markup
+        const hasIndexMarkup = this.detectEpubType(root, 'index');
+        if (!hasIndexMarkup && manifestItem?.properties?.includes('index')) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_015,
+            message: 'The property "index" should not be declared in the OPF file.',
+            location: { path },
+          });
+        }
+
+        // RSC-005: each "index" element must contain exactly one
+        // "index-entry-list" descendant. Mirrors idx-xhtml.sch idx.entry-list rule.
+        if (hasIndexMarkup) {
+          const epubTypeElements = root.find('.//*[@epub:type]', {
+            epub: 'http://www.idpf.org/2007/ops',
+          });
+          for (const el of epubTypeElements) {
+            const elemTyped = el as XmlElement;
+            const types = elemTyped.attr('type', 'epub')?.value.split(/\s+/) ?? [];
+            if (!types.includes('index') && !types.includes('index-group')) continue;
+            const entryLists = elemTyped.find('.//*[@epub:type]', {
+              epub: 'http://www.idpf.org/2007/ops',
+            });
+            const entryListCount = entryLists.filter((e) => {
+              const t = (e as XmlElement).attr('type', 'epub')?.value.split(/\s+/) ?? [];
+              return t.includes('index-entry-list');
+            }).length;
+            if (entryListCount !== 1) {
+              pushMessage(context.messages, {
+                id: MessageId.RSC_005,
+                message:
+                  'An "index" must contain one and only one "index-entry-list" descendant element.',
+                location: { path, line: elemTyped.line },
+              });
+            }
+          }
+        }
+
+        // RSC-005: documents declared as indexes must contain index markup.
+        // Mirrors the indexes Schematron rule.
+        const declaredAsIndex = this.isDeclaredAsIndex(path, manifestItem, packageDoc, context);
+        if (declaredAsIndex) {
+          // Strict body-level check applies only to:
+          // - Single-file XHTML mode under the 'idx' profile (no packageDoc)
+          // - Items with the explicit 'index' property
+          const requireBodyEpubType =
+            !packageDoc || (manifestItem?.properties?.includes('index') ?? false);
+          if (requireBodyEpubType) {
+            const body = root.get('.//html:body', { html: 'http://www.w3.org/1999/xhtml' });
+            const bodyHasIndex =
+              !!body &&
+              ((body as XmlElement).attr('type', 'epub')?.value.split(/\s+/).includes('index') ??
+                false);
+            if (!bodyHasIndex) {
+              const message = hasIndexMarkup
+                ? 'The document contains only index content; its "body" element must have the epub:type "index".'
+                : 'At least one "index" element must be present in a document declared as an index in the OPF.';
+              pushMessage(context.messages, {
+                id: MessageId.RSC_005,
+                message,
+                location: { path },
+              });
+            }
+          } else if (!hasIndexMarkup) {
+            // Whole-publication / collection case: any index element suffices.
+            pushMessage(context.messages, {
+              id: MessageId.RSC_005,
+              message:
+                'At least one "index" element must be present in a document declared as an index in the OPF.',
+              location: { path },
+            });
+          }
+        }
       }
 
       // Check for discouraged elements
@@ -1422,6 +1497,7 @@ export class ContentValidator {
       // Validate epub:type attributes (EPUB 3)
       if (context.version.startsWith('3')) {
         this.validateEpubTypes(context, path, root);
+        this.validateRegionBasedNav(context, path, root, manifestItem);
       }
 
       // Collect features for cross-document validation (EPUB 3)
@@ -2156,6 +2232,59 @@ export class ContentValidator {
     const rootSvg = root.get('.//svg:svg', { svg: 'http://www.w3.org/2000/svg' });
     if (rootSvg) return true;
 
+    return false;
+  }
+
+  /**
+   * Detect whether the document contains any element with the given epub:type
+   * token (token-aware match against whitespace-separated values).
+   */
+  private detectEpubType(root: XmlElement, token: string): boolean {
+    const elements = root.find('.//*[@epub:type]', { epub: 'http://www.idpf.org/2007/ops' });
+    for (const el of elements) {
+      const value = (el as XmlElement).attr('type', 'epub')?.value;
+      if (value?.split(/\s+/).includes(token)) return true;
+    }
+    return false;
+  }
+
+  /**
+   * A content document is "declared as an index" if any of:
+   * - The publication has dc:type=index (whole-publication case)
+   * - The manifest item has the "index" property
+   * - The document is referenced by a <collection role="index"> link
+   */
+  private isDeclaredAsIndex(
+    path: string,
+    manifestItem: { id: string; properties?: string[] } | undefined,
+    packageDoc: PackageDocument | undefined,
+    context: ValidationContext,
+  ): boolean {
+    // Nav documents are exempt from the index markup requirement.
+    if (manifestItem?.properties?.includes('nav')) return false;
+    if (manifestItem?.properties?.includes('index')) return true;
+    // Single-file XHTML mode under the 'idx' profile is implicitly an index.
+    if (!packageDoc && context.options.profile === 'idx') return true;
+    if (!packageDoc) return false;
+
+    const hasIndexDcType = packageDoc.dcElements.some(
+      (dc: { name: string; value: string }) => dc.name === 'type' && dc.value.trim() === 'index',
+    );
+    // Whole-publication index: dc:type=index applies to spine items only.
+    if (hasIndexDcType && manifestItem) {
+      const isInSpine = packageDoc.spine.some((sp) => sp.idref === manifestItem.id);
+      if (isInSpine) return true;
+    }
+
+    const opfPath = context.opfPath ?? '';
+    if (!opfPath) return false;
+    for (const coll of packageDoc.collections) {
+      if (coll.role !== 'index') continue;
+      for (const linkHref of coll.links) {
+        const hrefBase = linkHref.split('#')[0] ?? linkHref;
+        if (resolvePath(opfPath, hrefBase) === path) return true;
+      }
+    }
     return false;
   }
 
@@ -3398,6 +3527,55 @@ export class ContentValidator {
           message: `Image has invalid media type "${manifestItem.mediaType}": ${src}`,
           location: { path },
         });
+      }
+    }
+  }
+
+  /**
+   * Region-based / data-nav content validation.
+   * - HTM-052: epub:type="region-based" must be on a nav element AND inside a
+   *   Data Navigation Document (item with data-nav property).
+   * - RSC-005 (data-nav.nav-type): nav elements in data-nav documents must
+   *   declare their nature with an epub:type attribute.
+   *
+   * Mirrors ../epubcheck/src/main/java/com/adobe/epubcheck/ops/OPSHandler30.java:243
+   */
+  private validateRegionBasedNav(
+    context: ValidationContext,
+    path: string,
+    root: XmlElement,
+    manifestItem?: { id: string; properties?: string[] },
+  ): void {
+    const isDataNav = manifestItem?.properties?.includes('data-nav') ?? false;
+    const elements = root.find('.//*[@epub:type]', { epub: 'http://www.idpf.org/2007/ops' });
+    for (const el of elements) {
+      const elem = el as XmlElement;
+      const epubType = elem.attr('type', 'epub')?.value;
+      if (!epubType) continue;
+      const tokens = epubType.split(/\s+/);
+      if (!tokens.includes('region-based')) continue;
+      if (elem.name !== 'nav' || !isDataNav) {
+        pushMessage(context.messages, {
+          id: MessageId.HTM_052,
+          message:
+            'The "region-based" epub:type can only be used on "nav" elements inside a Data Navigation Document.',
+          location: { path, line: elem.line },
+        });
+      }
+    }
+
+    if (isDataNav) {
+      const navElements = root.find('.//html:nav', { html: 'http://www.w3.org/1999/xhtml' });
+      for (const navEl of navElements) {
+        const nav = navEl as XmlElement;
+        if (!nav.attr('type', 'epub')?.value) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message:
+              'A "nav" element in a Data Navigation Document must have an "epub:type" attribute.',
+            location: { path, line: nav.line },
+          });
+        }
       }
     }
   }

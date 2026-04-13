@@ -125,34 +125,6 @@ describe('OPFValidator', () => {
       expect(warnings).toHaveLength(0);
     });
 
-    it('should require name attribute for dictionary collection (OPF-072)', () => {
-      const opf = `<?xml version="1.0" encoding="UTF-8"?>
-<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">
-  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
-    <dc:identifier id="uid">test-id</dc:identifier>
-    <dc:title>Test</dc:title>
-    <dc:language>en</dc:language>
-    <meta property="dcterms:modified">2024-01-01T00:00:00Z</meta>
-  </metadata>
-  <manifest>
-    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
-    <item id="dict1" href="dict.xhtml" media-type="application/xhtml+xml"/>
-  </manifest>
-  <spine>
-    <itemref idref="nav"/>
-  </spine>
-  <collection role="dictionary">
-    <link href="dict.xhtml"/>
-  </collection>
-</package>`;
-      const context = createContext(opf, { 'OEBPS/dict.xhtml': '<html/>' });
-      validator.validate(context);
-
-      const errors = context.messages.filter((m) => m.id === 'OPF-072');
-      expect(errors).toHaveLength(1);
-      expect(errors[0]?.message).toContain('name');
-    });
-
     it('should report error for collection itemref referencing non-existent manifest item (OPF-073)', () => {
       const opf = `<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">
@@ -181,7 +153,7 @@ describe('OPFValidator', () => {
       expect(errors).toHaveLength(1);
     });
 
-    it('should validate dictionary collection items are XHTML or SVG (OPF-074)', () => {
+    it('should report dictionary collection items that are not XHTML or SKM (OPF-084)', () => {
       const opf = `<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
@@ -193,23 +165,25 @@ describe('OPFValidator', () => {
   <manifest>
     <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
     <item id="image1" href="image.png" media-type="image/png"/>
+    <item id="skm1" href="search.xml" properties="dictionary search-key-map" media-type="application/vnd.epub.search-key-map+xml"/>
   </manifest>
   <spine>
     <itemref idref="nav"/>
   </spine>
   <collection role="dictionary" id="dict1">
-    <metadata>
-      <dc:title>My Dictionary</dc:title>
-    </metadata>
+    <link href="search.xml"/>
     <link href="image.png"/>
   </collection>
 </package>`;
-      const context = createContext(opf, { 'OEBPS/image.png': 'PNG data' });
+      const context = createContext(opf, {
+        'OEBPS/image.png': 'PNG data',
+        'OEBPS/search.xml': '<x/>',
+      });
       validator.validate(context);
 
-      const errors = context.messages.filter((m) => m.id === 'OPF-074');
+      const errors = context.messages.filter((m) => m.id === 'OPF-084');
       expect(errors).toHaveLength(1);
-      expect(errors[0]?.message).toContain('XHTML or SVG');
+      expect(errors[0]?.message).toContain('Search Key Map');
     });
 
     it('should validate index collection items are XHTML (OPF-071)', () => {

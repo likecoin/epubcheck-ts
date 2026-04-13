@@ -416,12 +416,14 @@ export class ReferenceValidator {
     // Check if fragment target exists (only for resource types we parse for IDs)
     // Skip remote resources since we can't parse their content
     // Skip svgView() fragments — they are functional, not ID-based
+    // Skip Media Fragments URI fragments (xywh=, t=, id=) — they target spatial/temporal regions
     const parsedMimeTypes = ['application/xhtml+xml', 'image/svg+xml'];
     if (
       resource &&
       parsedMimeTypes.includes(resource.mimeType) &&
       !isRemoteURL(resourcePath) &&
       !fragment.includes('svgView(') &&
+      !isMediaFragment(fragment) &&
       reference.type !== ReferenceType.SVG_SYMBOL
     ) {
       if (!this.registry.hasID(resourcePath, fragment)) {
@@ -689,4 +691,18 @@ export class ReferenceValidator {
       mimeType === 'application/vnd.ms-opentype'
     );
   }
+}
+
+/**
+ * Detect Media Fragments URI fragments (xywh=, t=, id=, track=) that target
+ * spatial/temporal regions of media rather than HTML/SVG element IDs.
+ * @see https://www.w3.org/TR/media-frags/
+ */
+function isMediaFragment(fragment: string): boolean {
+  return (
+    fragment.startsWith('xywh=') ||
+    fragment.startsWith('t=') ||
+    fragment.startsWith('track=') ||
+    fragment.startsWith('id=')
+  );
 }

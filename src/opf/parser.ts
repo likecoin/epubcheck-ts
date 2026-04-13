@@ -436,9 +436,9 @@ function parseGuide(guideXml: string): GuideReference[] {
 /**
  * Parse XML attributes from a string
  */
-function parseAttributes(attrsStr: string): Record<string, string> {
+export function parseAttributes(attrsStr: string): Record<string, string> {
   const attrs: Record<string, string> = {};
-  const attrRegex = /(\S+)=["']([^"']*)["']/g;
+  const attrRegex = /(\S+?)\s*=\s*["']([^"']*)["']/g;
   let match;
   while ((match = attrRegex.exec(attrsStr)) !== null) {
     const name = match[1];
@@ -472,10 +472,13 @@ function decodeXmlEntities(str: string): string {
 
 // Only these roles need innerXml captured for later content inspection
 // (distributable-object metadata requires dc:identifier scanning).
-const ROLES_NEEDING_INNER_XML = new Set(['distributable-object']);
+const ROLES_NEEDING_INNER_XML = new Set(['distributable-object', 'dictionary']);
 
 function parseCollections(xml: string): Collection[] {
   if (!xml.includes('<collection')) return [];
+
+  // Strip XML comments to avoid parsing commented-out elements
+  const stripped = stripXmlComments(xml);
 
   // Walk <collection> open/close tags in document order, building a tree
   // based on nesting depth. Links attach to the innermost currently-open
@@ -484,13 +487,13 @@ function parseCollections(xml: string): Collection[] {
   const stack: { collection: Collection; contentStart: number }[] = [];
   const roots: Collection[] = [];
 
-  for (const match of xml.matchAll(tokenRegex)) {
+  for (const match of stripped.matchAll(tokenRegex)) {
     const text = match[0];
     const matchIndex = match.index;
     if (text.startsWith('</collection')) {
       const frame = stack.pop();
       if (frame && ROLES_NEEDING_INNER_XML.has(frame.collection.role)) {
-        frame.collection.innerXml = xml.slice(frame.contentStart, matchIndex);
+        frame.collection.innerXml = stripped.slice(frame.contentStart, matchIndex);
       }
       continue;
     }

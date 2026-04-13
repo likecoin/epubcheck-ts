@@ -17,9 +17,9 @@ interface OPFValidatorTest {
   buildManifestMaps(): void;
 }
 
-function createValidationContext(
-  overrides?: { version?: '2.0' | '3.0' | '3.1' | '3.2' | '3.3' },
-): ValidationContext {
+function createValidationContext(overrides?: {
+  version?: '2.0' | '3.0' | '3.1' | '3.2' | '3.3';
+}): ValidationContext {
   const version = overrides?.version ?? '3.0';
   return {
     data: new Uint8Array(),
@@ -170,9 +170,7 @@ describe('OPFValidator', () => {
       validatorTest.validateMetadata(context, 'OEBPS/content.opf');
 
       expect(
-        context.messages.some(
-          (m) => m.id === 'RSC-005' && m.message.includes('dc:title'),
-        ),
+        context.messages.some((m) => m.id === 'RSC-005' && m.message.includes('dc:title')),
       ).toBe(true);
     });
 
@@ -190,9 +188,7 @@ describe('OPFValidator', () => {
       validatorTest.validateMetadata(context, 'OEBPS/content.opf');
 
       expect(
-        context.messages.some(
-          (m) => m.id === 'RSC-005' && m.message.includes('dc:language'),
-        ),
+        context.messages.some((m) => m.id === 'RSC-005' && m.message.includes('dc:language')),
       ).toBe(true);
     });
 
@@ -841,20 +837,7 @@ describe('OPFValidator', () => {
       expect(context.messages.some((m) => m.id === 'OPF-071')).toBe(false);
     });
 
-    it('should add OPF-072 error when dictionary collection has no name', () => {
-      const context = createValidationContext();
-      const packageDoc = createMinimalPackage({
-        collections: [{ role: 'dictionary', links: [], children: [] }],
-      });
-      addFileToContext(context, 'OEBPS/nav.xhtml', '<html></html>');
-
-      validatorTest.packageDoc = packageDoc;
-      validatorTest.validateCollections(context, 'OEBPS/content.opf');
-
-      expect(context.messages.some((m) => m.id === 'OPF-072')).toBe(true);
-    });
-
-    it('should add OPF-073 error when collection link references non-existent manifest item', () => {
+    it('should add OPF-081 error when dictionary collection link references non-existent manifest item', () => {
       const context = createValidationContext();
       const packageDoc = createMinimalPackage({
         collections: [
@@ -867,26 +850,40 @@ describe('OPFValidator', () => {
       validatorTest.buildManifestMaps();
       validatorTest.validateCollections(context, 'OEBPS/content.opf');
 
-      expect(context.messages.some((m) => m.id === 'OPF-073')).toBe(true);
+      expect(context.messages.some((m) => m.id === 'OPF-081')).toBe(true);
     });
 
-    it('should add OPF-074 error when dictionary collection item is not XHTML or SVG', () => {
+    it('should add OPF-084 error when dictionary collection item is neither XHTML nor SKM', () => {
       const context = createValidationContext();
       const packageDoc = createMinimalPackage({
         manifest: [
           { id: 'nav', href: 'nav.xhtml', mediaType: 'application/xhtml+xml', properties: ['nav'] },
           { id: 'entry1', href: 'entry1.png', mediaType: 'image/png' },
+          {
+            id: 'skm',
+            href: 'search.xml',
+            mediaType: 'application/vnd.epub.search-key-map+xml',
+            properties: ['dictionary', 'search-key-map'],
+          },
         ],
-        collections: [{ role: 'dictionary', name: 'Test', links: ['entry1.png'], children: [] }],
+        collections: [
+          {
+            role: 'dictionary',
+            name: 'Test',
+            links: ['search.xml', 'entry1.png'],
+            children: [],
+          },
+        ],
       });
       addFileToContext(context, 'OEBPS/nav.xhtml', '<html></html>');
       addFileToContext(context, 'OEBPS/entry1.png', 'png');
+      addFileToContext(context, 'OEBPS/search.xml', '<x/>');
 
       validatorTest.packageDoc = packageDoc;
       validatorTest.buildManifestMaps();
       validatorTest.validateCollections(context, 'OEBPS/content.opf');
 
-      expect(context.messages.some((m) => m.id === 'OPF-074')).toBe(true);
+      expect(context.messages.some((m) => m.id === 'OPF-084')).toBe(true);
     });
 
     it('should add OPF-071 error when index collection item is not XHTML', () => {
@@ -914,13 +911,25 @@ describe('OPFValidator', () => {
         manifest: [
           { id: 'nav', href: 'nav.xhtml', mediaType: 'application/xhtml+xml', properties: ['nav'] },
           { id: 'entry1', href: 'entry1.xhtml', mediaType: 'application/xhtml+xml' },
+          {
+            id: 'skm',
+            href: 'search.xml',
+            mediaType: 'application/vnd.epub.search-key-map+xml',
+            properties: ['dictionary', 'search-key-map'],
+          },
         ],
         collections: [
-          { role: 'dictionary', name: 'Test Dictionary', links: ['entry1.xhtml'], children: [] },
+          {
+            role: 'dictionary',
+            name: 'Test Dictionary',
+            links: ['search.xml', 'entry1.xhtml'],
+            children: [],
+          },
         ],
       });
       addFileToContext(context, 'OEBPS/nav.xhtml', '<html></html>');
       addFileToContext(context, 'OEBPS/entry1.xhtml', '<html></html>');
+      addFileToContext(context, 'OEBPS/search.xml', '<x/>');
 
       validatorTest.packageDoc = packageDoc;
       validatorTest.buildManifestMaps();

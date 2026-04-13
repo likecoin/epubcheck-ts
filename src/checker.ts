@@ -394,6 +394,24 @@ export class EpubCheck {
           location: { path: opfPath },
         });
       }
+
+      // OPF-066: Page list / page breaks require pagination source identification
+      // Mirrors ../epubcheck/src/main/java/com/adobe/epubcheck/opf/OPFChecker30.java
+      if (features.hasPageBreak || features.hasPageList) {
+        const hasSource =
+          context.packageDocument?.dcElements.some((dc) => dc.name === 'source') ?? false;
+        const hasSourceOf =
+          context.packageDocument?.metaElements.some((m) => m.property.trim() === 'source-of') ??
+          false;
+        if (!hasSource && !hasSourceOf) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_066,
+            message:
+              'Missing "dc:source" or "source-of" pagination metadata. The pagination source must be identified using the "dc:source" and "source-of" properties when the content includes page break markers.',
+            location: { path: opfPath },
+          });
+        }
+      }
     }
 
     // Dictionary content ↔ dc:type checks
@@ -738,7 +756,15 @@ export class EpubCheck {
     }
 
     const content = new TextDecoder().decode(containerData);
-    parseContainerContent(content, context, (path) => context.files.has(path));
+    parseContainerContent(
+      content,
+      context,
+      (path) => context.files.has(path),
+      (path) => {
+        const data = context.files.get(path);
+        return data ? new TextDecoder().decode(data) : undefined;
+      },
+    );
   }
 
   /**

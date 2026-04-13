@@ -1,5 +1,5 @@
 import { MessageId, pushMessage } from '../messages/index.js';
-import { stripXmlComments } from '../opf/parser.js';
+import { parseAttributes, stripXmlComments } from '../opf/parser.js';
 import type { ValidationContext, ValidationMessage } from '../types.js';
 
 const OPF_MEDIA_TYPE = 'application/oebps-package+xml';
@@ -8,17 +8,24 @@ const FULL_PATH_ATTR = /\bfull-path\s*=\s*["']([^"']*)["']/;
 const MEDIA_TYPE_ATTR = /\bmedia-type\s*=\s*["']([^"']*)["']/;
 
 /**
+ * Rendition selection attributes per EPUB Multiple-Rendition spec §3.
+ * Mirrors ../epubcheck/src/main/resources/com/adobe/epubcheck/schema/30/multiple-renditions/container.rnc
+ */
+const RENDITION_SELECT_RE = /\brendition:(?:media|layout|language|accessMode|label)\s*=/;
+
+/**
  * Parse container.xml content to extract rootfiles and set opfPath on the context.
  */
 export function parseContainerContent(
   content: string,
   context: ValidationContext,
   fileExists: (path: string) => boolean,
+  getFileContent?: (path: string) => string | undefined,
 ): void {
   const containerPath = 'META-INF/container.xml';
   const stripped = stripXmlComments(content);
 
-  let opfRootfileCount = 0;
+  const opfRootfileTags: string[] = [];
   for (const tagMatch of stripped.matchAll(/<rootfile\b([^>]*?)\/?>/g)) {
     const attrs = tagMatch[1] ?? '';
     const fullPathMatch = FULL_PATH_ATTR.exec(attrs);
@@ -46,23 +53,99 @@ export function parseContainerContent(
     const mediaType = (mediaTypeMatch?.[1] ?? 'unknown').trim();
     context.rootfiles.push({ path, mediaType });
     if (mediaType === OPF_MEDIA_TYPE) {
-      opfRootfileCount++;
+      opfRootfileTags.push(attrs);
       context.opfPath ??= path;
     }
   }
 
-  if (opfRootfileCount === 0) {
+  if (opfRootfileTags.length === 0) {
     pushMessage(context.messages, {
       id: MessageId.RSC_003,
       message: 'No Package Document is declared in the container.xml file.',
       location: { path: containerPath },
     });
-  } else if (opfRootfileCount > 1 && context.version === '2.0') {
+  } else if (opfRootfileTags.length > 1 && context.version === '2.0') {
     pushMessage(context.messages, {
       id: MessageId.PKG_013,
       message: 'The EPUB 2 publication declares more than one Package Document.',
       location: { path: containerPath },
     });
+  }
+
+  // Mirrors ../epubcheck/src/main/java/com/adobe/epubcheck/ocf/OCFChecker.java:137
+  if (opfRootfileTags.length > 1 && context.version !== '2.0') {
+    if (!fileExists('META-INF/metadata.xml')) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_019,
+        message: 'EPUBs with Multiple Renditions should contain a META-INF/metadata.xml file.',
+        location: { path: containerPath },
+      });
+    } else if (getFileContent) {
+      const metadataContent = getFileContent('META-INF/metadata.xml');
+      if (metadataContent !== undefined) {
+        const stripped2 = stripXmlComments(metadataContent);
+        let modifiedCount = 0;
+        for (const m of stripped2.matchAll(/<meta\b([^>]*?)\/?>/g)) {
+          const attrs = parseAttributes(m[1] ?? '');
+          if (attrs.property?.trim() === 'dcterms:modified') modifiedCount++;
+        }
+        if (modifiedCount !== 1) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message:
+              'A "dcterms:modified" meta element must occur exactly once in the multiple-renditions metadata.xml file.',
+            location: { path: 'META-INF/metadata.xml' },
+          });
+        }
+      }
+    }
+    // Skip the first rootfile (primary); each subsequent must declare a selection attribute.
+    for (let i = 1; i < opfRootfileTags.length; i++) {
+      const attrs = opfRootfileTags[i] ?? '';
+      if (!RENDITION_SELECT_RE.test(attrs)) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_017,
+          message:
+            'At least one rendition selection attribute should be specified for each non-first rootfile element.',
+          location: { path: containerPath },
+        });
+      }
+    }
+
+    // Container <link rel="mapping"> checks
+    const mappingLinks: { href: string; mediaType: string }[] = [];
+    for (const linkMatch of stripped.matchAll(/<link\b([^>]*?)\/?>/g)) {
+      const lattrs = parseAttributes(linkMatch[1] ?? '');
+      if (lattrs.rel !== 'mapping') continue;
+      mappingLinks.push({ href: lattrs.href ?? '', mediaType: lattrs['media-type'] ?? '' });
+    }
+    if (mappingLinks.length > 1) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_005,
+        message: 'The Container Document must not reference more than one mapping document.',
+        location: { path: containerPath },
+      });
+    }
+    for (const ml of mappingLinks) {
+      if (ml.mediaType && ml.mediaType !== 'application/xhtml+xml') {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: 'The media type of Rendition Mapping Documents must be "application/xhtml+xml".',
+          location: { path: containerPath },
+        });
+      }
+    }
+
+    // Mapping document content checks (Java MappingDocumentChecker)
+    if (getFileContent && mappingLinks.length === 1) {
+      const ml = mappingLinks[0];
+      if (ml?.href) {
+        const mappingContent = getFileContent(ml.href);
+        if (mappingContent !== undefined) {
+          validateMappingDocumentContent(mappingContent, ml.href, context);
+        }
+      }
+    }
   }
 
   for (const rootfile of context.rootfiles) {
@@ -73,6 +156,61 @@ export function parseContainerContent(
         location: { path: containerPath },
       });
     }
+  }
+}
+
+/**
+ * Mirrors ../epubcheck/src/main/java/com/adobe/epubcheck/multiplerenditions/MappingDocumentChecker.java
+ * Validates the rendition mapping document referenced from container.xml.
+ */
+function validateMappingDocumentContent(
+  xml: string,
+  mappingPath: string,
+  context: ValidationContext,
+): void {
+  const stripped = stripXmlComments(xml);
+
+  let hasVersionMeta = false;
+  for (const m of stripped.matchAll(/<meta\b([^>]*?)\/?>/g)) {
+    const attrs = parseAttributes(m[1] ?? '');
+    if (attrs.name === 'epub.multiple.renditions.version' && attrs.content === '1.0') {
+      hasVersionMeta = true;
+      break;
+    }
+  }
+  if (!hasVersionMeta) {
+    pushMessage(context.messages, {
+      id: MessageId.RSC_005,
+      message:
+        'A meta tag with the name "epub.multiple.renditions.version" and value "1.0" is required in a Rendition Mapping Document.',
+      location: { path: mappingPath },
+    });
+  }
+
+  let resourceMapCount = 0;
+  for (const navMatch of stripped.matchAll(/<nav\b([^>]*)>/g)) {
+    const navAttrs = parseAttributes(navMatch[1] ?? '');
+    const epubType = navAttrs['epub:type'];
+    if (!epubType) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_005,
+        message:
+          'A nav element of a Rendition Mapping Document must identify its nature in an epub:type attribute.',
+        location: { path: mappingPath },
+      });
+      continue;
+    }
+    if (epubType.split(/\s+/).includes('resource-map')) {
+      resourceMapCount++;
+    }
+  }
+
+  if (resourceMapCount !== 1) {
+    pushMessage(context.messages, {
+      id: MessageId.RSC_005,
+      message: 'A Rendition Mapping Document must contain exactly one "resource-map" nav element.',
+      location: { path: mappingPath },
+    });
   }
 }
 
