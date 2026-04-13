@@ -501,7 +501,7 @@ describe('Integration Tests - Profiles', () => {
     });
 
     // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('Report body used as an explicit section without a heading', async () => {
+    it('Report body used as an explicit section without a heading', async () => {
       const data = loadFixture(
         'profiles/edupub/content-document-xhtml/edupub-body-explicit-section-no-heading-error.xhtml',
       );
@@ -514,7 +514,7 @@ describe('Integration Tests - Profiles', () => {
     });
 
     // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('Report a missing section heading', async () => {
+    it('Report a missing section heading', async () => {
       const data = loadFixture(
         'profiles/edupub/content-document-xhtml/edupub-heading-missing-error.xhtml',
       );
@@ -551,7 +551,7 @@ describe('Integration Tests - Profiles', () => {
     });
 
     // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('Report a heading with only an img without alternative text', async () => {
+    it('Report a heading with only an img without alternative text', async () => {
       const data = loadFixture(
         'profiles/edupub/content-document-xhtml/edupub-heading-img-no-alt-error.xhtml',
       );
@@ -576,7 +576,7 @@ describe('Integration Tests - Profiles', () => {
     });
 
     // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('Report section subtitle not in a header element', async () => {
+    it('Report section subtitle not in a header element', async () => {
       const data = loadFixture(
         'profiles/edupub/content-document-xhtml/edupub-titles-subtitle-header-error.xhtml',
       );
@@ -589,7 +589,7 @@ describe('Integration Tests - Profiles', () => {
     });
 
     // Skip: FAIL: expected 3x RSC-005, got 0; all={}
-    it.skip('Report invalid and missing headings in sectioning elements', async () => {
+    it('Report invalid and missing headings in sectioning elements', async () => {
       const data = loadFixture(
         'profiles/edupub/content-document-xhtml/edupub-titles-invalid-missing-error.xhtml',
       );
@@ -602,7 +602,7 @@ describe('Integration Tests - Profiles', () => {
     });
 
     // Skip: FAIL: expected 3x RSC-005, got 0; all={}
-    it.skip('Report invalid subheadings within a body used as an explicit section', async () => {
+    it('Report invalid subheadings within a body used as an explicit section', async () => {
       const data = loadFixture(
         'profiles/edupub/content-document-xhtml/edupub-titles-explicit-body-error.xhtml',
       );
@@ -615,7 +615,7 @@ describe('Integration Tests - Profiles', () => {
     });
 
     // Skip: FAIL: expected 2x RSC-005, got 0; all={}
-    it.skip('Report aria-label on body and section with headings', async () => {
+    it('Report aria-label on body and section with headings', async () => {
       const data = loadFixture(
         'profiles/edupub/content-document-xhtml/edupub-titles-aria-label-matches-heading-error.xhtml',
       );
@@ -628,7 +628,7 @@ describe('Integration Tests - Profiles', () => {
     });
 
     // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('Report incorrect heading level following aria-label on body', async () => {
+    it('Report incorrect heading level following aria-label on body', async () => {
       const data = loadFixture(
         'profiles/edupub/content-document-xhtml/edupub-untitled-heading-level-error.xhtml',
       );

@@ -2,7 +2,7 @@
  * Content document validation using libxml2-wasm for XML parsing
  */
 
-import { XmlDocument, type XmlElement, type XmlNode } from 'libxml2-wasm';
+import { XmlDocument, XmlElement, type XmlNode } from 'libxml2-wasm';
 import { CSSValidator } from '../css/validator.js';
 import { SMILValidator } from '../smil/validator.js';
 import { MessageId, pushMessage } from '../messages/index.js';
@@ -1498,6 +1498,19 @@ export class ContentValidator {
       if (context.version.startsWith('3')) {
         this.validateEpubTypes(context, path, root);
         this.validateRegionBasedNav(context, path, root, manifestItem);
+      }
+
+      // EDUPUB content structure rules (sectioning, headings, subtitles)
+      if (context.version.startsWith('3') && context.options.profile === 'edupub') {
+        const isFxl =
+          manifestItem && packageDoc ? isItemFixedLayout(packageDoc, manifestItem.id) : false;
+        const isNonLinear =
+          manifestItem && packageDoc
+            ? packageDoc.spine.find((ref) => ref.idref === manifestItem.id)?.linear === false
+            : false;
+        if (!isFxl && !isNonLinear) {
+          this.validateEdupubStructure(context, path, root);
+        }
       }
 
       // Collect features for cross-document validation (EPUB 3)
@@ -3576,6 +3589,249 @@ export class ContentValidator {
             location: { path, line: nav.line },
           });
         }
+      }
+    }
+  }
+
+  /**
+   * EDUPUB content-document structure rules.
+   *
+   * Mirrors ../epubcheck/src/main/resources/com/adobe/epubcheck/schema/30/edupub/edu-structure.sch
+   * (patterns: edupub.headings, edupub.sectioning, edupub.subtitles).
+   */
+  private validateEdupubStructure(
+    context: ValidationContext,
+    path: string,
+    root: XmlElement,
+  ): void {
+    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
+    const body = root.get('.//html:body', HTML_NS) as XmlElement | null;
+    if (!body) return;
+
+    const SECTIONING_ROOTS = new Set(['section', 'article', 'aside', 'nav']);
+    const isHeading = (el: XmlElement): boolean =>
+      /^h[1-6]$/.test(el.name) || this.getAttribute(el, 'role') === 'heading';
+    const headingRank = (el: XmlElement): number => {
+      if (this.getAttribute(el, 'role') === 'heading') {
+        const level = this.getAttribute(el, 'aria-level');
+        return level ? Number.parseInt(level, 10) : 2;
+      }
+      return Number.parseInt(el.name.substring(1), 10);
+    };
+
+    const directElementChildren = (parent: XmlElement): XmlElement[] => {
+      const out: XmlElement[] = [];
+      let n = parent.firstChild;
+      while (n) {
+        if (n instanceof XmlElement) out.push(n);
+        n = n.next;
+      }
+      return out;
+    };
+
+    // Walks the parent chain. Sectioning elements (section/article/aside/nav/
+    // figure/blockquote) only appear inside body in valid XHTML, so walking
+    // past body to html/head is harmless — those ancestors won't match the
+    // names we care about. No body-identity check needed.
+    const ancestorNames = (node: XmlElement): string[] => {
+      const chain: string[] = [];
+      let cur = node.parent;
+      while (cur) {
+        chain.push(cur.name);
+        cur = cur.parent;
+      }
+      return chain;
+    };
+
+    const allHeadings: XmlElement[] = [];
+    const walkAll = (el: XmlElement): void => {
+      if (isHeading(el)) allHeadings.push(el);
+      for (const c of directElementChildren(el)) walkAll(c);
+    };
+    walkAll(body);
+
+    const bodyChildren = directElementChildren(body);
+    const bodyIsSection = bodyChildren.some((c) => c.name !== 'article' && c.name !== 'section');
+
+    const bodyAriaLabel = this.getAttribute(body, 'aria-label');
+    const bodyLabelLen = bodyAriaLabel?.trim().length ?? 0;
+
+    // topmost-heading: first heading in body not under aside/nav, with ≤1
+    // section/article ancestor. Short-circuits on the first match.
+    const topmost = allHeadings.find((h) => {
+      const chain = ancestorNames(h);
+      if (chain.includes('aside') || chain.includes('nav')) return false;
+      const sectionArticleCount = chain.filter((n) => n === 'section' || n === 'article').length;
+      return sectionArticleCount <= 1;
+    });
+
+    let topmostRank: number;
+    let topmostNest: number;
+    if (bodyLabelLen > 0) {
+      topmostRank = 1;
+      topmostNest = 0;
+    } else if (topmost) {
+      topmostRank = headingRank(topmost);
+      const chain = ancestorNames(topmost);
+      topmostNest = chain.some((n) => n === 'section' || n === 'article' || n === 'nav') ? 1 : 0;
+    } else {
+      topmostRank = 1;
+      topmostNest = 0;
+    }
+
+    const pushRsc = (message: string, line?: number): void => {
+      const location: { path: string; line?: number } = { path };
+      if (line !== undefined) location.line = line;
+      pushMessage(context.messages, {
+        id: MessageId.RSC_005,
+        message,
+        location,
+      });
+    };
+
+    // Collect direct-descendant headings of `container`, stopping descent at
+    // any nested sectioning root (section/article/aside/nav). Walks downward
+    // from the given container so no node-identity comparison is needed.
+    const innermostHeadings = (container: XmlElement): XmlElement[] => {
+      const out: XmlElement[] = [];
+      const descend = (el: XmlElement): void => {
+        for (const c of directElementChildren(el)) {
+          if (SECTIONING_ROOTS.has(c.name)) continue;
+          if (isHeading(c)) out.push(c);
+          descend(c);
+        }
+      };
+      descend(container);
+      return out;
+    };
+
+    const headingAccessibleText = (h: XmlElement): string => {
+      const parts: string[] = [h.content];
+      const imgs = h.find('.//html:img', HTML_NS) as XmlElement[];
+      for (const img of imgs) parts.push(this.getAttribute(img, 'alt') ?? '');
+      const labelled = h.find('.//*[@aria-label]') as XmlElement[];
+      for (const el of labelled) parts.push(this.getAttribute(el, 'aria-label') ?? '');
+      return parts.join(' ').replace(/\s+/g, ' ').trim();
+    };
+
+    const checkContainer = (container: XmlElement, isBody: boolean): void => {
+      if (isBody) {
+        // Body rule context: body has at least one child element that isn't
+        // article/section/aside/nav.
+        const hasNonSectioning = bodyChildren.some((c) => !SECTIONING_ROOTS.has(c.name));
+        if (!hasNonSectioning) return;
+      }
+
+      const ariaLabel = this.getAttribute(container, 'aria-label');
+      const labelLen = ariaLabel?.trim().length ?? 0;
+      const headings = innermostHeadings(container);
+
+      if (ariaLabel !== null && labelLen === 0) {
+        pushRsc('Empty aria-label attribute found.', container.line);
+      }
+
+      if (labelLen === 0 && headings.length === 0) {
+        pushRsc(
+          isBody
+            ? 'The body element requires a heading when it is used as an implied section.'
+            : `${container.name} does not have a heading.`,
+          container.line,
+        );
+      }
+
+      if (headings.length > 1) {
+        pushRsc(
+          isBody
+            ? 'More than one ranked heading found as direct descendant of body.'
+            : `More than one ranked heading found as direct descendant of ${container.name}.`,
+          container.line,
+        );
+      }
+
+      if (headings.length === 1) {
+        const h = headings[0];
+        if (h && headingAccessibleText(h).length === 0) {
+          pushRsc('Empty ranked heading detected.', h.line);
+        }
+      }
+
+      if (ariaLabel && labelLen > 0 && headings.length > 0) {
+        const joined = headings
+          .map((h) => h.content.replace(/\s+/g, ' ').trim())
+          .filter((s) => s.length > 0)
+          .join(' ');
+        if (joined === ariaLabel.trim()) {
+          pushRsc(
+            'The value of the "aria-label" attribute must not be the same as the content of the heading.',
+            container.line,
+          );
+        }
+      }
+    };
+
+    checkContainer(body, true);
+    const containers = root.find('.//html:section|.//html:article', HTML_NS) as XmlElement[];
+    for (const c of containers) checkContainer(c, false);
+
+    for (const h of allHeadings) {
+      const chain = ancestorNames(h);
+      if (chain.includes('figure') || chain.includes('blockquote')) {
+        pushRsc('Ranked headings are not valid in figure or blockquote', h.line);
+        continue;
+      }
+
+      const nesting = chain.filter((n) => SECTIONING_ROOTS.has(n)).length;
+      const currentRank = headingRank(h);
+      const expectedRank = bodyIsSection
+        ? topmostRank - topmostNest + nesting
+        : topmostRank + nesting - 1;
+
+      if (expectedRank < 6 && currentRank !== expectedRank) {
+        pushRsc(
+          `The heading rank h${String(currentRank)} does not match the current nesting level (${String(expectedRank)}).`,
+          h.line,
+        );
+      } else if (expectedRank > 5 && currentRank < 6) {
+        pushRsc('The current heading rank should be h6.', h.line);
+      }
+    }
+
+    // Sectioning rule: non-section elements not allowed after a section sibling
+    const checkSectionOrder = (parent: XmlElement): void => {
+      let seenSection = false;
+      for (const c of directElementChildren(parent)) {
+        if (c.name === 'section') {
+          seenSection = true;
+        } else if (seenSection) {
+          pushRsc('Non-section elements not allowed between or after section elements.', c.line);
+        }
+      }
+    };
+    checkSectionOrder(body);
+    const sectionsOnly = root.find('.//html:section', HTML_NS) as XmlElement[];
+    for (const s of sectionsOnly) checkSectionOrder(s);
+
+    // Subtitles rule
+    const subtitleParagraphs = root.find('.//html:p[@epub:type]', {
+      ...HTML_NS,
+      epub: 'http://www.idpf.org/2007/ops',
+    }) as XmlElement[];
+    for (const p of subtitleParagraphs) {
+      if (!p.attr('type', 'epub')?.value.split(/\s+/).includes('subtitle')) continue;
+
+      let prev = p.prev;
+      let hasHeadingBefore = false;
+      while (prev) {
+        if (prev instanceof XmlElement && /^h[1-6]$/.test(prev.name)) {
+          hasHeadingBefore = true;
+          break;
+        }
+        prev = prev.prev;
+      }
+      if (!hasHeadingBefore) continue;
+
+      if (!ancestorNames(p).includes('header')) {
+        pushRsc('Section subtitles must be wrapped in a header element.', p.line);
       }
     }
   }
