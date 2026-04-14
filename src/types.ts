@@ -9,7 +9,8 @@ export type Severity = 'fatal' | 'error' | 'warning' | 'info' | 'usage';
 /**
  * Supported EPUB versions
  */
-export type EPUBVersion = '2.0' | '3.0' | '3.1' | '3.2' | '3.3';
+export const EPUB_VERSIONS = ['2.0', '3.0', '3.1', '3.2', '3.3'] as const;
+export type EPUBVersion = (typeof EPUB_VERSIONS)[number];
 
 /**
  * EPUB validation profiles

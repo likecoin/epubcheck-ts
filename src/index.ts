@@ -7,6 +7,9 @@
 // Main checker class
 export { EpubCheck } from './checker.js';
 
+// Runtime constants
+export { EPUB_VERSIONS } from './types.js';
+
 // Types
 export type {
   EpubCheckOptions,

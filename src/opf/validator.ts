@@ -1,14 +1,12 @@
 import { MessageId, pushMessage } from '../messages/index.js';
 import { checkUrlLeaking, isDataURL, isFileURL } from '../references/url.js';
 import { isValidSmilClock, parseSmilClock } from '../smil/clock.js';
-import type { EPUBProfile, ValidationContext } from '../types.js';
+import { EPUB_VERSIONS, type EPUBProfile, type ValidationContext } from '../types.js';
 import { parseDoctype } from '../util/doctype.js';
 import { sniffXmlEncoding } from '../util/encoding.js';
 import { parseOPF, stripXmlComments } from './parser.js';
 import type { Collection, ManifestItem, PackageDocument } from './types.js';
 import { ITEM_PROPERTIES, LINK_PROPERTIES, SPINE_PROPERTIES } from './types.js';
-
-const VALID_VERSIONS = new Set(['2.0', '3.0', '3.1', '3.2', '3.3']);
 
 const DEPRECATED_MEDIA_TYPES = new Set([
   'text/x-oeb1-document',
@@ -865,10 +863,10 @@ export class OPFValidator {
         message: 'The package element is missing the required "version" attribute.',
         location: { path: opfPath },
       });
-    } else if (!VALID_VERSIONS.has(this.packageDoc.version)) {
+    } else if (!(EPUB_VERSIONS as readonly string[]).includes(this.packageDoc.version)) {
       pushMessage(context.messages, {
         id: MessageId.OPF_001,
-        message: `Invalid package version "${this.packageDoc.version}"; must be one of: ${Array.from(VALID_VERSIONS).join(', ')}`,
+        message: `Invalid package version "${this.packageDoc.version}"; must be one of: ${EPUB_VERSIONS.join(', ')}`,
         location: { path: opfPath },
       });
     }

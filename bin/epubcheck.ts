@@ -20,7 +20,7 @@ import type {
 } from '../src/types.js';
 
 // Dynamic import to support both ESM and CJS builds
-const { EpubCheck, toJSONReport } = await import('../dist/index.js');
+const { EpubCheck, EPUB_VERSIONS, toJSONReport } = await import('../dist/index.js');
 
 const VERSION = '0.4.0';
 const VALID_MODES: ReadonlySet<ValidationMode> = new Set([
@@ -42,6 +42,7 @@ interface CliValues {
   fatal: boolean;
   error: boolean;
   warn: boolean;
+  info: boolean;
   customMessages?: string;
   version: boolean;
   help: boolean;
@@ -64,6 +65,7 @@ try {
       fatal: { type: 'boolean', short: 'f', default: false },
       error: { type: 'boolean', short: 'e', default: false },
       warn: { type: 'boolean', short: 'w', default: false },
+      info: { type: 'boolean', short: 'i', default: false },
       customMessages: { type: 'string', short: 'c' },
       version: { type: 'boolean', short: 'V', default: false },
       help: { type: 'boolean', short: 'h', default: false },
@@ -120,11 +122,12 @@ Options:
   -q, --quiet              Suppress console output (errors only)
   -p, --profile <name>     Validation profile (default|dict|edupub|idx|preview)
   -m, --mode <type>        Validation mode: exp (expanded directory), opf, xhtml, svg, nav, mo
-  -v, --epub-version <ver> EPUB version for single-file mode (2.0|3.0|3.3)
+  -v, --epub-version <ver> EPUB version for single-file mode (2|2.0|3|3.0|3.1|3.2|3.3)
   -u, --usage              Include usage messages (best practices)
   -f, --fatal              Show only fatal errors
   -e, --error              Show fatal errors and errors
   -w, --warn               Show fatal errors, errors, and warnings
+  -i, --info               Show fatal, error, warning, and info messages
   -c, --customMessages <file>  Override message severities (TSV: ID\\tSEVERITY)
       --fail-on-warnings   Exit with code 1 if warnings are found
                            (also accepts --failonwarnings for Java compatibility)
@@ -202,10 +205,11 @@ async function main(): Promise<void> {
     process.exit(2);
   }
 
-  const epubVersion = values['epub-version'] as EPUBVersion | undefined;
-  if (epubVersion && !['2.0', '3.0', '3.1', '3.2', '3.3'].includes(epubVersion)) {
+  const rawVersion = values['epub-version'];
+  const epubVersion = rawVersion === '2' ? '2.0' : rawVersion === '3' ? '3.0' : rawVersion;
+  if (epubVersion && !(EPUB_VERSIONS as readonly string[]).includes(epubVersion)) {
     console.error(
-      `Error: Invalid EPUB version "${epubVersion}". Valid versions: 2.0, 3.0, 3.1, 3.2, 3.3`,
+      `Error: Invalid EPUB version "${epubVersion}". Valid versions: ${EPUB_VERSIONS.join(', ')}`,
     );
     process.exit(2);
   }
@@ -228,7 +232,7 @@ async function main(): Promise<void> {
       options.profile = values.profile as EPUBProfile;
     }
     if (epubVersion) {
-      options.version = epubVersion;
+      options.version = epubVersion as EPUBVersion;
     }
     if (mode) {
       options.mode = mode;
@@ -275,7 +279,7 @@ async function main(): Promise<void> {
     }
     const elapsedMs = Date.now() - startTime;
 
-    // Most restrictive severity flag wins (--fatal overrides --error overrides --warn)
+    // Most restrictive severity flag wins (--fatal > --error > --warn > --info)
     const severityRank: Record<Severity, number> = {
       fatal: 0,
       error: 1,
@@ -287,7 +291,8 @@ async function main(): Promise<void> {
     if (values.fatal) maxRank = 0;
     else if (values.error) maxRank = 1;
     else if (values.warn) maxRank = 2;
-    const isFiltered = values.fatal || values.error || values.warn;
+    else if (values.info) maxRank = 3;
+    const isFiltered = values.fatal || values.error || values.warn || values.info;
     const displayMessages = result.messages.filter(
       (m: ValidationMessage) => severityRank[m.severity] <= maxRank,
     );

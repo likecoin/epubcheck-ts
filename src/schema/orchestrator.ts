@@ -58,8 +58,7 @@ export class SchemaValidator {
   async validate(): Promise<void> {
     const version = this.context.version;
 
-    // Get schema mappings for current version (version is guaranteed to be valid by EPUBVersion type)
-    const schemas = SCHEMA_MAPPINGS[version as keyof typeof SCHEMA_MAPPINGS];
+    const schemas = SCHEMA_MAPPINGS[version];
 
     // Validate container.xml
     await this.validateContainer(schemas.container);
