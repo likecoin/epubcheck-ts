@@ -6,7 +6,7 @@ Validate EPUB files in Node.js and the browser. A TypeScript implementation of [
 [![npm](https://img.shields.io/npm/v/%40likecoin%2Fepubcheck-ts)](https://www.npmjs.com/package/@likecoin/epubcheck-ts)
 [![License](https://img.shields.io/npm/l/%40likecoin%2Fepubcheck-ts)](./LICENSE)
 
-> **Status**: 93% feature parity with Java EPUBCheck (1061 tests passing, 74 skipped). See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for details. For full EPUB 3 conformance testing, use the official [Java EPUBCheck](https://github.com/w3c/epubcheck).
+> **Status**: ~97% feature parity with Java EPUBCheck (1323 tests passing, 45 skipped). See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for details. For full EPUB 3 conformance testing, use the official [Java EPUBCheck](https://github.com/w3c/epubcheck).
 
 ## Features
 
@@ -288,11 +288,11 @@ This library is a TypeScript port of the Java-based [EPUBCheck](https://github.c
 | Cross-reference Validation | 🟢 Complete | ~92% | Reference tracking, fragments, fallbacks, remote resources, cross-document features |
 | Accessibility Checks | 🟢 Complete | ~71% | 12/17 ACC checks: table, image alt, hyperlink, MathML, SVG, epub:type, OPF metadata |
 | Media Overlays | 🟡 Partial | ~70% | SMIL structure, timing, audio, OPF metadata, duration validation |
-| Media Validation | ❌ Not Started | 0% | Planned |
+| Media Validation | 🟡 Partial | ~25% | Magic number checks (MED-004/OPF-029/PKG-022); deep format parsing planned |
 
 Legend: 🟢 Complete | 🟡 Partial | 🔴 Basic | ❌ Not Started
 
-**Overall Progress: ~93% of Java EPUBCheck features**
+**Overall Progress: ~97% of Java EPUBCheck features**
 
 See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for detailed comparison.
 
@@ -377,7 +377,7 @@ Legend: ✅ Implemented
 | Aspect | epubcheck-ts | EPUBCheck (Java) |
 |--------|--------------|------------------|
 | Runtime | Node.js / Browser | JVM |
-| Feature Parity | ~93% | 100% |
+| Feature Parity | ~97% | 100% |
 | Bundle Size | ~450KB JS + ~1.6MB WASM | ~15MB |
 | Installation | `npm install` | Download JAR |
 | Integration | Native JS/TS | CLI or Java API |
