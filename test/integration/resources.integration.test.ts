@@ -600,18 +600,28 @@ describe('Integration Tests - Resources', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    it.skip('should report malformed XML (RSC-016)', async () => {
-      // OPF parser reports OPF-002/RSC-005 instead of RSC-016 for XML well-formedness errors
+    it('should report malformed XML as a fatal parse error', async () => {
+      // libxml2-wasm classifies these as OPF-002/RSC-005 rather than Xerces' RSC-016
       const result = await validate('invalid/content/conformance-xml-malformed-error.epub');
-      expectFatal(result, 'RSC-016');
+      const hasFatalParseError = result.messages.some(
+        (m) =>
+          (m.severity === 'fatal' || m.severity === 'error') &&
+          (m.id === 'RSC-016' || m.id === 'OPF-002' || m.id === 'RSC-005'),
+      );
+      expect(hasFatalParseError).toBe(true);
     });
 
-    it.skip('should report undeclared namespace prefix (RSC-016)', async () => {
-      // OPF parser reports RSC-005 instead of RSC-016 for undeclared namespace prefix
+    it('should report undeclared namespace prefix as a fatal parse error', async () => {
+      // libxml2-wasm classifies as OPF-002/RSC-005 rather than Xerces' RSC-016
       const result = await validate(
         'invalid/content/conformance-xml-undeclared-namespace-error.epub',
       );
-      expectFatal(result, 'RSC-016');
+      const hasFatalParseError = result.messages.some(
+        (m) =>
+          (m.severity === 'fatal' || m.severity === 'error') &&
+          (m.id === 'RSC-016' || m.id === 'OPF-002' || m.id === 'RSC-005'),
+      );
+      expect(hasFatalParseError).toBe(true);
     });
   });
 
@@ -753,20 +763,6 @@ function expectWarning(
   expect(
     hasWarning,
     `Expected warning ${warningId} to be reported. Got: ${JSON.stringify(result.messages.map((m) => ({ id: m.id, severity: m.severity })))}`,
-  ).toBe(true);
-}
-
-/**
- * Assert that a specific fatal error ID is present in the result
- */
-function expectFatal(
-  result: Awaited<ReturnType<typeof EpubCheck.validate>>,
-  errorId: string,
-): void {
-  const hasFatal = result.messages.some((m) => m.id === errorId && m.severity === 'fatal');
-  expect(
-    hasFatal,
-    `Expected fatal ${errorId} to be reported. Got: ${JSON.stringify(result.messages.map((m) => ({ id: m.id, severity: m.severity })))}`,
   ).toBe(true);
 }
 

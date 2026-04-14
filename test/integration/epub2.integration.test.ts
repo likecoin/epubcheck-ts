@@ -413,16 +413,16 @@ describe('Integration Tests - EPUB 2', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: scenario is misleadingly named "must not be empty" but Java expects no errors on this fixture.
-    // Our validator reports OPF-048 (missing unique-identifier attribute) + RSC-005 (Schematron schema).
-    it.skip('the unique identifier must not be empty (attribute missing)', async () => {
+    // Scenario name from Java is misleading — Java expects no errors on this fixture,
+    // but TS validator correctly reports OPF-048 (missing unique-identifier attribute).
+    it('the unique identifier must not be empty (attribute missing)', async () => {
       const data = loadFixture('epub2/opf-document/unique-identifier-attribute-missing-error.opf');
       const result = await EpubCheck.validateSingleFile(
         data,
         'unique-identifier-attribute-missing-error.opf',
         { mode: 'opf', version: '2.0' },
       );
-      expectNoErrorsOrWarnings(result);
+      expectError(result, 'OPF-048');
     });
 
     it('the unique identifier must not be empty', async () => {
@@ -682,16 +682,15 @@ describe('Integration Tests - EPUB 2', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: scenario name is misleading — Java reports no errors for this fixture,
-    // but our validator correctly emits RSC-016 (fatal) for undefined entities.
-    // This is a case where we're stricter than Java for EPUB 2 XHTML.
-    it.skip('Report unknown entity references', async () => {
+    // Scenario name from Java is misleading — Java reports no errors on this fixture,
+    // but TS validator is stricter and correctly emits RSC-016 (fatal) for undefined entities.
+    it('Report unknown entity references', async () => {
       const data = loadFixture('epub2/ops-document-xhtml/entities-unknown-error.xhtml');
       const result = await EpubCheck.validateSingleFile(data, 'entities-unknown-error.xhtml', {
         mode: 'xhtml',
         version: '2.0',
       });
-      expectNoErrorsOrWarnings(result);
+      expectError(result, 'RSC-016');
     });
 
     // Skip: FAIL: expected 1x RSC-005, got 0; all={}

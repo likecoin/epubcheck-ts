@@ -530,36 +530,6 @@ describe('ContentValidator', () => {
     });
   });
 
-  describe('Image validation', () => {
-    // TODO: OPF-051 is SUPPRESSED in Java EPUBCheck (used for image dimension warnings, not media type)
-    // This test uses wrong message ID - needs MED-008 or similar for invalid media type
-    it.skip('should add OPF-051 error for image with invalid media type', () => {
-      const context = createValidationContext();
-      const packageDoc = createMinimalPackage({
-        manifest: [
-          { id: 'nav', href: 'nav.xhtml', mediaType: 'application/xhtml+xml', properties: ['nav'] },
-          { id: 'chapter1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' },
-          { id: 'image1', href: 'image1.bin', mediaType: 'application/octet-stream' },
-        ],
-      });
-      context.packageDocument = packageDoc;
-      addXHTMLToContext(
-        context,
-        'OEBPS/nav.xhtml',
-        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><head><title>Nav</title></head><body><nav epub:type="toc"><ol><li><a href="chapter1.xhtml">Chapter 1</a></li></ol></nav></body></html>\n',
-      );
-      addXHTMLToContext(
-        context,
-        'OEBPS/chapter1.xhtml',
-        '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Test</title></head><body><img src="image1.bin" alt="Wrong Type"/></body></html>\n',
-      );
-      addXHTMLToContext(context, 'OEBPS/image1.bin', 'binary data');
-
-      validator.validate(context);
-      expect(context.messages.some((m) => m.id === 'OPF-051')).toBe(true);
-    });
-  });
-
   describe('Stylesheet link validation', () => {
     it('should add CSS-015 error for alternate stylesheet without title', () => {
       const context = createValidationContext();

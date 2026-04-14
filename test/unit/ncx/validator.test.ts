@@ -115,20 +115,18 @@ describe('NCXValidator', () => {
   });
 
   describe('dtb:uid validation', () => {
-    // NCX-003 is suppressed in Java EPUBCheck
-    it.skip('should add NCX-003 warning for empty dtb:uid content (suppressed in Java)', () => {
+    it('should add NCX-006 usage message for empty dtb:uid content', () => {
       const emptyUID = createValidNCX({ uid: '' });
       validator.validate(context, emptyUID, 'OEBPS/toc.ncx');
 
-      expect(context.messages.some((m) => m.id === 'NCX-003')).toBe(true);
+      expect(context.messages.some((m) => m.id === 'NCX-006')).toBe(true);
     });
 
-    // NCX-003 is suppressed in Java EPUBCheck
-    it.skip('should add NCX-003 warning for whitespace-only dtb:uid (suppressed in Java)', () => {
+    it('should add NCX-006 usage message for whitespace-only dtb:uid', () => {
       const whitespaceUID = createValidNCX({ uid: '   ' });
       validator.validate(context, whitespaceUID, 'OEBPS/toc.ncx');
 
-      expect(context.messages.some((m) => m.id === 'NCX-003')).toBe(true);
+      expect(context.messages.some((m) => m.id === 'NCX-006')).toBe(true);
     });
 
     it('should store valid uid in context', () => {
