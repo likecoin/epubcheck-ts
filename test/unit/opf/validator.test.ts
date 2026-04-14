@@ -14,6 +14,7 @@ interface OPFValidatorTest {
   validateFallbackChains(context: ValidationContext, path: string): void;
   validateGuide(context: ValidationContext, path: string): void;
   validateCollections(context: ValidationContext, path: string): void;
+  validateUndeclaredResources(context: ValidationContext, path: string): void;
   buildManifestMaps(): void;
 }
 
@@ -936,6 +937,56 @@ describe('OPFValidator', () => {
       validatorTest.validateCollections(context, 'OEBPS/content.opf');
 
       expect(context.messages.filter((m) => m.severity === 'error')).toHaveLength(0);
+    });
+  });
+
+  describe('undeclared resources validation (OPF-003)', () => {
+    it('should not flag percent-encoded manifest hrefs matching decoded ZIP filenames', () => {
+      const context = createValidationContext();
+      context.options.includeUsage = true;
+
+      const packageDoc = createMinimalPackage({
+        manifest: [
+          { id: 'nav', href: 'nav.xhtml', mediaType: 'application/xhtml+xml', properties: ['nav'] },
+          {
+            id: 'ch1',
+            href: '%E6%99%82%E9%96%93%E7%9A%84%E8%A9%A6%E7%85%89_20251209_epub.xhtml',
+            mediaType: 'application/xhtml+xml',
+          },
+        ],
+        spine: [{ idref: 'ch1', linear: true }],
+      });
+
+      addFileToContext(context, 'OEBPS/nav.xhtml', '<html></html>');
+      addFileToContext(
+        context,
+        'OEBPS/時間的試煉_20251209_epub.xhtml',
+        '<html></html>',
+      );
+
+      validatorTest.packageDoc = packageDoc;
+      validatorTest.validateUndeclaredResources(context, 'OEBPS/content.opf');
+
+      const opf003 = context.messages.filter((m) => m.id === 'OPF-003');
+      expect(opf003).toHaveLength(0);
+    });
+
+    it('should still flag genuinely undeclared resources', () => {
+      const context = createValidationContext();
+      context.options.includeUsage = true;
+
+      const packageDoc = createMinimalPackage();
+
+      addFileToContext(context, 'OEBPS/nav.xhtml', '<html></html>');
+      addFileToContext(context, 'OEBPS/chapter1.xhtml', '<html></html>');
+      addFileToContext(context, 'OEBPS/orphan.xhtml', '<html></html>');
+
+      validatorTest.packageDoc = packageDoc;
+      validatorTest.validateUndeclaredResources(context, 'OEBPS/content.opf');
+
+      const opf003 = context.messages.filter((m) => m.id === 'OPF-003');
+      expect(opf003).toHaveLength(1);
+      expect(opf003[0]!.message).toContain('OEBPS/orphan.xhtml');
     });
   });
 });

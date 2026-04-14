@@ -2396,7 +2396,9 @@ export class OPFValidator {
     for (const item of this.packageDoc.manifest) {
       const hrefBase = item.href.split('?')[0] ?? item.href;
       if (/^[a-zA-Z][a-zA-Z0-9+\-.]*:/.test(hrefBase)) continue;
-      manifestPaths.add(resolvePath(opfPath, hrefBase).normalize('NFC'));
+      manifestPaths.add(
+        resolvePath(opfPath, tryDecodeUriComponent(hrefBase)).normalize('NFC'),
+      );
     }
 
     const rootfilePaths = new Set(context.rootfiles.map((r) => r.path.normalize('NFC')));
