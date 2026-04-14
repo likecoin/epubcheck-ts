@@ -185,7 +185,7 @@ Every skipped test has an inline comment annotating the specific validator gap �
 5. **fontoxpath XPath 2.0** - fontoxpath crashes on XPath 2.0 functions like `tokenize()` used in OPF/nav Schematron; OPF and nav validation rules implemented as direct TypeScript instead
 6. **RelaxNG deprecation** - libxml2 plans to remove RelaxNG support in future
 7. **Unicode NFKC normalization** - Not implemented (affects 1 skipped test)
-8. **Single-file/directory validation mode** - Implemented for `exp` (expanded directory), `opf`, `xhtml`, and `mo` (SMIL). `svg` and `nav` modes not yet implemented (affects ~5 skipped tests).
+8. **Single-file/directory validation mode** - Implemented for `exp` (expanded directory), `opf`, `xhtml`, `svg`, `nav`, and `mo` (SMIL). All Java EPUBCheck single-file modes supported.
 9. **Profile implementation** - `--profile edupub|dict|idx|preview` flag is accepted, but only a handful of profile-aware checks exist. 125 profile scenarios are now ported with 91 skipped — each skip annotates the specific missing check (see Implementation Gaps Backlog).
 10. **EPUB 2 coverage** - Validator has partial EPUB 2 support. 99 EPUB 2 scenarios are now ported with 48 skipped — missing EPUB 2-specific OPF Schematron, metadata, and NCX content checks.
 

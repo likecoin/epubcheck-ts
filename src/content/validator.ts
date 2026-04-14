@@ -1262,7 +1262,8 @@ export class ContentValidator {
       const manifestItem = packageDoc?.manifest.find(
         (item: { id: string; properties?: string[] }) => item.id === itemId,
       );
-      const isNavItem = manifestItem?.properties?.includes('nav');
+      const isNavItem =
+        manifestItem?.properties?.includes('nav') === true || context.options.mode === 'nav';
 
       if (isNavItem) {
         this.checkNavDocument(context, path, doc, root);
@@ -1545,7 +1546,7 @@ export class ContentValidator {
           root,
           opfDir,
           refValidator,
-          !!isNavItem,
+          isNavItem,
           remoteXmlBase,
         );
         this.extractAndRegisterStylesheets(

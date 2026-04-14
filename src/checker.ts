@@ -258,6 +258,21 @@ export class EpubCheck {
 
         const schemaValidator = new SchemaValidator(context);
         await schemaValidator.validate();
+      } else if (mode === 'nav') {
+        // Navigation Document is EPUB 3 only (matches Java NavChecker)
+        if (this.options.version.startsWith('2')) {
+          pushMessage(context.messages, {
+            id: MessageId.NAV_001,
+            message: 'Navigation Documents are not allowed in EPUB 2',
+            location: { path: filename },
+          });
+        } else {
+          const contentValidator = new ContentValidator();
+          contentValidator.validateSingleDocument(context, filename);
+
+          const schemaValidator = new SchemaValidator(context);
+          await schemaValidator.validate();
+        }
       } else if (mode === 'mo') {
         // Media overlay (SMIL). SchemaValidator is a no-op here
         // since there's no container/opf/manifest, so we skip it.

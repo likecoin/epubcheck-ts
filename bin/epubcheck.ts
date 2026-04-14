@@ -23,29 +23,70 @@ import type {
 const { EpubCheck, toJSONReport } = await import('../dist/index.js');
 
 const VERSION = '0.4.0';
-const VALID_MODES = new Set(['exp', 'opf', 'xhtml', 'svg', 'nav', 'mo']);
+const VALID_MODES: ReadonlySet<ValidationMode> = new Set([
+  'exp',
+  'opf',
+  'xhtml',
+  'svg',
+  'nav',
+  'mo',
+]);
 
-// Parse command line arguments
-const { values, positionals } = parseArgs({
-  options: {
-    json: { type: 'string', short: 'j' },
-    quiet: { type: 'boolean', short: 'q', default: false },
-    profile: { type: 'string', short: 'p' },
-    mode: { type: 'string', short: 'm' },
-    'epub-version': { type: 'string', short: 'v' },
-    usage: { type: 'boolean', short: 'u', default: false },
-    fatal: { type: 'boolean', short: 'f', default: false },
-    error: { type: 'boolean', short: 'e', default: false },
-    warn: { type: 'boolean', default: false },
-    customMessages: { type: 'string', short: 'c' },
-    version: { type: 'boolean', short: 'V', default: false },
-    help: { type: 'boolean', short: 'h', default: false },
-    'fail-on-warnings': { type: 'boolean', short: 'w', default: false },
-    listChecks: { type: 'boolean', short: 'l', default: false },
-  },
-  allowPositionals: true,
-  strict: false,
-});
+interface CliValues {
+  json?: string;
+  quiet: boolean;
+  profile?: string;
+  mode?: string;
+  'epub-version'?: string;
+  usage: boolean;
+  fatal: boolean;
+  error: boolean;
+  warn: boolean;
+  customMessages?: string;
+  version: boolean;
+  help: boolean;
+  'fail-on-warnings': boolean;
+  failonwarnings: boolean;
+  listChecks: boolean;
+}
+
+let values: CliValues;
+let positionals: string[];
+try {
+  ({ values, positionals } = parseArgs({
+    options: {
+      json: { type: 'string', short: 'j' },
+      quiet: { type: 'boolean', short: 'q', default: false },
+      profile: { type: 'string', short: 'p' },
+      mode: { type: 'string', short: 'm' },
+      'epub-version': { type: 'string', short: 'v' },
+      usage: { type: 'boolean', short: 'u', default: false },
+      fatal: { type: 'boolean', short: 'f', default: false },
+      error: { type: 'boolean', short: 'e', default: false },
+      warn: { type: 'boolean', short: 'w', default: false },
+      customMessages: { type: 'string', short: 'c' },
+      version: { type: 'boolean', short: 'V', default: false },
+      help: { type: 'boolean', short: 'h', default: false },
+      'fail-on-warnings': { type: 'boolean', default: false },
+      failonwarnings: { type: 'boolean', default: false },
+      listChecks: { type: 'boolean', short: 'l', default: false },
+    },
+    allowPositionals: true,
+    strict: true,
+  }) as unknown as { values: CliValues; positionals: string[] });
+} catch (err) {
+  const message = err instanceof Error ? err.message : String(err);
+  console.error(`\x1b[31mError:\x1b[0m ${message}`);
+  const unsupportedJavaFlags = ['--out', '-o', '--xmp', '-x', '--save', '--locale'];
+  const matched = unsupportedJavaFlags.find((f) => message.includes(f));
+  if (matched) {
+    console.error(
+      `\x1b[90mNote: ${matched} is a Java EPUBCheck flag that epubcheck-ts does not yet support.\x1b[0m`,
+    );
+  }
+  console.error('Run with --help for usage information');
+  process.exit(2);
+}
 
 // Show version
 if (values.version) {
@@ -78,14 +119,15 @@ Options:
   -j, --json <file>        Output JSON report to file (use '-' for stdout)
   -q, --quiet              Suppress console output (errors only)
   -p, --profile <name>     Validation profile (default|dict|edupub|idx|preview)
-  -m, --mode <type>        Validation mode: exp (expanded directory), opf, xhtml, svg, mo
+  -m, --mode <type>        Validation mode: exp (expanded directory), opf, xhtml, svg, nav, mo
   -v, --epub-version <ver> EPUB version for single-file mode (2.0|3.0|3.3)
   -u, --usage              Include usage messages (best practices)
   -f, --fatal              Show only fatal errors
   -e, --error              Show fatal errors and errors
-      --warn               Show fatal errors, errors, and warnings
+  -w, --warn               Show fatal errors, errors, and warnings
   -c, --customMessages <file>  Override message severities (TSV: ID\\tSEVERITY)
-  -w, --fail-on-warnings   Exit with code 1 if warnings are found
+      --fail-on-warnings   Exit with code 1 if warnings are found
+                           (also accepts --failonwarnings for Java compatibility)
   -l, --listChecks         List all message IDs and severities
   -V, --version            Show version information
   -h, --help               Show this help message
@@ -95,6 +137,7 @@ Modes:
   --mode opf -v 3.0        Validate a standalone OPF package document
   --mode xhtml -v 3.0      Validate a standalone XHTML content document
   --mode svg -v 3.0        Validate a standalone SVG content document
+  --mode nav -v 3.0        Validate a standalone Navigation Document (EPUB 3 only)
   --mode mo -v 3.0         Validate a standalone SMIL media overlay document
 
 Examples:
@@ -106,6 +149,7 @@ Examples:
   epubcheck-ts chapter.xhtml --mode xhtml -v 3.0
   epubcheck-ts package.opf --mode opf -v 3.0
   epubcheck-ts image.svg --mode svg -v 3.0
+  epubcheck-ts nav.xhtml --mode nav -v 3.0
   epubcheck-ts overlay.smil --mode mo -v 3.0
 
 Exit Codes:
@@ -220,6 +264,7 @@ async function main(): Promise<void> {
       effectiveMode === 'opf' ||
       effectiveMode === 'xhtml' ||
       effectiveMode === 'svg' ||
+      effectiveMode === 'nav' ||
       effectiveMode === 'mo'
     ) {
       const fileData = await readFile(filePath);
@@ -344,10 +389,9 @@ async function main(): Promise<void> {
     }
 
     // Determine exit code
+    const failOnWarnings = values['fail-on-warnings'] || values.failonwarnings;
     const shouldFail =
-      result.errorCount > 0 ||
-      result.fatalCount > 0 ||
-      (values['fail-on-warnings'] && result.warningCount > 0);
+      result.errorCount > 0 || result.fatalCount > 0 || (failOnWarnings && result.warningCount > 0);
     process.exit(shouldFail ? 1 : 0);
   } catch (error) {
     console.error('\x1b[31mError:\x1b[0m', error instanceof Error ? error.message : String(error));
