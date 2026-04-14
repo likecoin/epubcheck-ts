@@ -6,6 +6,8 @@ import { XmlDocument, type XmlElement } from 'libxml2-wasm';
 import { EPUB_SSV_ALL } from '../vocab/epub-ssv.js';
 import { MessageId, pushMessage } from '../messages/index.js';
 import type { ManifestItem } from '../opf/types.js';
+import { tryDecodeUriComponent } from '../opf/validator.js';
+import { isRemoteURL } from '../references/url.js';
 import type { ValidationContext } from '../types.js';
 import { parseSmilClock } from './clock.js';
 
@@ -165,7 +167,7 @@ export class SMILValidator {
         const src = this.getAttribute(elem, 'src');
 
         if (src) {
-          if (/^https?:\/\//i.test(src)) {
+          if (isRemoteURL(src)) {
             result.hasRemoteResources = true;
           }
 
@@ -318,12 +320,13 @@ export class SMILValidator {
   }
 
   private resolveRelativePath(basePath: string, relativePath: string): string {
-    if (relativePath.startsWith('/') || /^[a-zA-Z]+:/.test(relativePath)) {
-      return relativePath;
+    const decoded = tryDecodeUriComponent(relativePath);
+    if (decoded.startsWith('/') || /^[a-zA-Z]+:/.test(decoded)) {
+      return decoded.normalize('NFC');
     }
     const baseDir = basePath.includes('/') ? basePath.substring(0, basePath.lastIndexOf('/')) : '';
-    if (!baseDir) return relativePath;
-    const segments = `${baseDir}/${relativePath}`.split('/');
+    if (!baseDir) return decoded.normalize('NFC');
+    const segments = `${baseDir}/${decoded}`.split('/');
     const resolved: string[] = [];
     for (const seg of segments) {
       if (seg === '..') {
@@ -332,6 +335,6 @@ export class SMILValidator {
         resolved.push(seg);
       }
     }
-    return resolved.join('/');
+    return resolved.join('/').normalize('NFC');
   }
 }

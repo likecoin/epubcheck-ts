@@ -4,8 +4,9 @@
 
 import { XmlDocument, type XmlElement } from 'libxml2-wasm';
 import { MessageId, pushMessage } from '../messages/index.js';
-import { resolvePath } from '../opf/validator.js';
+import { resolvePath, tryDecodeUriComponent } from '../opf/validator.js';
 import type { ResourceRegistry } from '../references/registry.js';
+import { isRemoteURL } from '../references/url.js';
 import type { ValidationContext } from '../types.js';
 
 /**
@@ -122,8 +123,10 @@ export class NCXValidator {
       const srcBase = hashIdx >= 0 ? src.substring(0, hashIdx) : src;
       const fragment = hashIdx >= 0 ? src.substring(hashIdx + 1) : '';
 
-      const isRemote = srcBase.startsWith('http://') || srcBase.startsWith('https://');
-      const fullPath = isRemote ? srcBase : resolvePath(ncxPath, srcBase);
+      const isRemote = isRemoteURL(srcBase);
+      const fullPath = isRemote
+        ? srcBase
+        : resolvePath(ncxPath, tryDecodeUriComponent(srcBase)).normalize('NFC');
 
       if (!context.files.has(fullPath) && !isRemote) {
         const line = contentElem.line;

@@ -235,6 +235,38 @@ describe('NCXValidator', () => {
 
       expect(context.messages.filter((m) => m.id === 'NCX-006')).toHaveLength(0);
     });
+
+    it('should resolve percent-encoded CJK filenames to the decoded ZIP path', () => {
+      // fflate decodes ZIP entries with the UTF-8 flag set into precomposed Unicode,
+      // while NCX `content@src` values are percent-encoded per RFC 3986. The validator
+      // must decode before comparing against context.files.
+      context.files.set('OEBPS/時間的試煉.xhtml', new TextEncoder().encode('<html></html>'));
+
+      const encodedSrc = createValidNCX({
+        contentSrc: '%E6%99%82%E9%96%93%E7%9A%84%E8%A9%A6%E7%85%89.xhtml',
+      });
+      validator.validate(context, encodedSrc, 'OEBPS/toc.ncx');
+
+      expect(context.messages.some((m) => m.id === 'RSC-007')).toBe(false);
+    });
+
+    it('should resolve percent-encoded space in filenames', () => {
+      context.files.set('OEBPS/chapter 1.xhtml', new TextEncoder().encode('<html></html>'));
+
+      const encodedSrc = createValidNCX({ contentSrc: 'chapter%201.xhtml' });
+      validator.validate(context, encodedSrc, 'OEBPS/toc.ncx');
+
+      expect(context.messages.some((m) => m.id === 'RSC-007')).toBe(false);
+    });
+
+    it('should still report RSC-007 when the decoded percent-encoded path is not in files', () => {
+      const encodedSrc = createValidNCX({
+        contentSrc: '%E6%99%82%E9%96%93%E7%9A%84%E8%A9%A6%E7%85%89.xhtml',
+      });
+      validator.validate(context, encodedSrc, 'OEBPS/toc.ncx');
+
+      expect(context.messages.some((m) => m.id === 'RSC-007')).toBe(true);
+    });
   });
 
   describe('Multiple content src elements', () => {

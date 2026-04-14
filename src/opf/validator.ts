@@ -3068,7 +3068,7 @@ export function resolvePath(basePath: string, relativePath: string): string {
  * This is needed because OPF hrefs may be URL-encoded (e.g., "table%20us%202.png")
  * but the actual file paths in the ZIP are not encoded (e.g., "table us 2.png").
  */
-function tryDecodeUriComponent(encoded: string): string {
+export function tryDecodeUriComponent(encoded: string): string {
   try {
     return decodeURIComponent(encoded);
   } catch {
