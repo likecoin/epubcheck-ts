@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-04-14
+
+### Fixed
+
+- **NCX and SMIL percent-encoded href lookups** — `<content src>` in NCX and `<text src>` / `<audio src>` / `epub:textref` in SMIL are URI-space (percent-encoded per RFC 3986), but `context.files` / registry / spine lookups are keyed by the decoded UTF-8 ZIP filenames. EPUBs with non-ASCII filenames (e.g. CJK) previously produced spurious `RSC-007` / `RSC-012` errors (NCX) or silently skipped `MED-005` / `MED-011` / `MED-013` / `MED-015` checks (SMIL, a false negative that looked like a valid book). Both paths now decode + NFC-normalize before lookup.
+- **usemap URIREF check** now skipped on EPUB 2, mirroring Java EPUBCheck
+
+### Changed
+
+- Test coverage: **1340 passing** (up from 1323), **34 skipped** (down from 45), **1374 total**
+- Unskipped 11 stale `it.skip` annotations whose features were already implemented
+- `tryDecodeUriComponent` exported from `src/opf/validator.ts` so sibling validators share the OPF decoding policy; NCX and SMIL now use the shared helper plus `isRemoteURL` instead of hand-rolled duplicates
+
 ## [0.5.0] - 2026-04-14
 
 ### Added
