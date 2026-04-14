@@ -3074,6 +3074,8 @@ export class ContentValidator {
   }
 
   private checkUsemapAttribute(context: ValidationContext, path: string, root: XmlElement): void {
+    // XHTML 1.1 (EPUB 2) treats @usemap as URIREF, permitting bare fragment names.
+    if (context.version === '2.0') return;
     try {
       const elements = root.find('.//html:*[@usemap]', XHTML_NS);
       for (const elem of elements) {

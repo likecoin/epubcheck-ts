@@ -428,8 +428,7 @@ describe('Integration Tests - Profiles', () => {
   });
 
   describe('Distributable Objects', () => {
-    // Skip: FAIL: got {"RSC-005":1}
-    it.skip('a simple EPUB Embedded Object', async () => {
+    it('a simple EPUB Embedded Object', async () => {
       const data = loadFixture(
         'profiles/distributable-objects/package-document/do-collection-valid.opf',
       );
@@ -1189,8 +1188,7 @@ describe('Integration Tests - Profiles', () => {
   });
 
   describe('Scriptable Components', () => {
-    // Skip: FAIL: got {"RSC-005":1}
-    it.skip('A minimal embedded scriptable component is reported as valid', async () => {
+    it('A minimal embedded scriptable component is reported as valid', async () => {
       const data = loadFixture(
         'profiles/scriptable-components/package-document/sc-embedded-valid.opf',
       );

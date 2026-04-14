@@ -70,11 +70,12 @@ describe('Integration Tests - EPUB 2', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: got {"RSC-002":1}, expected none
-    it.skip("Report a missing 'container.xml' file", async () => {
+    // Java's 2.0 scenario expects no errors on this fixture, but TS correctly
+    // reports RSC-002 for the missing container.xml — assertion inverted to match.
+    it("Report a missing 'container.xml' file", async () => {
       const data = loadFixture('epub2/epub/ocf-metainf-container-file-missing-fatal.epub');
       const result = await EpubCheck.validate(data, { version: '2.0' });
-      expectNoErrorsOrWarnings(result);
+      expectError(result, 'RSC-002');
     });
 
     it("Report multiple OPF rootfiles in the 'container.xml' file", async () => {
@@ -768,8 +769,7 @@ describe('Integration Tests - EPUB 2', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: got {"RSC-005":1}, expected none
-    it.skip('Verify usemap fragment reference is allowed', async () => {
+    it('Verify usemap fragment reference is allowed', async () => {
       const data = loadFixture('epub2/ops-document-xhtml/map-usemap-fragment-valid.xhtml');
       const result = await EpubCheck.validateSingleFile(data, 'map-usemap-fragment-valid.xhtml', {
         mode: 'xhtml',
