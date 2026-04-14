@@ -6,6 +6,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-04-14
+
+### Added
+
+- **Standalone validation modes** (`--mode`) — validate expanded directories (`exp`), OPF package documents (`opf`), XHTML content (`xhtml`), SVG (`svg`), SMIL media overlays (`mo`), and Navigation Documents (`nav`) without a full EPUB container
+- **Phase 1–5 validator sprints**: 100+ new validator checks ported from Java EPUBCheck
+  - **Phase 1** — 15 quick-win checks: PKG-016, OPF-027/052/054/055/073/085/088, RSC-017 duplicate guide, HTM-004/009 DOCTYPE, SMIL clock values, profile `dc:type` enforcement
+  - **Phase 2** — 18 medium-scope checks: EDUPUB / Dictionary / Preview metadata (edu-opf, dict-opf, preview-pub-opf), distributable-object `dc:identifier`, collection hierarchy rules (idx / dict), OPF-060 raw ZIP duplicate detection
+  - **Phase 3** — 20 EPUB 2 OPF/NCX/container checks: OPF-001/003/016/017/032/035/041/042, NCX RSC-007/RSC-010/NCX-006, id uniqueness (`opf_idAttrUnique`, `id-unique.sch`), PKG-010 percent-encoded spaces, PKG-013 multiple rootfiles
+  - **Phase 4** — 47 profile-collection checks: Dictionary (OPF-081/082/083/084 dispatch), Multi-rendition (container + MappingDocumentChecker), Region-nav (HTM-052), Index (OPF-015 + idx-xhtml), Preview embedded collections (OPF-075/076), data-nav manifest rules (OPF-077/080)
+  - **Phase 5** — EDUPUB content-document structure rules (sectioning, heading ranks, empty headings, subtitles)
+- **CLI parity with Java EPUBCheck**: `--info` (`-i`) reporting level, `-v 2`/`-v 3` version shorthand, `--failonwarnings` alias, strict unknown-flag rejection with Java-only flag hints, `-w` aliased to `--warn`
+- **100% Java scenario import complete** — every Java feature file (core EPUB 3, EPUB 2, profile extensions) is now represented in the test suite with specific validator-gap annotations on remaining skipped tests
+
+### Fixed
+
+- **OPF-037** now dispatches only for EPUB 2, mirroring Java
+- **OPF-016/017** correctly reserved for `container.xml` rootfile errors (previously misused for missing `dc:title`/`dc:language`; now RSC-005)
+- **parseCollections** strips XML comments before parsing, fixing false `<link>` hits inside `<!-- -->`
+- **References validator** skips RSC-012 fragment lookups for Media Fragments URIs (`#xywh=`, `#t=`, `#track=`, `#id=`), fixing false positives on region-based-nav fixtures
+- **OPF-060** duplicate ZIP entry detection via raw central-directory walk (fflate silently merges duplicates in `unzipSync`)
+
+### Changed
+
+- **`-v` now means `--epub-version`** (was short for `--version`); version flag is now `-V` — matches Java CLI
+- Test coverage: **1323 passing** (up from 1061), **45 skipped** (down from 74), **1368 total**
+- Overall completion: **~97%** (up from ~93%); 100% Java scenario import
+- EPUB 2 coverage: 71/99 scenarios passing (up from 0)
+- Profile extensions coverage: 88/125 scenarios passing (up from 0)
+- `check()` pipeline refactored into shared `runPipeline()` to avoid duplication across validation modes
+- `EPUB_VERSIONS` tuple in `src/types.ts` is now the single source of truth for valid EPUB versions
+
 ## [0.4.0] - 2026-04-07
 
 ### Added
@@ -560,7 +592,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - No media overlays validation
 - No script detection/validation
 
-[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/likecoin/epubcheck-ts/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.9...v0.4.0
 [0.3.9]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.8...v0.3.9
 [0.3.8]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.7...v0.3.8
