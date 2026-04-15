@@ -45,6 +45,10 @@ export function parseOPF(xml: string): PackageDocument {
     }
   }
 
+  const nsRegex = /<package[^>]*\sxmlns=["']([^"']+)["']/;
+  const isLegacyOebps12 =
+    nsRegex.exec(xml)?.[1] === 'http://openebook.org/namespaces/oeb-package/1.0/';
+
   // Extract prefix declarations (EPUB 3)
   const prefixes = parsePrefixes(xml);
 
@@ -103,6 +107,9 @@ export function parseOPF(xml: string): PackageDocument {
   // Only add optional properties if they have values
   if (!versionDeclared) {
     result.versionDeclared = false;
+  }
+  if (isLegacyOebps12) {
+    result.isLegacyOebps12 = true;
   }
   if (Object.keys(prefixes).length > 0) {
     result.prefixes = prefixes;

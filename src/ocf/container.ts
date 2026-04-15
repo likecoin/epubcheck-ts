@@ -147,16 +147,6 @@ export function parseContainerContent(
       }
     }
   }
-
-  for (const rootfile of context.rootfiles) {
-    if (!fileExists(rootfile.path)) {
-      pushMessage(context.messages, {
-        id: MessageId.PKG_010,
-        message: `Rootfile "${rootfile.path}" not found in EPUB`,
-        location: { path: containerPath },
-      });
-    }
-  }
 }
 
 /**

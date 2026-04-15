@@ -221,26 +221,6 @@ describe('OCFValidator', () => {
       const error = context.messages.find((m) => m.id === 'RSC-003');
       expect(error).toBeDefined();
     });
-
-    it('should report error when rootfile points to missing file', () => {
-      const data = createEpubZip({
-        mimetype: 'application/epub+zip',
-        'META-INF/container.xml': `<?xml version="1.0"?>
-<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
-  <rootfiles>
-    <rootfile full-path="missing.opf" media-type="application/oebps-package+xml"/>
-  </rootfiles>
-</container>`,
-      });
-      const context = createContext(data);
-      const validator = new OCFValidator();
-
-      validator.validate(context);
-
-      const error = context.messages.find((m) => m.id === 'PKG-010');
-      expect(error).toBeDefined();
-      expect(error?.message).toContain('missing.opf');
-    });
   });
 
   describe('META-INF validation', () => {

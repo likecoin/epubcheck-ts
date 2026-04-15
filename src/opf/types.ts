@@ -104,6 +104,8 @@ export interface PackageDocument {
   version: EPUBVersion;
   /** Whether the package@version attribute was present in the source (omitted = true) */
   versionDeclared?: boolean;
+  /** True when the package root uses the legacy OEBPS 1.2 namespace */
+  isLegacyOebps12?: boolean;
   /** Unique identifier reference (package@unique-identifier) */
   uniqueIdentifier: string;
   /** Package prefix declarations (EPUB 3) */

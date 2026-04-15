@@ -59,6 +59,7 @@ export class NCXValidator {
       this.checkContentSrc(context, root, ncxPath, registry);
       this.checkEmptyLabels(context, root, ncxPath);
       this.checkPageTargets(context, root, ncxPath);
+      this.checkIdSyntax(context, root, ncxPath);
     } finally {
       doc.dispose();
     }
@@ -186,10 +187,22 @@ export class NCXValidator {
     }
   }
 
-  /**
-   * pageTarget@type must be one of "front", "normal", "special".
-   * Reported via RSC-005 to mirror Java Schematron output.
-   */
+  private checkIdSyntax(context: ValidationContext, root: XmlElement, ncxPath: string): void {
+    const nodes = root.find('.//*[@id]', {
+      ncx: 'http://www.daisy.org/z3986/2005/ncx/',
+    });
+    for (const node of nodes) {
+      const idValue = (node as XmlElement).attr('id')?.value;
+      if (idValue && !NC_NAME_REGEX.test(idValue)) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: `Invalid id "${idValue}"; must match xs:ID syntax (NCName)`,
+          location: { path: ncxPath, line: node.line },
+        });
+      }
+    }
+  }
+
   private checkPageTargets(context: ValidationContext, root: XmlElement, ncxPath: string): void {
     const pageTargets = root.find('.//ncx:pageTarget[@type]', {
       ncx: 'http://www.daisy.org/z3986/2005/ncx/',
@@ -207,6 +220,9 @@ export class NCXValidator {
     }
   }
 }
+
+// xs:NCName — letters/digits/`-`/`.`/`_`, must start with letter or underscore, no colon.
+const NC_NAME_REGEX = /^[A-Za-z_][A-Za-z0-9._-]*$/;
 
 const PAGE_TARGET_TYPES = new Set(['front', 'normal', 'special']);
 

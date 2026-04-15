@@ -2122,17 +2122,30 @@ export class OPFValidator {
       if (DEPRECATED_MEDIA_TYPES.has(item.mediaType) || item.mediaType === 'text/html') {
         if (this.packageDoc.version === '2.0' && item.mediaType === 'text/html') {
           pushMessage(context.messages, {
-            id: MessageId.OPF_035,
+            id: this.packageDoc.isLegacyOebps12 ? MessageId.OPF_038 : MessageId.OPF_035,
             message: `XHTML Content Document "${item.id}" is declared as "text/html"`,
             location: { path: opfPath },
           });
-        } else if (this.packageDoc.version === '2.0') {
+        } else if (this.packageDoc.version === '2.0' && !this.packageDoc.isLegacyOebps12) {
           pushMessage(context.messages, {
             id: MessageId.OPF_037,
             message: `Found deprecated media-type "${item.mediaType}"`,
             location: { path: opfPath },
           });
         }
+      }
+
+      if (
+        this.packageDoc.version === '2.0' &&
+        this.packageDoc.isLegacyOebps12 &&
+        item.mediaType === 'text/css' &&
+        !item.fallback
+      ) {
+        pushMessage(context.messages, {
+          id: MessageId.OPF_039,
+          message: `Media type "${item.mediaType}" requires a fallback in legacy OEBPS 1.2 context`,
+          location: { path: opfPath },
+        });
       }
 
       // Check for non-preferred media types (OPF-090)
@@ -2396,9 +2409,7 @@ export class OPFValidator {
     for (const item of this.packageDoc.manifest) {
       const hrefBase = item.href.split('?')[0] ?? item.href;
       if (/^[a-zA-Z][a-zA-Z0-9+\-.]*:/.test(hrefBase)) continue;
-      manifestPaths.add(
-        resolvePath(opfPath, tryDecodeUriComponent(hrefBase)).normalize('NFC'),
-      );
+      manifestPaths.add(resolvePath(opfPath, tryDecodeUriComponent(hrefBase)).normalize('NFC'));
     }
 
     const rootfilePaths = new Set(context.rootfiles.map((r) => r.path.normalize('NFC')));

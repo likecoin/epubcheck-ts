@@ -958,11 +958,7 @@ describe('OPFValidator', () => {
       });
 
       addFileToContext(context, 'OEBPS/nav.xhtml', '<html></html>');
-      addFileToContext(
-        context,
-        'OEBPS/時間的試煉_20251209_epub.xhtml',
-        '<html></html>',
-      );
+      addFileToContext(context, 'OEBPS/時間的試煉_20251209_epub.xhtml', '<html></html>');
 
       validatorTest.packageDoc = packageDoc;
       validatorTest.validateUndeclaredResources(context, 'OEBPS/content.opf');
