@@ -693,8 +693,7 @@ describe('Integration Tests - EPUB 2', () => {
       expectError(result, 'RSC-016');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('Report HTML5 elements used in OPS XHTML Content Documents', async () => {
+    it('Report HTML5 elements used in OPS XHTML Content Documents', async () => {
       const data = loadFixture('epub2/ops-document-xhtml/html5-elements-error.xhtml');
       const result = await EpubCheck.validateSingleFile(data, 'html5-elements-error.xhtml', {
         mode: 'xhtml',
@@ -712,8 +711,7 @@ describe('Integration Tests - EPUB 2', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('Report the use of a custom namespaced attribute', async () => {
+    it('Report the use of a custom namespaced attribute', async () => {
       const data = loadFixture('epub2/ops-document-xhtml/custom-ns-attr-error.xhtml');
       const result = await EpubCheck.validateSingleFile(data, 'custom-ns-attr-error.xhtml', {
         mode: 'xhtml',
@@ -749,8 +747,7 @@ describe('Integration Tests - EPUB 2', () => {
       expectErrorCount(result, 'RSC-005', 2, 'error');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip('Report nested a tags', async () => {
+    it('Report nested a tags', async () => {
       const data = loadFixture('epub2/ops-document-xhtml/hyperlinks-nested-error.xhtml');
       const result = await EpubCheck.validateSingleFile(data, 'hyperlinks-nested-error.xhtml', {
         mode: 'xhtml',

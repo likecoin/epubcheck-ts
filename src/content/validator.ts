@@ -32,7 +32,9 @@ const CSS_CHARSET_RE = /^@charset\s+"([^"]+)"\s*;/;
 
 const EPUB_XMLNS_RE = /xmlns:epub\s*=\s*"([^"]*)"/;
 
-const XHTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
+const XHTML_NS_URI = 'http://www.w3.org/1999/xhtml';
+const XML_NS_URI = 'http://www.w3.org/XML/1998/namespace';
+const XHTML_NS = { html: XHTML_NS_URI };
 const EPUB_OPS_NS = { epub: 'http://www.idpf.org/2007/ops' };
 
 const EPUB_TYPE_FORBIDDEN_ELEMENTS = new Set([
@@ -354,6 +356,115 @@ const HTML5_ELEMENTS = new Set([
   'var',
   'video',
   'wbr',
+]);
+
+// XHTML 1.1 element module union — enforced for EPUB 2 OPS Content Documents.
+// Mirrors ../epubcheck/src/main/resources/com/adobe/epubcheck/schema/20/rng/xhtml/*.rng
+const XHTML11_ELEMENTS = new Set([
+  // struct
+  'html',
+  'head',
+  'title',
+  'body',
+  'meta',
+  'link',
+  'base',
+  'style',
+  'script',
+  'noscript',
+  // text
+  'br',
+  'span',
+  'abbr',
+  'acronym',
+  'cite',
+  'code',
+  'dfn',
+  'em',
+  'kbd',
+  'q',
+  'samp',
+  'strong',
+  'var',
+  'div',
+  'p',
+  'address',
+  'blockquote',
+  'pre',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  // pres / legacy
+  'hr',
+  'b',
+  'big',
+  'i',
+  'small',
+  'sub',
+  'sup',
+  'tt',
+  'basefont',
+  'center',
+  'font',
+  's',
+  'strike',
+  'u',
+  'dir',
+  'menu',
+  'isindex',
+  // list
+  'dl',
+  'dt',
+  'dd',
+  'ol',
+  'ul',
+  'li',
+  // table
+  'table',
+  'caption',
+  'tr',
+  'th',
+  'td',
+  'col',
+  'colgroup',
+  'tbody',
+  'thead',
+  'tfoot',
+  // hypertext / image / object / form / edit / ruby / map / iframe / applet / bdo / param
+  'a',
+  'img',
+  'object',
+  'param',
+  'form',
+  'label',
+  'input',
+  'select',
+  'option',
+  'optgroup',
+  'fieldset',
+  'button',
+  'legend',
+  'textarea',
+  'ins',
+  'del',
+  'ruby',
+  'rbc',
+  'rtc',
+  'rb',
+  'rt',
+  'rp',
+  'map',
+  'area',
+  'iframe',
+  'applet',
+  'bdo',
+  // frames
+  'frameset',
+  'frame',
+  'noframes',
 ]);
 
 function isItemFixedLayout(
@@ -1428,6 +1539,10 @@ export class ContentValidator {
             });
           }
         }
+      }
+
+      if (context.version === '2.0') {
+        this.checkEpub2XhtmlStrict(context, path, root);
       }
 
       // Check for discouraged elements
@@ -5420,13 +5535,11 @@ export class ContentValidator {
   }
 
   private checkUnknownElements(context: ValidationContext, path: string, root: XmlElement): void {
-    const XHTML_NS = 'http://www.w3.org/1999/xhtml';
     try {
       const allElements = root.find('.//*');
       for (const el of allElements) {
         const xmlEl = el as XmlElement;
-        const ns = xmlEl.namespaceUri;
-        if (ns !== XHTML_NS) continue;
+        if (xmlEl.namespaceUri !== XHTML_NS_URI) continue;
 
         const localName = xmlEl.name.includes(':')
           ? xmlEl.name.substring(xmlEl.name.indexOf(':') + 1)
@@ -5442,6 +5555,50 @@ export class ContentValidator {
             location: { path, line: el.line },
           });
         }
+      }
+    } catch {
+      // XPath may fail on malformed documents
+    }
+  }
+
+  private checkEpub2XhtmlStrict(context: ValidationContext, path: string, root: XmlElement): void {
+    const checkElement = (xmlEl: XmlElement): void => {
+      if (xmlEl.namespaceUri !== XHTML_NS_URI) return;
+
+      const localName = xmlEl.name.includes(':')
+        ? xmlEl.name.substring(xmlEl.name.indexOf(':') + 1)
+        : xmlEl.name;
+      if (!XHTML11_ELEMENTS.has(localName)) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: `element "${localName}" not allowed here`,
+          location: { path, line: xmlEl.line },
+        });
+      }
+
+      for (const attr of xmlEl.attrs) {
+        const ns = attr.namespaceUri;
+        if (!ns || ns === XHTML_NS_URI || ns === XML_NS_URI) continue;
+        const qname = attr.prefix ? `${attr.prefix}:${attr.name}` : attr.name;
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: `attribute "${qname}" not allowed here`,
+          location: { path, line: xmlEl.line },
+        });
+      }
+    };
+
+    checkElement(root);
+    try {
+      for (const el of root.find('.//*')) {
+        checkElement(el as XmlElement);
+      }
+      for (const a of root.find('.//html:a//html:a', XHTML_NS)) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: 'The "a" element cannot contain any nested "a" elements',
+          location: { path, line: a.line },
+        });
       }
     } catch {
       // XPath may fail on malformed documents
