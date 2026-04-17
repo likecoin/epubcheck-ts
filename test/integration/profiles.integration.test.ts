@@ -327,8 +327,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'OPF-012');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={"OPF-027":2}
-    it.skip('Report a dictionary that does not meet the content model requirements', async () => {
+    it('Report a dictionary that does not meet the content model requirements', async () => {
       const data = loadFixture('profiles/dictionaries/epub/dictionary-content-model-error.epub');
       const result = await EpubCheck.validate(data, { profile: 'dict' });
       expectError(result, 'RSC-005');
@@ -342,8 +341,7 @@ describe('Integration Tests - Profiles', () => {
       expectWarning(result, 'OPF-080');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={"OPF-027":2}
-    it.skip('Report a dictionary search key map with an invalid content model', async () => {
+    it('Report a dictionary search key map with an invalid content model', async () => {
       const data = loadFixture(
         'profiles/dictionaries/epub/dictionary-search-key-map-content-error.epub',
       );
@@ -351,8 +349,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x RSC-007, got 0; all={"OPF-027":2}
-    it.skip('Report a link to a missing resource', async () => {
+    it('Report a link to a missing resource', async () => {
       const data = loadFixture(
         'profiles/dictionaries/epub/dictionary-search-key-map-link-missing-error.epub',
       );
@@ -360,8 +357,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-007');
     });
 
-    // Skip: FAIL: expected 1x RSC-021, got 0; all={"OPF-027":2}
-    it.skip('Report a link to a CSS file instead of a content document', async () => {
+    it('Report a link to a CSS file instead of a content document', async () => {
       const data = loadFixture(
         'profiles/dictionaries/epub/dictionary-search-key-map-link-css-error.epub',
       );
@@ -403,8 +399,7 @@ describe('Integration Tests - Profiles', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: expected 1x OPF-078, got 0; all={"OPF-027":4,"OPF-074":2}
-    it.skip('Report multiple dictionaries without any content documents with dictionary content', async () => {
+    it('Report multiple dictionaries without any content documents with dictionary content', async () => {
       const data = loadFixture(
         'profiles/dictionaries/epub/dictionary-multiple-no-content-error.epub',
       );

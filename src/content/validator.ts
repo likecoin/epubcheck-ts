@@ -4,6 +4,7 @@
 
 import { XmlDocument, XmlElement, type XmlNode } from 'libxml2-wasm';
 import { CSSValidator } from '../css/validator.js';
+import { SKMValidator } from '../skm/validator.js';
 import { SMILValidator } from '../smil/validator.js';
 import { MessageId, pushMessage } from '../messages/index.js';
 import { isCoreMediaType, type PackageDocument } from '../opf/types.js';
@@ -553,6 +554,10 @@ export class ContentValidator {
         if (refValidator) {
           this.extractSVGReferences(context, fullPath, opfDir, refValidator);
         }
+      } else if (item.mediaType === 'application/vnd.epub.search-key-map+xml') {
+        const fullPath = resolveManifestHref(opfDir, item.href);
+        const skmValidator = new SKMValidator();
+        skmValidator.validate(context, fullPath, refValidator);
       } else if (item.mediaType === 'application/smil+xml') {
         const fullPath = resolveManifestHref(opfDir, item.href);
         const smilValidator = new SMILValidator();
@@ -1616,6 +1621,11 @@ export class ContentValidator {
         this.validateRegionBasedNav(context, path, root, manifestItem);
       }
 
+      // Dict profile: dictionary content model (dict-xhtml.sch)
+      if (context.version.startsWith('3') && context.options.profile === 'dict') {
+        this.validateDictionaryContent(context, path, root);
+      }
+
       // EDUPUB content structure rules (sectioning, headings, subtitles)
       if (context.version.startsWith('3') && context.options.profile === 'edupub') {
         const isFxl =
@@ -1631,7 +1641,7 @@ export class ContentValidator {
 
       // Collect features for cross-document validation (EPUB 3)
       if (context.version.startsWith('3')) {
-        this.collectFeatures(context, root);
+        this.collectFeatures(context, path, root);
       }
 
       // Validate epub:switch and epub:trigger (deprecated)
@@ -3551,7 +3561,7 @@ export class ContentValidator {
     }
   }
 
-  private collectFeatures(context: ValidationContext, root: XmlElement): void {
+  private collectFeatures(context: ValidationContext, path: string, root: XmlElement): void {
     const features = context.contentFeatures;
     if (!features) return;
 
@@ -3568,22 +3578,20 @@ export class ContentValidator {
       features.hasVideo = true;
     }
 
-    if (!features.hasPageBreak || !features.hasDictionary || !features.hasIndex) {
-      const epubTypeElements = root.find('.//*[@epub:type]', EPUB_OPS_NS);
-      for (const el of epubTypeElements) {
-        const attr = (el as XmlElement).attr('type', 'epub');
-        if (!attr?.value) continue;
-        const tokens = attr.value.trim().split(/\s+/);
-        if (!features.hasPageBreak && tokens.includes('pagebreak')) {
-          features.hasPageBreak = true;
-        }
-        if (!features.hasDictionary && tokens.includes('dictionary')) {
-          features.hasDictionary = true;
-        }
-        if (!features.hasIndex && tokens.includes('index')) {
-          features.hasIndex = true;
-        }
-        if (features.hasPageBreak && features.hasDictionary && features.hasIndex) break;
+    const epubTypeElements = root.find('.//*[@epub:type]', EPUB_OPS_NS);
+    for (const el of epubTypeElements) {
+      const attr = (el as XmlElement).attr('type', 'epub');
+      if (!attr?.value) continue;
+      const tokens = attr.value.trim().split(/\s+/);
+      if (!features.hasPageBreak && tokens.includes('pagebreak')) {
+        features.hasPageBreak = true;
+      }
+      if (tokens.includes('dictionary')) {
+        features.hasDictionary = true;
+        (features.dictionaryContentPaths ??= new Set()).add(path);
+      }
+      if (!features.hasIndex && tokens.includes('index')) {
+        features.hasIndex = true;
       }
     }
 
@@ -3708,6 +3716,86 @@ export class ContentValidator {
           });
         }
       }
+    }
+  }
+
+  /**
+   * EPUB Dictionaries content document rules.
+   *
+   * Mirrors ../epubcheck/src/main/resources/com/adobe/epubcheck/schema/30/dict/dict-xhtml.sch
+   * (minimum set: `dictionary` must be on body/section with article children; each article or
+   * `dictentry` must have a `dfn` descendant outside of optional `condensed-entry`).
+   */
+  private validateDictionaryContent(
+    context: ValidationContext,
+    path: string,
+    root: XmlElement,
+  ): void {
+    let typedElements: XmlElement[];
+    try {
+      typedElements = root.find('.//*[@epub:type]', EPUB_OPS_NS) as XmlElement[];
+    } catch {
+      return;
+    }
+
+    for (const el of typedElements) {
+      const tokens = el.attr('type', 'epub')?.value.split(/\s+/) ?? [];
+      if (tokens.includes('dictionary')) {
+        if (el.name !== 'body' && el.name !== 'section') {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: 'The "dictionary" type is only allowed on "body" or "section" elements.',
+            location: { path, line: el.line },
+          });
+        }
+        const articles = el.find('./html:article', XHTML_NS) as XmlElement[];
+        if (articles.length === 0) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: 'A "dictionary" must have at least one article child.',
+            location: { path, line: el.line },
+          });
+        }
+        for (const article of articles) {
+          this.checkDictionaryEntry(context, path, article);
+        }
+      }
+      if (tokens.includes('dictentry')) {
+        if (el.name !== 'article') {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_005,
+            message: 'The "dictentry" type is only allowed on "article" elements.',
+            location: { path, line: el.line },
+          });
+        } else {
+          this.checkDictionaryEntry(context, path, el);
+        }
+      }
+    }
+  }
+
+  private checkDictionaryEntry(
+    context: ValidationContext,
+    path: string,
+    article: XmlElement,
+  ): void {
+    const dfns = article.find('.//html:dfn', XHTML_NS);
+    const hasDfnOutsideCondensed = dfns.some((dfn) => {
+      let parent = dfn.parent;
+      while (parent) {
+        const type = parent.attr('type', 'epub')?.value;
+        if (type?.split(/\s+/).includes('condensed-entry')) return false;
+        parent = parent.parent;
+      }
+      return true;
+    });
+    if (!hasDfnOutsideCondensed) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_005,
+        message:
+          'A dictionary entry must have at least one "dfn" descendant (outside of the optional condensed entry "aside").',
+        location: { path, line: article.line },
+      });
     }
   }
 

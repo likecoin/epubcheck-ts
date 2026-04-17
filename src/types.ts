@@ -147,6 +147,7 @@ export interface ValidationContext {
     hasAudio?: boolean;
     hasVideo?: boolean;
     hasDictionary?: boolean;
+    dictionaryContentPaths?: Set<string>;
     hasIndex?: boolean;
     hasLOI?: boolean;
     hasLOT?: boolean;

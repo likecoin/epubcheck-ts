@@ -452,6 +452,32 @@ export class EpubCheck {
         location: { path: opfPath },
       });
     }
+
+    // Mirrors OPFChecker30.checkDictCollectionContent
+    if (profile === 'dict' && context.packageDocument) {
+      const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/')) : '';
+      const manifestByPath = new Map<string, (typeof context.packageDocument.manifest)[number]>();
+      for (const item of context.packageDocument.manifest) {
+        manifestByPath.set(resolveManifestHref(opfDir, item.href), item);
+      }
+      const dictPaths = features.dictionaryContentPaths ?? new Set<string>();
+      for (const coll of context.packageDocument.collections) {
+        if (coll.role !== 'dictionary') continue;
+        const hasDictContent = coll.links.some((href) => {
+          const full = resolveManifestHref(opfDir, href);
+          const item = manifestByPath.get(full);
+          return item?.mediaType === 'application/xhtml+xml' && dictPaths.has(full);
+        });
+        if (!hasDictContent) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_078,
+            message:
+              'An EPUB Dictionary must contain at least one Content Document with dictionary content (epub:type "dictionary")',
+            location: { path: opfPath },
+          });
+        }
+      }
+    }
   }
 
   /**

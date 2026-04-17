@@ -242,6 +242,19 @@ export class ReferenceValidator {
       });
     }
 
+    // RSC-021: Search Key Map references must point to Content Documents in spine
+    // (unless the fragment is an epubcfi, which is allowed for non-spine targets)
+    if (reference.type === ReferenceType.SEARCH_KEY && !resource?.inSpine) {
+      const isEpubCfi = reference.fragment?.startsWith('epubcfi(') ?? false;
+      if (!isEpubCfi) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_021,
+          message: `Search Key Map target "${resourcePath}" must be a Content Document in the spine`,
+          location: reference.location,
+        });
+      }
+    }
+
     // Check if publication resources point to content documents
     // RSC-010: Hyperlinks and overlay text links must point to blessed content document types
     if (isHyperlinkLike || reference.type === ReferenceType.OVERLAY_TEXT_LINK) {
