@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-04-20
+
+### Added
+
+- **EPUB 2 XHTML 1.1 strict content model** — custom element/attribute checks compensating for libxml2-wasm's inability to validate the EPUB 2 RelaxNG schema (HTML5 element rejection, custom-namespaced attribute rejection, nested `<a>` detection)
+- **EPUB 2 legacy OEBPS 1.2** — OPF parser detects the legacy namespace (`isLegacyOebps12`); media-type checks emit `OPF-038`/`OPF-039` under OEBPS 1.2
+- **NCX ID syntax validation** — `NCXValidator.checkIdSyntax` enforces `xs:ID` (NCName) on `@id` attributes
+- **Dictionary profile content model + Search Key Map** — ports `dict-xhtml.sch` and the SKM validator: content model (`search-key-group`/`match`), `RSC-021` for non-spine SKM references, `dictionary` epub:type placement rules, per-collection `OPF-078` dictionary-content check
+- **EDUPUB multi-rendition `dc:type` validation** — mirrors `edu-ocf-metadata.sch` (META-INF/metadata.xml) and `edu-opf.sch` (each rendition's OPF); non-primary OPFs are now reached
+- **Region-based nav** — `NAV-009` + `RSC-017` content model for `data-nav` (ports `datanav-xhtml.sch`); links must target FXL docs; `<ol>`/`<li>`/`<span>`/`<a>` structural rules mirrored
+- **`OPF-028` undeclared prefix** in `<meta property>`/`scheme`/`rel`, including collection metadata (raw-XML scan)
+- **EPUB 2 `<html>` xmlns check** — `RSC-005` on missing `xmlns` in EPUB 2 xhtml mode
+
+### Fixed
+
+- **`OPF-003` directory entries** — `validateUndeclaredResources` now skips zip directory entries so `images/`, `fonts/`, `ops/`, etc. no longer trip false undeclared-resource errors
+- **`OPF-027` user-declared prefixes** on manifest items — accept tokens under a declared prefix (e.g. `calibre:title-page`); reserved prefixes still fire
+- **`<opf:meta>` namespace-prefixed parsing** — `parseMetaElements` now matches `opf:`-prefixed `<meta>` so `dcterms:modified` no longer triggers false `OPF-054` + `RSC-005`
+- **`RSC-026` URL leaking** — `checkUrlLeaking` resolves relative URLs against the referencing resource's path, matching Java's `URLChecker` (applied to manifest leak detection too)
+- **OPF manifest percent-encoded hrefs** — `validateUndeclaredResources` decodes href tokens before matching `context.files` (same class of bug as the NCX/SMIL fix in 0.5.1); fixes spurious `OPF-003` on CJK filenames
+- **Mislabeled `PKG-010` on missing rootfile** removed (`OPF-002` already fires at the OPF layer, matching Java `OCFChecker`)
+
+### Changed
+
+- Test coverage: **1361 passing** (up from 1340), **14 skipped** (down from 34), **1375 total**
+- Profile Extensions: **125/125 scenarios passing (100%)** — up from 122/125
+- EPUB 2: **98/99 scenarios passing (99%)** — up from 97/99; remaining skip is a libxml2-wasm vs Jing reporting-shape difference
+- Overall completion: **~99%** (up from ~97%); all 14 remaining skips are structural dependency limits, not validator work
+
 ## [0.5.1] - 2026-04-14
 
 ### Fixed

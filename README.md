@@ -6,7 +6,7 @@ Validate EPUB files in Node.js and the browser. A TypeScript implementation of [
 [![npm](https://img.shields.io/npm/v/%40likecoin%2Fepubcheck-ts)](https://www.npmjs.com/package/@likecoin/epubcheck-ts)
 [![License](https://img.shields.io/npm/l/%40likecoin%2Fepubcheck-ts)](./LICENSE)
 
-> **Status**: ~97% feature parity with Java EPUBCheck (1333 tests passing, 34 skipped). See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for details. For full EPUB 3 conformance testing, use the official [Java EPUBCheck](https://github.com/w3c/epubcheck).
+> **Status**: ~99% feature parity with Java EPUBCheck (1361 tests passing, 14 skipped). See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for details. For full EPUB 3 conformance testing, use the official [Java EPUBCheck](https://github.com/w3c/epubcheck).
 
 ## Features
 
@@ -292,7 +292,7 @@ This library is a TypeScript port of the Java-based [EPUBCheck](https://github.c
 
 Legend: 🟢 Complete | 🟡 Partial | 🔴 Basic | ❌ Not Started
 
-**Overall Progress: ~97% of Java EPUBCheck features**
+**Overall Progress: ~99% of Java EPUBCheck features**
 
 See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for detailed comparison.
 
@@ -377,7 +377,7 @@ Legend: ✅ Implemented
 | Aspect | epubcheck-ts | EPUBCheck (Java) |
 |--------|--------------|------------------|
 | Runtime | Node.js / Browser | JVM |
-| Feature Parity | ~97% | 100% |
+| Feature Parity | ~99% | 100% |
 | Bundle Size | ~450KB JS + ~1.6MB WASM | ~15MB |
 | Installation | `npm install` | Download JAR |
 | Integration | Native JS/TS | CLI or Java API |
