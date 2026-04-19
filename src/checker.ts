@@ -14,6 +14,7 @@ import {
 } from './ocf/container.js';
 import { OCFValidator } from './ocf/index.js';
 import { OPFValidator } from './opf/index.js';
+import { parseOPF, stripXmlComments } from './opf/parser.js';
 import { isCoreMediaType } from './opf/types.js';
 import { ResourceRegistry } from './references/registry.js';
 import { resolveManifestHref } from './references/url.js';
@@ -481,6 +482,56 @@ export class EpubCheck {
   }
 
   /**
+   * Mirrors ../epubcheck/src/main/resources/com/adobe/epubcheck/schema/30/edupub/
+   *   edu-ocf-metadata.sch (META-INF/metadata.xml) and edu-opf.sch (each OPF).
+   *
+   * Non-primary OPFs are otherwise unreached: runPipeline only runs OPFValidator
+   * on context.opfPath.
+   */
+  private validateEdupubMultiRendition(context: ValidationContext): void {
+    if (context.options.profile !== 'edupub') return;
+    if (context.rootfiles.length <= 1) return;
+
+    const metadataPath = 'META-INF/metadata.xml';
+    const metadataData = context.files.get(metadataPath);
+    if (metadataData) {
+      const content =
+        typeof metadataData === 'string' ? metadataData : new TextDecoder().decode(metadataData);
+      const stripped = stripXmlComments(content);
+      if (!/<dc:type\b[^>]*>\s*edupub\s*<\/dc:type>/i.test(stripped)) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: 'A dc:type element with the value "edupub" is required.',
+          location: { path: metadataPath },
+        });
+      }
+    }
+
+    const primary = context.opfPath;
+    for (const rootfile of context.rootfiles) {
+      if (rootfile.path === primary) continue;
+      if (rootfile.mediaType !== 'application/oebps-package+xml') continue;
+
+      const path = rootfile.path.normalize('NFC');
+      const opfData = context.files.get(path);
+      if (!opfData) continue;
+
+      const xml = typeof opfData === 'string' ? opfData : new TextDecoder().decode(opfData);
+      const pkg = parseOPF(xml);
+      const hasType = pkg.dcElements.some(
+        (dc) => dc.name === 'type' && dc.value.trim() === 'edupub',
+      );
+      if (!hasType) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_005,
+          message: 'The dc:type identifier "edupub" is required.',
+          location: { path },
+        });
+      }
+    }
+  }
+
+  /**
    * Validate NCX navigation document (EPUB 2 always, EPUB 3 when NCX present)
    */
   private validateNCX(context: ValidationContext, registry: ResourceRegistry): void {
@@ -668,6 +719,7 @@ export class EpubCheck {
 
     // Step 4.5: Cross-document feature validation
     this.validateCrossDocumentFeatures(context);
+    this.validateEdupubMultiRendition(context);
 
     // Step 5: Validate NCX navigation (EPUB 2 always; EPUB 3 when NCX is present)
     if (context.packageDocument) {

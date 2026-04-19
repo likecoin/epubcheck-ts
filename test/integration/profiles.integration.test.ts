@@ -734,8 +734,7 @@ describe('Integration Tests - Profiles', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip("Report a missing publication-level 'dc:type' for edupub publication with multiple renditions", async () => {
+    it("Report a missing publication-level 'dc:type' for edupub publication with multiple renditions", async () => {
       const data = loadFixture(
         'profiles/edupub/epub/edupub-multiple-renditions-dctype-missing-for-publication-error.epub',
       );
@@ -743,8 +742,7 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'RSC-005');
     });
 
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={}
-    it.skip("Report a missing rendition-level 'dc:type' for edupub publication with multiple renditions", async () => {
+    it("Report a missing rendition-level 'dc:type' for edupub publication with multiple renditions", async () => {
       const data = loadFixture(
         'profiles/edupub/epub/edupub-multiple-renditions-dctype-missing-for-rendition-error.epub',
       );
