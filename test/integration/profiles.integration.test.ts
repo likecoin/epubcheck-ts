@@ -1157,15 +1157,13 @@ describe('Integration Tests - Profiles', () => {
       expectError(result, 'HTM-052');
     });
 
-    // Skip: FAIL: expected 1x NAV-009, got 0; all={"OPF-027":1,"RSC-012":1}
-    it.skip('Report a region-based nav element that does not point to fixed-layout documents', async () => {
+    it('Report a region-based nav element that does not point to fixed-layout documents', async () => {
       const data = loadFixture('profiles/region-nav/epub/region-based-nav-not-fxl-error.epub');
       const result = await EpubCheck.validate(data);
       expectError(result, 'NAV-009');
     });
 
-    // Skip: FAIL: expected 1x RSC-017, got 0; all={"OPF-027":1,"RSC-012":18}
-    it.skip('Report a region-based nav element with an invalid content model', async () => {
+    it('Report a region-based nav element with an invalid content model', async () => {
       const data = loadFixture(
         'profiles/region-nav/epub/region-based-nav-content-model-error.epub',
       );
@@ -1192,8 +1190,7 @@ describe('Integration Tests - Profiles', () => {
       expectNoErrorsOrWarnings(result);
     });
 
-    // Skip: FAIL: expected 1x OPF-028, got 0; all={"RSC-005":1}
-    it.skip("The 'epubsc' prefix must be declared", async () => {
+    it("The 'epubsc' prefix must be declared", async () => {
       const data = loadFixture(
         'profiles/scriptable-components/package-document/sc-prefix-declaration-missing-error.opf',
       );

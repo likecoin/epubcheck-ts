@@ -623,8 +623,7 @@ describe('Integration Tests - EPUB 2', () => {
   });
 
   describe('Ops Content Document Xhtml', () => {
-    // Skip: FAIL: expected 1x RSC-005, got 0; all={"HTM-001":1,"HTM-002":2,"RSC-017":1}
-    it.skip('Report the absence of a namespace declaration', async () => {
+    it('Report the absence of a namespace declaration', async () => {
       const data = loadFixture('epub2/ops-document-xhtml/html-no-namespace-error.xhtml');
       const result = await EpubCheck.validateSingleFile(data, 'html-no-namespace-error.xhtml', {
         mode: 'xhtml',

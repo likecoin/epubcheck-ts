@@ -545,6 +545,9 @@ export class OPFValidator {
     }
     this.validatePackageAttributes(context, opfPath);
     this.validateMetadata(context, opfPath);
+    if (this.packageDoc.version !== '2.0') {
+      this.validateMetaPrefixes(context, opfPath, opfXml);
+    }
     this.validateLinkElements(context, opfPath);
     this.validateManifest(context, opfPath);
     this.validateSpine(context, opfPath);
@@ -2372,6 +2375,46 @@ export class OPFValidator {
    * emits one assertion failure per offending element (so two duplicate ids
    * produce two RSC-005 messages).
    */
+  private validateMetaPrefixes(context: ValidationContext, opfPath: string, opfXml: string): void {
+    if (!this.packageDoc) return;
+
+    const RESERVED = new Set([
+      'dcterms',
+      'marc',
+      'onix',
+      'schema',
+      'xsd',
+      'a11y',
+      'media',
+      'rendition',
+    ]);
+    const declared = new Set(Object.keys(this.packageDoc.prefixes ?? {}));
+
+    const reported = new Set<string>();
+    const reportIfUndeclared = (prefix: string): void => {
+      if (!prefix || reported.has(prefix)) return;
+      if (RESERVED.has(prefix) || declared.has(prefix)) return;
+      reported.add(prefix);
+      pushMessage(context.messages, {
+        id: MessageId.OPF_028,
+        message: `Undeclared prefix: "${prefix}"`,
+        location: { path: opfPath },
+      });
+    };
+
+    const stripped = stripXmlComments(opfXml);
+    const attrRegex = /\b(?:property|scheme|rel)\s*=\s*["']([^"']+)["']/g;
+    for (const match of stripped.matchAll(attrRegex)) {
+      const value = match[1]?.trim();
+      if (!value) continue;
+      for (const token of value.split(/\s+/)) {
+        const colon = token.indexOf(':');
+        if (colon <= 0) continue;
+        reportIfUndeclared(token.slice(0, colon));
+      }
+    }
+  }
+
   private validateOpfIdUniqueness(
     context: ValidationContext,
     opfPath: string,

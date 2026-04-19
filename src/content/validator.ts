@@ -13,7 +13,7 @@ import type { ResourceRegistry } from '../references/registry.js';
 import type { Reference } from '../references/types.js';
 import { ReferenceType } from '../references/types.js';
 import { isRegisteredScheme } from '../references/uri-schemes.js';
-import { resolveManifestHref } from '../references/url.js';
+import { isRelativeURL, parseURL, resolveManifestHref } from '../references/url.js';
 import type { ReferenceValidator } from '../references/validator.js';
 import type { ValidationContext } from '../types.js';
 import { parseDoctype } from '../util/doctype.js';
@@ -3716,6 +3716,111 @@ export class ContentValidator {
           });
         }
       }
+
+      this.validateRegionBasedNavRules(context, path, root);
+    }
+  }
+
+  private validateRegionBasedNavRules(
+    context: ValidationContext,
+    path: string,
+    root: XmlElement,
+  ): void {
+    const XHTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
+
+    let regionNavs: XmlElement[];
+    try {
+      regionNavs = root.find('.//html:nav', XHTML_NS) as XmlElement[];
+    } catch {
+      return;
+    }
+
+    const packageDoc = context.packageDocument;
+    const opfDir = context.opfPath?.includes('/')
+      ? context.opfPath.substring(0, context.opfPath.lastIndexOf('/'))
+      : '';
+    const docDir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
+
+    const manifestByPath = packageDoc
+      ? new Map(packageDoc.manifest.map((m) => [resolveManifestHref(opfDir, m.href), m]))
+      : undefined;
+
+    for (const nav of regionNavs) {
+      const epubType = nav.attr('type', 'epub')?.value ?? '';
+      if (!epubType.split(/\s+/).includes('region-based')) continue;
+
+      const childEls = nav.find('./html:*', XHTML_NS) as XmlElement[];
+      if (childEls.length !== 1 || childEls[0]?.name !== 'ol') {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_017,
+          message: 'A region-based nav element must contain exactly one child ol element.',
+          location: { path, line: nav.line },
+        });
+      }
+
+      const liElements = nav.find('.//html:li', XHTML_NS) as XmlElement[];
+      for (const li of liElements) {
+        const liChildren = li.find('./html:*', XHTML_NS) as XmlElement[];
+        const first = liChildren[0];
+        if (!first || (first.name !== 'a' && first.name !== 'span')) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_017,
+            message:
+              "The first child of a region-based nav list item must be either an 'a' or 'span' element.",
+            location: { path, line: li.line },
+          });
+        }
+        if (liChildren.length > 1 && (liChildren.length !== 2 || liChildren[1]?.name !== 'ol')) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_017,
+            message:
+              "The first child of a region-based nav list item can only be followed by a single 'ol' element.",
+            location: { path, line: li.line },
+          });
+        }
+      }
+
+      const spans = nav.find('.//html:span', XHTML_NS) as XmlElement[];
+      for (const span of spans) {
+        const spanChildren = span.find('./html:*', XHTML_NS) as XmlElement[];
+        const aChildren = spanChildren.filter((c) => c.name === 'a');
+        if (spanChildren.length !== 2 || aChildren.length !== 2) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_017,
+            message: "'span' elements in region-based navs must contain exactly two 'a' elements.",
+            location: { path, line: span.line },
+          });
+        }
+      }
+
+      const anchors = nav.find('.//html:a', XHTML_NS) as XmlElement[];
+      for (const a of anchors) {
+        if (a.content.trim() !== '') {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_017,
+            message: "'a' elements in region-based navs should not contain text labels.",
+            location: { path, line: a.line },
+          });
+        }
+      }
+
+      if (!packageDoc || !manifestByPath) continue;
+      for (const a of anchors) {
+        const href = a.attr('href')?.value;
+        if (!href || !isRelativeURL(href)) continue;
+        const resolved = this.resolveRelativePath(docDir, href, opfDir);
+        const targetPath = parseURL(resolved).resource;
+        if (!targetPath) continue;
+        const item = manifestByPath.get(targetPath);
+        if (!item) continue;
+        if (!isItemFixedLayout(packageDoc, item.id)) {
+          pushMessage(context.messages, {
+            id: MessageId.NAV_009,
+            message: 'Region-based navigation links must point to Fixed-Layout Documents.',
+            location: { path, line: a.line },
+          });
+        }
+      }
     }
   }
 
@@ -5650,6 +5755,15 @@ export class ContentValidator {
   }
 
   private checkEpub2XhtmlStrict(context: ValidationContext, path: string, root: XmlElement): void {
+    if (!root.namespaceUri) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_005,
+        message: `element "${root.name}" from namespace "" is not allowed`,
+        location: { path, line: root.line },
+      });
+      return;
+    }
+
     const checkElement = (xmlEl: XmlElement): void => {
       if (xmlEl.namespaceUri !== XHTML_NS_URI) return;
 

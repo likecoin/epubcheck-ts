@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Accessibility | ~71% | 🟢 Content checks (table th/thead/caption/empty-th, epub:type usage, image alt, hyperlink text, MathML alt, SVG link name), OPF metadata (accessibilityFeature/accessMode/general a11y) done |
 | Cross-reference | ~92% | 🟢 URL leaking, CSS references, link elements, embed/input/object, exempt resources, SVG stylesheet/use refs, encoding detection, cross-document feature checks done |
 
-**Overall: ~98% complete (1357 tests passing, 18 skipped, 1375 total)**
+**Overall: ~99% complete (1361 tests passing, 14 skipped, 1375 total)**
 
 **100% Java scenario import**: Every Java EPUBCheck feature file (core EPUB 3, EPUB 2, profile extensions) has been ported into this suite. Skipped tests form a discoverable backlog with specific validator gap annotations.
 
@@ -29,8 +29,8 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | **Unit Tests** | 443 | 441 | 2 |
-| **Integration Tests** | 932 | 916 | 16 |
-| **Total** | **1375** | **1357** | **18** |
+| **Integration Tests** | 932 | 920 | 12 |
+| **Total** | **1375** | **1361** | **14** |
 
 ### Integration Test Files
 
@@ -45,8 +45,8 @@ test/integration/
 ├── resources.integration.test.ts     # 110 tests  (109 pass,   1 skip) - Resources/fallbacks
 ├── layout.integration.test.ts        #  52 tests  ( 52 pass,   0 skip) - Layout/viewport/FXL
 ├── mediaoverlays.integration.test.ts #  50 tests  ( 50 pass,   0 skip) - Media overlays/SMIL
-├── epub2.integration.test.ts         #  99 tests  ( 97 pass,   2 skip) - EPUB 2 (all 7 Java features)
-└── profiles.integration.test.ts      # 125 tests  (122 pass,   3 skip) - 9 profile extensions
+├── epub2.integration.test.ts         #  99 tests  ( 98 pass,   1 skip) - EPUB 2 (all 7 Java features)
+└── profiles.integration.test.ts      # 125 tests  (125 pass,   0 skip) - 9 profile extensions
 ```
 
 **Note**: Integration tests imported from Java EPUBCheck test suite (`../epubcheck/src/test/resources/epub3/`).
@@ -76,8 +76,8 @@ test/fixtures/
 - Fast execution (~1.4s for 1375 tests vs Java's integration-heavy suite)
 
 **Critical gaps:**
-- 🟢 **EPUB 2 validation** - 98% of 99 Java scenarios pass (97/99). Remaining gaps: wrong-namespace multi-error reporting (libxml2-wasm vs Jing dep limit), and one OEBPS-namespace check (PKG-001 not emitted for legacy fixture)
-- 🟢 **Profile implementation** - 98% of 125 profile scenarios pass (122/125). Remaining gaps: region-based nav (2 tests), scriptable components prefix (1 test)
+- 🟢 **EPUB 2 validation** - 99% of 99 Java scenarios pass (98/99). Remaining gap: wrong-namespace multi-error reporting (libxml2-wasm vs Jing dep limit)
+- 🟢 **Profile implementation** - 100% of 125 profile scenarios pass (125/125)
 - 🟡 **ARIA validation** - DPUB-ARIA deprecated roles done; IDREF validation done (aria-describedby/labelledby/flowto/owns/controls/activedescendant); aria-describedat detection done
 - 🟡 **ID/IDREF validation** - OPF + XHTML + SVG duplicate IDs done; ARIA IDREF + label/output/headers resolution done; MathML xref not yet
 - 🟡 **Advanced accessibility** - 71% coverage (12/17 ACC checks); remaining: ACC-008 page gaps, ACC-013 complex image aria-describedby, ACC-015/016/017
@@ -89,12 +89,11 @@ test/fixtures/
 **Unit tests (2)** - libxml2-wasm XPath limitations:
 - **Content validator (2)** - OPF-014 inline event handlers, OPF-088 unknown epub:type prefix (unprefixed attribute XPath queries don't match — library limitation, not validator bug)
 
-**Integration tests (16)** - Grouped by category:
+**Integration tests (12)** - All remaining skips are structural dependency limits, not missing validator work:
 - **Core EPUB 3 (11 skipped)**: Library limitations (RelaxNG foreignObject/SVG title, css-tree forgiveness, fflate ZIP dedup), pre-existing gaps (SMIL clock strictness, epub:type vocab), unimplemented checks (OPF-073, PKG-016, `--mode svg`).
-- **EPUB 2 (2 skipped)**: Wrong-namespace per-element error count (libxml2-wasm vs Jing reporting-shape difference) and one PKG-001 emission for legacy OEBPS namespace fixture.
-- **Profiles (3 skipped)**: Remaining profile-specific validation gaps — region-based nav (2 tests), scriptable components prefix (1 test). See the Implementation Gaps Backlog section below for the full breakdown.
+- **EPUB 2 (1 skipped)**: Wrong-namespace per-element error count (libxml2-wasm vs Jing reporting-shape difference).
 
-Every skipped test has an inline comment annotating the specific validator gap — search for `it.skip` in `test/` to find the full backlog.
+Every skipped test has an inline comment annotating the specific blocker — search for `it.skip` in `test/` to find the full list.
 
 ---
 
@@ -185,8 +184,8 @@ Every skipped test has an inline comment annotating the specific validator gap �
 6. **RelaxNG deprecation** - libxml2 plans to remove RelaxNG support in future
 7. **Unicode NFKC normalization** - Not implemented (affects 1 skipped test)
 8. **Single-file/directory validation mode** - Implemented for `exp` (expanded directory), `opf`, `xhtml`, `svg`, `nav`, and `mo` (SMIL). All Java EPUBCheck single-file modes supported.
-9. **Profile implementation** - `--profile edupub|dict|idx|preview` flag is accepted and most profile-aware checks now implemented. 125 profile scenarios are ported with 3 skipped — each skip annotates the specific missing check (see Implementation Gaps Backlog).
-10. **EPUB 2 coverage** - Validator has broad EPUB 2 support. 99 EPUB 2 scenarios are ported with 2 skipped — both are dependency-shape limits (wrong-namespace per-element count and a PKG-001 emission for the legacy OEBPS fixture).
+9. **Profile implementation** - `--profile edupub|dict|idx|preview` flag is accepted and profile-aware checks implemented. 125 profile scenarios pass (100%).
+10. **EPUB 2 coverage** - Validator has broad EPUB 2 support. 99 EPUB 2 scenarios are ported with 1 skipped — a dependency-shape limit (wrong-namespace per-element count, libxml2-wasm vs Jing).
 
 ---
 
@@ -217,7 +216,7 @@ Every skipped test has an inline comment annotating the specific validator gap �
 
 | Java Feature | Scenarios | Active | Skipped | Pass Rate |
 |---|---:|---:|---:|---:|
-| **EPUB 2 (all 7 features)** | **99** | **97** | **2** | **98%** |
+| **EPUB 2 (all 7 features)** | **99** | **98** | **1** | **99%** |
 
 Per-feature breakdown not tracked separately; see `test/integration/epub2.integration.test.ts` for `it.skip` annotations.
 
@@ -225,7 +224,7 @@ Per-feature breakdown not tracked separately; see `test/integration/epub2.integr
 
 | Java Directory | Scenarios | Active | Skipped | Pass Rate |
 |---|---:|---:|---:|---:|
-| **Profile Extensions (9 dirs)** | **125** | **122** | **3** | **98%** |
+| **Profile Extensions (9 dirs)** | **125** | **125** | **0** | **100%** |
 
 Per-directory breakdown not tracked separately; see `test/integration/profiles.integration.test.ts` for `it.skip` annotations.
 
@@ -234,9 +233,9 @@ Per-directory breakdown not tracked separately; see `test/integration/profiles.i
 | Tier | Java Scenarios | Active | Skipped | Pass Rate |
 |---|---:|---:|---:|---:|
 | Core EPUB 3 | ~726 | ~695 | 11 | ~98% |
-| EPUB 2 | 99 | 97 | 2 | 98% |
-| Profile Extensions | 125 | 122 | 3 | 98% |
-| **Total** | **~950** | **~914** | **16** | **~96%** |
+| EPUB 2 | 99 | 98 | 1 | 99% |
+| Profile Extensions | 125 | 125 | 0 | 100% |
+| **Total** | **~950** | **~918** | **12** | **~97%** |
 
 ### Out-of-scope Java features (intentionally not ported)
 
@@ -252,20 +251,17 @@ Per-directory breakdown not tracked separately; see `test/integration/profiles.i
 - **100% Java scenario import** achieved across all core EPUB 3, EPUB 2, and profile feature files (~950 scenarios total)
 - **08-layout** went from 39% → 100% via `--mode opf`
 - **09-media-overlays** went from 67% → 100% via `--mode mo`
+- **Profile Extensions** reached 100% (125/125) — region-based nav structural rules (NAV-009, RSC-017 content model) and OPF-028 undeclared prefix detection in collection metadata
 
 ---
 
 ## Implementation Gaps Backlog
 
-The 16 skipped integration tests form a prioritized backlog. For the authoritative per-test breakdown, search `it.skip` in `test/` — each skip has an inline annotation of the specific validator gap. Themes by category:
+The 12 skipped integration tests are all structural dependency limits — not missing validator logic. For the per-test breakdown, search `it.skip` in `test/` — each skip has an inline annotation of the specific blocker. Themes by category:
 
-### Profile validation (3 tests)
+### EPUB 2-specific checks (1 test)
 
-Remaining gaps (edge cases, not stubs): region-navigation structural rules (2 tests), scriptable components prefix declaration (1 test).
-
-### EPUB 2-specific checks (2 tests)
-
-Remaining EPUB 2-only gaps: wrong-namespace per-element error count (libxml2-wasm vs Jing reporting shape — inherent dep limit) and a PKG-001 emission for the legacy OEBPS fixture.
+Wrong-namespace per-element error count (libxml2-wasm vs Jing reporting shape — inherent dep limit).
 
 ### Core EPUB 3 library gaps (11 tests)
 
@@ -460,6 +456,10 @@ Unused prefixes: SCP (0), CHK (0), INF (0)
 - `CSS-005` - Alt Style Tag class conflict detection (vertical+horizontal, day+night) — fixed from incorrect title-based check
 - `OPF-018` - Standalone CSS files: declared `remote-resources` but no remote references found
 - `RSC-017` - Nested `<ol>` in page-list/landmarks nav (should be flat, no nested sublists)
+- `RSC-005` - EPUB 2 XHTML: missing namespace declaration on root `<html>` element
+- `NAV-009` - Region-based navigation links must point to fixed-layout documents
+- `RSC-017` - Region-based data-nav content model (child-ol, li/span structure, empty `<a>` labels)
+- `OPF-028` - Undeclared prefix in `<meta property>`, `scheme`, and collection metadata
 
 ---
 
