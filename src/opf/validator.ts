@@ -2009,6 +2009,7 @@ export class OPFValidator {
 
     const seenIds = new Set<string>();
     const seenHrefs = new Set<string>();
+    const declaredPrefixes = this.packageDoc.prefixes ?? {};
 
     for (const item of this.packageDoc.manifest) {
       // Check for duplicate IDs
@@ -2068,11 +2069,10 @@ export class OPFValidator {
         });
       }
 
-      // Check for URL leaking outside container (RSC-026)
-      // Using the same trick as Java EPUBCheck: resolve against two different test bases
-      // If the resolved URL doesn't start with both test base paths, it leaks outside the container
+      // Check for URL leaking outside container (RSC-026). Resolve against
+      // the OPF path so manifest hrefs like "../foo" anchor at the OPF dir.
       if (!item.href.startsWith('http') && !item.href.startsWith('mailto:')) {
-        const leaked = checkUrlLeaking(item.href);
+        const leaked = checkUrlLeaking(item.href, opfPath);
         if (leaked) {
           pushMessage(context.messages, {
             id: MessageId.RSC_026,
@@ -2164,13 +2164,17 @@ export class OPFValidator {
       // EPUB 3: Validate item properties
       if (this.packageDoc.version !== '2.0' && item.properties) {
         for (const prop of item.properties) {
-          if (!ITEM_PROPERTIES.has(prop)) {
-            pushMessage(context.messages, {
-              id: MessageId.OPF_027,
-              message: `Undefined property: "${prop}"`,
-              location: { path: opfPath },
-            });
-          }
+          if (ITEM_PROPERTIES.has(prop)) continue;
+          // User-declared prefixes map to custom vocabularies that the spec
+          // treats as permissive; reserved prefixes (rendition, a11y, …) are
+          // context-restricted on manifest items and still fire OPF-027.
+          const colon = prop.indexOf(':');
+          if (colon > 0 && declaredPrefixes[prop.slice(0, colon)] !== undefined) continue;
+          pushMessage(context.messages, {
+            id: MessageId.OPF_027,
+            message: `Undefined property: "${prop}"`,
+            location: { path: opfPath },
+          });
         }
 
         // Check nav property requirements
@@ -2459,6 +2463,7 @@ export class OPFValidator {
 
     for (const path of context.files.keys()) {
       if (path === 'mimetype') continue;
+      if (path.endsWith('/')) continue;
       if (path.startsWith('META-INF/')) continue;
       if (rootfilePaths.has(path)) continue;
       if (manifestPaths.has(path)) continue;

@@ -96,9 +96,9 @@ describe('ReferenceValidator', () => {
       expect(rscErrors).toHaveLength(1);
     });
 
-    it('should report parent directory references', () => {
+    it('should report parent directory references that escape the container', () => {
       validator.addReference(
-        createReference('../parent.xhtml', ReferenceType.HYPERLINK, 'OEBPS/nav.xhtml'),
+        createReference('../../parent.xhtml', ReferenceType.HYPERLINK, 'OEBPS/nav.xhtml'),
       );
       validator.validate(context);
       const rscErrors = context.messages.filter((m) => m.id === 'RSC-026');

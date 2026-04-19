@@ -241,8 +241,10 @@ function parseDCElements(metadataXml: string): DCElement[] {
 function parseMetaElements(metadataXml: string): MetaElement[] {
   const elements: MetaElement[] = [];
 
-  // Match <meta property="...">value</meta> (EPUB 3)
-  const metaRegex = /<meta([^>]*property=["'][^"']+["'][^>]*)>([^<]*)<\/meta>/g;
+  // <meta> may carry a namespace prefix (e.g. <opf:meta>) when the OPF
+  // namespace is bound to "opf" on the root; both forms are the same element.
+  const metaRegex =
+    /<(?:[A-Za-z_][\w.-]*:)?meta([^>]*property=["'][^"']+["'][^>]*)>([^<]*)<\/(?:[A-Za-z_][\w.-]*:)?meta>/g;
   let match;
   while ((match = metaRegex.exec(metadataXml)) !== null) {
     const attrsStr = match[1] ?? '';

@@ -140,9 +140,9 @@ describe('ReferenceValidator', () => {
       expect(context.messages.some((m) => m.id === 'RSC-026')).toBe(true);
     });
 
-    it('should add RSC-026 error for parent directory references', () => {
+    it('should add RSC-026 error for parent directory references that escape the container', () => {
       validator.addReference({
-        url: '../outside/file.html',
+        url: '../../outside/file.html',
         targetResource: 'outside/file.html',
         type: ReferenceType.HYPERLINK,
         location: { path: 'OEBPS/chapter1.xhtml' },

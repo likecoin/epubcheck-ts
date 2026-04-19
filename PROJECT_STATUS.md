@@ -186,6 +186,7 @@ Every skipped test has an inline comment annotating the specific blocker — sea
 8. **Single-file/directory validation mode** - Implemented for `exp` (expanded directory), `opf`, `xhtml`, `svg`, `nav`, and `mo` (SMIL). All Java EPUBCheck single-file modes supported.
 9. **Profile implementation** - `--profile edupub|dict|idx|preview` flag is accepted and profile-aware checks implemented. 125 profile scenarios pass (100%).
 10. **EPUB 2 coverage** - Validator has broad EPUB 2 support. 99 EPUB 2 scenarios are ported with 1 skipped — a dependency-shape limit (wrong-namespace per-element count, libxml2-wasm vs Jing).
+11. **USAGE message dedup** - Java collapses identical USAGE-severity messages per (id, file) to one message with multiple locations; TS emits one per occurrence. Shows up as count drift for CSS-028, OPF-090, RSC-007. Cosmetic; no semantic difference.
 
 ---
 

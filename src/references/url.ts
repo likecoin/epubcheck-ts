@@ -64,13 +64,6 @@ export function hasAbsolutePath(url: string): boolean {
 }
 
 /**
- * Check if a URL tries to escape with parent directory (..)
- */
-export function hasParentDirectoryReference(url: string): boolean {
-  return url.includes('..');
-}
-
-/**
  * Check if a URL is malformed
  */
 export function isMalformedURL(url: string): boolean {
@@ -101,14 +94,21 @@ export function isRemoteURL(url: string): boolean {
 }
 
 /**
- * Check if a URL leaks outside the EPUB container using the dual-base resolution trick
+ * Check if a URL leaks outside the EPUB container using the dual-base
+ * resolution trick. When `resourcePath` is supplied, it is treated as the
+ * base path of the referencing resource (inside the container) so that
+ * relative `..` segments are resolved against the resource's directory —
+ * mirroring Java's URLChecker, which keeps `baseURLTestA/B` anchored at the
+ * current resource rather than the container root.
  */
-export function checkUrlLeaking(href: string): boolean {
+export function checkUrlLeaking(href: string, resourcePath?: string): boolean {
   const TEST_BASE_A = 'https://a.example.org/A/';
   const TEST_BASE_B = 'https://b.example.org/B/';
   try {
-    const urlA = new URL(href, TEST_BASE_A).toString();
-    const urlB = new URL(href, TEST_BASE_B).toString();
+    const baseA = resourcePath ? new URL(resourcePath, TEST_BASE_A).toString() : TEST_BASE_A;
+    const baseB = resourcePath ? new URL(resourcePath, TEST_BASE_B).toString() : TEST_BASE_B;
+    const urlA = new URL(href, baseA).toString();
+    const urlB = new URL(href, baseB).toString();
     return !urlA.startsWith(TEST_BASE_A) || !urlB.startsWith(TEST_BASE_B);
   } catch {
     return false;

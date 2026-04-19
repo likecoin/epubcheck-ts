@@ -11,7 +11,6 @@ import { ReferenceType, isPublicationResourceReference } from './types.js';
 import {
   checkUrlLeaking,
   hasAbsolutePath,
-  hasParentDirectoryReference,
   isDataURL,
   isFileURL,
   isHTTP,
@@ -157,37 +156,15 @@ export class ReferenceValidator {
     reference: Reference,
     resourcePath: string,
   ): void {
-    // Check for absolute paths (RSC-026: URL leaks outside container)
+    // RSC-026: flag any URL that, resolved against the resource base,
+    // escapes the container — matches Java's URLChecker semantics.
     if (hasAbsolutePath(resourcePath)) {
       pushMessage(context.messages, {
         id: MessageId.RSC_026,
         message: 'Absolute paths are not allowed in EPUB',
         location: reference.location,
       });
-    }
-
-    // Check for parent directory references that escape the container (RSC-026)
-    const forbiddenParentDirTypes = [
-      ReferenceType.HYPERLINK,
-      ReferenceType.NAV_TOC_LINK,
-      ReferenceType.NAV_PAGELIST_LINK,
-    ];
-    if (
-      hasParentDirectoryReference(reference.url) &&
-      forbiddenParentDirTypes.includes(reference.type)
-    ) {
-      pushMessage(context.messages, {
-        id: MessageId.RSC_026,
-        message: 'Parent directory references (..) are not allowed',
-        location: reference.location,
-      });
-    } else if (
-      !hasAbsolutePath(resourcePath) &&
-      !hasParentDirectoryReference(reference.url) &&
-      checkUrlLeaking(reference.url)
-    ) {
-      // RSC-026: Check if the URL leaks outside the container
-      // (only when not already caught by the more specific checks above)
+    } else if (checkUrlLeaking(reference.url, reference.location.path)) {
       pushMessage(context.messages, {
         id: MessageId.RSC_026,
         message: `URL "${reference.url}" leaks outside the container`,
