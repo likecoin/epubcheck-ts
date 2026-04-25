@@ -155,6 +155,8 @@ export interface ValidationContext {
     hasLOV?: boolean;
     hasMicrodata?: boolean;
     hasRDFa?: boolean;
+    sectionCount?: number;
+    tocLinkCount?: number;
   };
 }
 

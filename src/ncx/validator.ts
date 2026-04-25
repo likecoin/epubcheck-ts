@@ -88,6 +88,14 @@ export class NCXValidator {
       return;
     }
 
+    if (uidContent !== uidContent.trim()) {
+      pushMessage(context.messages, {
+        id: MessageId.NCX_004,
+        message: 'NCX dtb:uid meta content has leading or trailing whitespace.',
+        location: { path, line: uidElement.line },
+      });
+    }
+
     context.ncxUid = uidContent.trim();
   }
 

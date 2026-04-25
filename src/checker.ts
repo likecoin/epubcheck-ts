@@ -352,6 +352,18 @@ export class EpubCheck {
 
     // EDUPUB-only checks
     if (profile === 'edupub') {
+      // NAV-004: toc must list every section
+      const sectionCount = features.sectionCount ?? 0;
+      const tocLinkCount = features.tocLinkCount ?? 0;
+      if (sectionCount > 0 && sectionCount !== tocLinkCount) {
+        pushMessage(context.messages, {
+          id: MessageId.NAV_004,
+          message:
+            'The Navigation Document should contain the full hierarchy of headings in the document for EDUPUB.',
+          location: { path: opfPath },
+        });
+      }
+
       // NAV-003: Page breaks require page-list nav
       if (features.hasPageBreak && !features.hasPageList) {
         pushMessage(context.messages, {
@@ -792,8 +804,14 @@ export class EpubCheck {
           'For maximum compatibility, use only lowercase characters for the EPUB file extension.',
         location: { path: filename },
       });
+      return;
     }
-    // PKG-017/024 for other extensions could be added here later.
+    const isEpub2 = context.version.startsWith('2');
+    pushMessage(context.messages, {
+      id: isEpub2 ? MessageId.PKG_017 : MessageId.PKG_024,
+      message: `EPUB file has an uncommon extension "${extension}".`,
+      location: { path: filename },
+    });
   }
 
   /**

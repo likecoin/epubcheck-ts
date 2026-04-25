@@ -2262,6 +2262,10 @@ export class ContentValidator {
       : '';
 
     const tocAnchors = tocNav.find('.//html:a[@href]', HTML_NS);
+    if (context.contentFeatures) {
+      context.contentFeatures.tocLinkCount =
+        (context.contentFeatures.tocLinkCount ?? 0) + tocAnchors.length;
+    }
     const tocLinks: NonNullable<ValidationContext['tocLinks']> = [];
 
     for (const anchor of tocAnchors) {
@@ -3603,6 +3607,11 @@ export class ContentValidator {
     // Detect RDFa (property attribute)
     if (!features.hasRDFa && root.get('.//*[@property]')) {
       features.hasRDFa = true;
+    }
+
+    if (context.options.profile === 'edupub') {
+      const sections = root.find('.//html:body//html:section', XHTML_NS);
+      features.sectionCount = (features.sectionCount ?? 0) + sections.length;
     }
   }
 

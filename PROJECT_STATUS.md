@@ -264,14 +264,13 @@ The 12 skipped integration tests are all structural dependency limits — not mi
 
 Wrong-namespace per-element error count (libxml2-wasm vs Jing reporting shape — inherent dep limit).
 
-### Core EPUB 3 library gaps (11 tests)
+### Core EPUB 3 library gaps (10 tests)
 
 | Gap | Blocker |
 |---|---|
 | RelaxNG per-element attribute allowlist (foreignObject, SVG title) | libxml2-wasm limitation |
 | Single-file filename validation (duplicates) | Pre-existing, low priority |
 | OPF-073 external DOCTYPE identifiers | Not implemented |
-| PKG-016 file extension case | Not implemented |
 | `--mode svg` | Not implemented |
 | SMIL clock parser strictness | Pre-existing |
 | SMIL epub:type vocabulary | Pre-existing |
@@ -302,10 +301,30 @@ Ordered by severity impact (number of active error/warning messages not yet emit
 ## Message IDs
 
 **Defined**: 300 message IDs
-**Actively used**: 170 (57%)
+**Actively used**: 182 (61%)
 
-Active by prefix: OPF (55), RSC (26), PKG (16), CSS (12), HTM (22), NAV (9), NCX (3), ACC (12), MED (15)
+Active by prefix: OPF (62), RSC (26), PKG (18), CSS (12), HTM (22), NAV (10), NCX (4), ACC (12), MED (15)
 Unused prefixes: SCP (0), CHK (0), INF (0)
+
+### Intentionally Not Emitted (19 IDs)
+
+The following Java EPUBCheck IDs are defined in `messages.ts` for registry parity but are not emitted — by design, not by omission:
+
+| ID(s) | Reason |
+|---|---|
+| `CHK-001`…`CHK-008` (8) | Report malformed `--customMessages` file. TS throws native Node errors instead; emitting parity messages adds no real-world value. |
+| `RSC-022` | "Cannot check image details (requires Java 7+)" — JVM-specific, irrelevant in a TS runtime. |
+| `RSC-024` / `RSC-025` | Pass-through of Xerces XML diagnostic text. TS uses libxml2-wasm with a different diagnostic surface; forcing this mapping would leak a library detail into user-visible output. |
+| `INF-001` | "Rule under review" placeholder — rarely used even by Java. |
+| `PKG-023` | Informational log line (`"Validating against version 2.0, default profile used"`), not a validation finding. TS logs this via normal stderr output when applicable. |
+| `OPF-011` | Commented out in upstream Java (`OPFHandler30.java:506`). Java itself no longer emits it. |
+| `OPF-021` | Java emits this only from `DTBookHandler.java` (DAISY 3 DTBook content, an EPUB 2 legacy format). epubcheck-ts has no DTBook content handler — only references the media type for spine validation. |
+| `OPF-036` | Defined in Java's `MessageId.java` but never emitted by any Java validator code path. Dead ID. |
+| `HTM-005` | Defined in Java's `MessageId.java` and `DefaultSeverities.java` but never emitted by any Java validator code path. Dead ID. |
+| `HTM-011` | Java's own `DeclarationHandler.java:175` comments: *"This message may never be reported. Undeclared entities result in a Sax Parser Error and message RSC_005."* libxml2-wasm raises the same parse error, surfaced as RSC-005 in our pipeline — matching Java's actual behavior. |
+| `HTM-044` | Defined in Java but never emitted by any Java validator code path. Dead ID. |
+
+These 19 IDs are **not** counted as gaps when measuring message-ID emission parity with Java EPUBCheck.
 
 ### Recent Message ID Fixes (aligned with Java EPUBCheck)
 - `RSC-001` - Missing manifest resource (was OPF-010)
@@ -316,6 +335,19 @@ Unused prefixes: SCP (0), CHK (0), INF (0)
 - `PKG-010` - Whitespace in filenames (warning)
 
 ### Recent Validation Improvements
+- `OPF-004` - Prefix attribute leading/trailing whitespace
+- `OPF-005` - Prefix declared but URI missing
+- `OPF-006` - Prefix declaration URI is not a valid URI
+- `OPF-007` - Re-declaration of reserved prefix (dcterms, marc, onix, media, rendition, schema, xsd, a11y)
+- `OPF-047` - OEBPS 1.2 syntax notice (legacy package namespace)
+- `OPF-062` - Adobe page-map attribute on spine element
+- `OPF-063` - Adobe page-map references unknown manifest ID
+- `OPF-064` - dc:type indicates profile that differs from active --profile
+- `OPF-067` - Resource declared as both package link and manifest item
+- `NCX-004` - dtb:uid meta has leading/trailing whitespace
+- `NAV-004` - EDUPUB nav must list every section
+- `PKG-017` - Uncommon EPUB 2 file extension
+- `PKG-024` - Uncommon EPUB 3 file extension
 - `OPF-034` - Duplicate spine itemref (now works for EPUB 3, was EPUB 2 only)
 - `OPF-050` - Spine toc attribute validation (now works for EPUB 3)
 - `OPF-060` - Duplicate filename detection with Unicode NFD normalization and full case folding

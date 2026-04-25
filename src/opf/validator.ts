@@ -397,6 +397,39 @@ const PROFILE_DC_TYPE: Partial<Record<EPUBProfile, string>> = {
   preview: 'preview',
 };
 
+// Inverse direction of PROFILE_DC_TYPE plus the IDX profile (which has no
+// required dc:type but still triggers OPF-064 when declared via dc:type).
+// Mirrors Java EPUBProfile.matchingType().
+const TYPE_TO_PROFILE: Record<string, EPUBProfile> = {
+  dictionary: 'dict',
+  edupub: 'edupub',
+  index: 'idx',
+  preview: 'preview',
+};
+
+// Reserved EPUB 3 vocabulary prefixes and their canonical URIs.
+// Source: https://www.w3.org/TR/epub-33/#sec-prefix-attr
+const RESERVED_PREFIX_URIS: Record<string, string> = {
+  dcterms: 'http://purl.org/dc/terms/',
+  marc: 'http://id.loc.gov/vocabulary/',
+  media: 'http://www.idpf.org/epub/vocab/overlays/#',
+  onix: 'http://www.editeur.org/ONIX/book/codelists/current.html#',
+  rendition: 'http://www.idpf.org/vocab/rendition/#',
+  schema: 'http://schema.org/',
+  xsd: 'http://www.w3.org/2001/XMLSchema#',
+  a11y: 'http://www.idpf.org/epub/vocab/package/a11y/#',
+};
+
+function isValidURI(uri: string): boolean {
+  if (!uri) return false;
+  try {
+    new URL(uri);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Mirrors ../epubcheck/src/main/resources/com/adobe/epubcheck/schema/30/dict/dict-opf.sch
 const DICTIONARY_TYPE_VALUES = new Set([
   'monolingual',
@@ -546,11 +579,13 @@ export class OPFValidator {
     this.validatePackageAttributes(context, opfPath);
     this.validateMetadata(context, opfPath);
     if (this.packageDoc.version !== '2.0') {
+      this.validatePrefixDeclarations(context, opfPath, opfXml);
       this.validateMetaPrefixes(context, opfPath, opfXml);
     }
     this.validateLinkElements(context, opfPath);
     this.validateManifest(context, opfPath);
     this.validateSpine(context, opfPath);
+    this.validatePageMap(context, opfPath, opfXml);
     this.validateFallbackChains(context, opfPath);
     this.validateUndeclaredResources(context, opfPath);
 
@@ -589,6 +624,7 @@ export class OPFValidator {
     if (this.packageDoc.version.startsWith('3.')) {
       this.validateAccessibilityMetadata(context, opfPath);
       this.validateProfileDcType(context, opfPath);
+      this.validateDcTypeProfileSwitch(context, opfPath);
       this.validateEdupubMetadata(context, opfPath);
       this.validateDictionaryMetadata(context, opfPath);
       this.validatePreviewMetadata(context, opfPath);
@@ -837,6 +873,23 @@ export class OPFValidator {
     }
   }
 
+  // Mirrors Java's EPUBProfile.makeTypeCompatible flow.
+  private validateDcTypeProfileSwitch(context: ValidationContext, opfPath: string): void {
+    if (!this.packageDoc) return;
+    for (const dc of this.packageDoc.dcElements) {
+      if (dc.name !== 'type') continue;
+      const inferred = TYPE_TO_PROFILE[dc.value.trim().toLowerCase()];
+      if (inferred && inferred !== context.options.profile) {
+        pushMessage(context.messages, {
+          id: MessageId.OPF_064,
+          message: `OPF declares type "${dc.value.trim().toLowerCase()}"; consider validating using the "${inferred}" profile.`,
+          location: { path: opfPath },
+        });
+        return;
+      }
+    }
+  }
+
   /**
    * Build lookup maps for manifest items
    */
@@ -859,6 +912,14 @@ export class OPFValidator {
    */
   private validatePackageAttributes(context: ValidationContext, opfPath: string): void {
     if (!this.packageDoc) return;
+
+    if (this.packageDoc.isLegacyOebps12) {
+      pushMessage(context.messages, {
+        id: MessageId.OPF_047,
+        message: 'OPF file is using OEBPS 1.2 syntax allowing backwards compatibility.',
+        location: { path: opfPath },
+      });
+    }
 
     if (this.packageDoc.versionDeclared === false) {
       pushMessage(context.messages, {
@@ -1988,15 +2049,26 @@ export class OPFValidator {
           : resolvedPath;
 
       const fileExists = context.files.has(resolvedPath) || context.files.has(resolvedPathDecoded);
-      const inManifest =
-        this.manifestByHref.has(basePathNoQuery) || this.manifestByHref.has(basePathDecodedNoQuery);
+      const manifestItem =
+        this.manifestByHref.get(basePathNoQuery) ?? this.manifestByHref.get(basePathDecodedNoQuery);
 
-      if (!fileExists && !inManifest) {
+      if (!fileExists && !manifestItem) {
         pushMessage(context.messages, {
           id: MessageId.RSC_007w,
           message: `Referenced resource "${resolvedPath}" could not be found in the EPUB`,
           location: { path: opfPath },
         });
+      }
+
+      if (manifestItem) {
+        const inSpine = this.packageDoc.spine.some((ref) => ref.idref === manifestItem.id);
+        if (!inSpine) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_067,
+            message: `Resource "${manifestItem.href}" is referenced as a link but is also declared as a manifest item.`,
+            location: { path: opfPath },
+          });
+        }
       }
     }
   }
@@ -2373,6 +2445,63 @@ export class OPFValidator {
     }
   }
 
+  // Mirrors Java's PrefixDeclarationParser + VocabUtil.parsePrefixDeclaration,
+  // but emits only the four main IDs (not Java's OPF-004a..f sub-codes).
+  private validatePrefixDeclarations(
+    context: ValidationContext,
+    opfPath: string,
+    opfXml: string,
+  ): void {
+    const stripped = stripXmlComments(opfXml);
+    const match = /<package[^>]*\sprefix\s*=\s*["']([^"']*)["']/.exec(stripped);
+    if (!match) return;
+    const raw = match[1] ?? '';
+
+    if (raw !== raw.trim()) {
+      pushMessage(context.messages, {
+        id: MessageId.OPF_004,
+        message: 'The value of the prefix attribute has leading or trailing whitespace.',
+        location: { path: opfPath },
+      });
+    }
+
+    const parts = raw.trim().split(/\s+/).filter(Boolean);
+    for (let i = 0; i < parts.length; ) {
+      const token = parts[i] ?? '';
+      if (token.endsWith(':') && token.length > 1) {
+        const prefix = token.slice(0, -1);
+        const uri = parts[i + 1];
+        if (!uri || uri.endsWith(':')) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_005,
+            message: `The prefix "${prefix}" is declared but no URI is bound to it.`,
+            location: { path: opfPath },
+          });
+          i += 1;
+          continue;
+        }
+        if (!isValidURI(uri)) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_006,
+            message: `The value "${uri}" bound to prefix "${prefix}" is not a valid URI.`,
+            location: { path: opfPath },
+          });
+        }
+        const reservedUri = RESERVED_PREFIX_URIS[prefix];
+        if (reservedUri !== undefined && reservedUri !== uri) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_007,
+            message: `The prefix "${prefix}" is reserved and must not be re-declared.`,
+            location: { path: opfPath },
+          });
+        }
+        i += 2;
+      } else {
+        i += 1;
+      }
+    }
+  }
+
   /**
    * RSC-005: all id attributes on elements in the OPF document must be unique.
    * Mirrors Java's id-unique.sch / opf.sch opf_idAttrUnique pattern, which
@@ -2382,16 +2511,7 @@ export class OPFValidator {
   private validateMetaPrefixes(context: ValidationContext, opfPath: string, opfXml: string): void {
     if (!this.packageDoc) return;
 
-    const RESERVED = new Set([
-      'dcterms',
-      'marc',
-      'onix',
-      'schema',
-      'xsd',
-      'a11y',
-      'media',
-      'rendition',
-    ]);
+    const RESERVED = new Set(Object.keys(RESERVED_PREFIX_URIS));
     const declared = new Set(Object.keys(this.packageDoc.prefixes ?? {}));
 
     const reported = new Set<string>();
@@ -2633,6 +2753,27 @@ export class OPFValidator {
           }
         }
       }
+    }
+  }
+
+  private validatePageMap(context: ValidationContext, opfPath: string, opfXml: string): void {
+    if (!this.packageDoc) return;
+    const stripped = stripXmlComments(opfXml);
+    const m = /<spine\b[^>]*\spage-map\s*=\s*["']([^"']*)["']/.exec(stripped);
+    if (!m) return;
+    const pageMapId = (m[1] ?? '').trim();
+    pushMessage(context.messages, {
+      id: MessageId.OPF_062,
+      message: `Found Adobe page-map attribute on spine element (page-map="${pageMapId}")`,
+      location: { path: opfPath },
+    });
+    if (!pageMapId) return;
+    if (!this.manifestById.has(pageMapId)) {
+      pushMessage(context.messages, {
+        id: MessageId.OPF_063,
+        message: `The Adobe page-map item "${pageMapId}" was not found in the manifest`,
+        location: { path: opfPath },
+      });
     }
   }
 
