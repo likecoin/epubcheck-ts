@@ -499,7 +499,9 @@ export class OPFValidator {
       return;
     }
 
-    // Read OPF content
+    // Read OPF content. Mirrors Java OCFChecker.java:407 which emits OPF-002
+    // (fatal) at the OCF stage when container.xml points to a missing OPF —
+    // the later OPFChecker.java:108 PKG-020 path is unreachable in practice.
     const opfData = context.files.get(opfPath);
     if (!opfData) {
       pushMessage(context.messages, {

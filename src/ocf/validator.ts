@@ -31,8 +31,8 @@ export class OCFValidator {
       zip = ZipReader.open(context.data);
     } catch (error) {
       pushMessage(context.messages, {
-        id: MessageId.PKG_001,
-        message: `Failed to open EPUB file: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        id: MessageId.PKG_004,
+        message: `Failed to open EPUB ZIP: ${error instanceof Error ? error.message : 'Unknown error'}`,
       });
       return;
     }
@@ -88,8 +88,8 @@ export class OCFValidator {
 
     if (compressionInfo === null) {
       pushMessage(messages, {
-        id: MessageId.PKG_006,
-        message: 'Could not read ZIP header',
+        id: MessageId.PKG_003,
+        message: 'Unable to read EPUB file header, likely corrupted',
         location: { path: 'mimetype' },
       });
       return;

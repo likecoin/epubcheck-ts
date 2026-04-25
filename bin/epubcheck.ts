@@ -20,7 +20,7 @@ import type {
 } from '../src/types.js';
 
 // Dynamic import to support both ESM and CJS builds
-const { EpubCheck, EPUB_VERSIONS, toJSONReport } = await import('../dist/index.js');
+const { EpubCheck, EPUB_VERSIONS, MessageId, toJSONReport } = await import('../dist/index.js');
 
 const VERSION = '0.6.0';
 const VALID_MODES: ReadonlySet<ValidationMode> = new Set([
@@ -399,6 +399,19 @@ async function main(): Promise<void> {
       result.errorCount > 0 || result.fatalCount > 0 || (failOnWarnings && result.warningCount > 0);
     process.exit(shouldFail ? 1 : 0);
   } catch (error) {
+    const code = (error as NodeJS.ErrnoException | undefined)?.code;
+    if (code === 'ENOENT') {
+      console.error(`\x1b[31m\x1b[1mFATAL (${filePath}):\x1b[0m EPUB file could not be found`);
+      console.error(`  \x1b[90mID: ${MessageId.PKG_018}\x1b[0m`);
+      process.exit(1);
+    }
+    if (code === 'EACCES' || code === 'EISDIR' || code === 'EIO') {
+      console.error(
+        `\x1b[31m\x1b[1mFATAL (${filePath}):\x1b[0m Unable to read EPUB contents: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      console.error(`  \x1b[90mID: ${MessageId.PKG_015}\x1b[0m`);
+      process.exit(1);
+    }
     console.error('\x1b[31mError:\x1b[0m', error instanceof Error ? error.message : String(error));
     if (error instanceof Error && error.stack && !values.quiet) {
       console.error('\x1b[90m' + error.stack + '\x1b[0m');

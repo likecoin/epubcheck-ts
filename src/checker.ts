@@ -144,7 +144,7 @@ export class EpubCheck {
       await this.runPipeline(context);
     } catch (error) {
       pushMessage(context.messages, {
-        id: MessageId.PKG_025,
+        id: MessageId.PKG_008,
         message: error instanceof Error ? error.message : 'Unknown validation error',
       });
     } finally {
@@ -202,7 +202,7 @@ export class EpubCheck {
       await this.runPipeline(context);
     } catch (error) {
       pushMessage(context.messages, {
-        id: MessageId.PKG_025,
+        id: MessageId.PKG_008,
         message: error instanceof Error ? error.message : 'Unknown validation error',
       });
     } finally {
@@ -282,7 +282,7 @@ export class EpubCheck {
       }
     } catch (error) {
       pushMessage(context.messages, {
-        id: MessageId.PKG_025,
+        id: MessageId.PKG_008,
         message: error instanceof Error ? error.message : 'Unknown validation error',
       });
     } finally {

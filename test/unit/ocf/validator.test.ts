@@ -48,7 +48,7 @@ describe('OCFValidator', () => {
   });
 
   describe('ZIP opening failures', () => {
-    it('should add PKG-001 error when ZIP cannot be opened', () => {
+    it('should add PKG-004 fatal error when ZIP cannot be opened', () => {
       const context = createValidationContext(new Uint8Array([0, 1, 2]));
 
       // Mock ZipReader.open to throw - using dynamic import
@@ -62,9 +62,8 @@ describe('OCFValidator', () => {
 
       validator.validate(context);
 
-      expect(context.messages.some((m) => m.id === 'PKG-001')).toBe(true);
-      // Java EPUBCheck has PKG-001 as warning severity
-      expect(context.messages[0]!.severity).toBe('warning');
+      expect(context.messages.some((m) => m.id === 'PKG-004')).toBe(true);
+      expect(context.messages[0]!.severity).toBe('fatal');
     });
   });
 

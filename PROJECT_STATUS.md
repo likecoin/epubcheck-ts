@@ -301,12 +301,12 @@ Ordered by severity impact (number of active error/warning messages not yet emit
 ## Message IDs
 
 **Defined**: 300 message IDs
-**Actively used**: 182 (61%)
+**Actively used**: 186 (62%)
 
-Active by prefix: OPF (62), RSC (26), PKG (18), CSS (12), HTM (22), NAV (10), NCX (4), ACC (12), MED (15)
+Active by prefix: OPF (62), RSC (26), PKG (22), CSS (12), HTM (22), NAV (10), NCX (4), ACC (12), MED (15)
 Unused prefixes: SCP (0), CHK (0), INF (0)
 
-### Intentionally Not Emitted (19 IDs)
+### Intentionally Not Emitted (20 IDs)
 
 The following Java EPUBCheck IDs are defined in `messages.ts` for registry parity but are not emitted — by design, not by omission:
 
@@ -323,8 +323,9 @@ The following Java EPUBCheck IDs are defined in `messages.ts` for registry parit
 | `HTM-005` | Defined in Java's `MessageId.java` and `DefaultSeverities.java` but never emitted by any Java validator code path. Dead ID. |
 | `HTM-011` | Java's own `DeclarationHandler.java:175` comments: *"This message may never be reported. Undeclared entities result in a Sax Parser Error and message RSC_005."* libxml2-wasm raises the same parse error, surfaced as RSC-005 in our pipeline — matching Java's actual behavior. |
 | `HTM-044` | Defined in Java but never emitted by any Java validator code path. Dead ID. |
+| `PKG-020` | Java emits this only from `OPFChecker.java:108`, downstream of the OCFChecker check that fires `OPF-002` first (`OCFChecker.java:407`). Java's actual flow stops at OPF-002, so PKG-020 is unreachable in practice. epubcheck-ts emits OPF-002 for the same case, matching observed Java behavior. |
 
-These 19 IDs are **not** counted as gaps when measuring message-ID emission parity with Java EPUBCheck.
+These 20 IDs are **not** counted as gaps when measuring message-ID emission parity with Java EPUBCheck.
 
 ### Recent Message ID Fixes (aligned with Java EPUBCheck)
 - `RSC-001` - Missing manifest resource (was OPF-010)
@@ -335,6 +336,11 @@ These 19 IDs are **not** counted as gaps when measuring message-ID emission pari
 - `PKG-010` - Whitespace in filenames (warning)
 
 ### Recent Validation Improvements
+- `PKG-003` - Unable to read EPUB file header, likely corrupted (was misrouted as PKG-006)
+- `PKG-004` - Corrupted EPUB ZIP header (was misrouted as PKG-001)
+- `PKG-008` - Unable to read file (was misrouted as PKG-025)
+- `PKG-015` - Unable to read EPUB contents (CLI: emitted on EACCES/EISDIR/EIO)
+- `PKG-018` - EPUB file could not be found (CLI: emitted on ENOENT)
 - `OPF-004` - Prefix attribute leading/trailing whitespace
 - `OPF-005` - Prefix declared but URI missing
 - `OPF-006` - Prefix declaration URI is not a valid URI
