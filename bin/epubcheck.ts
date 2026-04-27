@@ -22,7 +22,7 @@ import type {
 // Dynamic import to support both ESM and CJS builds
 const { EpubCheck, EPUB_VERSIONS, MessageId, toJSONReport } = await import('../dist/index.js');
 
-const VERSION = '0.6.0';
+const VERSION = '0.6.1';
 const VALID_MODES: ReadonlySet<ValidationMode> = new Set([
   'exp',
   'opf',

@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-04-27
+
+### Added
+
+- **13 new message ID emissions for Java parity** (OPF/NCX/NAV/PKG):
+  - `OPF-004`/`OPF-005`/`OPF-006`/`OPF-007` — prefix declaration parsing (leading/trailing whitespace, missing URI, invalid URI, re-declaration of reserved prefix)
+  - `OPF-047` — OEBPS 1.2 legacy package syntax notice
+  - `OPF-062`/`OPF-063` — Adobe page-map attribute on spine and unknown manifest ID reference
+  - `OPF-064` — `dc:type` indicates a profile that differs from the active `--profile`
+  - `OPF-067` — resource declared as both package `<link>` and non-spine manifest item
+  - `NCX-004` — `dtb:uid` meta has leading/trailing whitespace
+  - `NAV-004` — EDUPUB nav must list every section
+  - `PKG-017`/`PKG-024` — uncommon EPUB 2 / EPUB 3 file extension
+
+### Fixed
+
+- **I/O failures routed to correct PKG IDs** (5 misrouted IDs corrected):
+  - `PKG-001` → `PKG-004` when ZIP open fails (`PKG-001` actually means version mismatch, not corruption)
+  - `PKG-006` → `PKG-003` when the file is too short to contain a ZIP header
+  - `PKG-025` → `PKG-008` in validator try/catch blocks (`PKG-025` is for "publication resource in META-INF" and is still emitted correctly elsewhere)
+  - CLI `ENOENT` → structured `PKG-018` (fatal, exit 1) instead of raw Node error (exit 2)
+  - CLI `EACCES`/`EISDIR`/`EIO` → `PKG-015`
+
+### Changed
+
+- **Intentionally Not Emitted** registry grew from 14 → 20 IDs: documented `OPF-021`, `OPF-036`, `HTM-005`, `HTM-011`, `HTM-044`, `PKG-020` as unreachable in TS pipeline (Java either never emits them, or only from code paths that don't apply here — `DTBookHandler`, dead IDs, or cases superseded by `RSC-005` from libxml2-wasm)
+
 ## [0.6.0] - 2026-04-20
 
 ### Added
@@ -634,7 +661,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - No media overlays validation
 - No script detection/validation
 
-[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/likecoin/epubcheck-ts/compare/v0.6.0...v0.6.1
+[0.6.0]: https://github.com/likecoin/epubcheck-ts/compare/v0.5.1...v0.6.0
+[0.5.1]: https://github.com/likecoin/epubcheck-ts/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/likecoin/epubcheck-ts/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.9...v0.4.0
 [0.3.9]: https://github.com/likecoin/epubcheck-ts/compare/v0.3.8...v0.3.9
