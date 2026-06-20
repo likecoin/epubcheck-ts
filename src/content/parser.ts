@@ -2,7 +2,8 @@
  * XML parsing using libxml2-wasm
  */
 
-import { XmlDocument, type XmlElement } from 'libxml2-wasm';
+import type { XmlElement } from 'libxml2-wasm';
+import { getXmlDocument } from '../util/xml-engine.js';
 
 export interface XMLNode {
   name: string;
@@ -14,7 +15,7 @@ export interface XMLNode {
 export class XMLParser {
   parse(xmlContent: string): XMLNode | null {
     try {
-      const doc = XmlDocument.fromString(xmlContent);
+      const doc = getXmlDocument().fromString(xmlContent);
       const result = this.convertElement(doc.root);
       doc.dispose();
       return result;

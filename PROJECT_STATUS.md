@@ -32,6 +32,8 @@ Quick reference for implementation progress vs Java EPUBCheck.
 | **Integration Tests** | 932 | 920 | 12 |
 | **Total** | **1375** | **1361** | **14** |
 
+Plus a separate packaging regression suite (`npm run test:packaging`, 3 tests) that validates the built artifacts; run in CI and on prepublish.
+
 ### Integration Test Files
 
 ```
@@ -248,6 +250,7 @@ Per-directory breakdown not tracked separately; see `test/integration/profiles.i
 
 ### Recent Milestones
 
+- **CJS consumability fixed** — `libxml2-wasm` (ESM-only, top-level await) is now lazy-loaded via `await import()` (`src/util/xml-engine.ts`) instead of statically imported, so the CJS build no longer emits a top-level `require('libxml2-wasm')` that threw `ERR_REQUIRE_ASYNC_MODULE` (and silently broke bundlers like webpack/Next.js with a false HTM-004 flood). Guarded by `test/integration/packaging.test.ts`.
 - **Single-file modes** (`--mode opf|xhtml|mo|exp`) enabled unskipping 49 tests + made single-file test porting possible
 - **100% Java scenario import** achieved across all core EPUB 3, EPUB 2, and profile feature files (~950 scenarios total)
 - **08-layout** went from 39% → 100% via `--mode opf`

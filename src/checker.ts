@@ -22,6 +22,7 @@ import { ReferenceValidator } from './references/validator.js';
 import { SchemaValidator } from './schema/orchestrator.js';
 import { SMILValidator } from './smil/validator.js';
 import { parseDoctype } from './util/doctype.js';
+import { loadXmlEngine } from './util/xml-engine.js';
 import type {
   EPUBVersion,
   EpubCheckOptions,
@@ -109,6 +110,8 @@ export class EpubCheck {
   async check(data: Uint8Array, filename?: string): Promise<EpubCheckResult> {
     const startTime = performance.now();
 
+    await loadXmlEngine();
+
     // Initialize validation context
     const context: ValidationContext = {
       data,
@@ -163,6 +166,8 @@ export class EpubCheck {
    */
   async checkExpanded(files: Map<string, Uint8Array>): Promise<EpubCheckResult> {
     const startTime = performance.now();
+
+    await loadXmlEngine();
 
     const context: ValidationContext = {
       data: new Uint8Array(0),
@@ -223,6 +228,8 @@ export class EpubCheck {
   async checkSingleFile(data: Uint8Array, filename: string): Promise<EpubCheckResult> {
     const startTime = performance.now();
     const mode = this.options.mode;
+
+    await loadXmlEngine();
 
     const context: ValidationContext = {
       data: new Uint8Array(0),

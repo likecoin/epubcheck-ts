@@ -2,7 +2,8 @@
  * Content document validation using libxml2-wasm for XML parsing
  */
 
-import { XmlDocument, XmlElement, type XmlNode } from 'libxml2-wasm';
+import type { XmlDocument, XmlElement, XmlNode } from 'libxml2-wasm';
+import { getXmlDocument, getXmlElement } from '../util/xml-engine.js';
 import { CSSValidator } from '../css/validator.js';
 import { SKMValidator } from '../skm/validator.js';
 import { SMILValidator } from '../smil/validator.js';
@@ -748,7 +749,7 @@ export class ContentValidator {
     let doc: XmlDocument | undefined;
 
     try {
-      doc = XmlDocument.fromString(svgContent);
+      doc = getXmlDocument().fromString(svgContent);
       // Extract IDs using XPath
       this.extractAndRegisterIDs(path, doc.root, registry);
     } catch (e) {
@@ -773,7 +774,7 @@ export class ContentValidator {
     const svgContent = new TextDecoder().decode(svgData);
     let doc: XmlDocument | undefined;
     try {
-      doc = XmlDocument.fromString(svgContent);
+      doc = getXmlDocument().fromString(svgContent);
     } catch {
       return;
     }
@@ -832,7 +833,7 @@ export class ContentValidator {
     const svgContent = new TextDecoder().decode(svgData);
     let doc: XmlDocument | undefined;
     try {
-      doc = XmlDocument.fromString(svgContent);
+      doc = getXmlDocument().fromString(svgContent);
     } catch {
       return;
     }
@@ -1282,7 +1283,7 @@ export class ContentValidator {
     // Try to parse with libxml2-wasm to check for well-formedness
     let doc: XmlDocument | null = null;
     try {
-      doc = XmlDocument.fromString(content);
+      doc = getXmlDocument().fromString(content);
     } catch (error) {
       if (error instanceof Error) {
         const { message, line, column } = this.parseLibxmlError(error.message);
@@ -3939,6 +3940,7 @@ export class ContentValidator {
       return Number.parseInt(el.name.substring(1), 10);
     };
 
+    const XmlElement = getXmlElement();
     const directElementChildren = (parent: XmlElement): XmlElement[] => {
       const out: XmlElement[] = [];
       let n = parent.firstChild;

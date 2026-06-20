@@ -5,7 +5,8 @@
  * and ../epubcheck/src/main/java/com/adobe/epubcheck/dict/SearchKeyMapHandler.java
  */
 
-import { XmlDocument, type XmlElement } from 'libxml2-wasm';
+import type { XmlDocument, XmlElement } from 'libxml2-wasm';
+import { getXmlDocument } from '../util/xml-engine.js';
 import { MessageId, pushMessage } from '../messages/index.js';
 import { resolvePath, tryDecodeUriComponent } from '../opf/validator.js';
 import { ReferenceType, type Reference } from '../references/types.js';
@@ -25,7 +26,7 @@ export class SKMValidator {
 
     let doc: XmlDocument | null = null;
     try {
-      doc = XmlDocument.fromString(content);
+      doc = getXmlDocument().fromString(content);
     } catch {
       pushMessage(context.messages, {
         id: MessageId.RSC_016,

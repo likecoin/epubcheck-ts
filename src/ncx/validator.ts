@@ -2,7 +2,8 @@
  * NCX (Navigation Control XML) validation for EPUB 2.0
  */
 
-import { XmlDocument, type XmlElement } from 'libxml2-wasm';
+import type { XmlDocument, XmlElement } from 'libxml2-wasm';
+import { getXmlDocument } from '../util/xml-engine.js';
 import { MessageId, pushMessage } from '../messages/index.js';
 import { resolvePath, tryDecodeUriComponent } from '../opf/validator.js';
 import type { ResourceRegistry } from '../references/registry.js';
@@ -21,7 +22,7 @@ export class NCXValidator {
   ): void {
     let doc: XmlDocument | null = null;
     try {
-      doc = XmlDocument.fromString(ncxContent);
+      doc = getXmlDocument().fromString(ncxContent);
     } catch (error) {
       if (error instanceof Error) {
         pushMessage(context.messages, {

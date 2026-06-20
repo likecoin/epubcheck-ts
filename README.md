@@ -114,16 +114,21 @@ if (result.valid) {
 const fs = require('node:fs');
 
 async function validate() {
-  const { EpubCheck } = await import('epubcheck-ts');
-  
+  const { EpubCheck } = require('@likecoin/epubcheck-ts');
+
   const epubData = fs.readFileSync('book.epub');
   const result = await EpubCheck.validate(epubData);
-  
+
   console.log(result.valid ? 'Valid!' : 'Invalid');
 }
 
 validate();
 ```
+
+> The XML engine (`libxml2-wasm`, ESM-only with top-level await) is lazy-loaded
+> inside `EpubCheck.validate()`, so the package stays `require()`-able from
+> CommonJS and importable without forcing top-level-await support on your
+> bundler.
 
 ### Browser
 

@@ -4,8 +4,11 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    setupFiles: ['./test/setup.ts'],
     include: ['src/**/*.test.ts', 'test/**/*.test.ts'],
-    exclude: ['node_modules', 'dist'],
+    // The packaging test runs against the build output, not src; it has its own
+    // config (vitest.packaging.config.ts) and the `test:packaging` script.
+    exclude: ['node_modules', 'dist', 'test/integration/packaging.test.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

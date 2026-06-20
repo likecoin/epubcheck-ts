@@ -39,3 +39,6 @@ jobs:
 
       - name: Run tests
         run: npm test -- --run
+
+      - name: Run packaging tests
+        run: npm run test:packaging

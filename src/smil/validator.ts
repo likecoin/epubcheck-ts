@@ -2,7 +2,8 @@
  * Media Overlay (SMIL) document validation
  */
 
-import { XmlDocument, type XmlElement } from 'libxml2-wasm';
+import type { XmlDocument, XmlElement } from 'libxml2-wasm';
+import { getXmlDocument } from '../util/xml-engine.js';
 import { EPUB_SSV_ALL } from '../vocab/epub-ssv.js';
 import { MessageId, pushMessage } from '../messages/index.js';
 import type { ManifestItem } from '../opf/types.js';
@@ -65,7 +66,7 @@ export class SMILValidator {
 
     let doc: XmlDocument | null = null;
     try {
-      doc = XmlDocument.fromString(content);
+      doc = getXmlDocument().fromString(content);
     } catch {
       pushMessage(context.messages, {
         id: MessageId.RSC_016,
