@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-06-21
+
+### Fixed
+
+- **CommonJS consumption fixed** — `libxml2-wasm` (ESM-only, with a top-level `await`) is now lazy-loaded via dynamic `import()` instead of a static import, so the CommonJS build no longer emits a top-level `require('libxml2-wasm')` that threw `ERR_REQUIRE_ASYNC_MODULE`. Under bundlers (e.g. webpack/Next.js) the old static import silently produced a partial module namespace where `XmlDocument` was undefined, causing a false `HTM-004` per content document. Both the ESM and CommonJS builds now load correctly, with no public API change. A new packaging regression test (`npm run test:packaging`, run in CI and on prepublish) guards the built artifacts against a reintroduced static import.
+
 ## [0.6.1] - 2026-04-27
 
 ### Added
@@ -661,7 +667,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - No media overlays validation
 - No script detection/validation
 
-[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.6.2...HEAD
+[0.6.2]: https://github.com/likecoin/epubcheck-ts/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/likecoin/epubcheck-ts/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/likecoin/epubcheck-ts/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/likecoin/epubcheck-ts/compare/v0.5.0...v0.5.1
