@@ -35,7 +35,7 @@ async function loadSchema(schemaPath: string): Promise<string> {
  */
 
 export class XsdValidator extends BaseSchemaValidator {
-  async validate(xml: string, schemaPath: string): Promise<ValidationMessage[]> {
+  async validate(xml: string | Uint8Array, schemaPath: string): Promise<ValidationMessage[]> {
     this.checkDisposed();
 
     const messages: ValidationMessage[] = [];
@@ -43,7 +43,8 @@ export class XsdValidator extends BaseSchemaValidator {
     try {
       const { XmlDocument, XsdValidator: LibXsdValidator } = await import('libxml2-wasm');
 
-      const doc = XmlDocument.fromString(xml);
+      const doc =
+        typeof xml === 'string' ? XmlDocument.fromString(xml) : XmlDocument.fromBuffer(xml);
 
       try {
         const schemaContent = await loadSchema(schemaPath);

@@ -32,10 +32,10 @@ Baseline: **EPUBCheck 5.3.0**, measured 2026-08-05.
 
 | Metric | Agreement |
 |---|---|
-| **Valid/invalid verdict** | **95.3%** |
-| Message-ID set, errors + warnings only | 85.5% |
-| Message-ID set, all severities | 71.5% |
-| Exact match (IDs + counts + severity) | 65.2% |
+| **Valid/invalid verdict** | **95.5%** |
+| Message-ID set, errors + warnings only | 86.1% |
+| Message-ID set, all severities | 72.2% |
+| Exact match (IDs + counts + severity) | 65.8% |
 
 Severity assignment agrees on **100%** of messages — zero mismatches across the corpus.
 
@@ -43,10 +43,10 @@ Severity assignment agrees on **100%** of messages — zero mismatches across th
 
 | Mode | n | Exact | Verdict |
 |---|---:|---:|---:|
-| `--mode opf` | 489 | 89.4% | 98.2% |
+| `--mode opf` | 489 | 90.8% | 98.6% |
 | `--mode xhtml` | 745 | 95.6% | 97.9% |
 | `--mode svg` | 52 | 88.5% | 92.3% |
-| **Total** | **1286** | **92.9%** | **97.7%** |
+| **Total** | **1286** | **93.5%** | **97.9%** |
 
 ### Real-world EPUBs (n=5)
 
@@ -69,6 +69,7 @@ Run both engines over the same bytes and diff. Java: `epubcheck <file> --json ou
 Two corpus caveats worth knowing before trusting a delta:
 - Roughly half of `test/fixtures/` are synthetic EPUBs wrapping Java's *standalone* fixtures, with fabricated stub assets. Java flags that scaffolding (e.g. `PKG-021` on 22-byte placeholder JPEGs), which inflates apparent gaps. The standalone table above avoids this entirely.
 - Java auto-detects the publication version; a differential run must not pass an explicit version, or it will mask version-gating bugs.
+- Standalone fixtures must be addressed by **basename**, with the bytes read from wherever they live. Passing a path-qualified name makes every sibling `href` resolve outside the notional container, so `RSC-026` fires on nearly every OPF and the mode's exact-match score collapses to near zero. That is a measurement artifact, not a regression.
 
 ---
 
@@ -149,6 +150,7 @@ Metadata.xml (multiple renditions), full ARIA roles/attributes, external entity 
 5. **fontoxpath XPath 2.0** — crashes on `tokenize()` etc.; OPF/nav Schematron rules implemented as direct TypeScript.
 6. **EPUB 2 wrong-namespace count** — per-element error count differs (libxml2-wasm vs Jing reporting shape; 1 skipped test).
 7. **USAGE message dedup** — Java collapses identical USAGE messages per (id, file); TS emits one per occurrence. Cosmetic count drift for CSS-028/OPF-090/RSC-007; no semantic difference.
+8. **Partial parse after a fatal XML error** — Java's SAX handler keeps whatever it read before aborting, so a package document that fails mid-file still yields `OPF-030`/`OPF-003` from the truncated manifest. This port's package parser is regex-based and reads the whole file regardless, so it reports only the fatal `RSC-016`. Affects `conformance-xml-malformed-error` and `conformance-xml-undeclared-namespace-error`; matching it would mean making the parser *less* capable.
 
 ---
 

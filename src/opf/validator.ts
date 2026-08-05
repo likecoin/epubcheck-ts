@@ -3,7 +3,7 @@ import { checkUrlLeaking, isDataURL, isFileURL } from '../references/url.js';
 import { isValidSmilClock, parseSmilClock } from '../smil/clock.js';
 import { EPUB_VERSIONS, type EPUBProfile, type ValidationContext } from '../types.js';
 import { parseDoctype } from '../util/doctype.js';
-import { sniffXmlEncoding } from '../util/encoding.js';
+import { decodeXmlBytes } from '../util/encoding.js';
 import { locationAt } from '../util/location.js';
 import { parseOPF, stripXmlComments } from './parser.js';
 import type { Collection, ManifestItem, PackageDocument } from './types.js';
@@ -513,23 +513,8 @@ export class OPFValidator {
       return;
     }
 
-    // Check XML encoding before parsing
-    const encoding = sniffXmlEncoding(opfData);
-    if (encoding === 'UTF-16') {
-      pushMessage(context.messages, {
-        id: MessageId.RSC_027,
-        message: `Detected non-UTF-8 encoding "${encoding}" in "${opfPath}"`,
-        location: { path: opfPath },
-      });
-    } else if (encoding !== null) {
-      pushMessage(context.messages, {
-        id: MessageId.RSC_028,
-        message: `Detected non-UTF-8 encoding "${encoding}" in "${opfPath}"`,
-        location: { path: opfPath },
-      });
-    }
-
-    const opfXml = new TextDecoder().decode(opfData);
+    // Encoding and well-formedness are reported by EpubCheck.reportXmlSource.
+    const opfXml = decodeXmlBytes(opfData);
 
     // HTM-009: EPUB 2 OPF DOCTYPE check.
     // Only the OEB 1.2 package DOCTYPE is allowed; any other PUBLIC/SYSTEM

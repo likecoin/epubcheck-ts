@@ -16,11 +16,11 @@ export interface SchemaValidator {
   /**
    * Validate XML content against a schema
    *
-   * @param xml - The XML content to validate
+   * @param xml - The XML content to validate, as raw bytes or decoded text
    * @param schemaPath - Path to the schema file
    * @returns Array of validation messages
    */
-  validate(xml: string, schemaPath: string): Promise<ValidationMessage[]>;
+  validate(xml: string | Uint8Array, schemaPath: string): Promise<ValidationMessage[]>;
 
   /**
    * Dispose of any resources held by the validator
@@ -34,7 +34,7 @@ export interface SchemaValidator {
 export abstract class BaseSchemaValidator implements SchemaValidator {
   protected disposed = false;
 
-  abstract validate(xml: string, schemaPath: string): Promise<ValidationMessage[]>;
+  abstract validate(xml: string | Uint8Array, schemaPath: string): Promise<ValidationMessage[]>;
 
   dispose(): void {
     this.disposed = true;

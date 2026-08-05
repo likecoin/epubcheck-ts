@@ -23,8 +23,10 @@ import { ReferenceValidator } from './references/validator.js';
 import { SchemaValidator } from './schema/orchestrator.js';
 import { SMILValidator } from './smil/validator.js';
 import { parseDoctype } from './util/doctype.js';
+import { decodeXmlBytes, sniffXmlEncoding } from './util/encoding.js';
 import { locationAt } from './util/location.js';
-import { loadXmlEngine } from './util/xml-engine.js';
+import type { XmlParseFailure } from './util/xml-engine.js';
+import { checkXmlWellFormed, loadXmlEngine } from './util/xml-engine.js';
 import type {
   EPUBVersion,
   EpubCheckOptions,
@@ -251,11 +253,15 @@ export class EpubCheck {
 
       if (mode === 'opf') {
         context.opfPath = filename;
-        const opfValidator = new OPFValidator();
-        opfValidator.validate(context);
+        // The version comes from the caller in single-file mode, so a document
+        // that yielded nothing gets no accompanying OPF-001.
+        if (!this.reportXmlSource(context, filename, data)?.nothingParsed) {
+          const opfValidator = new OPFValidator();
+          opfValidator.validate(context);
 
-        const schemaValidator = new SchemaValidator(context);
-        await schemaValidator.validate();
+          const schemaValidator = new SchemaValidator(context);
+          await schemaValidator.validate();
+        }
       } else if (mode === 'xhtml') {
         const contentValidator = new ContentValidator();
         contentValidator.validateSingleDocument(context, filename);
@@ -737,7 +743,17 @@ export class EpubCheck {
     const opfData = context.files.get(context.opfPath);
     if (!opfData) return true;
 
-    const peek = peekOpfVersion(new TextDecoder().decode(opfData));
+    const failure = this.reportXmlSource(context, context.opfPath, opfData);
+    if (failure?.nothingParsed) {
+      pushMessage(context.messages, {
+        id: MessageId.OPF_001,
+        message: 'There was an error when parsing the EPUB version: Version not found.',
+        location: { path: context.opfPath },
+      });
+      return false;
+    }
+
+    const peek = peekOpfVersion(decodeXmlBytes(opfData));
     if (peek.kind === 'undeclared') {
       // Without a version the document cannot be validated against any ruleset.
       pushMessage(context.messages, {
@@ -750,6 +766,46 @@ export class EpubCheck {
     // Unreadable (bad encoding, malformed, not an OPF): let the pipeline diagnose it.
     if (peek.kind === 'declared') context.version = peek.version;
     return true;
+  }
+
+  /**
+   * Report the encoding and well-formedness of an XML document, mirroring
+   * Java's XMLParser: the sniffed encoding is reported (RSC-027/RSC-028) but
+   * not applied, the raw bytes are handed to the parser, and a parse failure
+   * becomes a fatal RSC-016.
+   *
+   * @returns the parse failure, when the document is not well-formed
+   */
+  private reportXmlSource(
+    context: ValidationContext,
+    path: string,
+    data: Uint8Array,
+  ): XmlParseFailure | undefined {
+    const encoding = sniffXmlEncoding(data);
+    if (encoding === 'UTF-16') {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_027,
+        message: 'XML document is encoded in UTF-16. It should be encoded in UTF-8 instead.',
+        location: { path },
+      });
+    } else if (encoding !== null) {
+      pushMessage(context.messages, {
+        id: MessageId.RSC_028,
+        message: `XML documents must be encoded in UTF-8, but ${encoding} was detected.`,
+        location: { path },
+      });
+    }
+
+    const failure = checkXmlWellFormed(data);
+    if (failure) {
+      (context.xmlParseFailures ??= new Set()).add(path);
+      pushMessage(context.messages, {
+        id: MessageId.RSC_016,
+        message: `Fatal Error while parsing file: ${failure.message}`,
+        location: locationAt(path, failure.line),
+      });
+    }
+    return failure;
   }
 
   /**
@@ -914,14 +970,13 @@ export class EpubCheck {
       return;
     }
 
-    const content = new TextDecoder().decode(containerData);
     parseContainerContent(
-      content,
+      decodeXmlBytes(containerData),
       context,
       (path) => context.files.has(path),
       (path) => {
         const data = context.files.get(path);
-        return data ? new TextDecoder().decode(data) : undefined;
+        return data ? decodeXmlBytes(data) : undefined;
       },
     );
   }

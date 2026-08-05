@@ -122,6 +122,12 @@ export interface ValidationContext {
   rootfiles: Rootfile[];
   /** Path to the package document (OPF) */
   opfPath?: string;
+  /**
+   * Paths whose XML is not well-formed. A fatal parse error is reported once,
+   * at the point the document is read; later passes skip these paths rather
+   * than reporting the same failure again in their own terms.
+   */
+  xmlParseFailures?: Set<string>;
   /** Parsed package document */
   packageDocument?: PackageDocument;
   /** NCX UID for validation against OPF identifier */

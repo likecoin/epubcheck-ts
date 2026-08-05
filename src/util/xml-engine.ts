@@ -47,3 +47,56 @@ export function getXmlElement(): typeof Libxml2.XmlElement {
   }
   return engine.XmlElement;
 }
+
+/** A document that is not well-formed, as reported by the parser. */
+export interface XmlParseFailure {
+  message: string;
+  line?: number;
+  /**
+   * True when the failure happened before any markup was read, so not even the
+   * root element exists. Java's SAX handler is left empty in this case, which
+   * is why EPUBCheck reports the version as missing rather than continuing with
+   * a partially parsed document.
+   */
+  nothingParsed: boolean;
+}
+
+/**
+ * libxml2 messages raised before any markup is read — the byte stream could not
+ * be decoded, or held no element at all.
+ *
+ * Matching on message text is unpleasant, but `ErrorDetail` carries no numeric
+ * code, and recovery-mode parsing is no help either: libxml2-wasm inspects the
+ * error list and throws even with `XML_PARSE_RECOVER`, so there is no partial
+ * document to inspect for a root element.
+ */
+const NOTHING_PARSED_PATTERNS = [
+  /^Document is empty/,
+  /^Unsupported encoding/,
+  /^Invalid encoding/,
+  /doesn't match auto-detected/,
+  /^Start tag expected/,
+];
+
+/**
+ * Parse `data` for well-formedness only, mirroring how Java hands raw bytes to
+ * SAX and lets it detect the encoding itself (XMLParser.java:141-165). Returns
+ * undefined when the document is well-formed.
+ */
+export function checkXmlWellFormed(data: Uint8Array): XmlParseFailure | undefined {
+  let doc: Libxml2.XmlDocument | undefined;
+  try {
+    doc = getXmlDocument().fromBuffer(data);
+    return undefined;
+  } catch (error) {
+    const first = (error as Partial<Libxml2.XmlLibError>).details?.[0];
+    const message = (first?.message ?? (error as Error).message).trim();
+    return {
+      message,
+      ...(first ? { line: first.line } : {}),
+      nothingParsed: NOTHING_PARSED_PATTERNS.some((pattern) => pattern.test(message)),
+    };
+  } finally {
+    doc?.dispose();
+  }
+}

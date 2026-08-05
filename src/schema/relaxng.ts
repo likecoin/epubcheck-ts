@@ -40,7 +40,12 @@ async function loadSchema(schemaPath: string): Promise<string> {
  */
 
 export class RelaxNGValidator extends BaseSchemaValidator {
-  async validate(xml: string, schemaPath: string): Promise<ValidationMessage[]> {
+  /**
+   * @param xml the document, as raw bytes or already-decoded text. Prefer bytes:
+   *   an XML declaration naming a non-UTF-8 encoding contradicts a decoded
+   *   string and makes the parser reject an otherwise valid document.
+   */
+  async validate(xml: string | Uint8Array, schemaPath: string): Promise<ValidationMessage[]> {
     this.checkDisposed();
 
     const messages: ValidationMessage[] = [];
@@ -51,7 +56,8 @@ export class RelaxNGValidator extends BaseSchemaValidator {
       const LibRelaxNGValidator = libxml2.RelaxNGValidator;
       const { XmlDocument } = libxml2;
 
-      const doc = XmlDocument.fromString(xml);
+      const doc =
+        typeof xml === 'string' ? XmlDocument.fromString(xml) : XmlDocument.fromBuffer(xml);
 
       try {
         const schemaContent = await loadSchema(schemaPath);

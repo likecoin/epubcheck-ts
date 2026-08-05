@@ -85,9 +85,8 @@ export class SchemaValidator {
       return;
     }
 
-    const xml = new TextDecoder().decode(data);
     const validator = new RelaxNGValidator();
-    const messages = await validator.validate(xml, schemaPath);
+    const messages = await validator.validate(data, schemaPath);
 
     for (const msg of messages) {
       this.addMessage({
@@ -107,9 +106,14 @@ export class SchemaValidator {
       return;
     }
 
-    const xml = new TextDecoder().decode(data);
+    // A document that failed to parse already produced a fatal RSC-016; the
+    // schema pass would only restate it as a RelaxNG initialization failure.
+    if (this.context.xmlParseFailures?.has(opfPath)) {
+      return;
+    }
+
     const validator = new RelaxNGValidator();
-    const messages = await validator.validate(xml, schemaPath);
+    const messages = await validator.validate(data, schemaPath);
 
     for (const msg of messages) {
       this.addMessage({

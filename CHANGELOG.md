@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **XML documents are decoded by encoding, and a parse failure is now fatal.** Two compounding defects: every XML byte stream was decoded with `new TextDecoder()` (UTF-8), so a UTF-16 package document became mojibake; and `parseOPF` is regex-based and cannot fail, so that mojibake silently produced an empty `PackageDocument` defaulting to version 3.0. One bad byte sequence therefore surfaced as a cascade of unrelated structural errors instead of a single fatal. Java sniffs the encoding for *reporting only* (`RSC-027`/`RSC-028`) and hands raw bytes to SAX, letting the parser detect the encoding itself (`XMLParser.java:141-165`); a `SAXException` becomes a fatal `RSC-016` with the version left unresolved. This port now does the same — `decodeXmlBytes` decodes per the BOM (including UTF-32, which `TextDecoder` does not support), the RelaxNG pass parses from bytes rather than re-encoded text, and `checkXmlWellFormed` gates the regex parser. Where the failure occurs before any markup is read, validation stops with `OPF-001`, matching Java's unresolved version. Across the 758-fixture corpus this moved verdict agreement 95.3% → 95.5% and error/warning ID agreement 85.5% → 86.1%; `--mode opf` exact agreement over Java's standalone fixtures rose 89.4% → 90.8%.
+- **`sniffXmlEncoding` now matches Java's magic-table order.** Java tests its UTF-16 table before its UCS-4 table, so a UTF-32LE BOM (`FF FE 00 00`) matches on its two-byte prefix and is reported as UTF-16. This port deliberately checked UCS-4 first, which is arguably more correct but disagrees with the oracle.
+- **The version peek on the container path decoded as UTF-8**, leaving the same mojibake bug alive for the `OCFChecker`-equivalent version resolution in `src/ocf/container.ts` even after the package-document path was fixed.
+
+### Changed
+
+- **`test/fixtures/invalid/content/xml-encoding-utf32-BOM-error.epub` repaired.** Its package document had been re-encoded to UTF-32LE-with-BOM when the fixture was packaged; Java's source fixture is UTF-32BE-without-BOM. The two are different tests — the LE-with-BOM form trips the sniffer-order quirk above and yields `RSC-027` plus a fatal, where Java's own feature file specifies `RSC-028` alone. Both engines now agree with that expectation on the repaired bytes.
+
 ## [0.6.3] - 2026-08-06
 
 ### Added
