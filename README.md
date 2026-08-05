@@ -6,7 +6,7 @@ Validate EPUB files in Node.js and the browser. A TypeScript implementation of [
 [![npm](https://img.shields.io/npm/v/%40likecoin%2Fepubcheck-ts)](https://www.npmjs.com/package/@likecoin/epubcheck-ts)
 [![License](https://img.shields.io/npm/l/%40likecoin%2Fepubcheck-ts)](./LICENSE)
 
-> **Status**: ~99% feature parity with Java EPUBCheck (1361 tests passing, 14 skipped). See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for details. For full EPUB 3 conformance testing, use the official [Java EPUBCheck](https://github.com/w3c/epubcheck).
+> **Status**: Measured against EPUBCheck 5.3.0 across 758 spec fixtures — **95% agreement on whether a publication is valid**, 86% agreement on which errors and warnings are reported. Agreement is near-total on real-world EPUBs. See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for the full breakdown and methodology. For formal EPUB 3 conformance certification, use the official [Java EPUBCheck](https://github.com/w3c/epubcheck).
 
 ## Features
 
@@ -297,9 +297,11 @@ This library is a TypeScript port of the Java-based [EPUBCheck](https://github.c
 
 Legend: 🟢 Complete | 🟡 Partial | 🔴 Basic | ❌ Not Started
 
-**Overall Progress: ~99% of Java EPUBCheck features**
-
-See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for detailed comparison.
+The percentages above are per-component estimates. For what actually matters —
+whether this tool and Java EPUBCheck reach the same verdict on the same file —
+see the measured figures in [PROJECT_STATUS.md](./PROJECT_STATUS.md): **95%
+valid/invalid agreement and 86% error/warning agreement** across 758 fixtures,
+with the remaining differences enumerated.
 
 ## Development
 
@@ -382,7 +384,7 @@ Legend: ✅ Implemented
 | Aspect | epubcheck-ts | EPUBCheck (Java) |
 |--------|--------------|------------------|
 | Runtime | Node.js / Browser | JVM |
-| Feature Parity | ~99% | 100% |
+| Verdict agreement | 95% (measured, n=758) | Baseline |
 | Bundle Size | ~450KB JS + ~1.6MB WASM | ~15MB |
 | Installation | `npm install` | Download JAR |
 | Integration | Native JS/TS | CLI or Java API |

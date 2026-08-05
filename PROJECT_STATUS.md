@@ -4,6 +4,8 @@ Quick reference for implementation progress vs Java EPUBCheck. This is the **onl
 
 ## Overview
 
+Per-component estimates. For measured agreement with Java, see [Measured Parity](#measured-parity-vs-java-epubcheck) below — that is the number to quote.
+
 | Category | Completion | Notes |
 |----------|------------|-------|
 | OCF Validation | ~92% | URL leaking, UTF-8, spaces, forbidden chars, encryption/signatures schema |
@@ -16,9 +18,57 @@ Quick reference for implementation progress vs Java EPUBCheck. This is the **onl
 | Accessibility | ~71% | 12/17 ACC checks (content + OPF a11y metadata) |
 | Cross-reference | ~92% | URL leaking, CSS/link/embed refs, exempt resources, cross-document feature checks |
 
-**Overall: ~99% complete (1383 tests passing, 14 skipped, 1397 total).**
-
 **100% Java scenario import**: every Java EPUBCheck feature file (core EPUB 3, EPUB 2, profile extensions) is ported. The 14 skipped tests form a discoverable backlog — each has an inline `it.skip` annotation naming the specific blocker.
+
+---
+
+## Measured Parity vs Java EPUBCheck
+
+Test pass rate measures whether ported scenarios still pass; it cannot see a check that fires when Java stays silent, nor missing location data. These figures come from running both engines over identical inputs and diffing the emitted message IDs. **Java is the oracle.**
+
+Baseline: **EPUBCheck 5.3.0**, measured 2026-08-05.
+
+### Packaged EPUBs (`test/fixtures/`, n=758)
+
+| Metric | Agreement |
+|---|---|
+| **Valid/invalid verdict** | **95.3%** |
+| Message-ID set, errors + warnings only | 85.5% |
+| Message-ID set, all severities | 71.5% |
+| Exact match (IDs + counts + severity) | 65.2% |
+
+Severity assignment agrees on **100%** of messages — zero mismatches across the corpus.
+
+### Standalone single-file modes (Java's own fixtures, n=1286)
+
+| Mode | n | Exact | Verdict |
+|---|---:|---:|---:|
+| `--mode opf` | 489 | 89.4% | 98.2% |
+| `--mode xhtml` | 745 | 95.6% | 97.9% |
+| `--mode svg` | 52 | 88.5% | 92.3% |
+| **Total** | **1286** | **92.9%** | **97.7%** |
+
+### Real-world EPUBs (n=5)
+
+5/5 verdict agreement; 4/5 byte-identical message sets. The fifth differs only in report shape (see USAGE dedup under Known Issues). Guarded by `test/integration/real-world.test.ts`.
+
+### Message locations
+
+**62.9%** of messages carry a line number (Java: 81.5%). Where both engines report the same ID on the same file, **87.2%** of line numbers match exactly; the rest are attribution or convention differences, not arithmetic. Messages still lacking a line come mostly from `RSC-005` rules and from document-level checks where nothing has a position — `OPF-003` has no line in Java either.
+
+### Reading these numbers
+
+- **Verdict agreement** is what a user feels: do both tools call the same file valid or invalid?
+- **Message-ID agreement** is stricter: do they report the *same* problems?
+- **Exact match** additionally requires identical counts, so it is depressed by the USAGE dedup difference below and is the least meaningful of the three.
+
+### Method
+
+Run both engines over the same bytes and diff. Java: `epubcheck <file> --json out.json -u`, or `--mode <m> -v 3.0` for standalone fixtures. TS: the library API with `includeUsage`/`includeInfo`. Normalize Java's `HTM_060b` form to `HTM-060b`, then compare per-fixture message-ID multisets.
+
+Two corpus caveats worth knowing before trusting a delta:
+- Roughly half of `test/fixtures/` are synthetic EPUBs wrapping Java's *standalone* fixtures, with fabricated stub assets. Java flags that scaffolding (e.g. `PKG-021` on 22-byte placeholder JPEGs), which inflates apparent gaps. The standalone table above avoids this entirely.
+- Java auto-detects the publication version; a differential run must not pass an explicit version, or it will mask version-gating bugs.
 
 ---
 
@@ -29,8 +79,8 @@ Quick reference for implementation progress vs Java EPUBCheck. This is the **onl
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
 | Unit Tests | 455 | 453 | 2 |
-| Integration Tests | 942 | 930 | 12 |
-| **Total** | **1397** | **1383** | **14** |
+| Integration Tests | 947 | 935 | 12 |
+| **Total** | **1402** | **1388** | **14** |
 
 Plus a separate packaging regression suite (`npm run test:packaging`, 3 tests) validating built artifacts; runs in CI and on prepublish.
 
@@ -48,8 +98,12 @@ test/integration/
 ├── layout.integration.test.ts        #  52 tests  ( 52 pass,   0 skip) - Layout/viewport/FXL
 ├── mediaoverlays.integration.test.ts #  50 tests  ( 50 pass,   0 skip) - Media overlays/SMIL
 ├── epub2.integration.test.ts         #  99 tests  ( 98 pass,   1 skip) - EPUB 2 (all 7 Java features)
-└── profiles.integration.test.ts      # 125 tests  (125 pass,   0 skip) - 9 profile extensions
+├── profiles.integration.test.ts      # 125 tests  (125 pass,   0 skip) - 9 profile extensions
+├── single-file.integration.test.ts   #  10 tests  ( 10 pass,   0 skip) - --mode xhtml/svg container guard
+└── real-world.test.ts                #   5 tests  (  5 pass,   0 skip) - Public-domain books
 ```
+
+`real-world.test.ts` runs against real published EPUBs rather than spec fixtures. The books are fetched on demand by `npm run fetch:real-epubs` into a gitignored cache; the tests skip themselves when it is absent, so offline runs and CI are unaffected.
 
 Integration tests imported from the Java EPUBCheck test suite (`../epubcheck/src/test/resources/epub3/`).
 
@@ -102,6 +156,8 @@ Metadata.xml (multiple renditions), full ARIA roles/attributes, external entity 
 
 **100% Java scenario import complete** — every Java EPUBCheck feature file is represented; each skipped test has a specific gap annotation.
 
+This table reports how many *ported scenarios* pass, which is a different question from whether the two engines agree — a scenario ported with a subtly wrong expectation passes forever. See [Measured Parity](#measured-parity-vs-java-epubcheck) for the differential figures.
+
 | Tier | Java Scenarios | Active | Skipped | Pass Rate |
 |---|---:|---:|---:|---:|
 | Core EPUB 3 | ~726 | ~695 | 11 | ~98% |
@@ -122,11 +178,18 @@ Core EPUB 3 per-feature: 00-minimal 100%, 02-conformance 100%, 03-resources 97%,
 
 ## Priority Next Steps
 
-Ordered by severity impact (active error/warning messages not yet emitted):
+Ordered by measured impact on agreement with Java:
 
-1. **Advanced media** — deep format validation beyond magic numbers (MED-003/004, PKG-021/022, OPF-051/057).
-2. **Remaining accessibility** — ACC-008/013/015/016/017 (all suppressed by default; low real-world impact).
-3. **Specialized** — dictionary/index advanced validation, multiple renditions (metadata.xml), signatures.xml validation.
+1. **Remaining false positives** — 75 error/warning occurrences across 30 IDs that Java does not emit; `OPF-097`, `OPF-003` and `OPF-088` dominate at usage severity. These cost more agreement than any unimplemented check.
+2. **Remaining coverage gaps** — 80 occurrences across 22 IDs Java emits and we do not, led by `PKG-021` (deep image decoding) and `RSC-005`.
+3. **Line numbers for `RSC-005`** — ~130 messages still carry no line; the OPF model now records positions, so the remaining work is per-rule attribution.
+4. **Advanced media** — deep format validation beyond magic numbers (MED-003/004, PKG-021/022, OPF-051/057).
+5. **Remaining accessibility** — ACC-008/013/015/016/017 (all suppressed by default; low real-world impact).
+6. **Specialized** — dictionary/index advanced validation, multiple renditions (metadata.xml), signatures.xml validation.
+
+### Unreachable code
+
+`src/schema/schematron.ts` (`SchematronValidator`) and `XMLParser`/`XMLWalker` in `src/content/parser.ts` are imported only by their own test files. `src/schema/orchestrator.ts` never imports Schematron — its comments claiming content is "validated via Schematron" describe an arrangement that does not exist; the rules are hand-ported TypeScript in `src/content/validator.ts` and `src/opf/validator.ts`. Either wire these up or delete them.
 
 ---
 
