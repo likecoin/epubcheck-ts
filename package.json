@@ -26,6 +26,7 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "generate:schemas": "npx tsx scripts/generate-schemas.ts",
+    "fetch:real-epubs": "npx tsx scripts/fetch-real-epubs.ts",
     "test": "vitest",
     "test:run": "vitest run",
     "test:packaging": "vitest run --config vitest.packaging.config.ts",

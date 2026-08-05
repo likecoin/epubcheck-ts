@@ -13,6 +13,9 @@ examples/*/node_modules/
 # Generated HTML docs (Markdown docs are kept in repo)
 docs/html/
 
+# Real-world EPUBs cached by scripts/fetch-real-epubs.ts (not vendored)
+test/fixtures/real/
+
 # Test coverage
 coverage/
 
