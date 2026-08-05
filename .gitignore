@@ -16,6 +16,9 @@ docs/html/
 # Test coverage
 coverage/
 
+# Real-world EPUB cache, fetched on demand by `npm run fetch:real-epubs`
+test/fixtures/real/
+
 # IDE
 .idea/
 .vscode/
