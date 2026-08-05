@@ -4,6 +4,7 @@ import { isValidSmilClock, parseSmilClock } from '../smil/clock.js';
 import { EPUB_VERSIONS, type EPUBProfile, type ValidationContext } from '../types.js';
 import { parseDoctype } from '../util/doctype.js';
 import { sniffXmlEncoding } from '../util/encoding.js';
+import { locationAt } from '../util/location.js';
 import { parseOPF, stripXmlComments } from './parser.js';
 import type { Collection, ManifestItem, PackageDocument } from './types.js';
 import { ITEM_PROPERTIES, LINK_PROPERTIES, SPINE_PROPERTIES } from './types.js';
@@ -683,7 +684,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.RSC_005,
           message: `EPUB Dictionaries "dictionary-type" metadata must be one of ${[...DICTIONARY_TYPE_VALUES].map((v) => `"${v}"`).join(', ')}. Found: "${value}"`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, meta.line),
         });
       }
     }
@@ -761,7 +762,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.RSC_005,
           message: `EPUB Dictionaries "source-language" and "target-language" must also be declared as "dc:language" in package-level metadata. Found: "${value}"`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, meta.line),
         });
       }
     }
@@ -885,7 +886,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.OPF_064,
           message: `OPF declares type "${dc.value.trim().toLowerCase()}"; consider validating using the "${inferred}" profile.`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, dc.line),
         });
         return;
       }
@@ -1135,14 +1136,14 @@ export class OPFValidator {
           pushMessage(context.messages, {
             id: MessageId.OPF_025,
             message: `Property value must be a single value, not a list: "${meta.property}"`,
-            location: { path: opfPath },
+            location: locationAt(opfPath, meta.line),
           });
         }
         if (meta.scheme && /\s/.test(meta.scheme.trim())) {
           pushMessage(context.messages, {
             id: MessageId.OPF_025,
             message: `Scheme value must be a single value, not a list: "${meta.scheme}"`,
-            location: { path: opfPath },
+            location: locationAt(opfPath, meta.line),
           });
         }
 
@@ -1153,7 +1154,7 @@ export class OPFValidator {
             pushMessage(context.messages, {
               id: MessageId.OPF_026,
               message: `Malformed property name: "${prop}"`,
-              location: { path: opfPath },
+              location: locationAt(opfPath, meta.line),
             });
           }
         }
@@ -1165,7 +1166,7 @@ export class OPFValidator {
             pushMessage(context.messages, {
               id: MessageId.OPF_027,
               message: `Undefined property: "${scheme}"`,
-              location: { path: opfPath },
+              location: locationAt(opfPath, meta.line),
             });
           }
         }
@@ -1228,7 +1229,7 @@ export class OPFValidator {
           pushMessage(context.messages, {
             id: MessageId.RSC_005,
             message: '@refines must be a relative URL',
-            location: { path: opfPath },
+            location: locationAt(opfPath, meta.line),
           });
           continue;
         }
@@ -1241,7 +1242,7 @@ export class OPFValidator {
             pushMessage(context.messages, {
               id: MessageId.RSC_017,
               message: `@refines should instead refer to "${refines}" using a fragment identifier pointing to its manifest item`,
-              location: { path: opfPath },
+              location: locationAt(opfPath, meta.line),
             });
           }
           continue;
@@ -1253,7 +1254,7 @@ export class OPFValidator {
           pushMessage(context.messages, {
             id: MessageId.RSC_005,
             message: `@refines missing target id: "${targetId}"`,
-            location: { path: opfPath },
+            location: locationAt(opfPath, meta.line),
           });
         }
       }
@@ -1874,13 +1875,13 @@ export class OPFValidator {
           pushMessage(context.messages, {
             id: MessageId.OPF_092,
             message: `Language tag must not have leading or trailing whitespace: "${lang}"`,
-            location: { path: opfPath },
+            location: locationAt(opfPath, link.line),
           });
         } else if (!isValidLanguageTag(lang)) {
           pushMessage(context.messages, {
             id: MessageId.OPF_092,
             message: `Invalid language tag: "${lang}"`,
-            location: { path: opfPath },
+            location: locationAt(opfPath, link.line),
           });
         }
       }
@@ -1892,7 +1893,7 @@ export class OPFValidator {
             pushMessage(context.messages, {
               id: MessageId.OPF_027,
               message: `Undefined property: "${prop}"`,
-              location: { path: opfPath },
+              location: locationAt(opfPath, link.line),
             });
           }
         }
@@ -1909,7 +1910,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.OPF_089,
           message: `The "alternate" keyword must not be combined with other keywords in the "rel" attribute`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, link.line),
         });
       }
 
@@ -1919,7 +1920,7 @@ export class OPFValidator {
           pushMessage(context.messages, {
             id: MessageId.OPF_086,
             message: `The rel keyword "${kw}" is deprecated`,
-            location: { path: opfPath },
+            location: locationAt(opfPath, link.line),
           });
         }
       }
@@ -1932,7 +1933,7 @@ export class OPFValidator {
           pushMessage(context.messages, {
             id: MessageId.OPF_027,
             message: `Undefined property: "${kw}"`,
-            location: { path: opfPath },
+            location: locationAt(opfPath, link.line),
           });
         }
       }
@@ -1943,7 +1944,7 @@ export class OPFValidator {
           id: MessageId.RSC_005,
           message:
             '"record" links only applies to the Publication (must not have a "refines" attribute).',
-          location: { path: opfPath },
+          location: locationAt(opfPath, link.line),
         });
       }
 
@@ -1952,7 +1953,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.RSC_005,
           message: '"voicing" links must have a "refines" attribute.',
-          location: { path: opfPath },
+          location: locationAt(opfPath, link.line),
         });
       }
 
@@ -1969,7 +1970,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.OPF_098,
           message: `The "href" attribute must reference resources, not elements in the package document, but found URL "${href}".`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, link.line),
         });
         continue;
       }
@@ -1979,7 +1980,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.RSC_029,
           message: `Data URLs are not allowed in the package document link href`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, link.line),
         });
         continue;
       }
@@ -1989,7 +1990,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.RSC_030,
           message: `File URLs are not allowed in the package document`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, link.line),
         });
         continue;
       }
@@ -2001,7 +2002,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.RSC_033,
           message: `Relative URL strings must not have a query component: "${href}"`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, link.line),
         });
       }
 
@@ -2010,7 +2011,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.OPF_095,
           message: `The "voicing" link media type must be an audio type, but found "${link.mediaType}"`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, link.line),
         });
       }
 
@@ -2019,7 +2020,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.OPF_094,
           message: `The "media-type" attribute is required for "record" and "voicing" links`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, link.line),
         });
       }
 
@@ -2032,7 +2033,7 @@ export class OPFValidator {
           id: MessageId.OPF_093,
           message:
             'The "media-type" attribute is required for linked resources located in the EPUB container',
-          location: { path: opfPath },
+          location: locationAt(opfPath, link.line),
         });
       }
 
@@ -2058,7 +2059,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.RSC_007w,
           message: `Referenced resource "${resolvedPath}" could not be found in the EPUB`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, link.line),
         });
       }
 
@@ -2068,7 +2069,7 @@ export class OPFValidator {
           pushMessage(context.messages, {
             id: MessageId.OPF_067,
             message: `Resource "${manifestItem.href}" is referenced as a link but is also declared as a manifest item.`,
-            location: { path: opfPath },
+            location: locationAt(opfPath, link.line),
           });
         }
       }
@@ -2091,7 +2092,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.OPF_074,
           message: `Duplicate manifest item id: "${item.id}"`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, item.line),
         });
       }
       seenIds.add(item.id);
@@ -2101,7 +2102,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.OPF_074,
           message: `Duplicate manifest item href: "${item.href}"`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, item.line),
         });
       }
       seenHrefs.add(item.href);
@@ -2111,7 +2112,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.RSC_029,
           message: `Data URLs are not allowed in the manifest item href`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, item.line),
         });
         continue;
       }
@@ -2122,7 +2123,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.RSC_033,
           message: `Relative URL strings must not have a query component: "${item.href}"`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, item.line),
         });
       }
 
@@ -2139,7 +2140,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.OPF_099,
           message: 'The manifest must not list the package document',
-          location: { path: opfPath },
+          location: locationAt(opfPath, item.line),
         });
       }
 
@@ -2151,7 +2152,7 @@ export class OPFValidator {
           pushMessage(context.messages, {
             id: MessageId.RSC_026,
             message: `URL "${item.href}" leaks outside the container (it is not a valid-relative-ocf-URL-with-fragment string)`,
-            location: { path: opfPath },
+            location: locationAt(opfPath, item.line),
           });
         }
       }
@@ -2173,7 +2174,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.RSC_001,
           message: `Referenced resource "${item.href}" could not be found in the EPUB`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, item.line),
         });
       }
 
@@ -2182,7 +2183,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.PKG_025,
           message: `Publication resource must not be located in META-INF: ${item.href}`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, item.line),
         });
       }
 
@@ -2191,7 +2192,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.OPF_014,
           message: `Invalid media-type format "${item.mediaType}" for item "${item.id}"`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, item.line),
         });
       }
 
@@ -2201,13 +2202,13 @@ export class OPFValidator {
           pushMessage(context.messages, {
             id: this.packageDoc.isLegacyOebps12 ? MessageId.OPF_038 : MessageId.OPF_035,
             message: `XHTML Content Document "${item.id}" is declared as "text/html"`,
-            location: { path: opfPath },
+            location: locationAt(opfPath, item.line),
           });
         } else if (this.packageDoc.version === '2.0' && !this.packageDoc.isLegacyOebps12) {
           pushMessage(context.messages, {
             id: MessageId.OPF_037,
             message: `Found deprecated media-type "${item.mediaType}"`,
-            location: { path: opfPath },
+            location: locationAt(opfPath, item.line),
           });
         }
       }
@@ -2221,7 +2222,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.OPF_039,
           message: `Media type "${item.mediaType}" requires a fallback in legacy OEBPS 1.2 context`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, item.line),
         });
       }
 
@@ -2231,7 +2232,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.OPF_090,
           message: `Encouraged to use media type "${preferred}" instead of "${item.mediaType}"`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, item.line),
         });
       }
 
@@ -2247,7 +2248,7 @@ export class OPFValidator {
           pushMessage(context.messages, {
             id: MessageId.OPF_027,
             message: `Undefined property: "${prop}"`,
-            location: { path: opfPath },
+            location: locationAt(opfPath, item.line),
           });
         }
 
@@ -2257,12 +2258,12 @@ export class OPFValidator {
             pushMessage(context.messages, {
               id: MessageId.RSC_005,
               message: `The manifest item representing the Navigation Document must be of the "application/xhtml+xml" type (given type was "${item.mediaType}")`,
-              location: { path: opfPath },
+              location: locationAt(opfPath, item.line),
             });
             pushMessage(context.messages, {
               id: MessageId.OPF_012,
               message: `Item with "nav" property must be XHTML, found: ${item.mediaType}`,
-              location: { path: opfPath },
+              location: locationAt(opfPath, item.line),
             });
           }
         }
@@ -2273,7 +2274,7 @@ export class OPFValidator {
             pushMessage(context.messages, {
               id: MessageId.OPF_012,
               message: `Item with "cover-image" property must be an image, found: ${item.mediaType}`,
-              location: { path: opfPath },
+              location: locationAt(opfPath, item.line),
             });
           }
         }
@@ -2284,14 +2285,14 @@ export class OPFValidator {
             pushMessage(context.messages, {
               id: MessageId.OPF_012,
               message: `The property "search-key-map" is not defined for media type "${item.mediaType}"`,
-              location: { path: opfPath },
+              location: locationAt(opfPath, item.line),
             });
           } else if (!item.href.toLowerCase().endsWith('.xml')) {
             // OPF-080: SKM document file should have .xml extension
             pushMessage(context.messages, {
               id: MessageId.OPF_080,
               message: 'A Search Key Map document file name should have the extension ".xml".',
-              location: { path: opfPath },
+              location: locationAt(opfPath, item.line),
               severityOverride: 'warning',
             });
           }
@@ -2303,7 +2304,7 @@ export class OPFValidator {
             pushMessage(context.messages, {
               id: MessageId.OPF_012,
               message: `The property "data-nav" is not defined for media type "${item.mediaType}"`,
-              location: { path: opfPath },
+              location: locationAt(opfPath, item.line),
             });
           }
         }
@@ -2314,7 +2315,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.OPF_041,
           message: `Manifest item "${item.id}" fallback-style references non-existent item: "${item.fallbackStyle}"`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, item.line),
         });
       }
 
@@ -2323,14 +2324,14 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.RSC_020,
           message: `"${item.href}" is not a valid URL (Illegal character in path segment: space is not allowed)`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, item.line),
         });
       } else if (!isRemoteItem && (item.href.includes('%20') || item.href.includes('%09'))) {
         // PKG-010: filename contains spaces even when properly percent-encoded
         pushMessage(context.messages, {
           id: MessageId.PKG_010,
           message: `Filename "${item.href}" contains spaces`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, item.line),
         });
       }
 
@@ -2339,7 +2340,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.OPF_091,
           message: `Manifest item href must not contain fragment identifier: "${item.href}"`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, item.line),
         });
       }
 
@@ -2365,14 +2366,14 @@ export class OPFValidator {
             pushMessage(context.messages, {
               id: MessageId.RSC_006,
               message: `Remote resource reference is not allowed in this context; resource "${item.href}" must be located in the EPUB container`,
-              location: { path: opfPath },
+              location: locationAt(opfPath, item.line),
             });
           }
           if (!item.properties?.includes('remote-resources')) {
             pushMessage(context.messages, {
               id: MessageId.RSC_006,
               message: `Manifest item "${item.id}" references remote resource but is missing "remote-resources" property`,
-              location: { path: opfPath },
+              location: locationAt(opfPath, item.line),
             });
           }
         }
@@ -2674,7 +2675,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.OPF_049,
           message: `Spine itemref references non-existent manifest item: "${itemref.idref}"`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, itemref.line),
         });
         continue;
       }
@@ -2684,7 +2685,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.OPF_034,
           message: `Duplicate spine itemref: "${itemref.idref}"`,
-          location: { path: opfPath },
+          location: locationAt(opfPath, itemref.line),
         });
       }
       seenIdrefs.add(itemref.idref);
@@ -2694,7 +2695,7 @@ export class OPFValidator {
         pushMessage(context.messages, {
           id: MessageId.OPF_077,
           message: 'A Data Navigation Document should not be included in the spine.',
-          location: { path: opfPath },
+          location: locationAt(opfPath, itemref.line),
           severityOverride: 'warning',
         });
       }
@@ -2707,19 +2708,19 @@ export class OPFValidator {
           pushMessage(context.messages, {
             id: MessageId.OPF_042,
             message: `"${item.mediaType}" is not a permissible spine media type`,
-            location: { path: opfPath },
+            location: locationAt(opfPath, itemref.line),
           });
         } else if (!item.fallback) {
           pushMessage(context.messages, {
             id: MessageId.OPF_043,
             message: `Spine item "${item.id}" has non-standard media type "${item.mediaType}" without fallback`,
-            location: { path: opfPath },
+            location: locationAt(opfPath, itemref.line),
           });
         } else if (!this.fallbackChainResolvesToContentDocument(item.id)) {
           pushMessage(context.messages, {
             id: MessageId.OPF_044,
             message: `Spine item "${item.id}" has non-standard media type "${item.mediaType}" and its fallback chain does not resolve to a content document`,
-            location: { path: opfPath },
+            location: locationAt(opfPath, itemref.line),
           });
         }
       }
@@ -2731,14 +2732,14 @@ export class OPFValidator {
             pushMessage(context.messages, {
               id: MessageId.OPF_012,
               message: `Unknown spine itemref property: "${prop}"`,
-              location: { path: opfPath },
+              location: locationAt(opfPath, itemref.line),
             });
           }
           if (prop === 'rendition:spread-portrait') {
             pushMessage(context.messages, {
               id: MessageId.OPF_086,
               message: `The "rendition:spread-portrait" property is deprecated`,
-              location: { path: opfPath },
+              location: locationAt(opfPath, itemref.line),
             });
           }
         }
@@ -2750,7 +2751,7 @@ export class OPFValidator {
             pushMessage(context.messages, {
               id: MessageId.RSC_005,
               message: `Properties "${found.join('", "')}" are mutually exclusive`,
-              location: { path: opfPath },
+              location: locationAt(opfPath, itemref.line),
             });
           }
         }
@@ -2795,7 +2796,7 @@ export class OPFValidator {
             pushMessage(context.messages, {
               id: MessageId.OPF_045,
               message: `Circular fallback chain detected starting from item "${item.id}"`,
-              location: { path: opfPath },
+              location: locationAt(opfPath, item.line),
             });
             break;
           }
@@ -2807,7 +2808,7 @@ export class OPFValidator {
             pushMessage(context.messages, {
               id: MessageId.OPF_040,
               message: `Fallback item "${currentFallback}" not found in manifest`,
-              location: { path: opfPath },
+              location: locationAt(opfPath, item.line),
             });
             break;
           }
