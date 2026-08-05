@@ -106,4 +106,11 @@ export interface Resource {
   isNcx?: boolean;
   /** IDs defined in this resource */
   ids: Set<string>;
+  /**
+   * Where the resource is declared in the package document.
+   *
+   * Messages about a manifest declaration (OPF-097) point at the declaration
+   * rather than at the resource file, matching Java.
+   */
+  declaredAt?: EPUBLocation;
 }

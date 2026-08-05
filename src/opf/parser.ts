@@ -1,4 +1,5 @@
 import type { EPUBVersion } from '../types.js';
+import { createLineIndex } from '../util/location.js';
 import type {
   Collection,
   DCElement,
@@ -16,34 +17,75 @@ import type {
  * This is a simple parser that extracts the essential information.
  * For full schema validation, use libxml2-wasm with RelaxNG/Schematron.
  */
+/** `<package>` with `version` before any `unique-identifier`. */
+const PACKAGE_VERSION_FIRST =
+  /<package[^>]*\sversion=["']([^"']+)["'][^>]*(?:\sunique-identifier=["']([^"']+)["'])?[^>]*>/;
+/** `<package>` with `unique-identifier` before any `version`. */
+const PACKAGE_UID_FIRST =
+  /<package[^>]*\sunique-identifier=["']([^"']+)["'][^>]*(?:\sversion=["']([^"']+)["'])?[^>]*>/;
+
+/**
+ * Result of peeking at a package document's version attribute.
+ *
+ * `undeclared` and `unreadable` are kept apart on purpose: a package element with
+ * no version cannot be validated against any ruleset and stops the check, whereas
+ * an unreadable document (wrong encoding, malformed XML, not an OPF at all) must
+ * fall through so the normal pipeline can report why.
+ */
+export type OpfVersionPeek =
+  | { kind: 'declared'; version: EPUBVersion }
+  | { kind: 'undeclared' }
+  | { kind: 'unreadable' };
+
+/** Attributes declared on the `<package>` element. */
+interface PackageAttributes {
+  /** undefined when no version attribute is declared */
+  version: EPUBVersion | undefined;
+  uniqueIdentifier: string;
+}
+
+/**
+ * Read `version` and `unique-identifier` off the package element.
+ *
+ * The two attributes can appear in either order, so both orderings are tried; the
+ * one that matched `version` first wins.
+ */
+function matchPackageElement(xml: string): PackageAttributes {
+  const versionFirst = PACKAGE_VERSION_FIRST.exec(xml);
+  const uidFirst = PACKAGE_UID_FIRST.exec(xml);
+
+  // The version group is non-optional in PACKAGE_VERSION_FIRST, so a match always
+  // carries one; only then does the uid-first ordering get a say.
+  const declaredVersion = versionFirst ? versionFirst[1] : uidFirst?.[2];
+
+  // An empty unique-identifier counts as absent, so the other ordering still gets a turn.
+  let uniqueIdentifier = versionFirst?.[2] ?? '';
+  if (uniqueIdentifier === '') uniqueIdentifier = uidFirst?.[1] ?? '';
+
+  return {
+    version: declaredVersion ? normalizeVersion(declaredVersion) : undefined,
+    uniqueIdentifier,
+  };
+}
+
+/**
+ * Extract the declared version from a package document without parsing it fully.
+ *
+ * The publication version has to be known before the container stage can decide
+ * which checks apply and whether validation can continue at all. Java does the
+ * same with PackageDocumentPeeker, ahead of any OPF checking.
+ */
+export function peekOpfVersion(xml: string): OpfVersionPeek {
+  const { version } = matchPackageElement(xml);
+  if (version) return { kind: 'declared', version };
+  return /<package[\s>]/.test(xml) ? { kind: 'undeclared' } : { kind: 'unreadable' };
+}
+
 export function parseOPF(xml: string): PackageDocument {
-  // Extract package element attributes
-  const packageRegex =
-    /<package[^>]*\sversion=["']([^"']+)["'][^>]*(?:\sunique-identifier=["']([^"']+)["'])?[^>]*>/;
-  const packageRegexAlt =
-    /<package[^>]*\sunique-identifier=["']([^"']+)["'][^>]*(?:\sversion=["']([^"']+)["'])?[^>]*>/;
-  const packageMatch = packageRegex.exec(xml);
-  const packageMatchAlt = packageRegexAlt.exec(xml);
-
-  let version: EPUBVersion = '3.0';
-  let versionDeclared = false;
-  let uniqueIdentifier = '';
-
-  if (packageMatch?.[1]) {
-    version = normalizeVersion(packageMatch[1]);
-    versionDeclared = true;
-    uniqueIdentifier = packageMatch[2] ?? '';
-  }
-  if (!uniqueIdentifier && packageMatchAlt?.[1]) {
-    uniqueIdentifier = packageMatchAlt[1];
-    if (!packageMatch) {
-      const altVersion = packageMatchAlt[2];
-      if (altVersion) {
-        version = normalizeVersion(altVersion);
-        versionDeclared = true;
-      }
-    }
-  }
+  const packageAttrs = matchPackageElement(xml);
+  const versionDeclared = packageAttrs.version !== undefined;
+  const version: EPUBVersion = packageAttrs.version ?? '3.0';
+  const uniqueIdentifier = packageAttrs.uniqueIdentifier;
 
   const nsRegex = /<package[^>]*\sxmlns=["']([^"']+)["']/;
   const isLegacyOebps12 =
@@ -56,24 +98,28 @@ export function parseOPF(xml: string): PackageDocument {
   const dirRegex = /<package[^>]*\sdir=["']([^"']+)["']/;
   const dirMatch = dirRegex.exec(xml);
 
+  // Offsets recorded by the section parsers are resolved against the original
+  // document, so reported locations point at real source lines.
+  const lineOf = createLineIndex(xml);
+
   // Parse metadata
   const metadataSection = extractSection(xml, 'metadata');
-  const dcElements = parseDCElements(metadataSection);
-  const metaElements = parseMetaElements(metadataSection);
-  const linkElements = parseLinkElements(metadataSection);
+  const dcElements = parseDCElements(metadataSection, lineOf);
+  const metaElements = parseMetaElements(metadataSection, lineOf);
+  const linkElements = parseLinkElements(metadataSection, lineOf);
 
   // Parse manifest
   const manifestSection = extractSection(xml, 'manifest');
-  const manifest = parseManifestItems(manifestSection);
+  const manifest = parseManifestItems(manifestSection, lineOf);
 
   // Parse spine
   const spineSection = extractSection(xml, 'spine');
   const spineAttrs = extractElementAttributes(xml, 'spine');
-  const spineResult = parseSpine(spineSection, spineAttrs);
+  const spineResult = parseSpine(spineSection, spineAttrs, lineOf);
 
   // Parse guide (EPUB 2)
   const guideSection = extractSection(xml, 'guide');
-  const guide = parseGuide(guideSection);
+  const guide = parseGuide(guideSection.content);
 
   // Parse collections (EPUB 3)
   const collections = parseCollections(xml);
@@ -169,19 +215,50 @@ function parsePrefixes(xml: string): Record<string, string> {
   return prefixes;
 }
 
+const XML_COMMENT = /<!--[\s\S]*?-->/g;
+
 export function stripXmlComments(xml: string): string {
-  return xml.replace(/<!--[\s\S]*?-->/g, '');
+  return xml.replace(XML_COMMENT, '');
 }
 
 /**
- * Extract a section from XML by tag name (returns content between tags)
+ * Blank out XML comments, preserving every character offset and line break.
+ *
+ * Unlike {@link stripXmlComments} this keeps the document the same length, so
+ * offsets taken from the result still map onto the original source. That is what
+ * lets the section parsers below report real line numbers.
  */
-function extractSection(xml: string, tagName: string): string {
-  // Handle both prefixed and non-prefixed tags
-  const regex = new RegExp(`<(?:opf:)?${tagName}[^>]*>([\\s\\S]*?)</(?:opf:)?${tagName}>`, 'i');
+function blankXmlComments(xml: string): string {
+  return xml.replace(XML_COMMENT, (comment) => comment.replace(/[^\n]/g, ' '));
+}
+
+/** A section of the package document, with its offset in the original source. */
+interface Section {
+  content: string;
+  /** Offset of `content` within the full document */
+  offset: number;
+}
+
+/** Maps a character offset in the package document to a 1-based line number. */
+type LineLookup = (offset: number) => number;
+
+/**
+ * Extract a section from XML by tag name (returns content between tags)
+ *
+ * Comments are blanked rather than removed so that `offset` stays meaningful.
+ */
+function extractSection(xml: string, tagName: string): Section {
+  // Handle both prefixed and non-prefixed tags. The opening tag is captured so the
+  // content's offset can be derived without searching for it.
+  const regex = new RegExp(`<((?:opf:)?${tagName}[^>]*)>([\\s\\S]*?)</(?:opf:)?${tagName}>`, 'i');
   const match = regex.exec(xml);
-  // Strip XML comments to avoid parsing commented-out elements
-  return stripXmlComments(match?.[1] ?? '');
+  const openTag = match?.[1];
+  const content = match?.[2];
+  if (match === null || openTag === undefined || content === undefined) {
+    return { content: '', offset: 0 };
+  }
+  // '<' + openTag + '>'
+  return { content: blankXmlComments(content), offset: match.index + openTag.length + 2 };
 }
 
 /**
@@ -200,13 +277,13 @@ function extractElementAttributes(xml: string, tagName: string): Record<string, 
 /**
  * Parse Dublin Core metadata elements
  */
-function parseDCElements(metadataXml: string): DCElement[] {
+function parseDCElements(metadata: Section, lineOf: LineLookup): DCElement[] {
   const elements: DCElement[] = [];
 
   // Match dc: prefixed elements
   const dcRegex = /<dc:(\w+)([^>]*)>([^<]*)<\/dc:\1>/g;
   let match;
-  while ((match = dcRegex.exec(metadataXml)) !== null) {
+  while ((match = dcRegex.exec(metadata.content)) !== null) {
     const name = match[1];
     const attrsStr = match[2] ?? '';
     const value = match[3] ?? '';
@@ -220,6 +297,7 @@ function parseDCElements(metadataXml: string): DCElement[] {
     const element: DCElement = {
       name,
       value: decodeXmlEntities(value.trim()),
+      line: lineOf(metadata.offset + match.index),
     };
 
     if (id) {
@@ -238,7 +316,7 @@ function parseDCElements(metadataXml: string): DCElement[] {
 /**
  * Parse EPUB 3 meta elements
  */
-function parseMetaElements(metadataXml: string): MetaElement[] {
+function parseMetaElements(metadata: Section, lineOf: LineLookup): MetaElement[] {
   const elements: MetaElement[] = [];
 
   // <meta> may carry a namespace prefix (e.g. <opf:meta>) when the OPF
@@ -246,7 +324,7 @@ function parseMetaElements(metadataXml: string): MetaElement[] {
   const metaRegex =
     /<(?:[A-Za-z_][\w.-]*:)?meta([^>]*property=["'][^"']+["'][^>]*)>([^<]*)<\/(?:[A-Za-z_][\w.-]*:)?meta>/g;
   let match;
-  while ((match = metaRegex.exec(metadataXml)) !== null) {
+  while ((match = metaRegex.exec(metadata.content)) !== null) {
     const attrsStr = match[1] ?? '';
     const value = match[2] ?? '';
     const attrs = parseAttributes(attrsStr);
@@ -256,6 +334,7 @@ function parseMetaElements(metadataXml: string): MetaElement[] {
       const element: MetaElement = {
         property,
         value: decodeXmlEntities(value.trim()),
+        line: lineOf(metadata.offset + match.index),
       };
 
       if (attrs.refines) {
@@ -278,13 +357,13 @@ function parseMetaElements(metadataXml: string): MetaElement[] {
 /**
  * Parse EPUB 3 link elements
  */
-function parseLinkElements(metadataXml: string): LinkElement[] {
+function parseLinkElements(metadata: Section, lineOf: LineLookup): LinkElement[] {
   const elements: LinkElement[] = [];
 
   // Match <link rel="..." href="..." />
   const linkRegex = /<link([^>]+)\/?\s*>/g;
   let match;
-  while ((match = linkRegex.exec(metadataXml)) !== null) {
+  while ((match = linkRegex.exec(metadata.content)) !== null) {
     const attrsStr = match[1] ?? '';
     const attrs = parseAttributes(attrsStr);
     const rel = attrs.rel;
@@ -294,6 +373,7 @@ function parseLinkElements(metadataXml: string): LinkElement[] {
       const element: LinkElement = {
         rel,
         href,
+        line: lineOf(metadata.offset + match.index),
       };
 
       if (attrs['media-type']) {
@@ -322,13 +402,13 @@ function parseLinkElements(metadataXml: string): LinkElement[] {
 /**
  * Parse manifest items
  */
-function parseManifestItems(manifestXml: string): ManifestItem[] {
+function parseManifestItems(manifest: Section, lineOf: LineLookup): ManifestItem[] {
   const items: ManifestItem[] = [];
 
   // Match <item ... />
   const itemRegex = /<item([^>]+)\/?\s*>/g;
   let match;
-  while ((match = itemRegex.exec(manifestXml)) !== null) {
+  while ((match = itemRegex.exec(manifest.content)) !== null) {
     const attrsStr = match[1] ?? '';
     const attrs = parseAttributes(attrsStr);
     const id = attrs.id?.trim();
@@ -340,6 +420,7 @@ function parseManifestItems(manifestXml: string): ManifestItem[] {
         id,
         href: decodeXmlEntities(href),
         mediaType,
+        line: lineOf(manifest.offset + match.index),
       };
 
       if (attrs.fallback) {
@@ -366,8 +447,9 @@ function parseManifestItems(manifestXml: string): ManifestItem[] {
  * Parse spine element and itemrefs
  */
 function parseSpine(
-  spineXml: string,
+  spineSection: Section,
   spineAttrs: Record<string, string>,
+  lineOf: LineLookup,
 ): {
   spine: SpineItemRef[];
   toc: string | null;
@@ -384,7 +466,7 @@ function parseSpine(
   // Match <itemref ... />
   const itemrefRegex = /<itemref([^>]+)\/?\s*>/g;
   let match;
-  while ((match = itemrefRegex.exec(spineXml)) !== null) {
+  while ((match = itemrefRegex.exec(spineSection.content)) !== null) {
     const attrsStr = match[1] ?? '';
     const attrs = parseAttributes(attrsStr);
     const idref = attrs.idref?.trim();
@@ -393,6 +475,7 @@ function parseSpine(
       const itemref: SpineItemRef = {
         idref,
         linear: attrs.linear !== 'no',
+        line: lineOf(spineSection.offset + match.index),
       };
 
       if (attrs.id) {

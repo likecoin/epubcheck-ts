@@ -511,7 +511,7 @@ export class ReferenceValidator {
       pushMessage(context.messages, {
         id: MessageId.OPF_097,
         message: `Resource declared in manifest but not referenced: ${resource.url}`,
-        location: { path: resource.url },
+        location: resource.declaredAt ?? { path: resource.url },
       });
     }
   }

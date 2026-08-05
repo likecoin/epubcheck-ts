@@ -18,6 +18,8 @@ export interface ManifestItem {
   mediaOverlay?: string;
   /** Item properties (EPUB 3) - e.g., 'nav', 'scripted', 'svg', 'remote-resources' */
   properties?: string[];
+  /** 1-based line of the `item` element in the package document */
+  line?: number;
 }
 
 /**
@@ -32,6 +34,8 @@ export interface SpineItemRef {
   linear: boolean;
   /** Itemref properties (EPUB 3) - e.g., 'page-spread-left', 'page-spread-right' */
   properties?: string[];
+  /** 1-based line of the element in the package document */
+  line?: number;
 }
 
 /**
@@ -58,6 +62,8 @@ export interface DCElement {
   id?: string;
   /** Additional attributes */
   attributes?: Record<string, string>;
+  /** 1-based line of the element in the package document */
+  line?: number;
 }
 
 /**
@@ -74,6 +80,8 @@ export interface MetaElement {
   scheme?: string;
   /** The id attribute, if any */
   id?: string;
+  /** 1-based line of the element in the package document */
+  line?: number;
 }
 
 /**
@@ -94,6 +102,8 @@ export interface LinkElement {
   id?: string;
   /** Language tag for the linked resource */
   hreflang?: string;
+  /** 1-based line of the element in the package document */
+  line?: number;
 }
 
 /**

@@ -1,8 +1,8 @@
 import { MessageId, pushMessage } from '../messages/index.js';
-import { parseAttributes, stripXmlComments } from '../opf/parser.js';
+import { parseAttributes, peekOpfVersion, stripXmlComments } from '../opf/parser.js';
 import type { ValidationContext, ValidationMessage } from '../types.js';
 
-const OPF_MEDIA_TYPE = 'application/oebps-package+xml';
+export const OPF_MEDIA_TYPE = 'application/oebps-package+xml';
 
 const FULL_PATH_ATTR = /\bfull-path\s*=\s*["']([^"']*)["']/;
 const MEDIA_TYPE_ATTR = /\bmedia-type\s*=\s*["']([^"']*)["']/;
@@ -64,7 +64,21 @@ export function parseContainerContent(
       message: 'No Package Document is declared in the container.xml file.',
       location: { path: containerPath },
     });
-  } else if (opfRootfileTags.length > 1 && context.version === '2.0') {
+  }
+
+  // The rendition checks below branch on the publication version, which may differ
+  // from the version the caller asked for. Java resolves it at exactly this point
+  // (OCFChecker.check peeks the primary Package Document) before applying them.
+  if (context.opfPath && getFileContent) {
+    const opfXml = getFileContent(context.opfPath);
+    if (opfXml !== undefined) {
+      const peek = peekOpfVersion(opfXml);
+      if (peek.kind === 'declared') context.version = peek.version;
+    }
+  }
+
+  // Mirrors ../epubcheck/src/main/java/com/adobe/epubcheck/ocf/OCFChecker.java:132
+  if (opfRootfileTags.length > 1 && context.version === '2.0') {
     pushMessage(context.messages, {
       id: MessageId.PKG_013,
       message: 'The EPUB 2 publication declares more than one Package Document.',

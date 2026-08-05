@@ -8,13 +8,14 @@ import {
 } from './messages/index.js';
 import { NCXValidator } from './nav/index.js';
 import {
+  OPF_MEDIA_TYPE,
   parseContainerContent,
   validateDuplicateFilenames,
   validateFilenameCharacters,
 } from './ocf/container.js';
 import { OCFValidator } from './ocf/index.js';
 import { OPFValidator } from './opf/index.js';
-import { parseOPF, stripXmlComments } from './opf/parser.js';
+import { parseOPF, peekOpfVersion, stripXmlComments } from './opf/parser.js';
 import { isCoreMediaType } from './opf/types.js';
 import { ResourceRegistry } from './references/registry.js';
 import { resolveManifestHref } from './references/url.js';
@@ -22,6 +23,7 @@ import { ReferenceValidator } from './references/validator.js';
 import { SchemaValidator } from './schema/orchestrator.js';
 import { SMILValidator } from './smil/validator.js';
 import { parseDoctype } from './util/doctype.js';
+import { locationAt } from './util/location.js';
 import { loadXmlEngine } from './util/xml-engine.js';
 import type {
   EPUBVersion,
@@ -529,7 +531,7 @@ export class EpubCheck {
     const primary = context.opfPath;
     for (const rootfile of context.rootfiles) {
       if (rootfile.path === primary) continue;
-      if (rootfile.mediaType !== 'application/oebps-package+xml') continue;
+      if (rootfile.mediaType !== OPF_MEDIA_TYPE) continue;
 
       const path = rootfile.path.normalize('NFC');
       const opfData = context.files.get(path);
@@ -689,6 +691,7 @@ export class EpubCheck {
         isCoverImage: properties.includes('cover-image'),
         isNcx: item.mediaType === 'application/x-dtbncx+xml',
         ids: new Set(),
+        declaredAt: locationAt(opfPath, item.line),
       });
     }
   }
@@ -714,9 +717,47 @@ export class EpubCheck {
   }
 
   /**
+   * Resolve the publication version from the declared Package Document and decide
+   * whether the rest of the validation can run.
+   *
+   * This runs between the container stage and the main pipeline, mirroring Java's
+   * OCFChecker.check(): the declared package documents are inspected, the version
+   * is peeked from the primary one, and the check is abandoned when there is no
+   * usable Package Document. Without this step the pipeline runs against an
+   * unusable publication and emits a cascade of messages Java never reports.
+   *
+   * @returns false when validation must stop
+   */
+  private resolvePublicationVersion(context: ValidationContext): boolean {
+    // No Package Document declared. container.xml validation already reported
+    // RSC-003; Java stops here rather than also reporting a missing OPF.
+    if (!context.opfPath) return false;
+
+    // Declared but absent: OPFValidator reports OPF-002 for this case.
+    const opfData = context.files.get(context.opfPath);
+    if (!opfData) return true;
+
+    const peek = peekOpfVersion(new TextDecoder().decode(opfData));
+    if (peek.kind === 'undeclared') {
+      // Without a version the document cannot be validated against any ruleset.
+      pushMessage(context.messages, {
+        id: MessageId.OPF_001,
+        message: 'The package element is missing the required "version" attribute.',
+        location: { path: context.opfPath },
+      });
+      return false;
+    }
+    // Unreadable (bad encoding, malformed, not an OPF): let the pipeline diagnose it.
+    if (peek.kind === 'declared') context.version = peek.version;
+    return true;
+  }
+
+  /**
    * Shared validation pipeline (Steps 2-7) used by both check() and checkExpanded()
    */
   private async runPipeline(context: ValidationContext): Promise<void> {
+    if (!this.resolvePublicationVersion(context)) return;
+
     // Step 2: Validate package document (OPF)
     const opfValidator = new OPFValidator();
     opfValidator.validate(context);
