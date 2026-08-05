@@ -487,6 +487,19 @@ export class ContentValidator {
   private cssWithRemoteResources = new Set<string>();
 
   /**
+   * Whether a Package Document is available to compare content features against.
+   *
+   * OPF-014/015/018 report a mismatch between the features a content document uses
+   * and the properties its manifest item declares. In single-file mode there is no
+   * manifest, so the comparison is meaningless and every detected feature would be
+   * reported as undeclared. Java guards the same checks with
+   * `context.container.isPresent()` (OPSHandler30.checkProperties).
+   */
+  private hasContainer(context: ValidationContext): boolean {
+    return context.packageDocument !== undefined;
+  }
+
+  /**
    * Validate a single XHTML document without a full EPUB container.
    * Used for --mode xhtml single-file validation.
    */
@@ -782,7 +795,11 @@ export class ContentValidator {
     try {
       const root = doc.root;
       const hasRemote = this.detectSVGRemoteResources(root);
-      if (hasRemote && !manifestItem.properties?.includes('remote-resources')) {
+      if (
+        this.hasContainer(context) &&
+        hasRemote &&
+        !manifestItem.properties?.includes('remote-resources')
+      ) {
         pushMessage(context.messages, {
           id: MessageId.OPF_014,
           message:
@@ -1381,6 +1398,7 @@ export class ContentValidator {
       );
       const isNavItem =
         manifestItem?.properties?.includes('nav') === true || context.options.mode === 'nav';
+      const hasContainer = this.hasContainer(context);
 
       if (isNavItem) {
         this.checkNavDocument(context, path, doc, root);
@@ -1388,7 +1406,7 @@ export class ContentValidator {
 
       if (context.version.startsWith('3')) {
         const hasScripts = this.detectScripts(context, path, root);
-        if (hasScripts && !manifestItem?.properties?.includes('scripted')) {
+        if (hasContainer && hasScripts && !manifestItem?.properties?.includes('scripted')) {
           pushMessage(context.messages, {
             id: MessageId.OPF_014,
             message:
@@ -1405,7 +1423,7 @@ export class ContentValidator {
         }
 
         const hasMathML = this.detectMathML(context, path, root);
-        if (hasMathML && !manifestItem?.properties?.includes('mathml')) {
+        if (hasContainer && hasMathML && !manifestItem?.properties?.includes('mathml')) {
           pushMessage(context.messages, {
             id: MessageId.OPF_014,
             message:
@@ -1422,7 +1440,7 @@ export class ContentValidator {
         }
 
         const hasSVG = this.detectSVG(context, path, root);
-        if (hasSVG && !manifestItem?.properties?.includes('svg')) {
+        if (hasContainer && hasSVG && !manifestItem?.properties?.includes('svg')) {
           pushMessage(context.messages, {
             id: MessageId.OPF_014,
             message: 'Content document contains SVG but manifest item is missing "svg" property',
@@ -1438,7 +1456,7 @@ export class ContentValidator {
         }
 
         const hasSwitch = this.detectSwitch(root);
-        if (hasSwitch && !manifestItem?.properties?.includes('switch')) {
+        if (hasContainer && hasSwitch && !manifestItem?.properties?.includes('switch')) {
           pushMessage(context.messages, {
             id: MessageId.OPF_014,
             message:
@@ -1455,7 +1473,11 @@ export class ContentValidator {
         }
 
         const hasRemoteResources = this.detectRemoteResources(context, path, root, opfDir);
-        if (hasRemoteResources && !manifestItem?.properties?.includes('remote-resources')) {
+        if (
+          hasContainer &&
+          hasRemoteResources &&
+          !manifestItem?.properties?.includes('remote-resources')
+        ) {
           pushMessage(context.messages, {
             id: MessageId.OPF_014,
             message:
