@@ -16,7 +16,7 @@ Quick reference for implementation progress vs Java EPUBCheck. This is the **onl
 | Accessibility | ~71% | 12/17 ACC checks (content + OPF a11y metadata) |
 | Cross-reference | ~92% | URL leaking, CSS/link/embed refs, exempt resources, cross-document feature checks |
 
-**Overall: ~99% complete (1361 tests passing, 14 skipped, 1375 total).**
+**Overall: ~99% complete (1383 tests passing, 14 skipped, 1397 total).**
 
 **100% Java scenario import**: every Java EPUBCheck feature file (core EPUB 3, EPUB 2, profile extensions) is ported. The 14 skipped tests form a discoverable backlog — each has an inline `it.skip` annotation naming the specific blocker.
 
@@ -28,9 +28,9 @@ Quick reference for implementation progress vs Java EPUBCheck. This is the **onl
 
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
-| Unit Tests | 443 | 441 | 2 |
-| Integration Tests | 932 | 920 | 12 |
-| **Total** | **1375** | **1361** | **14** |
+| Unit Tests | 455 | 453 | 2 |
+| Integration Tests | 942 | 930 | 12 |
+| **Total** | **1397** | **1383** | **14** |
 
 Plus a separate packaging regression suite (`npm run test:packaging`, 3 tests) validating built artifacts; runs in CI and on prepublish.
 
