@@ -81,6 +81,7 @@ function createContext(data: Uint8Array): ValidationContext {
     messages: [],
     files: new Map(),
     rootfiles: [],
+    hasContainer: true,
   };
 }
 

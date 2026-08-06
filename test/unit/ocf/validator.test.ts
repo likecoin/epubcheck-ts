@@ -19,6 +19,7 @@ function createValidationContext(data: Uint8Array): ValidationContext {
     messages: [],
     files: new Map(),
     rootfiles: [],
+    hasContainer: true,
   };
 }
 

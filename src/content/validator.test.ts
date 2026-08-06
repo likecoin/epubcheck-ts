@@ -26,15 +26,17 @@ describe('ContentValidator', () => {
   const createContext = (
     files: Map<string, Uint8Array>,
     packageDoc?: PackageDocument,
+    opfPath = 'OEBPS/content.opf',
   ): ValidationContext => {
     const ctx: ValidationContext = {
       messages: [],
       files,
-      opfPath: 'OEBPS/content.opf',
+      opfPath,
       data: new Uint8Array(),
       options: defaultOptions,
       version: '3.0',
-      rootfiles: [{ path: 'OEBPS/content.opf', mediaType: 'application/oebps-package+xml' }],
+      rootfiles: [{ path: opfPath, mediaType: 'application/oebps-package+xml' }],
+      hasContainer: true,
     };
     if (packageDoc) {
       ctx.packageDocument = packageDoc;
@@ -552,16 +554,7 @@ describe('ContentValidator', () => {
       const packageDoc = createPackageDoc([
         { id: 'ch1', href: 'chapter1.xhtml', mediaType: 'application/xhtml+xml' },
       ]);
-      context = {
-        messages: [],
-        files,
-        packageDocument: packageDoc,
-        opfPath: 'content.opf',
-        data: new Uint8Array(),
-        options: defaultOptions,
-        version: '3.0',
-        rootfiles: [{ path: 'content.opf', mediaType: 'application/oebps-package+xml' }],
-      };
+      context = createContext(files, packageDoc, 'content.opf');
       validator.validate(context);
       expect(context.messages).toHaveLength(0);
     });

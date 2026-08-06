@@ -442,7 +442,13 @@ describe('Integration Tests - EPUB 2', () => {
         'unique-identifier-not-found-error.opf',
         { mode: 'opf', version: '2.0' },
       );
-      expectError(result, 'OPF-030');
+      // The Java scenario this is ported from comments the assertion out —
+      // "# FIXME this error should be detected and reported in single-document
+      // mode" (opf-package-document.feature:80-83) — because OPF-030 comes from
+      // checkPackage, which runs only with a container. The packaged scenario
+      // above keeps it. EPUBCheck 5.3.0 reports nothing at all on this file;
+      // the RSC-005 pair we still emit here is a separate open gap.
+      expectNoError(result, 'OPF-030');
     });
 
     it("Report a 'dc:creator' metadata with an unknown role", async () => {
@@ -833,6 +839,16 @@ function expectError(result: Result, errorId: string): void {
     has,
     `Expected error ${errorId}. Got: ${JSON.stringify(result.messages.map((m) => ({ id: m.id, severity: m.severity })))}`,
   ).toBe(true);
+}
+
+function expectNoError(result: Result, errorId: string): void {
+  const has = result.messages.some(
+    (m) => m.id === errorId && (m.severity === 'error' || m.severity === 'fatal'),
+  );
+  expect(
+    has,
+    `Expected no error ${errorId}. Got: ${JSON.stringify(result.messages.map((m) => ({ id: m.id, severity: m.severity })))}`,
+  ).toBe(false);
 }
 
 function expectWarning(result: Result, warningId: string): void {

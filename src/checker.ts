@@ -124,6 +124,7 @@ export class EpubCheck {
       messages: [],
       files: new Map(),
       rootfiles: [],
+      hasContainer: true,
     };
 
     // Apply custom message severity overrides
@@ -180,6 +181,7 @@ export class EpubCheck {
       messages: [],
       files: new Map(),
       rootfiles: [],
+      hasContainer: true,
     };
 
     if (this.options.customMessages.size > 0) {
@@ -242,6 +244,7 @@ export class EpubCheck {
       messages: [],
       files: new Map(),
       rootfiles: [],
+      hasContainer: false,
     };
 
     if (this.options.customMessages.size > 0) {

@@ -26,6 +26,7 @@ describe('CSSValidator', () => {
     options: { ...defaultOptions, ...options },
     version: '3.0',
     rootfiles: [{ path: 'OEBPS/content.opf', mediaType: 'application/oebps-package+xml' }],
+    hasContainer: true,
   });
 
   beforeEach(() => {

@@ -37,6 +37,7 @@ function createValidationContext(overrides?: {
     messages: [],
     files: new Map(),
     rootfiles: [],
+    hasContainer: true,
     opfPath: 'OEBPS/content.opf',
   };
 }

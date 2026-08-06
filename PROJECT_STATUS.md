@@ -43,10 +43,10 @@ Severity assignment agrees on **100%** of messages — zero mismatches across th
 
 | Mode | n | Exact | Verdict |
 |---|---:|---:|---:|
-| `--mode opf` | 489 | 90.8% | 98.6% |
+| `--mode opf` | 489 | 93.7% | 97.8% |
 | `--mode xhtml` | 745 | 95.6% | 97.9% |
 | `--mode svg` | 52 | 88.5% | 92.3% |
-| **Total** | **1286** | **93.5%** | **97.9%** |
+| **Total** | **1286** | **94.6%** | **97.6%** |
 
 ### Real-world EPUBs (n=5)
 
@@ -66,8 +66,8 @@ Severity assignment agrees on **100%** of messages — zero mismatches across th
 
 Run both engines over the same bytes and diff. Java: `epubcheck <file> --json out.json -u`, or `--mode <m> -v 3.0` for standalone fixtures. TS: the library API with `includeUsage`/`includeInfo`. Normalize Java's `HTM_060b` form to `HTM-060b`, then compare per-fixture message-ID multisets.
 
-Two corpus caveats worth knowing before trusting a delta:
-- Roughly half of `test/fixtures/` are synthetic EPUBs wrapping Java's *standalone* fixtures, with fabricated stub assets. Java flags that scaffolding (e.g. `PKG-021` on 22-byte placeholder JPEGs), which inflates apparent gaps. The standalone table above avoids this entirely.
+Three corpus caveats worth knowing before trusting a delta:
+- Roughly half of `test/fixtures/` are synthetic EPUBs wrapping Java's *standalone* fixtures, with fabricated stub assets. Java flags that scaffolding, which inflates apparent gaps; the standalone table above avoids this entirely. All 20 `PKG-021` gaps are this: `build-fixtures.sh` writes a 22-byte header-only JPEG and an 8-byte PNG signature, neither of which `ImageIO` can read dimensions from. Confirmed by rebuilding `map-valid.epub` with a real 1×1 image — EPUBCheck 5.3.0 then reports nothing. The GIF and WebP stubs are complete images and produce no `PKG-021`.
 - Java auto-detects the publication version; a differential run must not pass an explicit version, or it will mask version-gating bugs.
 - Standalone fixtures must be addressed by **basename**, with the bytes read from wherever they live. Passing a path-qualified name makes every sibling `href` resolve outside the notional container, so `RSC-026` fires on nearly every OPF and the mode's exact-match score collapses to near zero. That is a measurement artifact, not a regression.
 
@@ -150,7 +150,9 @@ Metadata.xml (multiple renditions), full ARIA roles/attributes, external entity 
 5. **fontoxpath XPath 2.0** — crashes on `tokenize()` etc.; OPF/nav Schematron rules implemented as direct TypeScript.
 6. **EPUB 2 wrong-namespace count** — per-element error count differs (libxml2-wasm vs Jing reporting shape; 1 skipped test).
 7. **USAGE message dedup** — Java collapses identical USAGE messages per (id, file); TS emits one per occurrence. Cosmetic count drift for CSS-028/OPF-090/RSC-007; no semantic difference.
-8. **Partial parse after a fatal XML error** — Java's SAX handler keeps whatever it read before aborting, so a package document that fails mid-file still yields `OPF-030` from the attributes read before the abort. This port's package parser is regex-based and cannot reproduce a per-element cut-off. The item model *is* matched: Java builds its items in `endElement` on `</package>`, so a parse that aborts earlier leaves an empty manifest, and OPFValidator now skips its structural checks in that case (reporting `OPF-003` against the empty manifest, as Java does). Only `OPF-030` remains, affecting `conformance-xml-malformed-error` and `conformance-xml-undeclared-namespace-error`.
+8. **`PKG-009` in single-file mode** — with no container, Java resolves each manifest `href` against the document's `file:` URL, so an href that leaks above the base or is path-absolute yields a URL containing `:` and trips the OCF filename-character check. This port has no `file:` base to resolve against and stays silent. Four `--mode opf` fixtures (`ocf-url-leaking-in-opf-error`, `ocf-url-path-absolute-error`, `ocf-meta-inf-with-publication-resource-error`, `file-url-in-css-error`) therefore disagree on verdict. They previously agreed only because a false-positive `RSC-026` supplied an unrelated error; removing it exposed the real gap. Matching Java faithfully would mean emitting local absolute filesystem paths in message text.
+9. **Spurious `RSC-005` pair in `--mode opf`** — `unique-identifier-not-found-error.opf` draws two `RSC-005` errors where EPUBCheck 5.3.0 reports nothing, and the second carries an empty `message` string. The empty text suggests a libxml2 DTD-validation error surfacing without a formatted message rather than a rule of ours; not yet diagnosed. Covered by the single-document `OPF-030` test in `test/integration/epub2.integration.test.ts`, which asserts only the absence of `OPF-030` because of this.
+10. **Partial parse after a fatal XML error** — Java's SAX handler keeps whatever it read before aborting, so a package document that fails mid-file still yields `OPF-030` from the attributes read before the abort. This port's package parser is regex-based and cannot reproduce a per-element cut-off. The item model *is* matched: Java builds its items in `endElement` on `</package>`, so a parse that aborts earlier leaves an empty manifest, and OPFValidator now skips its structural checks in that case (reporting `OPF-003` against the empty manifest, as Java does). Only `OPF-030` remains, affecting `conformance-xml-malformed-error` and `conformance-xml-undeclared-namespace-error`.
 
 ---
 
@@ -183,7 +185,7 @@ Core EPUB 3 per-feature: 00-minimal 100%, 02-conformance 100%, 03-resources 97%,
 Ordered by measured impact on agreement with Java:
 
 1. **Remaining false positives** — 75 error/warning occurrences across 30 IDs that Java does not emit; `OPF-097`, `OPF-003` and `OPF-088` dominate at usage severity. These cost more agreement than any unimplemented check.
-2. **Remaining coverage gaps** — 80 occurrences across 22 IDs Java emits and we do not, led by `PKG-021` (deep image decoding) and `RSC-005`.
+2. **Remaining coverage gaps** — 80 occurrences across 22 IDs Java emits and we do not, led by `RSC-005`. The next 20 are `PKG-021` (9 of them verdict flips), which repairing the stub images clears without touching the validator — see the scaffolding caveat under Method. Implementing the check itself is item 4, and stays a real gap for real books either way.
 3. **Line numbers for `RSC-005`** — ~130 messages still carry no line; the OPF model now records positions, so the remaining work is per-rule attribution.
 4. **Advanced media** — deep format validation beyond magic numbers (MED-003/004, PKG-021/022, OPF-051/057).
 5. **Remaining accessibility** — ACC-008/013/015/016/017 (all suppressed by default; low real-world impact).

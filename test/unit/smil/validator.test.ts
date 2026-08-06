@@ -18,6 +18,7 @@ function createValidationContext(): ValidationContext {
     messages: [],
     files: new Map(),
     rootfiles: [],
+    hasContainer: true,
     opfPath: 'OEBPS/content.opf',
   };
 }

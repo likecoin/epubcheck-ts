@@ -487,19 +487,6 @@ export class ContentValidator {
   private cssWithRemoteResources = new Set<string>();
 
   /**
-   * Whether a Package Document is available to compare content features against.
-   *
-   * OPF-014/015/018 report a mismatch between the features a content document uses
-   * and the properties its manifest item declares. In single-file mode there is no
-   * manifest, so the comparison is meaningless and every detected feature would be
-   * reported as undeclared. Java guards the same checks with
-   * `context.container.isPresent()` (OPSHandler30.checkProperties).
-   */
-  private hasContainer(context: ValidationContext): boolean {
-    return context.packageDocument !== undefined;
-  }
-
-  /**
    * Validate a single XHTML document without a full EPUB container.
    * Used for --mode xhtml single-file validation.
    */
@@ -796,7 +783,7 @@ export class ContentValidator {
       const root = doc.root;
       const hasRemote = this.detectSVGRemoteResources(root);
       if (
-        this.hasContainer(context) &&
+        context.hasContainer &&
         hasRemote &&
         !manifestItem.properties?.includes('remote-resources')
       ) {
@@ -1398,7 +1385,11 @@ export class ContentValidator {
       );
       const isNavItem =
         manifestItem?.properties?.includes('nav') === true || context.options.mode === 'nav';
-      const hasContainer = this.hasContainer(context);
+      // OPF-014/015/018 compare the features a content document uses against
+      // the properties its manifest item declares. With no manifest to compare
+      // against, every feature would read as undeclared; Java guards these the
+      // same way (OPSHandler30.checkProperties).
+      const hasContainer = context.hasContainer;
 
       if (isNavItem) {
         this.checkNavDocument(context, path, doc, root);

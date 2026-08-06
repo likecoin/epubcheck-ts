@@ -954,11 +954,15 @@ export class OPFValidator {
           message: `package element unique-identifier attribute does not resolve to a dc:identifier element (given reference was "${refId}")`,
           location: { path: opfPath },
         });
-        pushMessage(context.messages, {
-          id: MessageId.OPF_030,
-          message: `unique-identifier "${refId}" does not reference an existing dc:identifier`,
-          location: { path: opfPath },
-        });
+        // OPF-030 restates the RSC-005 above, and Java raises it from
+        // checkPackage (OPFChecker.java:113).
+        if (context.hasContainer) {
+          pushMessage(context.messages, {
+            id: MessageId.OPF_030,
+            message: `unique-identifier "${refId}" does not reference an existing dc:identifier`,
+            location: { path: opfPath },
+          });
+        }
       }
     }
   }
@@ -2042,22 +2046,27 @@ export class OPFValidator {
         ? basePathDecoded.substring(0, basePathDecoded.indexOf('?'))
         : basePathDecoded;
 
-      const resolvedPath = resolvePath(opfPath, basePathNoQuery);
-      const resolvedPathDecoded =
-        basePathDecodedNoQuery !== basePathNoQuery
-          ? resolvePath(opfPath, basePathDecodedNoQuery)
-          : resolvedPath;
-
-      const fileExists = context.files.has(resolvedPath) || context.files.has(resolvedPathDecoded);
       const manifestItem =
         this.manifestByHref.get(basePathNoQuery) ?? this.manifestByHref.get(basePathDecodedNoQuery);
 
-      if (!fileExists && !manifestItem) {
-        pushMessage(context.messages, {
-          id: MessageId.RSC_007w,
-          message: `Referenced resource "${resolvedPath}" could not be found in the EPUB`,
-          location: locationAt(opfPath, link.line),
-        });
+      // Resolving a link target needs a container to resolve it against, so Java
+      // reaches this only from checkPackage, via ResourceReferencesChecker.java:327.
+      // The OPF-067 check below is not part of that pass — it runs from
+      // checkContent (OPFChecker30.java:81) and so applies either way.
+      if (context.hasContainer && !manifestItem) {
+        const resolvedPath = resolvePath(opfPath, basePathNoQuery);
+        const resolvedPathDecoded =
+          basePathDecodedNoQuery !== basePathNoQuery
+            ? resolvePath(opfPath, basePathDecodedNoQuery)
+            : resolvedPath;
+
+        if (!context.files.has(resolvedPath) && !context.files.has(resolvedPathDecoded)) {
+          pushMessage(context.messages, {
+            id: MessageId.RSC_007w,
+            message: `Referenced resource "${resolvedPath}" could not be found in the EPUB`,
+            location: locationAt(opfPath, link.line),
+          });
+        }
       }
 
       if (manifestItem) {
@@ -2143,7 +2152,10 @@ export class OPFValidator {
 
       // Check for URL leaking outside container (RSC-026). Resolve against
       // the OPF path so manifest hrefs like "../foo" anchor at the OPF dir.
-      if (!item.href.startsWith('http') && !item.href.startsWith('mailto:')) {
+      // There is nothing to leak out of without a container, which is the
+      // same guard Java applies (URLChecker.java:133).
+      const isLocalHref = !item.href.startsWith('http') && !item.href.startsWith('mailto:');
+      if (context.hasContainer && isLocalHref) {
         const leaked = checkUrlLeaking(item.href, opfPath);
         if (leaked) {
           pushMessage(context.messages, {
@@ -2163,7 +2175,7 @@ export class OPFValidator {
           : fullPath;
 
       if (
-        context.options.mode !== 'opf' &&
+        context.hasContainer &&
         !context.files.has(fullPath) &&
         !context.files.has(fullPathDecoded) &&
         !item.href.startsWith('http')
@@ -2569,7 +2581,7 @@ export class OPFValidator {
    * document(s), and common OS files.
    */
   private validateUndeclaredResources(context: ValidationContext, opfPath: string): void {
-    if (context.options.mode === 'opf') return;
+    if (!context.hasContainer) return;
 
     const manifestPaths = new Set<string>();
     for (const item of this.packageDoc?.manifest ?? []) {
@@ -2842,6 +2854,11 @@ export class OPFValidator {
         });
       }
     }
+
+    // The RSC-017 pass above comes from opf.sch and so runs in every mode. The
+    // OPF-031/032 pass below is Java's checkGuide(), called from checkPackage
+    // (OPFChecker.java:129).
+    if (!context.hasContainer) return;
 
     const blessedContentTypes =
       context.version === '2.0'

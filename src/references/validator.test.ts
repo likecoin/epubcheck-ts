@@ -26,6 +26,7 @@ describe('ReferenceValidator', () => {
     options: defaultOptions,
     version: '3.0',
     rootfiles: [{ path: 'OEBPS/content.opf', mediaType: 'application/oebps-package+xml' }],
+    hasContainer: true,
   });
 
   const createReference = (url: string, type: ReferenceType, path: string): Reference => {

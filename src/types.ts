@@ -121,6 +121,17 @@ export interface ValidationContext {
   files: Map<string, Uint8Array>;
   /** Rootfiles found in container.xml */
   rootfiles: Rootfile[];
+  /**
+   * Whether an OCF container backs this validation.
+   *
+   * Java splits the package document checks in two (OPFChecker.check): with a
+   * container it runs checkPackage(), which owns the unique-identifier check,
+   * the guide, and the whole reference-resolution pass; without one it runs
+   * only checkContent(), the schema and handler checks. Single-file modes have
+   * no container, so anything resolving a path against one is meaningless
+   * there and Java stays silent rather than reporting an unresolvable target.
+   */
+  hasContainer: boolean;
   /** Path to the package document (OPF) */
   opfPath?: string;
   /**
