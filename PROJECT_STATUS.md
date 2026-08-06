@@ -79,9 +79,9 @@ Two corpus caveats worth knowing before trusting a delta:
 
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
-| Unit Tests | 455 | 453 | 2 |
+| Unit Tests | 471 | 469 | 2 |
 | Integration Tests | 947 | 935 | 12 |
-| **Total** | **1402** | **1388** | **14** |
+| **Total** | **1418** | **1404** | **14** |
 
 Plus a separate packaging regression suite (`npm run test:packaging`, 3 tests) validating built artifacts; runs in CI and on prepublish.
 
@@ -150,7 +150,7 @@ Metadata.xml (multiple renditions), full ARIA roles/attributes, external entity 
 5. **fontoxpath XPath 2.0** — crashes on `tokenize()` etc.; OPF/nav Schematron rules implemented as direct TypeScript.
 6. **EPUB 2 wrong-namespace count** — per-element error count differs (libxml2-wasm vs Jing reporting shape; 1 skipped test).
 7. **USAGE message dedup** — Java collapses identical USAGE messages per (id, file); TS emits one per occurrence. Cosmetic count drift for CSS-028/OPF-090/RSC-007; no semantic difference.
-8. **Partial parse after a fatal XML error** — Java's SAX handler keeps whatever it read before aborting, so a package document that fails mid-file still yields `OPF-030`/`OPF-003` from the truncated manifest. This port's package parser is regex-based and reads the whole file regardless, so it reports only the fatal `RSC-016`. Affects `conformance-xml-malformed-error` and `conformance-xml-undeclared-namespace-error`; matching it would mean making the parser *less* capable.
+8. **Partial parse after a fatal XML error** — Java's SAX handler keeps whatever it read before aborting, so a package document that fails mid-file still yields `OPF-030` from the attributes read before the abort. This port's package parser is regex-based and cannot reproduce a per-element cut-off. The item model *is* matched: Java builds its items in `endElement` on `</package>`, so a parse that aborts earlier leaves an empty manifest, and OPFValidator now skips its structural checks in that case (reporting `OPF-003` against the empty manifest, as Java does). Only `OPF-030` remains, affecting `conformance-xml-malformed-error` and `conformance-xml-undeclared-namespace-error`.
 
 ---
 

@@ -254,8 +254,11 @@ export class EpubCheck {
       if (mode === 'opf') {
         context.opfPath = filename;
         // The version comes from the caller in single-file mode, so a document
-        // that yielded nothing gets no accompanying OPF-001.
-        if (!this.reportXmlSource(context, filename, data)?.nothingParsed) {
+        // that yielded nothing gets no accompanying OPF-001. A parse that
+        // aborted before `</package>` leaves Java's handler empty, so it has
+        // nothing to check either; see OPFValidator.validate().
+        const failure = this.reportXmlSource(context, filename, data);
+        if (!failure || failure.rootClosed) {
           const opfValidator = new OPFValidator();
           opfValidator.validate(context);
 
@@ -798,7 +801,7 @@ export class EpubCheck {
 
     const failure = checkXmlWellFormed(data);
     if (failure) {
-      (context.xmlParseFailures ??= new Set()).add(path);
+      (context.xmlParseFailures ??= new Map()).set(path, failure);
       pushMessage(context.messages, {
         id: MessageId.RSC_016,
         message: `Fatal Error while parsing file: ${failure.message}`,

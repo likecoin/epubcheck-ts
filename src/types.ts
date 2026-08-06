@@ -1,5 +1,6 @@
 import type { MessageSeverity } from './messages/index.js';
 import type { PackageDocument } from './opf/types.js';
+import type { XmlParseFailure } from './util/xml-engine.js';
 
 /**
  * Severity levels for validation messages
@@ -123,11 +124,13 @@ export interface ValidationContext {
   /** Path to the package document (OPF) */
   opfPath?: string;
   /**
-   * Paths whose XML is not well-formed. A fatal parse error is reported once,
-   * at the point the document is read; later passes skip these paths rather
-   * than reporting the same failure again in their own terms.
+   * Paths whose XML is not well-formed, keyed by path. A fatal parse error is
+   * reported once, at the point the document is read; later passes skip these
+   * paths rather than reporting the same failure again in their own terms.
+   * The failure records how far the parse got, which decides whether a
+   * document model exists for those passes to work from.
    */
-  xmlParseFailures?: Set<string>;
+  xmlParseFailures?: Map<string, XmlParseFailure>;
   /** Parsed package document */
   packageDocument?: PackageDocument;
   /** NCX UID for validation against OPF identifier */

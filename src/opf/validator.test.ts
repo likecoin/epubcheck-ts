@@ -754,6 +754,41 @@ describe('OPFValidator', () => {
     });
   });
 
+  describe('not-well-formed OPF', () => {
+    const truncatedOPF = validOPF.slice(0, validOPF.indexOf('<spine>'));
+
+    const failure = (rootClosed: boolean) => ({
+      message: rootClosed ? 'Extra content at the end of the document' : 'Premature end of data',
+      nothingParsed: false,
+      rootClosed,
+    });
+
+    it('should skip structural checks when the parse aborted before the root closed', () => {
+      const context = createContext(truncatedOPF);
+      context.xmlParseFailures = new Map([['OEBPS/content.opf', failure(false)]]);
+      validator.validate(context);
+
+      expect(context.messages.filter((m) => m.severity === 'error')).toHaveLength(0);
+      expect(context.packageDocument).toBeUndefined();
+    });
+
+    it('should still report undeclared resources against the empty manifest', () => {
+      const context = createContext(truncatedOPF);
+      context.xmlParseFailures = new Map([['OEBPS/content.opf', failure(false)]]);
+      validator.validate(context);
+
+      expect(context.messages.filter((m) => m.id === 'OPF-003')).toHaveLength(1);
+    });
+
+    it('should keep checking when the parse aborted after the root closed', () => {
+      const context = createContext(`${validOPF}<trailing/>`);
+      context.xmlParseFailures = new Map([['OEBPS/content.opf', failure(true)]]);
+      validator.validate(context);
+
+      expect(context.packageDocument).toBeDefined();
+    });
+  });
+
   describe('rendition vocabulary validation', () => {
     const makeOPF = (
       metaLines: string,

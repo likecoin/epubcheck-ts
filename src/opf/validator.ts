@@ -514,6 +514,18 @@ export class OPFValidator {
     }
 
     // Encoding and well-formedness are reported by EpubCheck.reportXmlSource.
+    // A parse that aborted before `</package>` never reached Java's
+    // `buildItems()` (OPFHandler.java:686), so its checks all run against an
+    // empty item model: no manifest, no spine, nothing to cascade from. The
+    // one check that still speaks up is the undeclared-resource pass, which an
+    // empty manifest makes report every resource in the container.
+    const parseFailure = context.xmlParseFailures?.get(opfPath);
+    if (parseFailure && !parseFailure.rootClosed) {
+      this.packageDoc = null;
+      this.validateUndeclaredResources(context, opfPath);
+      return;
+    }
+
     const opfXml = decodeXmlBytes(opfData);
 
     // HTM-009: EPUB 2 OPF DOCTYPE check.
@@ -2557,11 +2569,10 @@ export class OPFValidator {
    * document(s), and common OS files.
    */
   private validateUndeclaredResources(context: ValidationContext, opfPath: string): void {
-    if (!this.packageDoc) return;
     if (context.options.mode === 'opf') return;
 
     const manifestPaths = new Set<string>();
-    for (const item of this.packageDoc.manifest) {
+    for (const item of this.packageDoc?.manifest ?? []) {
       const hrefBase = item.href.split('?')[0] ?? item.href;
       if (/^[a-zA-Z][a-zA-Z0-9+\-.]*:/.test(hrefBase)) continue;
       manifestPaths.add(resolvePath(opfPath, tryDecodeUriComponent(hrefBase)).normalize('NFC'));

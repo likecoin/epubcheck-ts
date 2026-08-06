@@ -59,6 +59,15 @@ export interface XmlParseFailure {
    * a partially parsed document.
    */
   nothingParsed: boolean;
+  /**
+   * True when the failure happened after the root element was closed, so the
+   * document model is complete. Java builds its model in `endElement` on the
+   * root — OPFHandler.java:686 calls `buildItems()` on `</package>` — so an
+   * abort before that point leaves the model empty and every downstream check
+   * silent, while an abort after it leaves a populated model the checkers keep
+   * using.
+   */
+  rootClosed: boolean;
 }
 
 /**
@@ -79,6 +88,18 @@ const NOTHING_PARSED_PATTERNS = [
 ];
 
 /**
+ * libxml2 messages raised once the root element has been closed — trailing
+ * content, or a second root element.
+ *
+ * Deliberately narrow: malformed trailing comments and PIs report the same
+ * generic messages they would report inside the document ("Comment not
+ * terminated"), so they are left out rather than risk treating a mid-document
+ * abort as a complete parse. The cost is only that an already-fatal document
+ * skips checks Java would still run.
+ */
+const AFTER_ROOT_PATTERNS = [/^Extra content at the end of the document/];
+
+/**
  * Parse `data` for well-formedness only, mirroring how Java hands raw bytes to
  * SAX and lets it detect the encoding itself (XMLParser.java:141-165). Returns
  * undefined when the document is well-formed.
@@ -95,6 +116,7 @@ export function checkXmlWellFormed(data: Uint8Array): XmlParseFailure | undefine
       message,
       ...(first ? { line: first.line } : {}),
       nothingParsed: NOTHING_PARSED_PATTERNS.some((pattern) => pattern.test(message)),
+      rootClosed: AFTER_ROOT_PATTERNS.some((pattern) => pattern.test(message)),
     };
   } finally {
     doc?.dispose();
