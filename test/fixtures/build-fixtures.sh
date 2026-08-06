@@ -6,8 +6,24 @@ set -euo pipefail
 JAVA_OPF_DIR="../epubcheck/src/test/resources/epub3/05-package-document/files"
 JAVA_NAV_DIR="../epubcheck/src/test/resources/epub3/07-navigation-document/files"
 FIXTURES_DIR="test/fixtures"
+ASSETS_DIR="$FIXTURES_DIR/assets"
 
 MIMETYPE="application/epub+zip"
+
+# Write a real 1x1 image of the type implied by $1's extension. These must be
+# complete images, not just magic bytes: EPUBCheck reads image dimensions via
+# ImageIO and reports PKG-021 for anything it cannot decode, so a header-only
+# placeholder makes an otherwise-valid fixture invalid.
+create_stub_image() {
+  local target="$1"
+  case "$(printf '%s' "${target##*.}" | tr '[:upper:]' '[:lower:]')" in
+    jpg | jpeg) cp "$ASSETS_DIR/stub.jpg" "$target" ;;
+    png) cp "$ASSETS_DIR/stub.png" "$target" ;;
+    # A complete 1x1 GIF is small enough to stay inline.
+    gif) printf 'GIF89a\x01\x00\x01\x00\x80\x00\x00\xff\xff\xff\x00\x00\x00!\xf9\x04\x00\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;' > "$target" ;;
+    *) return 1 ;;
+  esac
+}
 
 CONTAINER_XML='<?xml version="1.0" encoding="UTF-8" ?>
 <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
@@ -158,14 +174,8 @@ build_opf_epub() {
       woff2)
         printf 'wOF2' > "$tmpdir/EPUB/$href"
         ;;
-      gif)
-        printf 'GIF89a\x01\x00\x01\x00\x80\x00\x00\xff\xff\xff\x00\x00\x00!\xf9\x04\x00\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;' > "$tmpdir/EPUB/$href"
-        ;;
-      jpg|jpeg)
-        printf '\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00\xff\xd9' > "$tmpdir/EPUB/$href"
-        ;;
-      png)
-        printf '\x89PNG\r\n\x1a\n' > "$tmpdir/EPUB/$href"
+      gif|jpg|jpeg|png)
+        create_stub_image "$tmpdir/EPUB/$href"
         ;;
       webp)
         printf 'RIFF\x24\x00\x00\x00WEBPVP8 \x18\x00\x00\x000\x01\x00\x9d\x01\x2a\x01\x00\x01\x00\x01\x40\x25\xa4\x00\x03\x70\x00\xfe\xfb\x94\x00\x00' > "$tmpdir/EPUB/$href"
@@ -208,14 +218,14 @@ SMILEOF
     printf 'RIFF\x24\x00\x00\x00WEBPVP8 \x18\x00\x00\x000\x01\x00\x9d\x01\x2a\x01\x00\x01\x00\x01\x40\x25\xa4\x00\x03\x70\x00\xfe\xfb\x94\x00\x00' > "$tmpdir/EPUB/cover.webp"
   fi
   if echo "$opf_content" | grep -q 'href="image.jpg"'; then
-    printf '\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00\xff\xd9' > "$tmpdir/EPUB/image.jpg"
+    create_stub_image "$tmpdir/EPUB/image.jpg"
   fi
   if echo "$opf_content" | grep -q 'href="image.png"'; then
-    printf '\x89PNG\r\n\x1a\n' > "$tmpdir/EPUB/image.png"
+    create_stub_image "$tmpdir/EPUB/image.png"
   fi
   # Unencoded space in filename
   if echo "$opf_content" | grep -q 'href="image 1.png"'; then
-    printf '\x89PNG\r\n\x1a\n' > "$tmpdir/EPUB/image 1.png"
+    create_stub_image "$tmpdir/EPUB/image 1.png"
   fi
 
   # NCX
@@ -407,9 +417,9 @@ STUBEOF
     local ext="${ref##*.}"
     local media_type=""
     case "$ext" in
-      jpg|jpeg) media_type="image/jpeg"; printf '\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00\xff\xd9' > "$stub_path" ;;
-      png) media_type="image/png"; printf '\x89PNG\r\n\x1a\n' > "$stub_path" ;;
-      gif) media_type="image/gif"; printf 'GIF89a\x01\x00\x01\x00\x80\x00\x00\xff\xff\xff\x00\x00\x00!\xf9\x04\x00\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;' > "$stub_path" ;;
+      jpg|jpeg) media_type="image/jpeg"; create_stub_image "$stub_path" ;;
+      png) media_type="image/png"; create_stub_image "$stub_path" ;;
+      gif) media_type="image/gif"; create_stub_image "$stub_path" ;;
       svg) media_type="image/svg+xml"; echo '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"/>' > "$stub_path" ;;
       *) continue ;;
     esac
@@ -721,14 +731,8 @@ STUBEOF
       svg)
         echo '<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><rect width="1" height="1"/></svg>' > "$stub_path"
         ;;
-      jpg|jpeg)
-        printf '\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00\xff\xd9' > "$stub_path"
-        ;;
-      png)
-        printf '\x89PNG\r\n\x1a\n' > "$stub_path"
-        ;;
-      gif)
-        printf 'GIF89a\x01\x00\x01\x00\x80\x00\x00\xff\xff\xff\x00\x00\x00!\xf9\x04\x00\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;' > "$stub_path"
+      jpg|jpeg|png|gif)
+        create_stub_image "$stub_path"
         ;;
       *)
         touch "$stub_path"

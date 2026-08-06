@@ -32,10 +32,10 @@ Baseline: **EPUBCheck 5.3.0**, measured 2026-08-05.
 
 | Metric | Agreement |
 |---|---|
-| **Valid/invalid verdict** | **95.5%** |
-| Message-ID set, errors + warnings only | 86.1% |
-| Message-ID set, all severities | 72.2% |
-| Exact match (IDs + counts + severity) | 65.8% |
+| **Valid/invalid verdict** | **96.7%** |
+| Message-ID set, errors + warnings only | 88.3% |
+| Message-ID set, all severities | 73.7% |
+| Exact match (IDs + counts + severity) | 67.2% |
 
 Severity assignment agrees on **100%** of messages — zero mismatches across the corpus.
 
@@ -67,7 +67,7 @@ Severity assignment agrees on **100%** of messages — zero mismatches across th
 Run both engines over the same bytes and diff. Java: `epubcheck <file> --json out.json -u`, or `--mode <m> -v 3.0` for standalone fixtures. TS: the library API with `includeUsage`/`includeInfo`. Normalize Java's `HTM_060b` form to `HTM-060b`, then compare per-fixture message-ID multisets.
 
 Three corpus caveats worth knowing before trusting a delta:
-- Roughly half of `test/fixtures/` are synthetic EPUBs wrapping Java's *standalone* fixtures, with fabricated stub assets. Java flags that scaffolding, which inflates apparent gaps; the standalone table above avoids this entirely. All 20 `PKG-021` gaps are this: `build-fixtures.sh` writes a 22-byte header-only JPEG and an 8-byte PNG signature, neither of which `ImageIO` can read dimensions from. Confirmed by rebuilding `map-valid.epub` with a real 1×1 image — EPUBCheck 5.3.0 then reports nothing. The GIF and WebP stubs are complete images and produce no `PKG-021`.
+- Roughly half of `test/fixtures/` are synthetic EPUBs wrapping Java's *standalone* fixtures, with fabricated stub assets. Java flags that scaffolding, which inflates apparent gaps; the standalone table above avoids this entirely. This produced all 20 of the former `PKG-021` gaps — `build-fixtures.sh` wrote a 22-byte header-only JPEG and a bare 8-byte PNG signature, neither carrying the dimensions `ImageIO` needs. Both are now real 1×1 images in `test/fixtures/assets/`, and `repair-stub-images.sh` fixed the 22 EPUBs built before that change. When adding a fixture asset, make it a *complete* file of its type, not just magic bytes.
 - Java auto-detects the publication version; a differential run must not pass an explicit version, or it will mask version-gating bugs.
 - Standalone fixtures must be addressed by **basename**, with the bytes read from wherever they live. Passing a path-qualified name makes every sibling `href` resolve outside the notional container, so `RSC-026` fires on nearly every OPF and the mode's exact-match score collapses to near zero. That is a measurement artifact, not a regression.
 
@@ -184,10 +184,10 @@ Core EPUB 3 per-feature: 00-minimal 100%, 02-conformance 100%, 03-resources 97%,
 
 Ordered by measured impact on agreement with Java:
 
-1. **Remaining false positives** — 75 error/warning occurrences across 30 IDs that Java does not emit; `OPF-097`, `OPF-003` and `OPF-088` dominate at usage severity. These cost more agreement than any unimplemented check.
-2. **Remaining coverage gaps** — 80 occurrences across 22 IDs Java emits and we do not, led by `RSC-005`. The next 20 are `PKG-021` (9 of them verdict flips), which repairing the stub images clears without touching the validator — see the scaffolding caveat under Method. Implementing the check itself is item 4, and stays a real gap for real books either way.
+1. **Remaining false positives** — 142 error/warning occurrences across 41 IDs that Java does not emit, led by `RSC-005` (45), `RSC-017` (10) and `RSC-006` (9). At usage severity `OPF-097`, `OPF-003` and `OPF-088` dominate. These cost more agreement than any unimplemented check.
+2. **Remaining coverage gaps** — 93 error/warning occurrences across 23 IDs Java emits and we do not, more than half of them `RSC-005` (50), then `RSC-007` (10). Nothing else reaches five.
 3. **Line numbers for `RSC-005`** — ~130 messages still carry no line; the OPF model now records positions, so the remaining work is per-rule attribution.
-4. **Advanced media** — deep format validation beyond magic numbers (MED-003/004, PKG-021/022, OPF-051/057).
+4. **Advanced media** — deep format validation beyond magic numbers (MED-003/004, PKG-021/022, OPF-051/057). No fixture exercises this any more now that the stub images are real, so it carries no measurable parity cost — but a truncated image in a real book still goes unflagged, and `PKG-021` currently fires only for files under 4 bytes.
 5. **Remaining accessibility** — ACC-008/013/015/016/017 (all suppressed by default; low real-world impact).
 6. **Specialized** — dictionary/index advanced validation, multiple renditions (metadata.xml), signatures.xml validation.
 
