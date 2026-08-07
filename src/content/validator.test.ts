@@ -1216,4 +1216,45 @@ describe('ContentValidator', () => {
       expect(fatals).toHaveLength(0);
     });
   });
+
+  // validateImages resolves an <img src> against the package document's location
+  // before looking it up in the manifest. Every packaged fixture in the corpus
+  // keeps its OPF under a directory (EPUB/, OEBPS/, OPS/), so the container-root
+  // case -- where that directory is empty -- is unreachable by parity and only
+  // covered here.
+  describe('image resolution with a container-root package document', () => {
+    const chapterWith = (src: string) => `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head><title>Test</title></head>
+  <body><img src="${src}" alt="test" /></body>
+</html>`;
+
+    const runWithRootOpf = (src: string, imageMediaType: string) => {
+      // OPF-051 is suppressed by default, so validateImages is silent under the
+      // default options and its resolution cannot be observed without this.
+      setSeverityOverrides(new Map([['OPF-051', 'error' as MessageSeverity]]));
+      const files = new Map([['chapter.xhtml', toBytes(chapterWith(src))]]);
+      const packageDoc = createPackageDoc([
+        { id: 'ch1', href: 'chapter.xhtml', mediaType: 'application/xhtml+xml' },
+        { id: 'img', href: 'images/pic.png', mediaType: imageMediaType },
+      ]);
+      context = createContext(files, packageDoc, 'content.opf');
+      validator.validate(context);
+      return context.messages.filter((m) => m.id === 'OPF-051');
+    };
+
+    it.each(['./images/pic.png', 'images/pic.png', '/images/pic.png'])(
+      'resolves "%s" to the manifest item and reports its non-image media type',
+      (src) => {
+        expect(runWithRootOpf(src, 'application/octet-stream')).toHaveLength(1);
+      },
+    );
+
+    it.each(['./images/pic.png', 'images/pic.png', '/images/pic.png'])(
+      'resolves "%s" without reporting a valid image media type',
+      (src) => {
+        expect(runWithRootOpf(src, 'image/png')).toHaveLength(0);
+      },
+    );
+  });
 });

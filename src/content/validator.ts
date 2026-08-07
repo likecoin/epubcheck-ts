@@ -25,6 +25,37 @@ import {
   EPUB_SSV_DISALLOWED_ON_CONTENT,
 } from '../vocab/epub-ssv.js';
 
+const JAVASCRIPT_TYPES = new Set([
+  'application/javascript',
+  'text/javascript',
+  'application/ecmascript',
+  'application/x-ecmascript',
+  'application/x-javascript',
+  'text/ecmascript',
+  'text/javascript1.0',
+  'text/javascript1.1',
+  'text/javascript1.2',
+  'text/javascript1.3',
+  'text/javascript1.4',
+  'text/javascript1.5',
+  'text/jscript',
+  'text/livescript',
+  'text/x-ecmascript',
+  'text/x-javascript',
+  'module', // ES modules
+]);
+
+const CORE_IMAGE_MEDIA_TYPES = new Set([
+  'image/gif',
+  'image/jpeg',
+  'image/png',
+  'image/svg+xml',
+  'image/webp',
+]);
+
+/** The core image types plus the non-standard `image/jpg`, which OPF-051 tolerates. */
+const IMAGE_MEDIA_TYPES = new Set([...CORE_IMAGE_MEDIA_TYPES, 'image/jpg']);
+
 const DISCOURAGED_ELEMENTS = new Set(['base', 'embed', 'rp']);
 
 const ABSOLUTE_URI_RE = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
@@ -38,7 +69,14 @@ const EPUB_XMLNS_RE = /xmlns:epub\s*=\s*"([^"]*)"/;
 const XHTML_NS_URI = 'http://www.w3.org/1999/xhtml';
 const XML_NS_URI = 'http://www.w3.org/XML/1998/namespace';
 const XHTML_NS = { html: XHTML_NS_URI };
-const EPUB_OPS_NS = { epub: 'http://www.idpf.org/2007/ops' };
+const SVG_NS_URI = 'http://www.w3.org/2000/svg';
+const MATHML_NS_URI = 'http://www.w3.org/1998/Math/MathML';
+const OPS_NS_URI = 'http://www.idpf.org/2007/ops';
+const EPUB_OPS_NS = { epub: OPS_NS_URI };
+const SVG_NS = { svg: SVG_NS_URI };
+const MATHML_NS = { math: MATHML_NS_URI };
+const XLINK_NS_URI = 'http://www.w3.org/1999/xlink';
+const SVG_XLINK_NS = { svg: SVG_NS_URI, xlink: XLINK_NS_URI };
 
 const EPUB_TYPE_FORBIDDEN_ELEMENTS = new Set([
   'head',
@@ -850,9 +888,7 @@ export class ContentValidator {
 
       // Extract font-face-uri references as FONT type
       try {
-        const fontFaceUris = root.find('.//svg:font-face-uri', {
-          svg: 'http://www.w3.org/2000/svg',
-        });
+        const fontFaceUris = root.find('.//svg:font-face-uri', SVG_NS);
         for (const uri of fontFaceUris) {
           const href =
             this.getAttribute(uri as XmlElement, 'xlink:href') ??
@@ -881,7 +917,7 @@ export class ContentValidator {
 
       // Extract @import from SVG <style> elements
       try {
-        const styles = root.find('.//svg:style', { svg: 'http://www.w3.org/2000/svg' });
+        const styles = root.find('.//svg:style', SVG_NS);
         for (const style of styles) {
           const cssContent = (style as XmlElement).content;
           if (cssContent) {
@@ -953,13 +989,8 @@ export class ContentValidator {
     refValidator: ReferenceValidator,
   ): void {
     try {
-      const svgUseXlink = root.find('.//svg:use[@xlink:href]', {
-        svg: 'http://www.w3.org/2000/svg',
-        xlink: 'http://www.w3.org/1999/xlink',
-      });
-      const svgUseHref = root.find('.//svg:use[@href]', {
-        svg: 'http://www.w3.org/2000/svg',
-      });
+      const svgUseXlink = root.find('.//svg:use[@xlink:href]', SVG_XLINK_NS);
+      const svgUseHref = root.find('.//svg:use[@href]', SVG_NS);
       for (const useNode of [...svgUseXlink, ...svgUseHref]) {
         const useElem = useNode as XmlElement;
         const href = this.getAttribute(useElem, 'xlink:href') ?? this.getAttribute(useElem, 'href');
@@ -1010,9 +1041,7 @@ export class ContentValidator {
 
   private detectSVGRemoteResources(root: XmlElement): boolean {
     try {
-      const fontFaceUris = root.find('.//svg:font-face-uri', {
-        svg: 'http://www.w3.org/2000/svg',
-      });
+      const fontFaceUris = root.find('.//svg:font-face-uri', SVG_NS);
       for (const uri of fontFaceUris) {
         const href =
           this.getAttribute(uri as XmlElement, 'xlink:href') ??
@@ -1026,7 +1055,7 @@ export class ContentValidator {
     }
 
     try {
-      const images = root.find('.//svg:image', { svg: 'http://www.w3.org/2000/svg' });
+      const images = root.find('.//svg:image', SVG_NS);
       for (const img of images) {
         const href =
           this.getAttribute(img as XmlElement, 'xlink:href') ??
@@ -1040,7 +1069,7 @@ export class ContentValidator {
     }
 
     try {
-      const styles = root.find('.//svg:style', { svg: 'http://www.w3.org/2000/svg' });
+      const styles = root.find('.//svg:style', SVG_NS);
       for (const style of styles) {
         const cssContent = (style as XmlElement).content;
         if (this.cssContainsRemoteUrl(cssContent)) {
@@ -1223,13 +1252,13 @@ export class ContentValidator {
 
     // Check for unusual epub namespace before parsing (HTM-010)
     const epubNsMatch = EPUB_XMLNS_RE.exec(content);
-    if (epubNsMatch?.[1] && epubNsMatch[1] !== 'http://www.idpf.org/2007/ops') {
+    if (epubNsMatch?.[1] && epubNsMatch[1] !== OPS_NS_URI) {
       pushMessage(context.messages, {
         id: MessageId.HTM_010,
         message: `Namespace URI "${epubNsMatch[1]}" is unusual for the "epub" prefix`,
         location: { path },
       });
-      content = content.replace(epubNsMatch[0], 'xmlns:epub="http://www.idpf.org/2007/ops"');
+      content = content.replace(epubNsMatch[0], `xmlns:epub="${OPS_NS_URI}"`);
     }
 
     // Check for unescaped ampersands before parsing
@@ -1329,8 +1358,7 @@ export class ContentValidator {
       // Check for html element with xmlns
       const nsDecls = root.nsDeclarations;
       const hasXhtmlNamespace =
-        nsDecls[''] === 'http://www.w3.org/1999/xhtml' ||
-        Object.values(nsDecls).some((uri) => uri === 'http://www.w3.org/1999/xhtml');
+        nsDecls[''] === XHTML_NS_URI || Object.values(nsDecls).some((uri) => uri === XHTML_NS_URI);
 
       if (!hasXhtmlNamespace) {
         pushMessage(context.messages, {
@@ -1342,7 +1370,7 @@ export class ContentValidator {
       }
 
       // Check for head element
-      const head = root.get('.//html:head', { html: 'http://www.w3.org/1999/xhtml' });
+      const head = root.get('.//html:head', XHTML_NS);
       if (!head) {
         pushMessage(context.messages, {
           id: MessageId.HTM_002,
@@ -1352,7 +1380,7 @@ export class ContentValidator {
       }
 
       // Check for title element
-      const title = root.get('.//html:title', { html: 'http://www.w3.org/1999/xhtml' });
+      const title = root.get('.//html:title', XHTML_NS);
       if (!title) {
         pushMessage(context.messages, {
           id: MessageId.RSC_017,
@@ -1371,7 +1399,7 @@ export class ContentValidator {
       }
 
       // Check for body element
-      const body = root.get('.//html:body', { html: 'http://www.w3.org/1999/xhtml' });
+      const body = root.get('.//html:body', XHTML_NS);
       if (!body) {
         pushMessage(context.messages, {
           id: MessageId.HTM_002,
@@ -1499,16 +1527,12 @@ export class ContentValidator {
         // RSC-005: each "index" element must contain exactly one
         // "index-entry-list" descendant. Mirrors idx-xhtml.sch idx.entry-list rule.
         if (hasIndexMarkup) {
-          const epubTypeElements = root.find('.//*[@epub:type]', {
-            epub: 'http://www.idpf.org/2007/ops',
-          });
+          const epubTypeElements = root.find('.//*[@epub:type]', EPUB_OPS_NS);
           for (const el of epubTypeElements) {
             const elemTyped = el as XmlElement;
             const types = elemTyped.attr('type', 'epub')?.value.split(/\s+/) ?? [];
             if (!types.includes('index') && !types.includes('index-group')) continue;
-            const entryLists = elemTyped.find('.//*[@epub:type]', {
-              epub: 'http://www.idpf.org/2007/ops',
-            });
+            const entryLists = elemTyped.find('.//*[@epub:type]', EPUB_OPS_NS);
             const entryListCount = entryLists.filter((e) => {
               const t = (e as XmlElement).attr('type', 'epub')?.value.split(/\s+/) ?? [];
               return t.includes('index-entry-list');
@@ -1534,7 +1558,7 @@ export class ContentValidator {
           const requireBodyEpubType =
             !packageDoc || (manifestItem?.properties?.includes('index') ?? false);
           if (requireBodyEpubType) {
-            const body = root.get('.//html:body', { html: 'http://www.w3.org/1999/xhtml' });
+            const body = root.get('.//html:body', XHTML_NS);
             const bodyHasIndex =
               !!body &&
               ((body as XmlElement).attr('type', 'epub')?.value.split(/\s+/).includes('index') ??
@@ -1738,7 +1762,7 @@ export class ContentValidator {
 
     if (isSVG) {
       try {
-        const styles = root.find('.//svg:style', { svg: 'http://www.w3.org/2000/svg' });
+        const styles = root.find('.//svg:style', SVG_NS);
         if (styles.length > 0) hasCSS = true;
       } catch {
         // XPath may fail
@@ -1847,8 +1871,7 @@ export class ContentValidator {
     _doc: XmlDocument,
     root: XmlElement,
   ): void {
-    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
-    const navElements = root.find('.//html:nav', HTML_NS);
+    const navElements = root.find('.//html:nav', XHTML_NS);
     if (navElements.length === 0) {
       pushMessage(context.messages, {
         id: MessageId.NAV_001,
@@ -1865,9 +1888,7 @@ export class ContentValidator {
         nav.attrs as { name: string; value: string; prefix?: string; namespaceUri?: string }[]
       ).find(
         (attr) =>
-          attr.name === 'type' &&
-          attr.prefix === 'epub' &&
-          attr.namespaceUri === 'http://www.idpf.org/2007/ops',
+          attr.name === 'type' && attr.prefix === 'epub' && attr.namespaceUri === OPS_NS_URI,
       );
       return epubTypeAttr ? epubTypeAttr.value.trim().split(/\s+/) : [];
     };
@@ -1902,7 +1923,7 @@ export class ContentValidator {
       return;
     }
 
-    const ol = tocNav.get('.//html:ol', HTML_NS);
+    const ol = tocNav.get('.//html:ol', XHTML_NS);
     if (!ol) {
       pushMessage(context.messages, {
         id: MessageId.NAV_002,
@@ -1982,11 +2003,10 @@ export class ContentValidator {
     path: string,
     navElem: XmlElement,
   ): void {
-    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
     const headingTags = new Set(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
 
     // Get first child element of nav
-    const children = navElem.find('./html:*', HTML_NS);
+    const children = navElem.find('./html:*', XHTML_NS);
     if (children.length === 0) return;
 
     const firstChild = children[0] as XmlElement;
@@ -2002,10 +2022,7 @@ export class ContentValidator {
   }
 
   private checkNavLandmarks(context: ValidationContext, path: string, navElem: XmlElement): void {
-    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
-    const EPUB_NS = 'http://www.idpf.org/2007/ops';
-
-    const anchors = navElem.find('.//html:ol//html:a', HTML_NS);
+    const anchors = navElem.find('.//html:ol//html:a', XHTML_NS);
     const seenLandmarks: { type: string; href: string }[] = [];
 
     for (const anchor of anchors) {
@@ -2021,7 +2038,7 @@ export class ContentValidator {
                 prefix?: string;
                 namespaceUri?: string;
               }[]
-            ).find((attr) => attr.name === 'type' && attr.namespaceUri === EPUB_NS)
+            ).find((attr) => attr.name === 'type' && attr.namespaceUri === OPS_NS_URI)
           : undefined;
 
       if (!epubTypeAttr) {
@@ -2055,10 +2072,8 @@ export class ContentValidator {
   }
 
   private checkNavLabels(context: ValidationContext, path: string, navElem: XmlElement): void {
-    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
-
     // Check anchor labels
-    const anchors = navElem.find('.//html:ol//html:a', HTML_NS);
+    const anchors = navElem.find('.//html:ol//html:a', XHTML_NS);
     for (const anchor of anchors) {
       if (!this.hasNavLabelContent(anchor as XmlElement)) {
         pushMessage(context.messages, {
@@ -2070,7 +2085,7 @@ export class ContentValidator {
     }
 
     // Check span labels
-    const spans = navElem.find('.//html:ol//html:span', HTML_NS);
+    const spans = navElem.find('.//html:ol//html:span', XHTML_NS);
     for (const span of spans) {
       if (!this.hasNavLabelContent(span as XmlElement)) {
         pushMessage(context.messages, {
@@ -2083,13 +2098,12 @@ export class ContentValidator {
   }
 
   private hasNavLabelContent(element: XmlElement): boolean {
-    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
     // Check text content
     const textContent = element.content;
     if (textContent && textContent.trim().length > 0) return true;
 
     // Check img alt attributes
-    const imgs = element.find('./html:img[@alt]', HTML_NS);
+    const imgs = element.find('./html:img[@alt]', XHTML_NS);
     for (const img of imgs) {
       const alt = this.getAttribute(img as XmlElement, 'alt');
       if (alt && alt.trim().length > 0) return true;
@@ -2113,11 +2127,10 @@ export class ContentValidator {
     path: string,
     navElem: XmlElement,
   ): void {
-    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
     const headingTags = new Set(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hgroup']);
 
     // Check nav direct children: only headings, hgroup, and ol are allowed
-    const navChildren = navElem.find('./html:*', HTML_NS);
+    const navChildren = navElem.find('./html:*', XHTML_NS);
     for (const child of navChildren) {
       const localName = (child as XmlElement).name.split(':').pop() ?? (child as XmlElement).name;
       if (!headingTags.has(localName) && localName !== 'ol') {
@@ -2130,9 +2143,9 @@ export class ContentValidator {
     }
 
     // Check ol elements have li children
-    const olElements = navElem.find('.//html:ol', HTML_NS);
+    const olElements = navElem.find('.//html:ol', XHTML_NS);
     for (const ol of olElements) {
-      const liChildren = (ol as XmlElement).find('./html:li', HTML_NS);
+      const liChildren = (ol as XmlElement).find('./html:li', XHTML_NS);
       if (liChildren.length === 0) {
         pushMessage(context.messages, {
           id: MessageId.RSC_005,
@@ -2143,12 +2156,12 @@ export class ContentValidator {
     }
 
     // Check li elements content model
-    const liElements = navElem.find('.//html:ol//html:li', HTML_NS);
+    const liElements = navElem.find('.//html:ol//html:li', XHTML_NS);
     for (const li of liElements) {
       const liElem = li as XmlElement;
-      const hasOl = liElem.get('./html:ol', HTML_NS);
-      const hasAnchor = liElem.get('./html:a', HTML_NS);
-      const hasSpan = liElem.get('./html:span', HTML_NS);
+      const hasOl = liElem.get('./html:ol', XHTML_NS);
+      const hasAnchor = liElem.get('./html:a', XHTML_NS);
+      const hasSpan = liElem.get('./html:span', XHTML_NS);
 
       if (!hasAnchor && !hasSpan) {
         if (hasOl) {
@@ -2178,7 +2191,6 @@ export class ContentValidator {
   }
 
   private checkNavHeadingContent(context: ValidationContext, path: string, root: XmlElement): void {
-    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
     const headingSelectors = [
       './/html:h1',
       './/html:h2',
@@ -2189,7 +2201,7 @@ export class ContentValidator {
     ];
 
     for (const selector of headingSelectors) {
-      const headings = root.find(selector, HTML_NS);
+      const headings = root.find(selector, XHTML_NS);
       for (const heading of headings) {
         if (!this.hasNavLabelContent(heading as XmlElement)) {
           pushMessage(context.messages, {
@@ -2226,8 +2238,7 @@ export class ContentValidator {
   }
 
   private checkNavRemoteLinks(context: ValidationContext, path: string, root: XmlElement): void {
-    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
-    const navElements = root.find('.//html:nav', HTML_NS);
+    const navElements = root.find('.//html:nav', XHTML_NS);
 
     for (const nav of navElements) {
       const navElem = nav as XmlElement;
@@ -2242,9 +2253,7 @@ export class ContentValidator {
               }[]
             ).find(
               (attr) =>
-                attr.name === 'type' &&
-                attr.prefix === 'epub' &&
-                attr.namespaceUri === 'http://www.idpf.org/2007/ops',
+                attr.name === 'type' && attr.prefix === 'epub' && attr.namespaceUri === OPS_NS_URI,
             )
           : undefined;
       const types = epubTypeAttr ? epubTypeAttr.value.trim().split(/\s+/) : [];
@@ -2255,7 +2264,7 @@ export class ContentValidator {
       if (!isToc && !isLandmarks && !isPageList) continue;
 
       const navType = isToc ? 'toc' : isLandmarks ? 'landmarks' : 'page-list';
-      const links = navElem.find('.//html:a[@href]', HTML_NS);
+      const links = navElem.find('.//html:a[@href]', XHTML_NS);
       for (const link of links) {
         const href = this.getAttribute(link as XmlElement, 'href');
         if (href && (href.startsWith('http://') || href.startsWith('https://'))) {
@@ -2270,11 +2279,10 @@ export class ContentValidator {
   }
 
   private collectTocLinks(context: ValidationContext, path: string, tocNav: XmlElement): void {
-    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
     const docDir = dirname(path);
     const opfDir = dirname(context.opfPath ?? '');
 
-    const tocAnchors = tocNav.find('.//html:a[@href]', HTML_NS);
+    const tocAnchors = tocNav.find('.//html:a[@href]', XHTML_NS);
     if (context.contentFeatures) {
       context.contentFeatures.tocLinkCount =
         (context.contentFeatures.tocLinkCount ?? 0) + tocAnchors.length;
@@ -2314,21 +2322,21 @@ export class ContentValidator {
   private detectScripts(_context: ValidationContext, _path: string, root: XmlElement): boolean {
     // Check for script elements with JavaScript types
     // Non-JavaScript types like application/ld+json don't require "scripted" property
-    const htmlScripts = root.find('.//html:script', { html: 'http://www.w3.org/1999/xhtml' });
+    const htmlScripts = root.find('.//html:script', XHTML_NS);
     for (const script of htmlScripts) {
       if (this.isScriptType(this.getAttribute(script as XmlElement, 'type'))) {
         return true;
       }
     }
 
-    const svgScripts = root.find('.//svg:script', { svg: 'http://www.w3.org/2000/svg' });
+    const svgScripts = root.find('.//svg:script', SVG_NS);
     for (const script of svgScripts) {
       if (this.isScriptType(this.getAttribute(script as XmlElement, 'type'))) {
         return true;
       }
     }
 
-    const form = root.get('.//html:form', { html: 'http://www.w3.org/1999/xhtml' });
+    const form = root.get('.//html:form', XHTML_NS);
     if (form) return true;
 
     const elementsWithEvents = root.find(
@@ -2348,44 +2356,24 @@ export class ContentValidator {
     // No type attribute or empty = defaults to JavaScript
     if (!type || type.trim() === '') return true;
 
-    const jsTypes = new Set([
-      'application/javascript',
-      'text/javascript',
-      'application/ecmascript',
-      'application/x-ecmascript',
-      'application/x-javascript',
-      'text/ecmascript',
-      'text/javascript1.0',
-      'text/javascript1.1',
-      'text/javascript1.2',
-      'text/javascript1.3',
-      'text/javascript1.4',
-      'text/javascript1.5',
-      'text/jscript',
-      'text/livescript',
-      'text/x-ecmascript',
-      'text/x-javascript',
-      'module', // ES modules
-    ]);
-
-    return jsTypes.has(type.toLowerCase());
+    return JAVASCRIPT_TYPES.has(type.toLowerCase());
   }
 
   private detectSwitch(root: XmlElement): boolean {
-    const switchElem = root.get('.//epub:switch', { epub: 'http://www.idpf.org/2007/ops' });
+    const switchElem = root.get('.//epub:switch', EPUB_OPS_NS);
     return !!switchElem;
   }
 
   private detectMathML(_context: ValidationContext, _path: string, root: XmlElement): boolean {
-    const mathMLElements = root.find('.//math:*', { math: 'http://www.w3.org/1998/Math/MathML' });
+    const mathMLElements = root.find('.//math:*', MATHML_NS);
     return mathMLElements.length > 0;
   }
 
   private detectSVG(_context: ValidationContext, _path: string, root: XmlElement): boolean {
-    const svgElement = root.get('.//html:svg', { html: 'http://www.w3.org/1999/xhtml' });
+    const svgElement = root.get('.//html:svg', XHTML_NS);
     if (svgElement) return true;
 
-    const rootSvg = root.get('.//svg:svg', { svg: 'http://www.w3.org/2000/svg' });
+    const rootSvg = root.get('.//svg:svg', SVG_NS);
     if (rootSvg) return true;
 
     return false;
@@ -2396,7 +2384,7 @@ export class ContentValidator {
    * token (token-aware match against whitespace-separated values).
    */
   private detectEpubType(root: XmlElement, token: string): boolean {
-    const elements = root.find('.//*[@epub:type]', { epub: 'http://www.idpf.org/2007/ops' });
+    const elements = root.find('.//*[@epub:type]', EPUB_OPS_NS);
     for (const el of elements) {
       const value = (el as XmlElement).attr('type', 'epub')?.value;
       if (value?.split(/\s+/).includes(token)) return true;
@@ -2459,7 +2447,7 @@ export class ContentValidator {
     root: XmlElement,
     opfDir?: string,
   ): boolean {
-    const images = root.find('.//html:img[@src]', { html: 'http://www.w3.org/1999/xhtml' });
+    const images = root.find('.//html:img[@src]', XHTML_NS);
     for (const img of images) {
       const src = this.getAttribute(img as XmlElement, 'src');
       if (src && (src.startsWith('http://') || src.startsWith('https://'))) {
@@ -2467,7 +2455,7 @@ export class ContentValidator {
       }
     }
 
-    const audio = root.find('.//html:audio[@src]', { html: 'http://www.w3.org/1999/xhtml' });
+    const audio = root.find('.//html:audio[@src]', XHTML_NS);
     for (const elem of audio) {
       const src = this.getAttribute(elem as XmlElement, 'src');
       if (src && (src.startsWith('http://') || src.startsWith('https://'))) {
@@ -2475,7 +2463,7 @@ export class ContentValidator {
       }
     }
 
-    const video = root.find('.//html:video[@src]', { html: 'http://www.w3.org/1999/xhtml' });
+    const video = root.find('.//html:video[@src]', XHTML_NS);
     for (const elem of video) {
       const src = this.getAttribute(elem as XmlElement, 'src');
       if (src && (src.startsWith('http://') || src.startsWith('https://'))) {
@@ -2483,7 +2471,7 @@ export class ContentValidator {
       }
     }
 
-    const sources = root.find('.//html:source[@src]', { html: 'http://www.w3.org/1999/xhtml' });
+    const sources = root.find('.//html:source[@src]', XHTML_NS);
     for (const source of sources) {
       const src = this.getAttribute(source as XmlElement, 'src');
       if (src && (src.startsWith('http://') || src.startsWith('https://'))) {
@@ -2491,7 +2479,7 @@ export class ContentValidator {
       }
     }
 
-    const objects = root.find('.//html:object[@data]', { html: 'http://www.w3.org/1999/xhtml' });
+    const objects = root.find('.//html:object[@data]', XHTML_NS);
     for (const obj of objects) {
       const data = this.getAttribute(obj as XmlElement, 'data');
       if (data && (data.startsWith('http://') || data.startsWith('https://'))) {
@@ -2499,7 +2487,7 @@ export class ContentValidator {
       }
     }
 
-    const embeds = root.find('.//html:embed[@src]', { html: 'http://www.w3.org/1999/xhtml' });
+    const embeds = root.find('.//html:embed[@src]', XHTML_NS);
     for (const embed of embeds) {
       const src = this.getAttribute(embed as XmlElement, 'src');
       if (src && (src.startsWith('http://') || src.startsWith('https://'))) {
@@ -2507,9 +2495,7 @@ export class ContentValidator {
       }
     }
 
-    const linkElements = root.find('.//html:link[@rel and @href]', {
-      html: 'http://www.w3.org/1999/xhtml',
-    });
+    const linkElements = root.find('.//html:link[@rel and @href]', XHTML_NS);
     const docDir = dirname(path);
     for (const linkElem of linkElements) {
       const rel = this.getAttribute(linkElem as XmlElement, 'rel');
@@ -2526,7 +2512,7 @@ export class ContentValidator {
       }
     }
 
-    const styleElements = root.find('.//html:style', { html: 'http://www.w3.org/1999/xhtml' });
+    const styleElements = root.find('.//html:style', XHTML_NS);
     for (const style of styleElements) {
       const cssContent = (style as XmlElement).content;
       if (this.cssContainsRemoteUrl(cssContent)) {
@@ -2548,7 +2534,7 @@ export class ContentValidator {
     root: XmlElement,
   ): void {
     for (const elemName of DISCOURAGED_ELEMENTS) {
-      const element = root.get(`.//html:${elemName}`, { html: 'http://www.w3.org/1999/xhtml' });
+      const element = root.get(`.//html:${elemName}`, XHTML_NS);
       if (element) {
         pushMessage(context.messages, {
           id: MessageId.HTM_055,
@@ -2581,8 +2567,6 @@ export class ContentValidator {
   }
 
   private checkObsoleteHTML(context: ValidationContext, path: string, root: XmlElement): void {
-    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
-
     // Obsolete global attributes
     const obsoleteGlobalAttrs = ['contextmenu', 'dropzone'];
     for (const attr of obsoleteGlobalAttrs) {
@@ -2608,7 +2592,7 @@ export class ContentValidator {
     ];
     for (const [attr, xpath] of obsoleteElementAttrs) {
       try {
-        const elements = root.find(xpath, HTML_NS);
+        const elements = root.find(xpath, XHTML_NS);
         for (const el of elements) {
           pushMessage(context.messages, {
             id: MessageId.RSC_005,
@@ -2623,7 +2607,7 @@ export class ContentValidator {
 
     // Obsolete elements
     try {
-      const keygens = root.find('.//html:keygen', HTML_NS);
+      const keygens = root.find('.//html:keygen', XHTML_NS);
       for (const keygen of keygens) {
         pushMessage(context.messages, {
           id: MessageId.RSC_005,
@@ -2637,7 +2621,7 @@ export class ContentValidator {
 
     // Obsolete menu features: type attribute on menu, command element
     try {
-      const menuTypes = root.find('.//html:menu[@type]', HTML_NS);
+      const menuTypes = root.find('.//html:menu[@type]', XHTML_NS);
       for (const menuType of menuTypes) {
         pushMessage(context.messages, {
           id: MessageId.RSC_005,
@@ -2649,7 +2633,7 @@ export class ContentValidator {
       // XPath may fail on malformed documents
     }
     try {
-      const commands = root.find('.//html:command', HTML_NS);
+      const commands = root.find('.//html:command', XHTML_NS);
       for (const command of commands) {
         pushMessage(context.messages, {
           id: MessageId.RSC_005,
@@ -2689,9 +2673,8 @@ export class ContentValidator {
   }
 
   private checkImgSrcEmpty(context: ValidationContext, path: string, root: XmlElement): void {
-    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
     try {
-      const imgs = root.find('.//html:img[@src]', HTML_NS);
+      const imgs = root.find('.//html:img[@src]', XHTML_NS);
       for (const img of imgs) {
         const src = this.getAttribute(img as XmlElement, 'src');
         if (src !== null && src.trim() === '') {
@@ -2708,9 +2691,8 @@ export class ContentValidator {
   }
 
   private checkStyleInBody(context: ValidationContext, path: string, root: XmlElement): void {
-    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
     try {
-      const bodyStyles = root.find('.//html:body//html:style', HTML_NS);
+      const bodyStyles = root.find('.//html:body//html:style', XHTML_NS);
       for (const style of bodyStyles) {
         pushMessage(context.messages, {
           id: MessageId.RSC_005,
@@ -2724,9 +2706,8 @@ export class ContentValidator {
   }
 
   private checkHttpEquivCharset(context: ValidationContext, path: string, root: XmlElement): void {
-    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
     try {
-      const metas = root.find('.//html:head/html:meta', HTML_NS);
+      const metas = root.find('.//html:head/html:meta', XHTML_NS);
       let hasCharsetMeta = false;
       let hasHttpEquivContentType = false;
 
@@ -2790,9 +2771,8 @@ export class ContentValidator {
   }
 
   private validateInlineStyles(context: ValidationContext, path: string, root: XmlElement): void {
-    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
     try {
-      const styles = root.find('.//html:style', HTML_NS);
+      const styles = root.find('.//html:style', XHTML_NS);
       for (const style of styles) {
         const cssContent = (style as XmlElement).content;
         if (cssContent) {
@@ -2860,7 +2840,6 @@ export class ContentValidator {
   private validateIdRefs(context: ValidationContext, path: string, root: XmlElement): void {
     try {
       const allIds = this.collectIds(root);
-      const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
 
       const idrefsChecks: { xpath: string; attr: string; ns?: Record<string, string> }[] = [
         { xpath: './/*[@aria-describedby]', attr: 'aria-describedby' },
@@ -2868,11 +2847,11 @@ export class ContentValidator {
         { xpath: './/*[@aria-labelledby]', attr: 'aria-labelledby' },
         { xpath: './/*[@aria-owns]', attr: 'aria-owns' },
         { xpath: './/*[@aria-controls]', attr: 'aria-controls' },
-        { xpath: './/html:output[@for]', attr: 'for', ns: HTML_NS },
+        { xpath: './/html:output[@for]', attr: 'for', ns: XHTML_NS },
         {
           xpath: './/html:td[@headers] | .//html:th[@headers]',
           attr: 'headers',
-          ns: HTML_NS,
+          ns: XHTML_NS,
         },
       ];
       for (const { xpath, attr, ns } of idrefsChecks) {
@@ -2927,7 +2906,7 @@ export class ContentValidator {
       }
 
       // label[for]: single IDREF with specific message matching Java Schematron
-      for (const elem of root.find('.//html:label[@for]', HTML_NS)) {
+      for (const elem of root.find('.//html:label[@for]', XHTML_NS)) {
         const idref = this.getAttribute(elem as XmlElement, 'for');
         if (idref && !allIds.has(idref)) {
           pushMessage(context.messages, {
@@ -2943,9 +2922,8 @@ export class ContentValidator {
   }
 
   private validateEpubSwitch(context: ValidationContext, path: string, root: XmlElement): void {
-    const EPUB_NS = { epub: 'http://www.idpf.org/2007/ops' };
     try {
-      const switches = root.find('.//epub:switch', EPUB_NS);
+      const switches = root.find('.//epub:switch', EPUB_OPS_NS);
       for (const sw of switches) {
         pushMessage(context.messages, {
           id: MessageId.RSC_017,
@@ -2960,8 +2938,8 @@ export class ContentValidator {
 
         // Iterate child elements
         try {
-          const childCases = swElem.find('./epub:case', EPUB_NS);
-          const childDefaults = swElem.find('./epub:default', EPUB_NS);
+          const childCases = swElem.find('./epub:case', EPUB_OPS_NS);
+          const childDefaults = swElem.find('./epub:default', EPUB_OPS_NS);
           cases.push(...childCases);
           defaults.push(...childDefaults);
 
@@ -3026,8 +3004,7 @@ export class ContentValidator {
 
         // Check for nested <math> inside <math> (invalid MathML)
         try {
-          const MATH_NS = { m: 'http://www.w3.org/1998/Math/MathML' };
-          const nestedMath = swElem.find('.//m:math//m:math', MATH_NS);
+          const nestedMath = swElem.find('.//math:math//math:math', MATHML_NS);
           for (const nested of nestedMath) {
             pushMessage(context.messages, {
               id: MessageId.RSC_005,
@@ -3045,9 +3022,8 @@ export class ContentValidator {
   }
 
   private validateEpubTrigger(context: ValidationContext, path: string, root: XmlElement): void {
-    const EPUB_NS = { epub: 'http://www.idpf.org/2007/ops' };
     try {
-      const triggers = root.find('.//epub:trigger', EPUB_NS);
+      const triggers = root.find('.//epub:trigger', EPUB_OPS_NS);
       if (triggers.length === 0) return;
 
       const allIds = this.collectIds(root);
@@ -3133,9 +3109,8 @@ export class ContentValidator {
       'video',
     ]);
 
-    const EPUB_NS = { epub: 'http://www.idpf.org/2007/ops' };
     try {
-      const elements = root.find('.//*[@epub:type]', EPUB_NS);
+      const elements = root.find('.//*[@epub:type]', EPUB_OPS_NS);
       for (const elem of elements) {
         const elemTyped = elem as XmlElement;
         const localName = elemTyped.name;
@@ -3197,9 +3172,8 @@ export class ContentValidator {
   }
 
   private checkTableBorder(context: ValidationContext, path: string, root: XmlElement): void {
-    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
     try {
-      const tables = root.find('.//html:table[@border]', HTML_NS);
+      const tables = root.find('.//html:table[@border]', XHTML_NS);
       for (const table of tables) {
         const border = this.getAttribute(table as XmlElement, 'border');
         if (border !== null && border !== '' && border !== '1') {
@@ -3236,11 +3210,9 @@ export class ContentValidator {
   }
 
   private checkTimeElement(context: ValidationContext, path: string, root: XmlElement): void {
-    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
-
     // Check nested time elements
     try {
-      const nestedTimes = root.find('.//html:time//html:time', HTML_NS);
+      const nestedTimes = root.find('.//html:time//html:time', XHTML_NS);
       for (const nested of nestedTimes) {
         pushMessage(context.messages, {
           id: MessageId.RSC_005,
@@ -3254,7 +3226,7 @@ export class ContentValidator {
 
     // Check datetime attribute format
     try {
-      const times = root.find('.//html:time[@datetime]', HTML_NS);
+      const times = root.find('.//html:time[@datetime]', XHTML_NS);
       for (const time of times) {
         const datetime = this.getAttribute(time as XmlElement, 'datetime');
         if (datetime !== null && !isValidDatetime(datetime)) {
@@ -3271,7 +3243,6 @@ export class ContentValidator {
   }
 
   private checkMathMLAnnotations(context: ValidationContext, path: string, root: XmlElement): void {
-    const MATH_NS = { math: 'http://www.w3.org/1998/Math/MathML' };
     const CONTENT_MATHML_ENCODINGS = new Set(['mathml-content', 'application/mathml-content+xml']);
     const CONTENT_MATHML_ELEMENTS = new Set([
       'apply',
@@ -3297,7 +3268,7 @@ export class ContentValidator {
 
     // Check annotation-xml elements
     try {
-      const annotations = root.find('.//math:annotation-xml', MATH_NS);
+      const annotations = root.find('.//math:annotation-xml', MATHML_NS);
       for (const anno of annotations) {
         const el = anno as XmlElement;
         const encoding = this.getAttribute(el, 'encoding');
@@ -3325,7 +3296,7 @@ export class ContentValidator {
             // Non-Content encoding: check for Content MathML elements inside
             for (const cElemName of contentMathMLNames) {
               try {
-                const found = el.get(`./math:${cElemName}`, MATH_NS);
+                const found = el.get(`./math:${cElemName}`, MATHML_NS);
                 if (found) {
                   pushMessage(context.messages, {
                     id: MessageId.RSC_005,
@@ -3358,7 +3329,7 @@ export class ContentValidator {
     // Check Content MathML elements directly in math (not inside annotation-xml)
     for (const elemName of contentMathMLNames) {
       try {
-        const found = root.get(`.//math:math/math:${elemName}`, MATH_NS);
+        const found = root.get(`.//math:math/math:${elemName}`, MATHML_NS);
         if (found) {
           pushMessage(context.messages, {
             id: MessageId.RSC_005,
@@ -3391,13 +3362,13 @@ export class ContentValidator {
       'xsi',
     ]);
     const STANDARD_NAMESPACES = new Set([
-      'http://www.w3.org/XML/1998/namespace',
+      XML_NS_URI,
       'http://www.w3.org/2000/xmlns/',
-      'http://www.w3.org/1999/xhtml',
-      'http://www.w3.org/1999/xlink',
-      'http://www.w3.org/2000/svg',
-      'http://www.w3.org/1998/Math/MathML',
-      'http://www.idpf.org/2007/ops',
+      XHTML_NS_URI,
+      XLINK_NS_URI,
+      SVG_NS_URI,
+      MATHML_NS_URI,
+      OPS_NS_URI,
       'http://purl.org/dc/elements/1.1/',
       'http://purl.org/dc/terms/',
       'http://www.w3.org/2001/10/synthesis',
@@ -3454,7 +3425,7 @@ export class ContentValidator {
   }
 
   private checkAccessibility(context: ValidationContext, path: string, root: XmlElement): void {
-    const links = root.find('.//html:a', { html: 'http://www.w3.org/1999/xhtml' });
+    const links = root.find('.//html:a', XHTML_NS);
     for (const link of links) {
       if (!this.hasAccessibleContent(link as XmlElement)) {
         pushMessage(context.messages, {
@@ -3465,7 +3436,7 @@ export class ContentValidator {
       }
     }
 
-    const images = root.find('.//html:img', { html: 'http://www.w3.org/1999/xhtml' });
+    const images = root.find('.//html:img', XHTML_NS);
     for (const img of images) {
       const altAttr = this.getAttribute(img as XmlElement, 'alt');
       if (altAttr === null) {
@@ -3479,13 +3450,11 @@ export class ContentValidator {
 
     this.checkSVGLinkAccessibility(context, path, root);
 
-    const mathElements = root.find('.//math:math', { math: 'http://www.w3.org/1998/Math/MathML' });
+    const mathElements = root.find('.//math:math', MATHML_NS);
     for (const mathElem of mathElements) {
       const elem = mathElem as XmlElement;
       const alttext = elem.attr('alttext');
-      const annotation = elem.get('./math:annotation[@encoding="application/x-tex"]', {
-        math: 'http://www.w3.org/1998/Math/MathML',
-      });
+      const annotation = elem.get('./math:annotation[@encoding="application/x-tex"]', MATHML_NS);
       const ariaLabel = this.getAttribute(elem, 'aria-label');
 
       if (!alttext?.value && !annotation && !ariaLabel) {
@@ -3536,9 +3505,7 @@ export class ContentValidator {
 
     // ACC-007: Content document does not use epub:type for semantic inflection (EPUB 3 only)
     if (context.packageDocument?.version.startsWith('3.')) {
-      const epubTypeElements = root.find('.//*[@epub:type]', {
-        epub: 'http://www.idpf.org/2007/ops',
-      });
+      const epubTypeElements = root.find('.//*[@epub:type]', EPUB_OPS_NS);
       if (epubTypeElements.length === 0) {
         pushMessage(context.messages, {
           id: MessageId.ACC_007,
@@ -3550,9 +3517,8 @@ export class ContentValidator {
   }
 
   private hasSVGLinkAccessibleName(svgElem: XmlElement): boolean {
-    const ns = { svg: 'http://www.w3.org/2000/svg' };
-    if (svgElem.get('.//svg:title', ns)) return true;
-    if (svgElem.get('.//svg:text', ns)) return true;
+    if (svgElem.get('.//svg:title', SVG_NS)) return true;
+    if (svgElem.get('.//svg:text', SVG_NS)) return true;
     if (this.getAttribute(svgElem, 'aria-label')) return true;
     if (this.getAttribute(svgElem, 'xlink:title')) return true;
     return false;
@@ -3563,10 +3529,7 @@ export class ContentValidator {
     path: string,
     root: XmlElement,
   ): void {
-    const svgLinks = root.find('.//svg:a', {
-      svg: 'http://www.w3.org/2000/svg',
-      xlink: 'http://www.w3.org/1999/xlink',
-    });
+    const svgLinks = root.find('.//svg:a', SVG_XLINK_NS);
     for (const svgLink of svgLinks) {
       if (!this.hasSVGLinkAccessibleName(svgLink as XmlElement)) {
         pushMessage(context.messages, {
@@ -3632,36 +3595,18 @@ export class ContentValidator {
     const packageDoc = context.packageDocument;
     if (!packageDoc) return;
 
-    const images = root.find('.//html:img[@src]', { html: 'http://www.w3.org/1999/xhtml' });
+    const images = root.find('.//html:img[@src]', XHTML_NS);
     for (const img of images) {
       const imgElem = img as XmlElement;
       const srcAttr = this.getAttribute(imgElem, 'src');
       if (!srcAttr) continue;
 
       const src = srcAttr;
-      const opfDir = dirname(context.opfPath ?? '');
-
-      let fullPath = src;
-      if (opfDir && !src.startsWith('http://') && !src.startsWith('https://')) {
-        if (src.startsWith('/')) {
-          fullPath = src.slice(1);
-        } else {
-          const parts = opfDir.split('/');
-          const relParts = src.split('/');
-          for (const part of relParts) {
-            if (part === '..') {
-              parts.pop();
-            } else if (part !== '.') {
-              parts.push(part);
-            }
-          }
-          fullPath = parts.join('/');
-        }
-      }
-
       if (src.startsWith('http://') || src.startsWith('https://')) {
         continue;
       }
+
+      const fullPath = resolvePath(context.opfPath ?? '', src);
 
       const manifestItem = packageDoc.manifest.find(
         (item) => fullPath.endsWith(item.href) || item.href.endsWith(fullPath),
@@ -3671,16 +3616,7 @@ export class ContentValidator {
         continue;
       }
 
-      const imageMediaTypes = new Set([
-        'image/gif',
-        'image/jpeg',
-        'image/jpg',
-        'image/png',
-        'image/svg+xml',
-        'image/webp',
-      ]);
-
-      if (!imageMediaTypes.has(manifestItem.mediaType)) {
+      if (!IMAGE_MEDIA_TYPES.has(manifestItem.mediaType)) {
         pushMessage(context.messages, {
           id: MessageId.OPF_051,
           message: `Image has invalid media type "${manifestItem.mediaType}": ${src}`,
@@ -3706,7 +3642,7 @@ export class ContentValidator {
     manifestItem?: { id: string; properties?: string[] },
   ): void {
     const isDataNav = manifestItem?.properties?.includes('data-nav') ?? false;
-    const elements = root.find('.//*[@epub:type]', { epub: 'http://www.idpf.org/2007/ops' });
+    const elements = root.find('.//*[@epub:type]', EPUB_OPS_NS);
     for (const el of elements) {
       const elem = el as XmlElement;
       const epubType = elem.attr('type', 'epub')?.value;
@@ -3724,7 +3660,7 @@ export class ContentValidator {
     }
 
     if (isDataNav) {
-      const navElements = root.find('.//html:nav', { html: 'http://www.w3.org/1999/xhtml' });
+      const navElements = root.find('.//html:nav', XHTML_NS);
       for (const navEl of navElements) {
         const nav = navEl as XmlElement;
         if (!nav.attr('type', 'epub')?.value) {
@@ -3746,8 +3682,6 @@ export class ContentValidator {
     path: string,
     root: XmlElement,
   ): void {
-    const XHTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
-
     let regionNavs: XmlElement[];
     try {
       regionNavs = root.find('.//html:nav', XHTML_NS) as XmlElement[];
@@ -3933,8 +3867,7 @@ export class ContentValidator {
     path: string,
     root: XmlElement,
   ): void {
-    const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
-    const body = root.get('.//html:body', HTML_NS) as XmlElement | null;
+    const body = root.get('.//html:body', XHTML_NS) as XmlElement | null;
     if (!body) return;
 
     const SECTIONING_ROOTS = new Set(['section', 'article', 'aside', 'nav']);
@@ -4037,7 +3970,7 @@ export class ContentValidator {
 
     const headingAccessibleText = (h: XmlElement): string => {
       const parts: string[] = [h.content];
-      const imgs = h.find('.//html:img', HTML_NS) as XmlElement[];
+      const imgs = h.find('.//html:img', XHTML_NS) as XmlElement[];
       for (const img of imgs) parts.push(this.getAttribute(img, 'alt') ?? '');
       const labelled = h.find('.//*[@aria-label]') as XmlElement[];
       for (const el of labelled) parts.push(this.getAttribute(el, 'aria-label') ?? '');
@@ -4100,7 +4033,7 @@ export class ContentValidator {
     };
 
     checkContainer(body, true);
-    const containers = root.find('.//html:section|.//html:article', HTML_NS) as XmlElement[];
+    const containers = root.find('.//html:section|.//html:article', XHTML_NS) as XmlElement[];
     for (const c of containers) checkContainer(c, false);
 
     for (const h of allHeadings) {
@@ -4138,13 +4071,13 @@ export class ContentValidator {
       }
     };
     checkSectionOrder(body);
-    const sectionsOnly = root.find('.//html:section', HTML_NS) as XmlElement[];
+    const sectionsOnly = root.find('.//html:section', XHTML_NS) as XmlElement[];
     for (const s of sectionsOnly) checkSectionOrder(s);
 
     // Subtitles rule
     const subtitleParagraphs = root.find('.//html:p[@epub:type]', {
-      ...HTML_NS,
-      epub: 'http://www.idpf.org/2007/ops',
+      ...XHTML_NS,
+      ...EPUB_OPS_NS,
     }) as XmlElement[];
     for (const p of subtitleParagraphs) {
       if (!p.attr('type', 'epub')?.value.split(/\s+/).includes('subtitle')) continue;
@@ -4167,9 +4100,7 @@ export class ContentValidator {
   }
 
   private validateEpubTypes(context: ValidationContext, path: string, root: XmlElement): void {
-    const epubTypeElements = root.find('.//*[@epub:type]', {
-      epub: 'http://www.idpf.org/2007/ops',
-    });
+    const epubTypeElements = root.find('.//*[@epub:type]', EPUB_OPS_NS);
 
     for (const elem of epubTypeElements) {
       const elemTyped = elem as XmlElement;
@@ -4222,7 +4153,7 @@ export class ContentValidator {
     path: string,
     root: XmlElement,
   ): void {
-    const linkElements = root.find('.//html:link[@rel]', { html: 'http://www.w3.org/1999/xhtml' });
+    const linkElements = root.find('.//html:link[@rel]', XHTML_NS);
 
     for (const linkElem of linkElements) {
       const elem = linkElem as XmlElement;
@@ -4271,7 +4202,7 @@ export class ContentValidator {
       return true;
     }
 
-    const img = element.get('./html:img[@alt]', { html: 'http://www.w3.org/1999/xhtml' });
+    const img = element.get('./html:img[@alt]', XHTML_NS);
     if (img) {
       const alt = this.getAttribute(img as XmlElement, 'alt');
       if (alt && alt.trim().length > 0) {
@@ -4316,9 +4247,7 @@ export class ContentValidator {
     const isFixedLayout =
       manifestItem && packageDoc ? isItemFixedLayout(packageDoc, manifestItem.id) : false;
 
-    const headMetas = root.find('.//html:head/html:meta[@name]', {
-      html: 'http://www.w3.org/1999/xhtml',
-    });
+    const headMetas = root.find('.//html:head/html:meta[@name]', XHTML_NS);
 
     let viewportCount = 0;
 
@@ -4485,8 +4414,7 @@ export class ContentValidator {
     // when processing a nav document, to distinguish toc/page-list links from regular hyperlinks
     const navAnchorTypes = new Map<string, ReferenceType>();
     if (isNavDocument) {
-      const HTML_NS = { html: 'http://www.w3.org/1999/xhtml' };
-      const navElements = root.find('.//html:nav', HTML_NS);
+      const navElements = root.find('.//html:nav', XHTML_NS);
       for (const nav of navElements) {
         const navElem = nav as XmlElement;
         const epubTypeAttr =
@@ -4502,7 +4430,7 @@ export class ContentValidator {
                 (attr) =>
                   attr.name === 'type' &&
                   attr.prefix === 'epub' &&
-                  attr.namespaceUri === 'http://www.idpf.org/2007/ops',
+                  attr.namespaceUri === OPS_NS_URI,
               )
             : undefined;
         const types = epubTypeAttr ? epubTypeAttr.value.trim().split(/\s+/) : [];
@@ -4510,7 +4438,7 @@ export class ContentValidator {
         if (types.includes('toc')) refType = ReferenceType.NAV_TOC_LINK;
         else if (types.includes('page-list')) refType = ReferenceType.NAV_PAGELIST_LINK;
 
-        const navAnchors = navElem.find('.//html:a[@href]', HTML_NS);
+        const navAnchors = navElem.find('.//html:a[@href]', XHTML_NS);
         for (const a of navAnchors) {
           const anchorHref = this.getAttribute(a as XmlElement, 'href') ?? '';
           navAnchorTypes.set(`${String(a.line)}:${anchorHref}`, refType);
@@ -4518,7 +4446,7 @@ export class ContentValidator {
       }
     }
 
-    const links = root.find('.//html:a[@href]', { html: 'http://www.w3.org/1999/xhtml' });
+    const links = root.find('.//html:a[@href]', XHTML_NS);
     for (const link of links) {
       // Trim whitespace (XML attribute values are whitespace-normalized by parsers)
       const href = this.getAttribute(link as XmlElement, 'href')?.trim() ?? null;
@@ -4597,7 +4525,7 @@ export class ContentValidator {
     }
 
     // Extract <area href> elements (M1: Java extracts these as hyperlink references)
-    const areaLinks = root.find('.//html:area[@href]', { html: 'http://www.w3.org/1999/xhtml' });
+    const areaLinks = root.find('.//html:area[@href]', XHTML_NS);
     for (const area of areaLinks) {
       const href = this.getAttribute(area as XmlElement, 'href')?.trim();
       if (!href) continue;
@@ -4650,10 +4578,7 @@ export class ContentValidator {
       refValidator.addReference(areaRef);
     }
 
-    const svgLinks = root.find('.//svg:a', {
-      svg: 'http://www.w3.org/2000/svg',
-      xlink: 'http://www.w3.org/1999/xlink',
-    });
+    const svgLinks = root.find('.//svg:a', SVG_XLINK_NS);
     for (const link of svgLinks) {
       const elem = link as XmlElement;
       const href = this.getAttribute(elem, 'xlink:href') ?? this.getAttribute(elem, 'href');
@@ -4717,7 +4642,7 @@ export class ContentValidator {
     const docDir = dirname(path);
 
     // Detect <base href> with remote URL; fall back to xml:base
-    const baseElem = root.get('.//html:base[@href]', { html: 'http://www.w3.org/1999/xhtml' });
+    const baseElem = root.get('.//html:base[@href]', XHTML_NS);
     const baseHref = baseElem ? this.getAttribute(baseElem as XmlElement, 'href') : null;
     const effectiveBase = baseHref ?? remoteXmlBase;
     const remoteBaseUrl =
@@ -4725,7 +4650,7 @@ export class ContentValidator {
         ? effectiveBase
         : null;
 
-    const linkElements = root.find('.//html:link[@href]', { html: 'http://www.w3.org/1999/xhtml' });
+    const linkElements = root.find('.//html:link[@href]', XHTML_NS);
     for (const linkElem of linkElements) {
       const href = this.getAttribute(linkElem as XmlElement, 'href');
       const rel = this.getAttribute(linkElem as XmlElement, 'rel');
@@ -4829,16 +4754,15 @@ export class ContentValidator {
     registry?: ResourceRegistry,
   ): void {
     const docDir = dirname(path);
-    const ns = { html: 'http://www.w3.org/1999/xhtml' };
 
     // Pre-compute which picture elements have CMT source siblings for intrinsic fallback
     const pictureHasCMTSource = new Set<number>();
     if (registry) {
-      const pictures = root.find('.//html:picture', ns);
+      const pictures = root.find('.//html:picture', XHTML_NS);
       for (const pic of pictures) {
         const picElem = pic as XmlElement;
-        const sources = picElem.find('html:source[@src]', ns);
-        const sourcesWithSrcset = picElem.find('html:source[@srcset]', ns);
+        const sources = picElem.find('html:source[@src]', XHTML_NS);
+        const sourcesWithSrcset = picElem.find('html:source[@srcset]', XHTML_NS);
         for (const source of [...sources, ...sourcesWithSrcset]) {
           const srcAttr = this.getAttribute(source as XmlElement, 'src');
           const srcsetAttr = this.getAttribute(source as XmlElement, 'srcset');
@@ -4855,7 +4779,7 @@ export class ContentValidator {
       }
     }
 
-    const images = root.find('.//html:img[@src]', ns);
+    const images = root.find('.//html:img[@src]', XHTML_NS);
     for (const img of images) {
       const imgElem = img as XmlElement;
       const src = this.getAttribute(imgElem, 'src');
@@ -4867,7 +4791,7 @@ export class ContentValidator {
       let hasIntrinsicFallback: boolean | undefined;
       if (pictureHasCMTSource.size > 0) {
         try {
-          const pictureParent = imgElem.get('ancestor::html:picture', ns);
+          const pictureParent = imgElem.get('ancestor::html:picture', XHTML_NS);
           if (pictureParent && pictureHasCMTSource.has(pictureParent.line)) {
             hasIntrinsicFallback = true;
           }
@@ -4913,13 +4837,8 @@ export class ContentValidator {
     // Also check for images in SVG - use separate queries to avoid XPath 'or' issues
     let svgImages: unknown[] = [];
     try {
-      const svgImagesXlink = root.find('.//svg:image[@xlink:href]', {
-        svg: 'http://www.w3.org/2000/svg',
-        xlink: 'http://www.w3.org/1999/xlink',
-      });
-      const svgImagesHref = root.find('.//svg:image[@href]', {
-        svg: 'http://www.w3.org/2000/svg',
-      });
+      const svgImagesXlink = root.find('.//svg:image[@xlink:href]', SVG_XLINK_NS);
+      const svgImagesHref = root.find('.//svg:image[@href]', SVG_NS);
       svgImages = [...svgImagesXlink, ...svgImagesHref];
     } catch {
       // Fallback: skip SVG image extraction if namespace resolution fails
@@ -4961,7 +4880,7 @@ export class ContentValidator {
     this.extractSVGUseReferences(context, path, root, docDir, opfDir, refValidator);
 
     // Check for poster images on video elements
-    const videos = root.find('.//html:video[@poster]', { html: 'http://www.w3.org/1999/xhtml' });
+    const videos = root.find('.//html:video[@poster]', XHTML_NS);
     for (const video of videos) {
       const poster = this.getAttribute(video as XmlElement, 'poster');
       if (!poster) continue;
@@ -4996,9 +4915,7 @@ export class ContentValidator {
   ): void {
     const docDir = dirname(path);
 
-    const mathElements = root.find('.//math:math[@altimg]', {
-      math: 'http://www.w3.org/1998/Math/MathML',
-    });
+    const mathElements = root.find('.//math:math[@altimg]', MATHML_NS);
     for (const mathElem of mathElements) {
       const altimg = this.getAttribute(mathElem as XmlElement, 'altimg');
       if (!altimg) continue;
@@ -5033,7 +4950,7 @@ export class ContentValidator {
   ): void {
     const docDir = dirname(path);
 
-    const scripts = root.find('.//html:script[@src]', { html: 'http://www.w3.org/1999/xhtml' });
+    const scripts = root.find('.//html:script[@src]', XHTML_NS);
     for (const script of scripts) {
       const src = this.getAttribute(script as XmlElement, 'src');
       if (!src) continue;
@@ -5074,10 +4991,10 @@ export class ContentValidator {
 
     // Elements that can have cite attribute: blockquote, q, ins, del
     const citeElements = [
-      ...root.find('.//html:blockquote[@cite]', { html: 'http://www.w3.org/1999/xhtml' }),
-      ...root.find('.//html:q[@cite]', { html: 'http://www.w3.org/1999/xhtml' }),
-      ...root.find('.//html:ins[@cite]', { html: 'http://www.w3.org/1999/xhtml' }),
-      ...root.find('.//html:del[@cite]', { html: 'http://www.w3.org/1999/xhtml' }),
+      ...root.find('.//html:blockquote[@cite]', XHTML_NS),
+      ...root.find('.//html:q[@cite]', XHTML_NS),
+      ...root.find('.//html:ins[@cite]', XHTML_NS),
+      ...root.find('.//html:del[@cite]', XHTML_NS),
     ];
 
     for (const elem of citeElements) {
@@ -5132,7 +5049,6 @@ export class ContentValidator {
     registry?: ResourceRegistry,
   ): void {
     const docDir = dirname(path);
-    const ns = { html: 'http://www.w3.org/1999/xhtml' };
 
     // Process audio and video elements together to detect intrinsic source fallback.
     // Per Java EPUBCheck: a media element has intrinsic fallback if any of its
@@ -5140,7 +5056,7 @@ export class ContentValidator {
     for (const tagName of ['audio', 'video'] as const) {
       const isAudio = tagName === 'audio';
       const refType = isAudio ? ReferenceType.AUDIO : ReferenceType.VIDEO;
-      const elements = root.find(`.//html:${tagName}`, ns);
+      const elements = root.find(`.//html:${tagName}`, XHTML_NS);
 
       for (const elem of elements) {
         const mediaElem = elem as XmlElement;
@@ -5164,7 +5080,7 @@ export class ContentValidator {
         }
 
         // Collect <source> children
-        const sources = mediaElem.find('html:source[@src]', ns);
+        const sources = mediaElem.find('html:source[@src]', XHTML_NS);
         for (const source of sources) {
           const sourceElem = source as XmlElement;
           const sourceSrc = this.getAttribute(sourceElem, 'src');
@@ -5209,9 +5125,7 @@ export class ContentValidator {
     this.extractAndRegisterPictureElements(context, path, root, opfDir, refValidator, registry);
 
     // Extract iframe elements with src attribute
-    const iframeElements = root.find('.//html:iframe[@src]', {
-      html: 'http://www.w3.org/1999/xhtml',
-    });
+    const iframeElements = root.find('.//html:iframe[@src]', XHTML_NS);
     for (const iframe of iframeElements) {
       const src = this.getAttribute(iframe as XmlElement, 'src');
       if (!src) continue;
@@ -5237,9 +5151,7 @@ export class ContentValidator {
     }
 
     // Extract track elements with src attribute
-    const trackElements = root.find('.//html:track[@src]', {
-      html: 'http://www.w3.org/1999/xhtml',
-    });
+    const trackElements = root.find('.//html:track[@src]', XHTML_NS);
     for (const track of trackElements) {
       const src = this.getAttribute(track as XmlElement, 'src');
       if (!src) continue;
@@ -5274,7 +5186,6 @@ export class ContentValidator {
     registry?: ResourceRegistry,
   ): void {
     const docDir = dirname(path);
-    const ns = { html: 'http://www.w3.org/1999/xhtml' };
 
     const addRef = (
       src: string,
@@ -5309,7 +5220,7 @@ export class ContentValidator {
     };
 
     // embed[@src]
-    for (const elem of root.find('.//html:embed[@src]', ns)) {
+    for (const elem of root.find('.//html:embed[@src]', XHTML_NS)) {
       const embedElem = elem as XmlElement;
       const src = this.getAttribute(embedElem, 'src');
       if (src) addRef(src, ReferenceType.GENERIC, elem.line);
@@ -5319,7 +5230,7 @@ export class ContentValidator {
     }
 
     // input[@type='image'][@src]
-    for (const elem of root.find('.//html:input[@src]', ns)) {
+    for (const elem of root.find('.//html:input[@src]', XHTML_NS)) {
       const type = this.getAttribute(elem as XmlElement, 'type');
       if (type?.toLowerCase() === 'image') {
         const src = this.getAttribute(elem as XmlElement, 'src');
@@ -5328,13 +5239,13 @@ export class ContentValidator {
     }
 
     // object[@data]
-    for (const elem of root.find('.//html:object[@data]', ns)) {
+    for (const elem of root.find('.//html:object[@data]', XHTML_NS)) {
       const objElem = elem as XmlElement;
       const data = this.getAttribute(objElem, 'data');
       if (!data) continue;
       // Object has intrinsic fallback if it has palpable child content
       // (non-param, non-hidden child elements)
-      const allChildren = objElem.find('html:*', ns);
+      const allChildren = objElem.find('html:*', XHTML_NS);
       const hasFallbackContent = allChildren.some((child) => {
         const c = child as XmlElement;
         return c.name !== 'param' && this.getAttribute(c, 'hidden') === null;
@@ -5394,22 +5305,13 @@ export class ContentValidator {
     registry?: ResourceRegistry,
   ): void {
     const docDir = dirname(path);
-    const ns = { html: 'http://www.w3.org/1999/xhtml' };
 
-    const BLESSED_IMAGE_TYPES = new Set([
-      'image/gif',
-      'image/jpeg',
-      'image/png',
-      'image/svg+xml',
-      'image/webp',
-    ]);
-
-    const pictures = root.find('.//html:picture', ns);
+    const pictures = root.find('.//html:picture', XHTML_NS);
     for (const pic of pictures) {
       const picElem = pic as XmlElement;
 
       // Check img inside picture (MED-003)
-      const imgs = picElem.find('html:img[@src]', ns);
+      const imgs = picElem.find('html:img[@src]', XHTML_NS);
       for (const img of imgs) {
         const imgElem = img as XmlElement;
         const src = this.getAttribute(imgElem, 'src');
@@ -5418,7 +5320,7 @@ export class ContentValidator {
         if (registry) {
           const resolvedPath = this.resolveRelativePath(docDir, src, opfDir);
           const resource = registry.getResource(resolvedPath);
-          if (resource && !BLESSED_IMAGE_TYPES.has(resource.mimeType)) {
+          if (resource && !CORE_IMAGE_MEDIA_TYPES.has(resource.mimeType)) {
             pushMessage(context.messages, {
               id: MessageId.MED_003,
               message: `Image in "picture" element must be a core image type, but found "${resource.mimeType}"`,
@@ -5436,7 +5338,7 @@ export class ContentValidator {
             if (!url || url.startsWith('http://') || url.startsWith('https://')) continue;
             const resolvedPath = this.resolveRelativePath(docDir, url, opfDir);
             const resource = registry.getResource(resolvedPath);
-            if (resource && !BLESSED_IMAGE_TYPES.has(resource.mimeType)) {
+            if (resource && !CORE_IMAGE_MEDIA_TYPES.has(resource.mimeType)) {
               pushMessage(context.messages, {
                 id: MessageId.MED_003,
                 message: `Image in "picture" element must be a core image type, but found "${resource.mimeType}"`,
@@ -5449,8 +5351,8 @@ export class ContentValidator {
 
       // Check source inside picture (MED-007, OPF-013)
       // Sources may use src or srcset attribute
-      const sourcesWithSrc = picElem.find('html:source[@src]', ns);
-      const sourcesWithSrcset = picElem.find('html:source[@srcset]', ns);
+      const sourcesWithSrc = picElem.find('html:source[@src]', XHTML_NS);
+      const sourcesWithSrcset = picElem.find('html:source[@srcset]', XHTML_NS);
       const allSources = new Set([...sourcesWithSrc, ...sourcesWithSrcset]);
       for (const source of allSources) {
         const sourceElem = source as XmlElement;
@@ -5487,7 +5389,7 @@ export class ContentValidator {
           // MED-007: source in picture must have type attribute if resource is not blessed image
           const resolvedPath = this.resolveRelativePath(docDir, sourceUrl, opfDir);
           const resource = registry.getResource(resolvedPath);
-          if (resource && !BLESSED_IMAGE_TYPES.has(resource.mimeType) && !typeAttr) {
+          if (resource && !CORE_IMAGE_MEDIA_TYPES.has(resource.mimeType) && !typeAttr) {
             pushMessage(context.messages, {
               id: MessageId.MED_007,
               message: `Source element in "picture" with foreign resource type "${resource.mimeType}" must declare a "type" attribute`,
@@ -5832,8 +5734,6 @@ export class ContentValidator {
     root: XmlElement,
     isSVGDoc: boolean,
   ): void {
-    const SVG_NS = { svg: 'http://www.w3.org/2000/svg' };
-    const XHTML_URI = 'http://www.w3.org/1999/xhtml';
     const DISALLOWED_FO_CHILDREN = new Set(['body', 'head', 'html', 'title']);
 
     let foreignObjects: ReturnType<typeof root.find>;
@@ -5862,7 +5762,7 @@ export class ContentValidator {
 
         if (isSVGDoc) {
           // Standalone SVG: foreignObject allows body or flow content in XHTML namespace
-          if (childNs !== XHTML_URI) {
+          if (childNs !== XHTML_NS_URI) {
             pushMessage(context.messages, {
               id: MessageId.RSC_005,
               message: `element "${childLocal}" not allowed here`,
@@ -5886,7 +5786,7 @@ export class ContentValidator {
               location: { path, line: child.line },
             });
           }
-        } else if (childNs === XHTML_URI && DISALLOWED_FO_CHILDREN.has(childLocal)) {
+        } else if (childNs === XHTML_NS_URI && DISALLOWED_FO_CHILDREN.has(childLocal)) {
           // XHTML embedded SVG: foreignObject content is flow content, no body/head/html/title
           pushMessage(context.messages, {
             id: MessageId.RSC_005,
@@ -5899,9 +5799,6 @@ export class ContentValidator {
   }
 
   private checkSVGTitleContent(context: ValidationContext, path: string, root: XmlElement): void {
-    const SVG_NS = { svg: 'http://www.w3.org/2000/svg' };
-    const XHTML_URI = 'http://www.w3.org/1999/xhtml';
-
     let svgTitles: ReturnType<typeof root.find>;
     try {
       svgTitles = root.find('.//svg:title', SVG_NS);
@@ -5924,7 +5821,7 @@ export class ContentValidator {
         const descNs = descEl.namespaceUri;
 
         // svg:title allows any XHTML content (anyhtml model) but not non-XHTML elements
-        if (descNs && descNs !== XHTML_URI && !reportedNamespaces.has(descNs)) {
+        if (descNs && descNs !== XHTML_NS_URI && !reportedNamespaces.has(descNs)) {
           reportedNamespaces.add(descNs);
           pushMessage(context.messages, {
             id: MessageId.RSC_005,
