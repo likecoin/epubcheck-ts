@@ -8,6 +8,6 @@
 
 > **ResolvedEpubCheckOptions** = `Required`\<`Omit`\<[`EpubCheckOptions`](../interfaces/EpubCheckOptions.md), `"mode"`\>\> & `Pick`\<[`EpubCheckOptions`](../interfaces/EpubCheckOptions.md), `"mode"`\>
 
-Defined in: types.ts:105
+Defined in: types.ts:113
 
 EpubCheckOptions with all fields required except mode (which is inherently optional)

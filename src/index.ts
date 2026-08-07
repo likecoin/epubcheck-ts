@@ -8,7 +8,7 @@
 export { EpubCheck } from './checker.js';
 
 // Runtime constants
-export { EPUB_VERSIONS } from './types.js';
+export { EPUB_VERSIONS, EPUB_PROFILES, VALIDATION_MODES } from './types.js';
 export { VERSION } from './version.js';
 
 // Types

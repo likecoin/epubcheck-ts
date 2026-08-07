@@ -8,7 +8,7 @@
 
 > **filterByPath**(`messages`, `path`): [`ValidationMessage`](../interfaces/ValidationMessage.md)[]
 
-Defined in: core/report.ts:58
+Defined in: core/report.ts:59
 
 Filter messages by path
 

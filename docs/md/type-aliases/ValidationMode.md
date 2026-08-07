@@ -6,8 +6,6 @@
 
 # Type Alias: ValidationMode
 
-> **ValidationMode** = `"exp"` \| `"opf"` \| `"xhtml"` \| `"svg"` \| `"nav"` \| `"mo"`
+> **ValidationMode** = *typeof* [`VALIDATION_MODES`](../variables/VALIDATION_MODES.md)\[`number`\]
 
-Defined in: types.ts:24
-
-Validation modes for single-file and expanded directory validation
+Defined in: types.ts:32

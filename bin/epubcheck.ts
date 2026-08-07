@@ -20,25 +20,15 @@ import type {
 } from '../src/types.js';
 
 // Dynamic import to support both ESM and CJS builds
-const { EpubCheck, EPUB_VERSIONS, MessageId, VERSION, toJSONReport } = await import(
-  '../dist/index.js'
-);
-
-const VALID_MODES: ReadonlySet<ValidationMode> = new Set([
-  'exp',
-  'opf',
-  'xhtml',
-  'svg',
-  'nav',
-  'mo',
-]);
-const VALID_PROFILES: ReadonlySet<EPUBProfile> = new Set([
-  'default',
-  'dict',
-  'edupub',
-  'idx',
-  'preview',
-]);
+const {
+  EpubCheck,
+  EPUB_PROFILES,
+  EPUB_VERSIONS,
+  MessageId,
+  VALIDATION_MODES,
+  VERSION,
+  toJSONReport,
+} = await import('../dist/index.js');
 
 interface CliValues {
   json?: string;
@@ -208,20 +198,18 @@ async function main(): Promise<void> {
   }
 
   const mode = values.mode as ValidationMode | undefined;
-  if (mode && !VALID_MODES.has(mode)) {
-    console.error(`Error: Invalid mode "${mode}". Valid modes: ${[...VALID_MODES].join(', ')}`);
+  if (mode && !(VALIDATION_MODES as readonly string[]).includes(mode)) {
+    console.error(`Error: Invalid mode "${mode}". Valid modes: ${VALIDATION_MODES.join(', ')}`);
     process.exit(2);
   }
 
-  // An unrecognised profile used to fall through to the default ruleset and
-  // report success: `-p edupbu` on a book that violates edupub exited 0 with no
-  // errors. A validator returning a clean bill of health for a profile it never
-  // applied is the one failure the output cannot reveal, so this rejects rather
-  // than degrades — matching the mode and version checks either side of it.
+  // Reject rather than degrade: an unrecognised profile would otherwise fall
+  // through to the default ruleset and report a clean result for a profile that
+  // was never applied.
   const profile = values.profile as EPUBProfile | undefined;
-  if (profile && !VALID_PROFILES.has(profile)) {
+  if (profile && !(EPUB_PROFILES as readonly string[]).includes(profile)) {
     console.error(
-      `Error: Invalid profile "${profile}". Valid profiles: ${[...VALID_PROFILES].join(', ')}`,
+      `Error: Invalid profile "${profile}". Valid profiles: ${EPUB_PROFILES.join(', ')}`,
     );
     process.exit(2);
   }

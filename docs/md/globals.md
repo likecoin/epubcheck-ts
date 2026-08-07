@@ -32,8 +32,11 @@ epubcheck-ts - EPUB validation library for Node.js and browsers
 
 ## Variables
 
+- [EPUB\_PROFILES](variables/EPUB_PROFILES.md)
 - [EPUB\_VERSIONS](variables/EPUB_VERSIONS.md)
 - [MessageId](variables/MessageId.md)
+- [VALIDATION\_MODES](variables/VALIDATION_MODES.md)
+- [VERSION](variables/VERSION.md)
 
 ## Functions
 

@@ -6,7 +6,7 @@
 
 # Interface: EpubCheckOptions
 
-Defined in: types.ts:83
+Defined in: types.ts:91
 
 Options for EpubCheck
 
@@ -16,7 +16,7 @@ Options for EpubCheck
 
 > `optional` **customMessages**: `Map`\<`string`, [`MessageSeverity`](../type-aliases/MessageSeverity.md)\>
 
-Defined in: types.ts:99
+Defined in: types.ts:107
 
 Custom message severity overrides (message ID → severity)
 
@@ -26,7 +26,7 @@ Custom message severity overrides (message ID → severity)
 
 > `optional` **includeInfo**: `boolean`
 
-Defined in: types.ts:93
+Defined in: types.ts:101
 
 Whether to include info messages
 
@@ -36,7 +36,7 @@ Whether to include info messages
 
 > `optional` **includeUsage**: `boolean`
 
-Defined in: types.ts:91
+Defined in: types.ts:99
 
 Whether to include usage messages
 
@@ -46,7 +46,7 @@ Whether to include usage messages
 
 > `optional` **locale**: `string`
 
-Defined in: types.ts:97
+Defined in: types.ts:105
 
 Locale for messages (e.g., 'en', 'de', 'fr')
 
@@ -56,7 +56,7 @@ Locale for messages (e.g., 'en', 'de', 'fr')
 
 > `optional` **maxErrors**: `number`
 
-Defined in: types.ts:95
+Defined in: types.ts:103
 
 Maximum number of errors before stopping (0 = unlimited)
 
@@ -64,9 +64,9 @@ Maximum number of errors before stopping (0 = unlimited)
 
 ### mode?
 
-> `optional` **mode**: [`ValidationMode`](../type-aliases/ValidationMode.md)
+> `optional` **mode**: `"nav"` \| `"svg"` \| `"exp"` \| `"opf"` \| `"xhtml"` \| `"mo"`
 
-Defined in: types.ts:89
+Defined in: types.ts:97
 
 Validation mode for single-file or expanded directory validation
 
@@ -74,9 +74,9 @@ Validation mode for single-file or expanded directory validation
 
 ### profile?
 
-> `optional` **profile**: [`EPUBProfile`](../type-aliases/EPUBProfile.md)
+> `optional` **profile**: `"default"` \| `"dict"` \| `"edupub"` \| `"idx"` \| `"preview"`
 
-Defined in: types.ts:87
+Defined in: types.ts:95
 
 Validation profile
 
@@ -86,6 +86,6 @@ Validation profile
 
 > `optional` **version**: `"2.0"` \| `"3.0"` \| `"3.1"` \| `"3.2"` \| `"3.3"`
 
-Defined in: types.ts:85
+Defined in: types.ts:93
 
 EPUB version to validate against (auto-detected if not specified)

@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **`EPUB_PROFILES` and `VALIDATION_MODES` are exported**, alongside the existing `EPUB_VERSIONS`, and `EPUBProfile`/`ValidationMode` are now derived from them. Both were bare unions, so every caller that had to validate user input hand-copied the members — the CLI and the parity harness each grew their own list, and a profile added to the union would have been silently rejected by both. Deriving the type from the list makes that drift impossible rather than merely typed.
 - **The CLI is under test.** CI ran build, lint, typecheck, unit, packaging and parity without ever invoking `bin/epubcheck.js`; nothing in `test/` spawned it. `test/integration/cli.test.ts` now asserts the CLI contract — flag mapping, exit codes and stream routing — as 13 tests in the packaging suite, which CI already runs across Node 18/20/22. It lives there rather than in the default suite because the binary imports `dist/`, and the default suite deliberately runs against `src/` without building. Validation agreement with Java is not re-tested here; `npm run parity` covers that over 763 fixtures. All three fixes below are defects this absence had been hiding.
 
 ### Fixed

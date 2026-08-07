@@ -8,7 +8,7 @@
 
 > **toJSONReport**(`result`): `string`
 
-Defined in: core/report.ts:80
+Defined in: core/report.ts:81
 
 Convert result to JSON report format (compatible with EPUBCheck JSON output)
 

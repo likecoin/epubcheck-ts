@@ -6,8 +6,6 @@
 
 # Type Alias: EPUBProfile
 
-> **EPUBProfile** = `"default"` \| `"edupub"` \| `"idx"` \| `"dict"` \| `"preview"`
+> **EPUBProfile** = *typeof* [`EPUB_PROFILES`](../variables/EPUB_PROFILES.md)\[`number`\]
 
-Defined in: types.ts:19
-
-EPUB validation profiles
+Defined in: types.ts:26

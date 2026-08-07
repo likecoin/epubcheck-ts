@@ -8,7 +8,7 @@
 
 > **formatMessages**(`messages`): `string`
 
-Defined in: core/report.ts:65
+Defined in: core/report.ts:66
 
 Format messages as a string for display
 

@@ -53,16 +53,25 @@ Options:
   -j, --json <file>        Output JSON report to file (use '-' for stdout)
   -q, --quiet              Suppress console output (errors only)
   -p, --profile <name>     Validation profile (default|dict|edupub|idx|preview)
+  -m, --mode <type>        Validation mode: exp (expanded directory), opf, xhtml, svg, nav, mo
+  -v, --epub-version <ver> EPUB version for single-file mode (2|2.0|3|3.0|3.1|3.2|3.3)
   -u, --usage              Include usage messages (best practices)
   -f, --fatal              Show only fatal errors
   -e, --error              Show fatal errors and errors
-      --warn               Show fatal errors, errors, and warnings
+  -w, --warn               Show fatal errors, errors, and warnings
+  -i, --info               Show fatal, error, warning, and info messages
   -c, --customMessages <file>  Override message severities (TSV: ID<tab>SEVERITY)
-  -w, --fail-on-warnings   Exit with code 1 if warnings are found
+      --fail-on-warnings   Exit with code 1 if warnings are found
+                           (also accepts --failonwarnings for Java compatibility)
   -l, --listChecks         List all message IDs and severities
-  -v, --version            Show version information
+  -V, --version            Show version information
   -h, --help               Show this help message
 ```
+
+`-w` and `--fail-on-warnings` are different options: `-w` only widens which
+messages are *displayed*, while `--fail-on-warnings` changes the *exit code*.
+Use the latter in CI. Note also that `-V` shows the version — `-v` takes an
+EPUB version for single-file mode.
 
 **Examples:**
 ```bash

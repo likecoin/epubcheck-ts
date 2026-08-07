@@ -8,7 +8,7 @@
 
 > **filterBySeverity**(`messages`, `severity`): [`ValidationMessage`](../interfaces/ValidationMessage.md)[]
 
-Defined in: core/report.ts:48
+Defined in: core/report.ts:49
 
 Filter messages by severity
 

@@ -16,7 +16,9 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import type * as EpubCheckModule from '../../src/index.js';
 import {
+  EPUB_PROFILES,
   EPUB_VERSIONS,
+  VALIDATION_MODES,
   type EPUBProfile,
   type EPUBVersion,
   type EpubCheckOptions,
@@ -45,9 +47,6 @@ const MAX_BUFFER = 64 * 1024 * 1024;
 
 // ------------------------------------------------------------ option parsing
 
-const PROFILE_VALUES = ['default', 'edupub', 'idx', 'dict', 'preview'] as const;
-const MODE_VALUES = ['exp', 'opf', 'xhtml', 'svg', 'nav', 'mo'] as const;
-
 function narrow<T extends string>(raw: string, allowed: readonly T[], flag: string): T {
   // Casting the string through would let a typo reach the validator as a silent
   // no-op and quietly change what the run measures.
@@ -57,12 +56,11 @@ function narrow<T extends string>(raw: string, allowed: readonly T[], flag: stri
   return raw as T;
 }
 
-// EPUB_VERSIONS is the library's own list, so a version added there is accepted
-// here without a second edit. No such runtime constant exists for profiles or
-// modes -- only the types -- so those two lists are still local copies.
+// All three lists are the library's own, so a value added there is accepted here
+// without a second edit.
 export const toVersion = (raw: string): EPUBVersion => narrow(raw, EPUB_VERSIONS, '--version');
-export const toProfile = (raw: string): EPUBProfile => narrow(raw, PROFILE_VALUES, '--profile');
-export const toMode = (raw: string): ValidationMode => narrow(raw, MODE_VALUES, '--mode');
+export const toProfile = (raw: string): EPUBProfile => narrow(raw, EPUB_PROFILES, '--profile');
+export const toMode = (raw: string): ValidationMode => narrow(raw, VALIDATION_MODES, '--mode');
 
 // ------------------------------------------------------------- input routing
 

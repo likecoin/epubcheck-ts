@@ -15,13 +15,21 @@ export type EPUBVersion = (typeof EPUB_VERSIONS)[number];
 
 /**
  * EPUB validation profiles
+ *
+ * Declared as a runtime list first, like EPUB_VERSIONS above, so callers that
+ * must validate user input have something to check against. Left as a bare
+ * union, every such caller hand-copied the members: the CLI and the parity
+ * harness each grew their own list, and a profile added here would have been
+ * silently rejected by both.
  */
-export type EPUBProfile = 'default' | 'edupub' | 'idx' | 'dict' | 'preview';
+export const EPUB_PROFILES = ['default', 'dict', 'edupub', 'idx', 'preview'] as const;
+export type EPUBProfile = (typeof EPUB_PROFILES)[number];
 
 /**
  * Validation modes for single-file and expanded directory validation
  */
-export type ValidationMode = 'exp' | 'opf' | 'xhtml' | 'svg' | 'nav' | 'mo';
+export const VALIDATION_MODES = ['exp', 'opf', 'xhtml', 'svg', 'nav', 'mo'] as const;
+export type ValidationMode = (typeof VALIDATION_MODES)[number];
 
 /**
  * Location within an EPUB file

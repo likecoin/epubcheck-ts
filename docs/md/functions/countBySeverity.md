@@ -8,7 +8,7 @@
 
 > **countBySeverity**(`messages`): `Record`\<[`Severity`](../type-aliases/Severity.md), `number`\>
 
-Defined in: core/report.ts:29
+Defined in: core/report.ts:30
 
 Count messages by severity
 

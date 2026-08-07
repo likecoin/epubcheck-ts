@@ -6,7 +6,7 @@
 
 # Interface: ValidationContext
 
-Defined in: types.ts:111
+Defined in: types.ts:119
 
 Internal validation context passed through the validation pipeline
 
@@ -16,7 +16,7 @@ Internal validation context passed through the validation pipeline
 
 > `optional` **contentFeatures**: `object`
 
-Defined in: types.ts:162
+Defined in: types.ts:170
 
 Feature flags collected during content validation for cross-document checks
 
@@ -94,7 +94,7 @@ Feature flags collected during content validation for cross-document checks
 
 > **data**: `Uint8Array`
 
-Defined in: types.ts:113
+Defined in: types.ts:121
 
 EPUB file data
 
@@ -104,7 +104,7 @@ EPUB file data
 
 > **files**: `Map`\<`string`, `Uint8Array`\<`ArrayBufferLike`\>\>
 
-Defined in: types.ts:121
+Defined in: types.ts:129
 
 Files extracted from EPUB container
 
@@ -114,7 +114,7 @@ Files extracted from EPUB container
 
 > **hasContainer**: `boolean`
 
-Defined in: types.ts:134
+Defined in: types.ts:142
 
 Whether an OCF container backs this validation.
 
@@ -131,7 +131,7 @@ there and Java stays silent rather than reporting an unresolvable target.
 
 > `optional` **mediaActiveClass**: `string`
 
-Defined in: types.ts:156
+Defined in: types.ts:164
 
 OPF media:active-class value (if declared)
 
@@ -141,7 +141,7 @@ OPF media:active-class value (if declared)
 
 > `optional` **mediaPlaybackActiveClass**: `string`
 
-Defined in: types.ts:158
+Defined in: types.ts:166
 
 OPF media:playback-active-class value (if declared)
 
@@ -151,7 +151,7 @@ OPF media:playback-active-class value (if declared)
 
 > **messages**: [`ValidationMessage`](ValidationMessage.md)[]
 
-Defined in: types.ts:119
+Defined in: types.ts:127
 
 Validation messages collected so far
 
@@ -161,7 +161,7 @@ Validation messages collected so far
 
 > `optional` **ncxUid**: `string`
 
-Defined in: types.ts:148
+Defined in: types.ts:156
 
 NCX UID for validation against OPF identifier
 
@@ -171,7 +171,7 @@ NCX UID for validation against OPF identifier
 
 > `optional` **obfuscatedResources**: `Set`\<`string`\>
 
-Defined in: types.ts:160
+Defined in: types.ts:168
 
 Resources marked with IDPF font obfuscation in encryption.xml
 
@@ -181,7 +181,7 @@ Resources marked with IDPF font obfuscation in encryption.xml
 
 > `optional` **opfPath**: `string`
 
-Defined in: types.ts:136
+Defined in: types.ts:144
 
 Path to the package document (OPF)
 
@@ -191,7 +191,7 @@ Path to the package document (OPF)
 
 > **options**: [`ResolvedEpubCheckOptions`](../type-aliases/ResolvedEpubCheckOptions.md)
 
-Defined in: types.ts:115
+Defined in: types.ts:123
 
 Validation options
 
@@ -201,7 +201,7 @@ Validation options
 
 > `optional` **overlayTextLinks**: `object`[]
 
-Defined in: types.ts:154
+Defined in: types.ts:162
 
 Media overlay text link targets in order, for reading order validation (MED-015)
 
@@ -223,7 +223,7 @@ Media overlay text link targets in order, for reading order validation (MED-015)
 
 > `optional` **packageDocument**: `PackageDocument`
 
-Defined in: types.ts:146
+Defined in: types.ts:154
 
 Parsed package document
 
@@ -233,7 +233,7 @@ Parsed package document
 
 > `optional` **referencedUndeclaredResources**: `Set`\<`string`\>
 
-Defined in: types.ts:150
+Defined in: types.ts:158
 
 Resources referenced in content but not declared in manifest
 
@@ -243,7 +243,7 @@ Resources referenced in content but not declared in manifest
 
 > **rootfiles**: `Rootfile`[]
 
-Defined in: types.ts:123
+Defined in: types.ts:131
 
 Rootfiles found in container.xml
 
@@ -253,7 +253,7 @@ Rootfiles found in container.xml
 
 > `optional` **tocLinks**: `object`[]
 
-Defined in: types.ts:152
+Defined in: types.ts:160
 
 TOC navigation link targets in order, for reading order validation (NAV-011)
 
@@ -275,7 +275,7 @@ TOC navigation link targets in order, for reading order validation (NAV-011)
 
 > **version**: `"2.0"` \| `"3.0"` \| `"3.1"` \| `"3.2"` \| `"3.3"`
 
-Defined in: types.ts:117
+Defined in: types.ts:125
 
 Detected EPUB version
 
@@ -285,7 +285,7 @@ Detected EPUB version
 
 > `optional` **xmlParseFailures**: `Map`\<`string`, `XmlParseFailure`\>
 
-Defined in: types.ts:144
+Defined in: types.ts:152
 
 Paths whose XML is not well-formed, keyed by path. A fatal parse error is
 reported once, at the point the document is read; later passes skip these
