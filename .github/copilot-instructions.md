@@ -9,7 +9,7 @@
 **Key Technologies:**
 - TypeScript 5.7+ with strict type checking (ESM-first with `.js` extensions)
 - Node.js 18+ (tested on 18, 20, 22)
-- Dependencies: `libxml2-wasm` (XML/schema validation), `fflate` (ZIP), `css-tree` (CSS), `fontoxpath` (XPath)
+- Dependencies: `libxml2-wasm` (XML/schema validation), `fflate` (ZIP), `css-tree` (CSS)
 - Build: `tsup` (ESM + CJS), Test: `vitest`, Lint: `eslint` + `biome`
 
 ## Build & Validation Workflow
@@ -156,7 +156,7 @@ describe('ComponentName', () => {
 - `src/references/validator.test.ts:100` - ID registration logic needs fixing
 
 **High-priority missing features:**
-1. Schema validation (RelaxNG, XSD, Schematron) - required for many validations
+1. Schema validation - RelaxNG/XSD are implemented; XHTML/SVG RelaxNG is disabled (libxml2 limitation). There is no Schematron engine: those rules are hand-ported to TypeScript in `src/content/validator.ts` and `src/opf/validator.ts`.
 2. Full XML DOM parsing - currently using regex (error-prone)
 3. Cross-reference validation - link targets, fragments, unused resources
 4. CSS validation - parser available (css-tree), validation not implemented

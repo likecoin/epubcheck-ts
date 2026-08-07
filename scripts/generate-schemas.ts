@@ -23,7 +23,7 @@ const SCHEMAS_DIR = join(ROOT_DIR, 'schemas');
 const OUTPUT_FILE = join(ROOT_DIR, 'src', 'schema', 'schemas.generated.ts');
 
 // Schema file extensions to process
-const SCHEMA_EXTENSIONS = ['.rng', '.rnc', '.sch', '.xsd'];
+const SCHEMA_EXTENSIONS = ['.rng', '.rnc', '.xsd'];
 
 /**
  * Compress and base64-encode a string

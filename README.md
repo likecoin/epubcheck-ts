@@ -278,7 +278,7 @@ This library is a TypeScript port of the Java-based [EPUBCheck](https://github.c
 - **XML Processing**: Uses [libxml2-wasm](https://github.com/nicklasb/libxml2-wasm) for XML parsing and schema validation (RelaxNG, XSD) via WebAssembly
 - **ZIP Handling**: Uses [fflate](https://github.com/101arrowz/fflate) for fast, lightweight EPUB container processing
 - **CSS Validation**: Uses [css-tree](https://github.com/nicklasb/css-tree) for CSS parsing and validation
-- **Schematron**: Uses [fontoxpath](https://github.com/FontoXML/fontoxpath) with [slimdom](https://github.com/bwrrp/slimdom.js) for XPath 3.1 evaluation
+- **Schematron rules**: Hand-ported to TypeScript rather than evaluated from `.sch` files — there is no Schematron engine, so the three runtime dependencies above are the whole list
 
 ## Validation Coverage
 
@@ -363,10 +363,9 @@ epubcheck-ts/
 │   ├── schema/            # Schema validation ✅
 │   │   ├── relaxng.ts     # RelaxNG validation
 │   │   ├── xsd.ts         # XSD validation
-│   │   ├── schematron.ts  # Schematron validation
 │   │   └── orchestrator.ts # Schema orchestration
 │   └── messages/          # Error messages
-├── schemas/               # Schema files (RNG, RNC, SCH)
+├── schemas/               # Schema files (RNG, RNC, XSD)
 ├── test/
 │   ├── fixtures/          # Test EPUB files
 │   └── integration/       # Integration tests

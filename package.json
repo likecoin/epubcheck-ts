@@ -50,10 +50,7 @@
   "dependencies": {
     "css-tree": "^3.0.1",
     "fflate": "^0.8.2",
-    "fontoxpath": "^3.33.1",
-    "libxml2-wasm": "^0.6.0",
-    "slimdom": "^4.3.5",
-    "slimdom-sax-parser": "^1.5.3"
+    "libxml2-wasm": "^0.6.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

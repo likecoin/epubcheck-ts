@@ -151,7 +151,7 @@ Mimetype (PKG-005/006/007), container.xml, package attributes, required metadata
 
 ### 🟡 Partially Implemented
 
-- **Schema validation** — RelaxNG for OPF/container works; XHTML/SVG RelaxNG disabled (libxml2-wasm can't handle complex recursive patterns); content validated via Schematron instead.
+- **Schema validation** — RelaxNG for OPF/container works; XHTML/SVG RelaxNG disabled (libxml2-wasm can't handle complex recursive patterns); content documents are checked by hand-ported rules in `src/content/validator.ts` instead.
 - **Accessibility** — 12/17 ACC checks; remaining 5 (ACC-008/013/015/016/017) are suppressed by default.
 - **Media validation** — magic-number checks done; deep format parsing not implemented.
 - **Media overlays** — structure/timing/metadata done (~70%); SMIL clock parser strictness and epub:type vocab pending.
@@ -167,8 +167,8 @@ Metadata.xml (multiple renditions), full ARIA roles/attributes, external entity 
 1. **fflate ZIP dedup** — fflate auto-deduplicates ZIP entries, so duplicate-entry detection is impossible (1 skipped test).
 2. **css-tree forgiving parser** — successfully parses many invalid CSS snippets, making some syntax-error detection impossible (1 skipped test).
 3. **libxml2-wasm XPath** — queries for namespaced attributes don't match (2 skipped unit tests).
-4. **libxml2-wasm RelaxNG** — can't parse XHTML/SVG schemas (complex recursive patterns Jing handles); validation done via Schematron instead. libxml2 also plans to remove RelaxNG support in future.
-5. **fontoxpath XPath 2.0** — crashes on `tokenize()` etc.; OPF/nav Schematron rules implemented as direct TypeScript.
+4. **libxml2-wasm RelaxNG** — can't parse XHTML/SVG schemas (complex recursive patterns Jing handles); those documents are checked by hand-ported rules instead. libxml2 also plans to remove RelaxNG support in future.
+5. **No Schematron engine** — every `.sch` rule is hand-ported to TypeScript. A generic evaluator was tried (fontoxpath + slimdom) and abandoned: fontoxpath lacks the XPath 2.0 functions the EPUB schemas rely on (`matches`, `tokenize`), so it could never have reached parity. Deleted in favour of the hand-ports that already shipped.
 6. **EPUB 2 wrong-namespace count** — per-element error count differs (libxml2-wasm vs Jing reporting shape; 1 skipped test).
 7. **USAGE message dedup** — Java collapses identical USAGE messages per (id, file); TS emits one per occurrence. Cosmetic count drift for CSS-028/OPF-090/RSC-007; no semantic difference.
 8. **`PKG-009` in single-file mode** — with no container, Java resolves each manifest `href` against the document's `file:` URL, so an href that leaks above the base or is path-absolute yields a URL containing `:` and trips the OCF filename-character check. This port has no `file:` base to resolve against and stays silent. Four `--mode opf` fixtures (`ocf-url-leaking-in-opf-error`, `ocf-url-path-absolute-error`, `ocf-meta-inf-with-publication-resource-error`, `file-url-in-css-error`) therefore disagree on verdict. They previously agreed only because a false-positive `RSC-026` supplied an unrelated error; removing it exposed the real gap. Matching Java faithfully would mean emitting local absolute filesystem paths in message text.
@@ -214,7 +214,7 @@ Ordered by measured impact on agreement with Java:
 
 ### Unreachable code
 
-`src/schema/schematron.ts` (`SchematronValidator`) and `XMLParser`/`XMLWalker` in `src/content/parser.ts` are imported only by their own test files. `src/schema/orchestrator.ts` never imports Schematron — its comments claiming content is "validated via Schematron" describe an arrangement that does not exist; the rules are hand-ported TypeScript in `src/content/validator.ts` and `src/opf/validator.ts`. Either wire these up or delete them.
+Resolved. `SchematronValidator` and `XMLParser`/`XMLWalker` were deleted — neither was ever imported outside its own test, in any commit. Schematron's rules ship as hand-ported TypeScript in `src/content/validator.ts` and `src/opf/validator.ts`; the misleading comment in `src/schema/orchestrator.ts` now says so. Removing them dropped `slimdom`, `slimdom-sax-parser` and `fontoxpath` (plus `saxes`, `prsc`, `xspattern` transitively) from the install, leaving three runtime dependencies: `css-tree`, `fflate`, `libxml2-wasm`.
 
 ---
 

@@ -132,12 +132,15 @@ export class SchemaValidator {
    * that libxml2 doesn't support ("Found forbidden pattern oneOrMore//interleave//attribute").
    *
    * Java EPUBCheck uses Jing (a more sophisticated RelaxNG validator) that handles these.
-   * Content validation still happens via Schematron and custom validators.
+   *
+   * Content documents are instead checked by ContentValidator
+   * (src/content/validator.ts), and package documents by OPFValidator
+   * (src/opf/validator.ts). Both hand-port the corresponding Schematron rules
+   * to TypeScript rather than evaluating .sch files -- there is no Schematron
+   * engine in this project.
    */
   private async validateManifestItems(_schemas: Record<string, string>): Promise<void> {
     // RelaxNG validation disabled - see comment above
-    // Content is validated via Schematron (src/schema/schematron.ts) and
-    // custom validators (src/content/validator.ts)
   }
 
   /**
