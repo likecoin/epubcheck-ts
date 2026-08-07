@@ -6,9 +6,16 @@ export default defineConfig({
     environment: 'node',
     setupFiles: ['./test/setup.ts'],
     include: ['src/**/*.test.ts', 'test/**/*.test.ts'],
-    // The packaging test runs against the build output, not src; it has its own
-    // config (vitest.packaging.config.ts) and the `test:packaging` script.
-    exclude: ['node_modules', 'dist', 'test/integration/packaging.test.ts'],
+    // These run against the build output, not src, so they need a prior
+    // `npm run build`; they have their own config (vitest.packaging.config.ts)
+    // and the `test:packaging` script. Left in the default suite they pass on a
+    // machine that happens to have dist/ lying around and fail on a fresh clone.
+    exclude: [
+      'node_modules',
+      'dist',
+      'test/integration/packaging.test.ts',
+      'test/integration/cli.test.ts',
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

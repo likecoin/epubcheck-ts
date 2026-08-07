@@ -1,4 +1,5 @@
 import type { EPUBVersion, EpubCheckResult, Severity, ValidationMessage } from '../types.js';
+import { VERSION } from '../version.js';
 
 /**
  * Build a validation result from messages
@@ -82,7 +83,7 @@ export function toJSONReport(result: EpubCheckResult): string {
     {
       checker: {
         name: 'epubcheck-ts',
-        version: '0.1.0',
+        version: VERSION,
       },
       publication: {
         version: result.version,

@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **The CLI is under test.** CI ran build, lint, typecheck, unit, packaging and parity without ever invoking `bin/epubcheck.js`; nothing in `test/` spawned it. `test/integration/cli.test.ts` now asserts the CLI contract — flag mapping, exit codes and stream routing — as 13 tests in the packaging suite, which CI already runs across Node 18/20/22. It lives there rather than in the default suite because the binary imports `dist/`, and the default suite deliberately runs against `src/` without building. Validation agreement with Java is not re-tested here; `npm run parity` covers that over 763 fixtures. All three fixes below are defects this absence had been hiding.
+
+### Fixed
+
+- **An unrecognised `--profile` no longer reports success.** `values.profile` was cast to `EPUBProfile` with no validation, so a typo fell through to the default ruleset: on `edupub-pagelist-no-source-error.epub`, `-p edupub` reports 1 error and exits 1 while `-p bogus` reported 0 errors and exited 0 — byte-identical to `-p default`. A validator returning a clean bill of health for a profile it never applied is the one failure its output cannot reveal. Invalid profiles now exit 2 with the valid list, matching the `--mode` and `--epub-version` checks either side of it, which were already guarded.
+- **JSON reports carry the real version.** `toJSONReport` hardcoded `"version": "0.1.0"`, so every machine-readable report claimed 0.1.0 through six minor releases. The version now lives in `src/version.ts`, is exported as `VERSION`, and is used by both the report and the CLI, replacing two hardcoded copies. A unit test asserts it matches `package.json`, so drift fails the build rather than shipping.
+- **The documented CLI flags match the real ones.** The README had `-w` as `--fail-on-warnings` and `-v` as `--version`; both were wrong, and the first is the kind of mistake that silently disarms a CI pipeline — `-w` is `--warn`, a display filter that exits 0 on warnings, while `--fail-on-warnings` has no short form and exits 1. `-v` is `--epub-version <ver>` and errors without a value; `--version` is `-V`. `-m/--mode`, `-i/--info` and `--failonwarnings` were undocumented. `--help` was correct throughout and is now the source of truth: a test asserts every long flag it advertises appears in the README, since nothing compared them before.
+
 ## [0.6.4] - 2026-08-07
 
 ### Added

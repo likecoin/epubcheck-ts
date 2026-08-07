@@ -8,7 +8,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['test/integration/packaging.test.ts'],
+    include: ['test/integration/packaging.test.ts', 'test/integration/cli.test.ts'],
     testTimeout: 30000,
     pool: 'forks',
   },

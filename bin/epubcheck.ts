@@ -20,9 +20,10 @@ import type {
 } from '../src/types.js';
 
 // Dynamic import to support both ESM and CJS builds
-const { EpubCheck, EPUB_VERSIONS, MessageId, toJSONReport } = await import('../dist/index.js');
+const { EpubCheck, EPUB_VERSIONS, MessageId, VERSION, toJSONReport } = await import(
+  '../dist/index.js'
+);
 
-const VERSION = '0.6.4';
 const VALID_MODES: ReadonlySet<ValidationMode> = new Set([
   'exp',
   'opf',
@@ -30,6 +31,13 @@ const VALID_MODES: ReadonlySet<ValidationMode> = new Set([
   'svg',
   'nav',
   'mo',
+]);
+const VALID_PROFILES: ReadonlySet<EPUBProfile> = new Set([
+  'default',
+  'dict',
+  'edupub',
+  'idx',
+  'preview',
 ]);
 
 interface CliValues {
@@ -205,6 +213,19 @@ async function main(): Promise<void> {
     process.exit(2);
   }
 
+  // An unrecognised profile used to fall through to the default ruleset and
+  // report success: `-p edupbu` on a book that violates edupub exited 0 with no
+  // errors. A validator returning a clean bill of health for a profile it never
+  // applied is the one failure the output cannot reveal, so this rejects rather
+  // than degrades — matching the mode and version checks either side of it.
+  const profile = values.profile as EPUBProfile | undefined;
+  if (profile && !VALID_PROFILES.has(profile)) {
+    console.error(
+      `Error: Invalid profile "${profile}". Valid profiles: ${[...VALID_PROFILES].join(', ')}`,
+    );
+    process.exit(2);
+  }
+
   const rawVersion = values['epub-version'];
   const epubVersion = rawVersion === '2' ? '2.0' : rawVersion === '3' ? '3.0' : rawVersion;
   if (epubVersion && !(EPUB_VERSIONS as readonly string[]).includes(epubVersion)) {
@@ -228,8 +249,8 @@ async function main(): Promise<void> {
 
     // Build options
     const options: EpubCheckOptions = {};
-    if (values.profile) {
-      options.profile = values.profile as EPUBProfile;
+    if (profile) {
+      options.profile = profile;
     }
     if (epubVersion) {
       options.version = epubVersion as EPUBVersion;

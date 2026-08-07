@@ -104,7 +104,7 @@ The standalone corpus is every `.opf`/`.xhtml`/`.svg` under `../epubcheck/src/te
 
 Unit tests include 17 for the parity harness itself (`test/unit/parity.test.ts`) — cache keying, the ID-set vs ID-count distinction, and the location metric. The harness gates CI, so a silent bug there would not make a check wrong; it would make every check unverifiable while still printing a confident percentage.
 
-Plus a separate packaging regression suite (`npm run test:packaging`, 3 tests) validating built artifacts; runs in CI and on prepublish.
+Plus a separate packaging regression suite (`npm run test:packaging`, 16 tests) validating the built artifacts and the CLI contract; runs in CI and on prepublish. Both need a prior `npm run build`, which is why they are excluded from the default suite — left in it they pass wherever `dist/` happens to exist and fail on a fresh clone.
 
 ### Integration Test Files
 
