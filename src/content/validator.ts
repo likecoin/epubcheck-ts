@@ -790,7 +790,7 @@ export class ContentValidator {
     try {
       doc = getXmlDocument().fromString(svgContent);
       // Extract IDs using XPath
-      this.extractAndRegisterIDs(path, doc.root, registry);
+      this.extractAndRegisterIDs(path, this.findIdElements(doc.root), registry);
     } catch (e) {
       pushMessage(context.messages, {
         id: MessageId.RSC_016,
@@ -834,8 +834,9 @@ export class ContentValidator {
         });
       }
 
-      this.checkDuplicateIDs(context, path, root);
-      this.checkSVGInvalidIDs(context, path, root);
+      const idElements = this.findIdElements(root);
+      this.checkDuplicateIDs(context, path, idElements);
+      this.checkSVGInvalidIDs(context, path, root, idElements);
       this.validateSvgEpubType(context, path, root);
       this.checkUnknownEpubAttributes(context, path, root);
       this.checkSVGLinkAccessibility(context, path, root);
@@ -1598,8 +1599,11 @@ export class ContentValidator {
       // Check obsolete HTML attributes and elements
       this.checkObsoleteHTML(context, path, root);
 
+      // Every @id-bearing element, walked once for the three checks below.
+      const idElements = this.findIdElements(root);
+
       // Check for duplicate IDs
-      this.checkDuplicateIDs(context, path, root);
+      this.checkDuplicateIDs(context, path, idElements);
 
       // Check img src empty
       this.checkImgSrcEmpty(context, path, root);
@@ -1620,7 +1624,7 @@ export class ContentValidator {
       this.checkDpubAriaDeprecated(context, path, root);
 
       // Validate ARIA and HTML IDREF attributes
-      this.validateIdRefs(context, path, root);
+      this.validateIdRefs(context, path, root, idElements);
 
       // Check table border attribute
       this.checkTableBorder(context, path, root);
@@ -1685,7 +1689,7 @@ export class ContentValidator {
 
       // Validate epub:switch and epub:trigger (deprecated)
       this.validateEpubSwitch(context, path, root);
-      this.validateEpubTrigger(context, path, root);
+      this.validateEpubTrigger(context, path, root, idElements);
 
       // Validate CSS in style attributes
       this.validateStyleAttributes(context, path, root);
@@ -1698,7 +1702,7 @@ export class ContentValidator {
 
       // Extract IDs and register with registry
       if (registry) {
-        this.extractAndRegisterIDs(path, root, registry);
+        this.extractAndRegisterIDs(path, idElements, registry);
       }
 
       // Extract hyperlinks and register with reference validator
@@ -2646,12 +2650,15 @@ export class ContentValidator {
     }
   }
 
-  private checkDuplicateIDs(context: ValidationContext, path: string, root: XmlElement): void {
+  private checkDuplicateIDs(
+    context: ValidationContext,
+    path: string,
+    idElements: readonly XmlElement[],
+  ): void {
     // Schematron-equivalent: emit one RSC-005 per element carrying a duplicated id.
     const occurrences = new Map<string, { line: number }[]>();
-    const elements = root.find('.//*[@id]');
-    for (const elem of elements) {
-      const id = this.getAttribute(elem as XmlElement, 'id');
+    for (const elem of idElements) {
+      const id = this.getAttribute(elem, 'id');
       if (!id) continue;
       const entry = occurrences.get(id);
       if (entry) {
@@ -2745,12 +2752,16 @@ export class ContentValidator {
     }
   }
 
-  private checkSVGInvalidIDs(context: ValidationContext, path: string, root: XmlElement): void {
+  private checkSVGInvalidIDs(
+    context: ValidationContext,
+    path: string,
+    root: XmlElement,
+    idElements: readonly XmlElement[],
+  ): void {
     // SVG IDs must match XML Name production: cannot start with a digit
     const XML_NAME_START_RE = /^[a-zA-Z_:\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF]/;
-    const elements = root.find('.//*[@id]');
-    for (const elem of elements) {
-      const id = this.getAttribute(elem as XmlElement, 'id');
+    for (const elem of idElements) {
+      const id = this.getAttribute(elem, 'id');
       if (id && !XML_NAME_START_RE.test(id)) {
         pushMessage(context.messages, {
           id: MessageId.RSC_005,
@@ -2824,22 +2835,33 @@ export class ContentValidator {
     }
   }
 
-  private collectIds(root: XmlElement): Set<string> {
-    const ids = new Set<string>();
+  /** Descendants carrying `@id`. Excludes `root` itself, which `.//` never matches. */
+  private findIdElements(root: XmlElement): XmlElement[] {
     try {
-      for (const el of root.find('.//*[@id]')) {
-        const id = this.getAttribute(el as XmlElement, 'id');
-        if (id) ids.add(id);
-      }
+      return root.find('.//*[@id]') as XmlElement[];
     } catch {
       // XPath may fail on malformed documents
+      return [];
+    }
+  }
+
+  private collectIds(idElements: readonly XmlElement[]): Set<string> {
+    const ids = new Set<string>();
+    for (const el of idElements) {
+      const id = this.getAttribute(el, 'id');
+      if (id) ids.add(id);
     }
     return ids;
   }
 
-  private validateIdRefs(context: ValidationContext, path: string, root: XmlElement): void {
+  private validateIdRefs(
+    context: ValidationContext,
+    path: string,
+    root: XmlElement,
+    idElements: readonly XmlElement[],
+  ): void {
     try {
-      const allIds = this.collectIds(root);
+      const allIds = this.collectIds(idElements);
 
       const idrefsChecks: { xpath: string; attr: string; ns?: Record<string, string> }[] = [
         { xpath: './/*[@aria-describedby]', attr: 'aria-describedby' },
@@ -3021,12 +3043,17 @@ export class ContentValidator {
     }
   }
 
-  private validateEpubTrigger(context: ValidationContext, path: string, root: XmlElement): void {
+  private validateEpubTrigger(
+    context: ValidationContext,
+    path: string,
+    root: XmlElement,
+    idElements: readonly XmlElement[],
+  ): void {
     try {
       const triggers = root.find('.//epub:trigger', EPUB_OPS_NS);
       if (triggers.length === 0) return;
 
-      const allIds = this.collectIds(root);
+      const allIds = this.collectIds(idElements);
 
       for (const trigger of triggers) {
         pushMessage(context.messages, {
@@ -4384,14 +4411,16 @@ export class ContentValidator {
     }
   }
 
-  private extractAndRegisterIDs(path: string, root: XmlElement, registry: ResourceRegistry): void {
-    const elementsWithId = root.find('.//*[@id]');
-    for (const elem of elementsWithId) {
-      const xmlElem = elem as XmlElement;
-      const id = this.getAttribute(xmlElem, 'id');
+  private extractAndRegisterIDs(
+    path: string,
+    idElements: readonly XmlElement[],
+    registry: ResourceRegistry,
+  ): void {
+    for (const elem of idElements) {
+      const id = this.getAttribute(elem, 'id');
       if (id) {
         registry.registerID(path, id);
-        const localName = xmlElem.name.includes(':') ? xmlElem.name.split(':').pop() : xmlElem.name;
+        const localName = elem.name.includes(':') ? elem.name.split(':').pop() : elem.name;
         if (localName === 'symbol') {
           registry.registerSVGSymbolID(path, id);
         }
