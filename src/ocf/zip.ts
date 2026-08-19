@@ -18,19 +18,26 @@ export interface InvalidUtf8Filename {
  * A simple ZIP reader for EPUB files using fflate
  */
 export class ZipReader {
-  private files: Record<string, Uint8Array>;
+  /**
+   * A Map, not a plain object: entry names come from the archive, so an EPUB can
+   * name one `__proto__` (assigning that key sets the prototype instead of storing
+   * the entry, losing the file) or reference `constructor`, which a plain object
+   * answers from its prototype with a function where bytes are expected. Matches
+   * `ValidationContext.files`, which is already a Map.
+   */
+  private files: Map<string, Uint8Array>;
   private _paths: string[];
   private _originalOrder: string[];
   private _rawData: Uint8Array;
 
   private constructor(
-    files: Record<string, Uint8Array>,
+    files: Map<string, Uint8Array>,
     originalOrder: string[],
     rawData: Uint8Array,
   ) {
     this.files = files;
     this._originalOrder = originalOrder;
-    this._paths = Object.keys(files).sort();
+    this._paths = [...files.keys()].sort();
     this._rawData = rawData;
   }
 
@@ -41,12 +48,12 @@ export class ZipReader {
     const raw = unzipSync(data);
     // fflate decodes filenames as Latin-1 when the ZIP UTF-8 flag is not set.
     // EPUB spec requires UTF-8 filenames, so re-decode Latin-1 names as UTF-8.
-    const files: Record<string, Uint8Array> = {};
+    const files = new Map<string, Uint8Array>();
     const originalOrder: string[] = [];
     for (const key of Object.keys(raw)) {
       const corrected = reDecodeFilename(key);
       const entry = raw[key];
-      if (entry) files[corrected] = entry;
+      if (entry) files.set(corrected, entry);
       originalOrder.push(corrected);
     }
     return new ZipReader(files, originalOrder, data);
@@ -114,14 +121,14 @@ export class ZipReader {
    * Check if a file exists in the ZIP
    */
   has(path: string): boolean {
-    return path in this.files;
+    return this.files.has(path);
   }
 
   /**
    * Read a file as text (UTF-8)
    */
   readText(path: string): string | undefined {
-    const data = this.files[path];
+    const data = this.files.get(path);
     if (!data) {
       return undefined;
     }
@@ -132,14 +139,14 @@ export class ZipReader {
    * Read a file as binary data
    */
   readBinary(path: string): Uint8Array | undefined {
-    return this.files[path];
+    return this.files.get(path);
   }
 
   /**
    * Get the size of a file in bytes
    */
   getSize(path: string): number | undefined {
-    return this.files[path]?.length;
+    return this.files.get(path)?.length;
   }
 
   /**

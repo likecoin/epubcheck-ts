@@ -237,4 +237,26 @@ describe('ZipReader', () => {
       expect(() => ZipReader.open(invalidData)).toThrow();
     });
   });
+
+  describe('entry names that collide with Object prototype members', () => {
+    /**
+     * Entry names come from the archive, so they reach the lookup as arbitrary
+     * strings. Backed by a plain object these resolved up the prototype chain:
+     * `has` answered true for files no EPUB contained, and the read returned a
+     * function where bytes were expected, which threw out of `strFromU8` as a
+     * raw TypeError. A `<rootfile full-path="constructor">` reached all three.
+     */
+    const data = createTestZip({ mimetype: 'application/epub+zip' });
+
+    for (const name of ['constructor', 'toString', 'valueOf', 'hasOwnProperty']) {
+      it(`reports "${name}" as absent`, () => {
+        const zip = ZipReader.open(data);
+
+        expect(zip.has(name)).toBe(false);
+        expect(zip.readBinary(name)).toBeUndefined();
+        expect(zip.getSize(name)).toBeUndefined();
+        expect(zip.readText(name)).toBeUndefined();
+      });
+    }
+  });
 });
