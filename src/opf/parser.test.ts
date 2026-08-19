@@ -440,13 +440,11 @@ describe('peekOpfVersion', () => {
   });
 
   /**
-   * Both guard against superlinear scanning of a `<package` that never closes, and
-   * they are not the same input: one long tag is quadratic only if the attribute
-   * scan backtracks, while many short tags are quadratic whenever the scan restarts
-   * from each occurrence. The first case was fixed while the second still took 95s
-   * on a 1 MB document, so a guard for one is no evidence about the other. Sized so
-   * that anything worse than linear exhausts the test timeout, which fails louder
-   * and less flakily than a millisecond budget.
+   * Two distinct quadratic failure modes, not one bug tested twice: a single long
+   * tag is quadratic only if the attribute scan backtracks, while many short tags
+   * are quadratic whenever the scan restarts from each occurrence. Neither test is
+   * evidence about the other. Both are sized so anything worse than linear exhausts
+   * the test timeout, which fails louder than a millisecond budget and never flakes.
    */
   it('does not backtrack on one long unclosed package element', () => {
     const unclosed = `<package ${'unique-identifier="a" '.repeat(2500)}`;

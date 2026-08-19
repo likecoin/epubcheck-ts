@@ -62,9 +62,9 @@ export function peekOpfVersion(xml: string): OpfVersionPeek {
 }
 
 export function parseOPF(xml: string): PackageDocument {
-  // One read of the package element, shared by every attribute below. Each used to
-  // run its own `<package[^>]*\s…` scan over the whole document, so the element was
-  // located four times per parse and each scan carried the quadratic cost above.
+  // One read of the package element, shared by every attribute below. Do not add a
+  // per-attribute `<package…>` scan: each one re-locates the element over the whole
+  // document and re-pays the rescan cost `extractElementAttributes` exists to avoid.
   const packageElement = extractElementAttributes(xml, 'package');
   const packageAttrs = readPackageAttributes(packageElement);
   const versionDeclared = packageAttrs.version !== undefined;
@@ -563,8 +563,9 @@ function parseCollections(xml: string): Collection[] {
   // Only the tag name is matched; the end is found with indexOf. Letting a
   // `[^>]*` group run to the closing `>` re-scans to the end of the input from
   // every occurrence of the name, which a document repeating `<collection` with
-  // no `>` turns into O(n^2). The lookahead keeps `<collections>` from matching,
-  // as the `(\s[^>]*)?>` form did.
+  // no `>` turns into O(n^2). The lookahead keeps `<collections>` from matching.
+  // It does admit a bare `<link/>`, which the old pattern's mandatory leading `\s`
+  // excluded; that tag carries no attributes, so no link or collection comes of it.
   const tokenRegex = /<\/?(?:collection|link)(?=[\s/>])/g;
   const stack: { collection: Collection; contentStart: number }[] = [];
   const roots: Collection[] = [];
