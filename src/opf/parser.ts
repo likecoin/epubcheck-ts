@@ -17,20 +17,6 @@ import type {
  * This is a simple parser that extracts the essential information.
  * For full schema validation, use libxml2-wasm with RelaxNG/Schematron.
  */
-/**
- * `<package>`, capturing the attribute text up to the closing `>`.
- *
- * One variable-length section, not the three chained `[^>]*` the previous pair of
- * order-specific patterns each carried: those multiply, so a `<package` tag that
- * never closes backtracked for time growing faster than the square of its length.
- * Attributes are read off the captured text instead, which makes their order
- * irrelevant and removes the need for a second pattern.
- */
-const PACKAGE_TAG = /<package([^>]*)>/;
-/** `version`, read off the captured `<package>` attribute text. */
-const VERSION_ATTR = /\sversion=["']([^"']+)["']/;
-/** `unique-identifier`, read off the captured `<package>` attribute text. */
-const UID_ATTR = /\sunique-identifier=["']([^"']+)["']/;
 
 /**
  * Result of peeking at a package document's version attribute.
@@ -54,18 +40,18 @@ interface PackageAttributes {
 
 /**
  * Read `version` and `unique-identifier` off the package element.
+ *
+ * Attributes come from one match of the opening tag. Matching each attribute with
+ * its own `<package…>` pattern instead lets the variable-length sections multiply,
+ * which is what made an unclosed `<package` tag backtrack superlinearly.
  */
 function matchPackageElement(xml: string): PackageAttributes {
-  const attributes = PACKAGE_TAG.exec(xml)?.[1];
-  if (attributes === undefined) {
-    return { version: undefined, uniqueIdentifier: '' };
-  }
-
-  const declaredVersion = VERSION_ATTR.exec(attributes)?.[1];
+  const attributes = extractElementAttributes(xml, 'package');
+  const declaredVersion = attributes.version;
 
   return {
     version: declaredVersion ? normalizeVersion(declaredVersion) : undefined,
-    uniqueIdentifier: UID_ATTR.exec(attributes)?.[1] ?? '',
+    uniqueIdentifier: attributes['unique-identifier'] ?? '',
   };
 }
 

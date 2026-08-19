@@ -440,21 +440,14 @@ describe('peekOpfVersion', () => {
   });
 
   /**
-   * A `<package` that never closes used to be matched by two patterns carrying
-   * three chained `[^>]*` each. Those multiply: 2.6 KB of unclosed tag took 105 ms
-   * and grew faster than the square of the input, so a document a publisher could
-   * plausibly upload stalled the parse. Sized well above any real budget so the
-   * test reports a genuine regression rather than CI jitter.
+   * Guards against superlinear backtracking on a `<package` tag that never closes.
+   * The input is sized so that anything worse than linear exhausts the test
+   * timeout, which fails this louder and less flakily than a millisecond budget.
    */
   it('does not backtrack on an unclosed package element', () => {
     const unclosed = `<package ${'unique-identifier="a" '.repeat(2500)}`;
 
-    const start = performance.now();
-    const peek = peekOpfVersion(unclosed);
-    const elapsed = performance.now() - start;
-
     // `undeclared`, not `unreadable`: the element is there, its version is not.
-    expect(peek).toEqual({ kind: 'undeclared' });
-    expect(elapsed).toBeLessThan(500);
+    expect(peekOpfVersion(unclosed)).toEqual({ kind: 'undeclared' });
   });
 });

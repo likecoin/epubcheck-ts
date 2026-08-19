@@ -238,19 +238,11 @@ describe('ZipReader', () => {
     });
   });
 
+  // Regression test for the prototype-chain lookups documented on `ZipReader.files`.
   describe('entry names that collide with Object prototype members', () => {
-    /**
-     * Entry names come from the archive, so they reach the lookup as arbitrary
-     * strings. Backed by a plain object these resolved up the prototype chain:
-     * `has` answered true for files no EPUB contained, and the read returned a
-     * function where bytes were expected, which threw out of `strFromU8` as a
-     * raw TypeError. A `<rootfile full-path="constructor">` reached all three.
-     */
-    const data = createTestZip({ mimetype: 'application/epub+zip' });
-
     for (const name of ['constructor', 'toString', 'valueOf', 'hasOwnProperty']) {
       it(`reports "${name}" as absent`, () => {
-        const zip = ZipReader.open(data);
+        const zip = ZipReader.open(createTestZip({ mimetype: 'application/epub+zip' }));
 
         expect(zip.has(name)).toBe(false);
         expect(zip.readBinary(name)).toBeUndefined();
