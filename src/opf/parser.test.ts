@@ -440,14 +440,24 @@ describe('peekOpfVersion', () => {
   });
 
   /**
-   * Guards against superlinear backtracking on a `<package` tag that never closes.
-   * The input is sized so that anything worse than linear exhausts the test
-   * timeout, which fails this louder and less flakily than a millisecond budget.
+   * Both guard against superlinear scanning of a `<package` that never closes, and
+   * they are not the same input: one long tag is quadratic only if the attribute
+   * scan backtracks, while many short tags are quadratic whenever the scan restarts
+   * from each occurrence. The first case was fixed while the second still took 95s
+   * on a 1 MB document, so a guard for one is no evidence about the other. Sized so
+   * that anything worse than linear exhausts the test timeout, which fails louder
+   * and less flakily than a millisecond budget.
    */
-  it('does not backtrack on an unclosed package element', () => {
+  it('does not backtrack on one long unclosed package element', () => {
     const unclosed = `<package ${'unique-identifier="a" '.repeat(2500)}`;
 
     // `undeclared`, not `unreadable`: the element is there, its version is not.
     expect(peekOpfVersion(unclosed)).toEqual({ kind: 'undeclared' });
+  });
+
+  it('does not rescan from every occurrence of many unclosed package elements', () => {
+    const repeated = '<package '.repeat(120000);
+
+    expect(peekOpfVersion(repeated)).toEqual({ kind: 'undeclared' });
   });
 });

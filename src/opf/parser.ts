@@ -38,15 +38,8 @@ interface PackageAttributes {
   uniqueIdentifier: string;
 }
 
-/**
- * Read `version` and `unique-identifier` off the package element.
- *
- * Attributes come from one match of the opening tag. Matching each attribute with
- * its own `<package…>` pattern instead lets the variable-length sections multiply,
- * which is what made an unclosed `<package` tag backtrack superlinearly.
- */
-function matchPackageElement(xml: string): PackageAttributes {
-  const attributes = extractElementAttributes(xml, 'package');
+/** Read `version` and `unique-identifier` off already-parsed package attributes. */
+function readPackageAttributes(attributes: Record<string, string>): PackageAttributes {
   const declaredVersion = attributes.version;
 
   return {
@@ -63,27 +56,28 @@ function matchPackageElement(xml: string): PackageAttributes {
  * same with PackageDocumentPeeker, ahead of any OPF checking.
  */
 export function peekOpfVersion(xml: string): OpfVersionPeek {
-  const { version } = matchPackageElement(xml);
+  const { version } = readPackageAttributes(extractElementAttributes(xml, 'package'));
   if (version) return { kind: 'declared', version };
   return /<package[\s>]/.test(xml) ? { kind: 'undeclared' } : { kind: 'unreadable' };
 }
 
 export function parseOPF(xml: string): PackageDocument {
-  const packageAttrs = matchPackageElement(xml);
+  // One read of the package element, shared by every attribute below. Each used to
+  // run its own `<package[^>]*\s…` scan over the whole document, so the element was
+  // located four times per parse and each scan carried the quadratic cost above.
+  const packageElement = extractElementAttributes(xml, 'package');
+  const packageAttrs = readPackageAttributes(packageElement);
   const versionDeclared = packageAttrs.version !== undefined;
   const version: EPUBVersion = packageAttrs.version ?? '3.0';
   const uniqueIdentifier = packageAttrs.uniqueIdentifier;
 
-  const nsRegex = /<package[^>]*\sxmlns=["']([^"']+)["']/;
   const isLegacyOebps12 =
-    nsRegex.exec(xml)?.[1] === 'http://openebook.org/namespaces/oeb-package/1.0/';
+    packageElement.xmlns === 'http://openebook.org/namespaces/oeb-package/1.0/';
 
   // Extract prefix declarations (EPUB 3)
-  const prefixes = parsePrefixes(xml);
+  const prefixes = parsePrefixes(packageElement.prefix);
 
-  // Extract dir attribute
-  const dirRegex = /<package[^>]*\sdir=["']([^"']+)["']/;
-  const dirMatch = dirRegex.exec(xml);
+  const dir = packageElement.dir;
 
   // Offsets recorded by the section parsers are resolved against the original
   // document, so reported locations point at real source lines.
@@ -147,8 +141,8 @@ export function parseOPF(xml: string): PackageDocument {
   if (Object.keys(prefixes).length > 0) {
     result.prefixes = prefixes;
   }
-  if (dirMatch?.[1]) {
-    result.dir = dirMatch[1];
+  if (dir) {
+    result.dir = dir;
   }
   if (spineResult.toc) {
     result.spineToc = spineResult.toc;
@@ -183,12 +177,9 @@ function normalizeVersion(versionStr: string): EPUBVersion {
 /**
  * Parse prefix declarations from package element
  */
-function parsePrefixes(xml: string): Record<string, string> {
+function parsePrefixes(prefixStr: string | undefined): Record<string, string> {
   const prefixes: Record<string, string> = {};
-  const prefixRegex = /<package[^>]*\sprefix=["']([^"']+)["']/;
-  const prefixMatch = prefixRegex.exec(xml);
-  if (prefixMatch?.[1]) {
-    const prefixStr = prefixMatch[1];
+  if (prefixStr) {
     // Format: "prefix: uri prefix2: uri2"
     const parts = prefixStr.split(/\s+/);
     for (let i = 0; i < parts.length - 1; i += 2) {
@@ -252,13 +243,20 @@ function extractSection(xml: string, tagName: string): Section {
  * Extract an element's opening tag attributes
  */
 function extractElementAttributes(xml: string, tagName: string): Record<string, string> {
-  // Match the opening tag with its attributes
-  const regex = new RegExp(`<(?:opf:)?${tagName}([^>]*)>`, 'i');
-  const match = regex.exec(xml);
-  if (match?.[1]) {
-    return parseAttributes(match[1]);
-  }
-  return {};
+  // The attribute text is bounded with indexOf rather than a `[^>]*` capture. That
+  // group re-scans to the end of the input from every position the tag name
+  // matches, so a document repeating `<package` with no `>` costs O(n^2) before it
+  // fails. Since `[^>]*` cannot cross a `>` anyway, the first `>` after the tag
+  // name is the only end it could ever settle on -- this picks it directly.
+  const opener = new RegExp(`<(?:opf:)?${tagName}`, 'i');
+  const match = opener.exec(xml);
+  if (!match) return {};
+
+  const start = match.index + match[0].length;
+  const end = xml.indexOf('>', start);
+  if (end === -1) return {};
+
+  return parseAttributes(xml.slice(start, end));
 }
 
 /**
@@ -562,13 +560,22 @@ function parseCollections(xml: string): Collection[] {
   // Walk <collection> open/close tags in document order, building a tree
   // based on nesting depth. Links attach to the innermost currently-open
   // collection only (not to parents).
-  const tokenRegex = /<collection(\s[^>]*)?>|<\/collection\s*>|<link(\s[^>]*?)\/?>/g;
+  // Only the tag name is matched; the end is found with indexOf. Letting a
+  // `[^>]*` group run to the closing `>` re-scans to the end of the input from
+  // every occurrence of the name, which a document repeating `<collection` with
+  // no `>` turns into O(n^2). The lookahead keeps `<collections>` from matching,
+  // as the `(\s[^>]*)?>` form did.
+  const tokenRegex = /<\/?(?:collection|link)(?=[\s/>])/g;
   const stack: { collection: Collection; contentStart: number }[] = [];
   const roots: Collection[] = [];
 
   for (const match of stripped.matchAll(tokenRegex)) {
-    const text = match[0];
     const matchIndex = match.index;
+    const tagEnd = stripped.indexOf('>', matchIndex);
+    // An unterminated tag ends the document as far as this walk is concerned.
+    if (tagEnd === -1) break;
+    const text = stripped.slice(matchIndex, tagEnd + 1);
+    const attrs = stripped.slice(matchIndex + match[0].length, tagEnd);
     if (text.startsWith('</collection')) {
       const frame = stack.pop();
       if (frame && ROLES_NEEDING_INNER_XML.has(frame.collection.role)) {
@@ -577,7 +584,6 @@ function parseCollections(xml: string): Collection[] {
       continue;
     }
     if (text.startsWith('<collection')) {
-      const attrs = match[1] ?? '';
       const role = /\brole=["']([^"']+)["']/.exec(attrs)?.[1];
       if (!role) continue;
       const collection: Collection = { role, links: [], children: [] };
@@ -596,7 +602,7 @@ function parseCollections(xml: string): Collection[] {
     }
     const top = stack[stack.length - 1];
     if (!top) continue;
-    const href = /\bhref=["']([^"']+)["']/.exec(match[2] ?? '')?.[1];
+    const href = /\bhref=["']([^"']+)["']/.exec(attrs)?.[1];
     if (href) {
       top.collection.links.push(decodeXmlEntities(href));
     }
