@@ -17,12 +17,20 @@ import type {
  * This is a simple parser that extracts the essential information.
  * For full schema validation, use libxml2-wasm with RelaxNG/Schematron.
  */
-/** `<package>` with `version` before any `unique-identifier`. */
-const PACKAGE_VERSION_FIRST =
-  /<package[^>]*\sversion=["']([^"']+)["'][^>]*(?:\sunique-identifier=["']([^"']+)["'])?[^>]*>/;
-/** `<package>` with `unique-identifier` before any `version`. */
-const PACKAGE_UID_FIRST =
-  /<package[^>]*\sunique-identifier=["']([^"']+)["'][^>]*(?:\sversion=["']([^"']+)["'])?[^>]*>/;
+/**
+ * `<package>`, capturing the attribute text up to the closing `>`.
+ *
+ * One variable-length section, not the three chained `[^>]*` the previous pair of
+ * order-specific patterns each carried: those multiply, so a `<package` tag that
+ * never closes backtracked for time growing faster than the square of its length.
+ * Attributes are read off the captured text instead, which makes their order
+ * irrelevant and removes the need for a second pattern.
+ */
+const PACKAGE_TAG = /<package([^>]*)>/;
+/** `version`, read off the captured `<package>` attribute text. */
+const VERSION_ATTR = /\sversion=["']([^"']+)["']/;
+/** `unique-identifier`, read off the captured `<package>` attribute text. */
+const UID_ATTR = /\sunique-identifier=["']([^"']+)["']/;
 
 /**
  * Result of peeking at a package document's version attribute.
@@ -46,25 +54,18 @@ interface PackageAttributes {
 
 /**
  * Read `version` and `unique-identifier` off the package element.
- *
- * The two attributes can appear in either order, so both orderings are tried; the
- * one that matched `version` first wins.
  */
 function matchPackageElement(xml: string): PackageAttributes {
-  const versionFirst = PACKAGE_VERSION_FIRST.exec(xml);
-  const uidFirst = PACKAGE_UID_FIRST.exec(xml);
+  const attributes = PACKAGE_TAG.exec(xml)?.[1];
+  if (attributes === undefined) {
+    return { version: undefined, uniqueIdentifier: '' };
+  }
 
-  // The version group is non-optional in PACKAGE_VERSION_FIRST, so a match always
-  // carries one; only then does the uid-first ordering get a say.
-  const declaredVersion = versionFirst ? versionFirst[1] : uidFirst?.[2];
-
-  // An empty unique-identifier counts as absent, so the other ordering still gets a turn.
-  let uniqueIdentifier = versionFirst?.[2] ?? '';
-  if (uniqueIdentifier === '') uniqueIdentifier = uidFirst?.[1] ?? '';
+  const declaredVersion = VERSION_ATTR.exec(attributes)?.[1];
 
   return {
     version: declaredVersion ? normalizeVersion(declaredVersion) : undefined,
-    uniqueIdentifier,
+    uniqueIdentifier: UID_ATTR.exec(attributes)?.[1] ?? '',
   };
 }
 
