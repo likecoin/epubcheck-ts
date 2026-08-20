@@ -21,7 +21,10 @@ const RENDITION_SELECT_RE = /\brendition:(?:media|layout|language|accessMode|lab
  * cross a `>`, so the first `>` after the tag name is the only end that group
  * could settle on -- but the regex still re-scans to the end of the input from
  * every opener that never closes, so a container.xml repeating `<rootfile` costs
- * O(n^2). One trailing `/` is dropped, as `\/?>` did.
+ * O(n^2). A trailing `/` is dropped, as `\/?>` did for every scan but `<nav`'s --
+ * which kept it, and `parseAttributes` discards it either way.
+ *
+ * Only correct for tag names ending in a word character, which `\b` also required.
  */
 function* elementAttributes(xml: string, tagName: string): Generator<string> {
   const opener = `<${tagName}`;
@@ -30,8 +33,10 @@ function* elementAttributes(xml: string, tagName: string): Generator<string> {
     const start = xml.indexOf(opener, from);
     if (start === -1) return;
     const nameEnd = start + opener.length;
-    // `\b`: the tag name must not run on into a longer one, as in `<rootfiles`.
     if (/\w/.test(xml[nameEnd] ?? '')) {
+      // `\b` rejected a run-on name like `<rootfiles`. Resuming at the end of the
+      // name rather than one past its `<` is the same thing, because `<tagName`
+      // holds no second `<` for another opener to start from.
       from = nameEnd;
       continue;
     }

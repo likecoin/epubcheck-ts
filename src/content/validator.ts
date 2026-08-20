@@ -522,7 +522,13 @@ function isItemFixedLayout(
   return globalLayout?.value === 'pre-paginated';
 }
 
-/** Remove CSS comments. An unterminated `/*` is not a comment, as the regex had it. */
+/**
+ * Remove CSS comments, bounding each with indexOf: `/\*[\s\S]*?\*\//` re-scans to
+ * the end of the stylesheet from every `/*` that never closes, costing O(n^2).
+ *
+ * Searching from `start + 2` keeps an opener's own `*` from closing it, and an
+ * unterminated `/*` is not a comment -- both as the regex had it.
+ */
 function stripCssComments(css: string): string {
   let from = 0;
   let out = '';
@@ -534,7 +540,7 @@ function stripCssComments(css: string): string {
     out += css.slice(from, start);
     from = end + 2;
   }
-  return from === 0 ? css : out + css.slice(from);
+  return out + css.slice(from);
 }
 
 export class ContentValidator {
@@ -2543,21 +2549,30 @@ export class ContentValidator {
   }
 
   private cssContainsRemoteUrl(css: string): boolean {
-    // `[^"')]+` cannot cross a `)`, and nothing else in the pattern matches one, so
-    // a match must end at the first `)` after its `url`. Bounding each candidate
-    // there stops the scan from running to the end of the stylesheet from every
-    // `url(` that never closes, which costs O(n^2) on crafted CSS.
-    const opener = /url\s*\(/gi;
-    const remote = /^url\s*\(\s*["']?https?:\/\/[^"')]+["']?\s*\)$/i;
-    let close = -1;
+    // The URL body stops at the first `"`, `'` or `)`, and the match can only close
+    // there: handing those characters back never helps, since an earlier `)` would
+    // itself be one of them. So one cursor over the three decides every candidate,
+    // where re-scanning the body from each `url(` costs O(n^2) on a stylesheet of
+    // repeated `url(https://a`.
+    const opener = /url\s*\(\s*["']?https?:\/\//gi;
+    const delimiter = /["')]/g;
+    const closer = /\s*\)/y;
+    let stop = -1;
+    let closes = false;
     let match;
     while ((match = opener.exec(css)) !== null) {
-      if (close < match.index) {
-        close = css.indexOf(')', match.index);
-        if (close === -1) return false;
+      const body = match.index + match[0].length;
+      if (stop < body) {
+        delimiter.lastIndex = body;
+        const found = delimiter.exec(css);
+        // Nothing left that could close a url(), so no later candidate can either.
+        if (!found) return false;
+        stop = found.index;
+        closer.lastIndex = stop + 1;
+        closes = css[stop] === ')' || closer.test(css);
       }
-      if (remote.test(css.slice(match.index, close + 1))) return true;
-      opener.lastIndex = match.index + 1;
+      // `stop > body`: the body must not be empty, as `[^"')]+` required.
+      if (stop > body && closes) return true;
     }
     return false;
   }
@@ -4764,9 +4779,7 @@ export class ContentValidator {
   ): void {
     const cssDir = dirname(cssPath);
 
-    // Remove CSS comments first to avoid matching imports inside comments. The
-    // bounds come from indexOf: `/\*[\s\S]*?\*\//` re-scans to the end of the
-    // stylesheet from every `/*` that never closes, which costs O(n^2).
+    // Remove CSS comments first to avoid matching imports inside comments
     const cleanedCSS = stripCssComments(cssContent);
 
     // Simple regex to match @import statements

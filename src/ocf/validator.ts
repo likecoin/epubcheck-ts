@@ -12,18 +12,17 @@ import { ZipReader } from './zip.js';
  */
 const EPUB_MIMETYPE = 'application/epub+zip';
 
-const ENCRYPTED_DATA_OPEN = /<(?:\w+:)?EncryptedData[\s>]/g;
-const ENCRYPTED_DATA_CLOSE = /<\/(?:\w+:)?EncryptedData>/g;
-
 /** Yield each `<EncryptedData>...</EncryptedData>` block, prefixed or not. */
 function* encryptedDataBlocks(content: string): Generator<string> {
+  const openTag = /<(?:\w+:)?EncryptedData[\s>]/g;
+  const closeTag = /<\/(?:\w+:)?EncryptedData>/g;
   let from = 0;
   for (;;) {
-    ENCRYPTED_DATA_OPEN.lastIndex = from;
-    const open = ENCRYPTED_DATA_OPEN.exec(content);
+    openTag.lastIndex = from;
+    const open = openTag.exec(content);
     if (!open) return;
-    ENCRYPTED_DATA_CLOSE.lastIndex = open.index + open[0].length;
-    const close = ENCRYPTED_DATA_CLOSE.exec(content);
+    closeTag.lastIndex = open.index + open[0].length;
+    const close = closeTag.exec(content);
     // No close tag left, so no later opener can find one either.
     if (!close) return;
     const end = close.index + close[0].length;
@@ -266,10 +265,7 @@ export class OCFValidator {
     const IDPF_OBFUSCATION = 'http://www.idpf.org/2008/embedding';
     const obfuscated = new Set<string>();
 
-    // Match EncryptedData blocks (with or without namespace prefix). The block body
-    // is bounded by searching for the close tag once per opener instead of letting
-    // `[\s\S]*?` re-scan to the end of the file from every `<EncryptedData` that
-    // never closes, which costs O(n^2) on a crafted encryption.xml.
+    // Match EncryptedData blocks (with or without namespace prefix)
     for (const xml of encryptedDataBlocks(content)) {
       const algorithmMatch = /Algorithm=["']([^"']+)["']/.exec(xml);
       const uriMatch = /<(?:\w+:)?CipherReference[^>]+URI=["']([^"']+)["']/.exec(xml);

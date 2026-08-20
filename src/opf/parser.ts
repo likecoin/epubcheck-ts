@@ -215,7 +215,7 @@ function replaceXmlComments(xml: string, replace: (comment: string) => string): 
     out += xml.slice(from, start) + replace(xml.slice(start, end + 3));
     from = end + 3;
   }
-  return from === 0 ? xml : out + xml.slice(from);
+  return out + xml.slice(from);
 }
 
 export function stripXmlComments(xml: string): string {
