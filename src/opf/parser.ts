@@ -193,10 +193,33 @@ function parsePrefixes(prefixStr: string | undefined): Record<string, string> {
   return prefixes;
 }
 
-const XML_COMMENT = /<!--[\s\S]*?-->/g;
+/**
+ * Walk the XML comments in `xml`, handing each one to `replace`.
+ *
+ * The bounds are found with indexOf rather than `<!--[\s\S]*?-->`. That lazy class
+ * cannot cross its own terminator, so the first `-->` after an opener is the only
+ * end it could ever settle on -- but the regex still re-scans to the end of the
+ * input from every `<!--` that never closes, so a document repeating `<!--` costs
+ * O(n^2) before it gives up. Searching from `start + 4` keeps the regex's own edge
+ * cases: `[\s\S]*?` may match nothing, so `<!-->` is not a comment.
+ */
+function replaceXmlComments(xml: string, replace: (comment: string) => string): string {
+  let from = 0;
+  let out = '';
+  for (;;) {
+    const start = xml.indexOf('<!--', from);
+    if (start === -1) break;
+    const end = xml.indexOf('-->', start + 4);
+    // An unterminated comment is not a comment; the rest of the document stands.
+    if (end === -1) break;
+    out += xml.slice(from, start) + replace(xml.slice(start, end + 3));
+    from = end + 3;
+  }
+  return from === 0 ? xml : out + xml.slice(from);
+}
 
 export function stripXmlComments(xml: string): string {
-  return xml.replace(XML_COMMENT, '');
+  return replaceXmlComments(xml, () => '');
 }
 
 /**
@@ -207,7 +230,7 @@ export function stripXmlComments(xml: string): string {
  * lets the section parsers below report real line numbers.
  */
 function blankXmlComments(xml: string): string {
-  return xml.replace(XML_COMMENT, (comment) => comment.replace(/[^\n]/g, ' '));
+  return replaceXmlComments(xml, (comment) => comment.replace(/[^\n]/g, ' '));
 }
 
 /** A section of the package document, with its offset in the original source. */
