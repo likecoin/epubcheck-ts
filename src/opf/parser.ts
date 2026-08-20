@@ -58,7 +58,7 @@ function readPackageAttributes(attributes: Record<string, string>): PackageAttri
 export function peekOpfVersion(xml: string): OpfVersionPeek {
   const { version } = readPackageAttributes(extractElementAttributes(xml, 'package'));
   if (version) return { kind: 'declared', version };
-  return /<package[\s>]/.test(xml) ? { kind: 'undeclared' } : { kind: 'unreadable' };
+  return /<(?:opf:)?package[\s>]/.test(xml) ? { kind: 'undeclared' } : { kind: 'unreadable' };
 }
 
 export function parseOPF(xml: string): PackageDocument {

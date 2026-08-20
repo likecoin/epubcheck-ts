@@ -427,6 +427,23 @@ describe('peekOpfVersion', () => {
     expect(peekOpfVersion('<package>\n</package>')).toEqual({ kind: 'undeclared' });
   });
 
+  // The prefixed form has to reach the same verdict as the unprefixed one. The
+  // attribute read accepts `opf:`, so a prefixed element with no version must be
+  // `undeclared` -- reading `unreadable` would skip OPF-001 and let the document
+  // through as if it held no package element at all.
+  it('should report a prefixed package element with no version as undeclared', () => {
+    expect(peekOpfVersion('<opf:package unique-identifier="uid">')).toEqual({
+      kind: 'undeclared',
+    });
+  });
+
+  it('should read a version declared on a prefixed package element', () => {
+    expect(peekOpfVersion('<opf:package version="2.0" unique-identifier="uid">')).toEqual({
+      kind: 'declared',
+      version: '2.0',
+    });
+  });
+
   // Kept apart from `undeclared` on purpose: an unreadable document must fall
   // through so the normal pipeline can report why, rather than stopping at OPF-001.
   it('should report a document with no package element as unreadable', () => {
