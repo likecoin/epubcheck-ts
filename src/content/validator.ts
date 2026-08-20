@@ -522,6 +522,21 @@ function isItemFixedLayout(
   return globalLayout?.value === 'pre-paginated';
 }
 
+/** Remove CSS comments. An unterminated `/*` is not a comment, as the regex had it. */
+function stripCssComments(css: string): string {
+  let from = 0;
+  let out = '';
+  for (;;) {
+    const start = css.indexOf('/*', from);
+    if (start === -1) break;
+    const end = css.indexOf('*/', start + 2);
+    if (end === -1) break;
+    out += css.slice(from, start);
+    from = end + 2;
+  }
+  return from === 0 ? css : out + css.slice(from);
+}
+
 export class ContentValidator {
   private cssWithRemoteResources = new Set<string>();
 
@@ -2528,8 +2543,23 @@ export class ContentValidator {
   }
 
   private cssContainsRemoteUrl(css: string): boolean {
-    const urlRegex = /url\s*\(\s*["']?(https?:\/\/[^"')]+)["']?\s*\)/gi;
-    return urlRegex.test(css);
+    // `[^"')]+` cannot cross a `)`, and nothing else in the pattern matches one, so
+    // a match must end at the first `)` after its `url`. Bounding each candidate
+    // there stops the scan from running to the end of the stylesheet from every
+    // `url(` that never closes, which costs O(n^2) on crafted CSS.
+    const opener = /url\s*\(/gi;
+    const remote = /^url\s*\(\s*["']?https?:\/\/[^"')]+["']?\s*\)$/i;
+    let close = -1;
+    let match;
+    while ((match = opener.exec(css)) !== null) {
+      if (close < match.index) {
+        close = css.indexOf(')', match.index);
+        if (close === -1) return false;
+      }
+      if (remote.test(css.slice(match.index, close + 1))) return true;
+      opener.lastIndex = match.index + 1;
+    }
+    return false;
   }
 
   private checkDiscouragedElements(
@@ -4734,8 +4764,10 @@ export class ContentValidator {
   ): void {
     const cssDir = dirname(cssPath);
 
-    // Remove CSS comments first to avoid matching imports inside comments
-    const cleanedCSS = cssContent.replace(/\/\*[\s\S]*?\*\//g, '');
+    // Remove CSS comments first to avoid matching imports inside comments. The
+    // bounds come from indexOf: `/\*[\s\S]*?\*\//` re-scans to the end of the
+    // stylesheet from every `/*` that never closes, which costs O(n^2).
+    const cleanedCSS = stripCssComments(cssContent);
 
     // Simple regex to match @import statements
     // Matches: @import "file.css"; @import 'file.css'; @import url("file.css"); @import url(file.css);

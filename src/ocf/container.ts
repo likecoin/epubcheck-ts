@@ -15,6 +15,36 @@ const MEDIA_TYPE_ATTR = /\bmedia-type\s*=\s*["']([^"']*)["']/;
 const RENDITION_SELECT_RE = /\brendition:(?:media|layout|language|accessMode|label)\s*=/;
 
 /**
+ * Yield the attribute text of every `<tagName ...>` in `xml`.
+ *
+ * The bounds come from indexOf rather than `<tag\b([^>]*?)\/?>`. `[^>]*` cannot
+ * cross a `>`, so the first `>` after the tag name is the only end that group
+ * could settle on -- but the regex still re-scans to the end of the input from
+ * every opener that never closes, so a container.xml repeating `<rootfile` costs
+ * O(n^2). One trailing `/` is dropped, as `\/?>` did.
+ */
+function* elementAttributes(xml: string, tagName: string): Generator<string> {
+  const opener = `<${tagName}`;
+  let from = 0;
+  for (;;) {
+    const start = xml.indexOf(opener, from);
+    if (start === -1) return;
+    const nameEnd = start + opener.length;
+    // `\b`: the tag name must not run on into a longer one, as in `<rootfiles`.
+    if (/\w/.test(xml[nameEnd] ?? '')) {
+      from = nameEnd;
+      continue;
+    }
+    const gt = xml.indexOf('>', nameEnd);
+    // No `>` left in the document, so no later opener can close either.
+    if (gt === -1) return;
+    from = gt + 1;
+    const attrs = xml.slice(nameEnd, gt);
+    yield attrs.endsWith('/') ? attrs.slice(0, -1) : attrs;
+  }
+}
+
+/**
  * Parse container.xml content to extract rootfiles and set opfPath on the context.
  */
 export function parseContainerContent(
@@ -27,8 +57,7 @@ export function parseContainerContent(
   const stripped = stripXmlComments(content);
 
   const opfRootfileTags: string[] = [];
-  for (const tagMatch of stripped.matchAll(/<rootfile\b([^>]*?)\/?>/g)) {
-    const attrs = tagMatch[1] ?? '';
+  for (const attrs of elementAttributes(stripped, 'rootfile')) {
     const fullPathMatch = FULL_PATH_ATTR.exec(attrs);
     const mediaTypeMatch = MEDIA_TYPE_ATTR.exec(attrs);
 
@@ -100,8 +129,8 @@ export function parseContainerContent(
       if (metadataContent !== undefined) {
         const stripped2 = stripXmlComments(metadataContent);
         let modifiedCount = 0;
-        for (const m of stripped2.matchAll(/<meta\b([^>]*?)\/?>/g)) {
-          const attrs = parseAttributes(m[1] ?? '');
+        for (const raw of elementAttributes(stripped2, 'meta')) {
+          const attrs = parseAttributes(raw);
           if (attrs.property?.trim() === 'dcterms:modified') modifiedCount++;
         }
         if (modifiedCount !== 1) {
@@ -129,8 +158,8 @@ export function parseContainerContent(
 
     // Container <link rel="mapping"> checks
     const mappingLinks: { href: string; mediaType: string }[] = [];
-    for (const linkMatch of stripped.matchAll(/<link\b([^>]*?)\/?>/g)) {
-      const lattrs = parseAttributes(linkMatch[1] ?? '');
+    for (const raw of elementAttributes(stripped, 'link')) {
+      const lattrs = parseAttributes(raw);
       if (lattrs.rel !== 'mapping') continue;
       mappingLinks.push({ href: lattrs.href ?? '', mediaType: lattrs['media-type'] ?? '' });
     }
@@ -176,8 +205,8 @@ function validateMappingDocumentContent(
   const stripped = stripXmlComments(xml);
 
   let hasVersionMeta = false;
-  for (const m of stripped.matchAll(/<meta\b([^>]*?)\/?>/g)) {
-    const attrs = parseAttributes(m[1] ?? '');
+  for (const raw of elementAttributes(stripped, 'meta')) {
+    const attrs = parseAttributes(raw);
     if (attrs.name === 'epub.multiple.renditions.version' && attrs.content === '1.0') {
       hasVersionMeta = true;
       break;
@@ -193,8 +222,8 @@ function validateMappingDocumentContent(
   }
 
   let resourceMapCount = 0;
-  for (const navMatch of stripped.matchAll(/<nav\b([^>]*)>/g)) {
-    const navAttrs = parseAttributes(navMatch[1] ?? '');
+  for (const raw of elementAttributes(stripped, 'nav')) {
+    const navAttrs = parseAttributes(raw);
     const epubType = navAttrs['epub:type'];
     if (!epubType) {
       pushMessage(context.messages, {
