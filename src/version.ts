@@ -7,4 +7,4 @@
  * exactly the tooling this repo leans on hardest. A unit test asserts this
  * matches `package.json`, which makes drift fail the build instead of shipping.
  */
-export const VERSION = '0.6.4';
+export const VERSION = '0.6.5';
