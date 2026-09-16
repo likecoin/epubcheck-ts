@@ -1113,8 +1113,7 @@
       "setMatch": false,
       "exact": false,
       "onlyTs": [
-        "OPF-018",
-        "RSC-006"
+        "OPF-018"
       ],
       "onlyJava": []
     },
@@ -1132,7 +1131,6 @@
       "setMatch": false,
       "exact": false,
       "onlyTs": [
-        "RSC-006",
         "RSC-031"
       ],
       "onlyJava": []
@@ -1140,10 +1138,8 @@
     "test/fixtures/invalid/content/resources-remote-img-in-script-error.epub": {
       "verdict": true,
       "setMatch": true,
-      "exact": false,
-      "onlyTs": [
-        "RSC-006"
-      ],
+      "exact": true,
+      "onlyTs": [],
       "onlyJava": []
     },
     "test/fixtures/invalid/content/resources-remote-img-undeclared-error.epub": {
@@ -1166,12 +1162,9 @@
     },
     "test/fixtures/invalid/content/resources-remote-script-error.epub": {
       "verdict": true,
-      "setMatch": false,
-      "exact": false,
-      "onlyTs": [
-        "OPF-018",
-        "RSC-006"
-      ],
+      "setMatch": true,
+      "exact": true,
+      "onlyTs": [],
       "onlyJava": []
     },
     "test/fixtures/invalid/content/resources-remote-spine-item-error.epub": {
@@ -1209,10 +1202,8 @@
     "test/fixtures/invalid/content/resources-remote-svg-contentdoc-error.epub": {
       "verdict": true,
       "setMatch": true,
-      "exact": false,
-      "onlyTs": [
-        "RSC-006"
-      ],
+      "exact": true,
+      "onlyTs": [],
       "onlyJava": []
     },
     "test/fixtures/invalid/content/schematron-error.epub": {
@@ -5179,23 +5170,17 @@
       "onlyJava": []
     },
     "test/fixtures/valid/resources-remote-resource-for-script-cmt-valid.epub": {
-      "verdict": false,
-      "setMatch": false,
-      "exact": false,
-      "onlyTs": [
-        "OPF-018",
-        "RSC-006"
-      ],
+      "verdict": true,
+      "setMatch": true,
+      "exact": true,
+      "onlyTs": [],
       "onlyJava": []
     },
     "test/fixtures/valid/resources-remote-resource-for-script-foreign-valid.epub": {
-      "verdict": false,
-      "setMatch": false,
-      "exact": false,
-      "onlyTs": [
-        "OPF-018",
-        "RSC-006"
-      ],
+      "verdict": true,
+      "setMatch": true,
+      "exact": true,
+      "onlyTs": [],
       "onlyJava": []
     },
     "test/fixtures/valid/resources-remote-video-valid.epub": {

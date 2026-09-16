@@ -446,39 +446,38 @@ export class ReferenceValidator {
   }
 
   /**
-   * Check non-spine remote resources that have non-standard types.
-   * Fires RSC-006 for remote items that aren't audio/video/font types
-   * and aren't referenced as audio/video/font by content documents.
-   * This mirrors Java's checkItemAfterResourceValidation behavior.
+   * Check non-spine remote manifest items that aren't audio/video/font types.
+   * Mirrors Java's OPFChecker30.checkItemAfterResourceValidation: items with any
+   * reference are left to the reference-side check; unreferenced ones are an
+   * error, or RSC-006b when scripts might retrieve them.
    */
   private checkRemoteResources(context: ValidationContext): void {
     if (!this.version.startsWith('3')) return;
 
-    // Collect remote resources that are referenced as allowed types (font/audio/video)
-    const referencedAsAllowed = new Set<string>();
-    for (const ref of this.references) {
-      if (isRemoteURL(ref.url) || isRemoteURL(ref.targetResource)) {
-        if (
-          ref.type === ReferenceType.FONT ||
-          ref.type === ReferenceType.AUDIO ||
-          ref.type === ReferenceType.VIDEO
-        ) {
-          referencedAsAllowed.add(ref.targetResource);
-        }
-      }
-    }
+    const referencedRemote = new Set(
+      this.references.map((ref) => ref.targetResource).filter((url) => isRemoteURL(url)),
+    );
+    const hasScripts = this.hasScriptedManifestItem(context);
 
     for (const resource of this.registry.getAllResources()) {
       if (!isRemoteURL(resource.url)) continue;
       if (resource.inSpine) continue; // Already checked in OPF validator
       if (this.isRemoteResourceType(resource.mimeType)) continue;
-      if (referencedAsAllowed.has(resource.url)) continue;
+      if (referencedRemote.has(resource.url)) continue;
 
-      pushMessage(context.messages, {
-        id: MessageId.RSC_006,
-        message: `Remote resource reference is not allowed; resource "${resource.url}" must be located in the EPUB container`,
-        location: { path: resource.url },
-      });
+      if (hasScripts) {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_006b,
+          message: `Resource "${resource.url}" is located outside the EPUB Container; please check the resource is retrieved in scripted content`,
+          location: { path: resource.url },
+        });
+      } else {
+        pushMessage(context.messages, {
+          id: MessageId.RSC_006,
+          message: `Remote resource reference is not allowed; resource "${resource.url}" must be located in the EPUB container`,
+          location: { path: resource.url },
+        });
+      }
     }
   }
 
@@ -626,9 +625,7 @@ export class ReferenceValidator {
       }
     }
 
-    const hasScripts = context.packageDocument.manifest.some((m) =>
-      m.properties?.includes('scripted'),
-    );
+    const hasScripts = this.hasScriptedManifestItem(context);
 
     for (const spineItem of spine) {
       if (spineItem.linear) continue;
@@ -669,6 +666,12 @@ export class ReferenceValidator {
   private extractDataURLMimeType(url: string): string {
     const match = /^data:([^;,]+)/.exec(url);
     return match?.[1]?.trim().toLowerCase() ?? 'text/plain';
+  }
+
+  private hasScriptedManifestItem(context: ValidationContext): boolean {
+    return (
+      context.packageDocument?.manifest.some((m) => m.properties?.includes('scripted')) ?? false
+    );
   }
 
   private isRemoteResourceType(mimeType: string): boolean {
