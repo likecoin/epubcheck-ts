@@ -1529,9 +1529,10 @@ export class ContentValidator {
         }
         if (!hasRemoteResources && manifestItem?.properties?.includes('remote-resources')) {
           pushMessage(context.messages, {
-            id: MessageId.OPF_018,
-            message:
-              'The "remote-resources" property was declared in the Package Document, but no reference to remote resources has been found',
+            id: hasScripts ? MessageId.OPF_018b : MessageId.OPF_018,
+            message: hasScripts
+              ? 'The "remote-resources" property was declared in the Package Document, but no reference to remote resources has been found; please check scripted content to make sure the property is legit'
+              : 'The "remote-resources" property was declared in the Package Document, but no reference to remote resources has been found',
             location: { path },
           });
         }

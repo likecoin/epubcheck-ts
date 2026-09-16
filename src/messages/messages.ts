@@ -234,6 +234,12 @@ const MessageDefs = {
     severity: 'warning',
     description: 'remote-resources property declared but no remote references found',
   },
+  OPF_018b: {
+    id: 'OPF-018b',
+    severity: 'usage',
+    description:
+      'remote-resources property declared but no remote references found; check scripted content',
+  },
   OPF_021: {
     id: 'OPF-021',
     severity: 'warning',
@@ -586,6 +592,11 @@ const MessageDefs = {
     id: 'RSC-006',
     severity: 'error',
     description: 'Remote resource reference not allowed, must be in EPUB container',
+  },
+  RSC_006b: {
+    id: 'RSC-006b',
+    severity: 'usage',
+    description: 'Remote resource may be retrieved by script; check it is used in scripted content',
   },
   RSC_007: {
     id: 'RSC-007',

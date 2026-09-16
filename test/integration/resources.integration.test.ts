@@ -450,6 +450,25 @@ describe('Integration Tests - Resources', () => {
       expectError(result, 'RSC-006');
     });
 
+    it('should allow a remote foreign resource used by a script (RSC-006b)', async () => {
+      const result = await validate(
+        'valid/resources-remote-resource-for-script-foreign-valid.epub',
+        { includeUsage: true },
+      );
+      expectUsage(result, 'OPF-018b');
+      expectUsage(result, 'RSC-006b');
+      expectNoErrorsOrWarnings(result);
+    });
+
+    it('should allow a remote core media type resource used by a script (RSC-006b)', async () => {
+      const result = await validate('valid/resources-remote-resource-for-script-cmt-valid.epub', {
+        includeUsage: true,
+      });
+      expectUsage(result, 'OPF-018b');
+      expectUsage(result, 'RSC-006b');
+      expectNoErrorsOrWarnings(result);
+    });
+
     it('should report remote stylesheet (RSC-006)', async () => {
       const result = await validate('invalid/content/resources-remote-stylesheet-error.epub');
       expectError(result, 'RSC-006');
