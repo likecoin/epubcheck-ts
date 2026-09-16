@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-09-16
+
+### Changed
+
+- **The license is now BSD-3-Clause.** 0.7.0 is the first release under it; 0.6.5 and every release before it remain GPL-3.0-only on npm and stay that way. GPL was the wrong instrument for this package: `dist/` is meant to be bundled into applications, browser workers and CI images, so copyleft reached the consumer's own code and disqualified the library from exactly the embedded use it is fastest at. BSD-3-Clause is also what the Java [EPUBCheck](https://github.com/w3c/epubcheck) uses, which removes the asymmetry of deriving schemas and message wording from a permissive project and redistributing them under a stricter license. Requested in [#32](https://github.com/likecoin/epubcheck-ts/issues/32).
+- **Third-party notices are published with the package.** The README claimed no code was copied from EPUBCheck, which the schemas contradict: 8 of the files in `schemas/` are byte-identical to their counterparts in the Java project and the rest are converted from its `.rnc` sources, with the message catalogue and test fixtures following it too. Those schemas ship inside `dist/index.js` as gzipped base64, so every consumer of the bundle redistributes them. `THIRD_PARTY_NOTICES.md` now carries the notices that requires — EPUBCheck's BSD-3-Clause (Adobe 2007, IDPF 2008, W3C 2017), the MIT license of the Nu Html Checker modules the XHTML grammar is built from (fantasai, Sivonen, Mozilla Foundation), and the W3C Software Notice and License covering the MathML 3 and SVG 1.1 modules — and is listed in `files`, so it travels with the tarball rather than living only in the repository. The obligation predates the relicense; going permissive only widens who relies on the notice being there.
+
 ## [0.6.5] - 2026-08-20
 
 ### Added
@@ -745,7 +752,8 @@ A crafted EPUB could stall validation before any rule ran. Five families of scan
 - No media overlays validation
 - No script detection/validation
 
-[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.6.5...HEAD
+[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/likecoin/epubcheck-ts/compare/v0.6.5...v0.7.0
 [0.6.5]: https://github.com/likecoin/epubcheck-ts/compare/v0.6.4...v0.6.5
 [0.6.4]: https://github.com/likecoin/epubcheck-ts/compare/v0.6.3...v0.6.4
 [0.6.3]: https://github.com/likecoin/epubcheck-ts/compare/v0.6.2...v0.6.3

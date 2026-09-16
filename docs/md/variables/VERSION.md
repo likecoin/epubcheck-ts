@@ -6,7 +6,7 @@
 
 # Variable: VERSION
 
-> `const` **VERSION**: `"0.6.5"` = `'0.6.5'`
+> `const` **VERSION**: `"0.7.0"` = `'0.7.0'`
 
 Defined in: version.ts:10
 

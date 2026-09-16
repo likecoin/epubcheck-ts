@@ -1,6 +1,6 @@
 {
   "name": "@likecoin/epubcheck-ts",
-  "version": "0.6.5",
+  "version": "0.7.0",
   "description": "EPUB validation for Node.js and browsers — TypeScript port of EPUBCheck",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -17,7 +17,7 @@
   "bin": {
     "epubcheck-ts": "bin/epubcheck.js"
   },
-  "files": ["dist", "bin"],
+  "files": ["dist", "bin", "THIRD_PARTY_NOTICES.md"],
   "sideEffects": false,
   "engines": {
     "node": ">=18"
@@ -80,7 +80,7 @@
     "a11y"
   ],
   "author": "William Chong <williamchong@like.co>",
-  "license": "GPL-3.0-only",
+  "license": "BSD-3-Clause",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/likecoin/epubcheck-ts.git"

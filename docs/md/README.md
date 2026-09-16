@@ -412,9 +412,9 @@ For AI agents contributing to this project, see [AGENTS.md](_media/AGENTS.md).
 
 ## License
 
-[GPL-3.0](_media/LICENSE)
+[BSD-3-Clause](_media/LICENSE) — the same license as the Java [EPUBCheck](https://github.com/w3c/epubcheck). Releases up to and including 0.6.5 were published under GPL-3.0; 0.7.0 is the first BSD-3-Clause release.
 
-This is an independent TypeScript implementation inspired by the Java-based [EPUBCheck](https://github.com/w3c/epubcheck) (BSD-3-Clause). No code was directly copied from the original project.
+This is an independent TypeScript implementation of the Java EPUBCheck: the validation logic is written from scratch, not translated line by line. The RELAX NG schemas, the message identifiers and their wording, and the test fixtures do come from the original project — along with the [Nu Html Checker](https://github.com/validator/validator) (MIT) and W3C MathML/SVG schemas it bundles. [THIRD_PARTY_NOTICES.md](_media/THIRD_PARTY_NOTICES.md) reproduces the notices those require, and ships with the package.
 
 ## Acknowledgments
 
