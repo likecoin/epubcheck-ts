@@ -650,6 +650,7 @@ describe('Integration Tests - Resources', () => {
   describe('MIME Type Mismatch', () => {
     it('should report object type mismatch (OPF-013)', async () => {
       const result = await validate('warnings/type-mismatch-in-object-warning.epub');
+      expect(result.valid).toBe(true);
       expectWarning(result, 'OPF-013');
     });
 

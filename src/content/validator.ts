@@ -3,7 +3,7 @@
  */
 
 import type { XmlDocument, XmlElement, XmlNode } from 'libxml2-wasm';
-import { getXmlDocument, getXmlElement } from '../util/xml-engine.js';
+import { getXmlCData, getXmlDocument, getXmlElement, getXmlText } from '../util/xml-engine.js';
 import { CSSValidator } from '../css/validator.js';
 import { SKMValidator } from '../skm/validator.js';
 import { SMILValidator } from '../smil/validator.js';
@@ -57,6 +57,18 @@ const CORE_IMAGE_MEDIA_TYPES = new Set([
 const IMAGE_MEDIA_TYPES = new Set([...CORE_IMAGE_MEDIA_TYPES, 'image/jpg']);
 
 const DISCOURAGED_ELEMENTS = new Set(['base', 'embed', 'rp']);
+
+const EMBEDDED_CONTENT_ELEMENTS = new Set([
+  'audio',
+  'canvas',
+  'embed',
+  'iframe',
+  'img',
+  'object',
+  'picture',
+  'video',
+]);
+const NON_PALPABLE_ELEMENTS = new Set(['html', 'head', 'script', 'link', 'meta', 'title', 'style']);
 
 const ABSOLUTE_URI_RE = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
 
@@ -4291,6 +4303,42 @@ export class ContentValidator {
     return false;
   }
 
+  /**
+   * Port of OPSHandler30's HAS_PALPABLE_CONTENT: non-whitespace character data
+   * directly inside the element, or a palpable child element.
+   */
+  private hasPalpableContent(element: XmlElement): boolean {
+    const XmlElement = getXmlElement();
+    const XmlText = getXmlText();
+    const XmlCData = getXmlCData();
+    for (let n = element.firstChild; n; n = n.next) {
+      if (n instanceof XmlElement) {
+        if (this.isPalpable(n)) return true;
+      } else if ((n instanceof XmlText || n instanceof XmlCData) && /[^\t\n\r ]/.test(n.content)) {
+        // Java's String.trim() strips only chars <= U+0020, which in XML are these four
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** Port of OPSHandler30.isPalpable() */
+  private isPalpable(element: XmlElement): boolean {
+    if (this.getAttribute(element, 'hidden') !== null) return false;
+    switch (element.namespaceUri) {
+      case XHTML_NS_URI:
+        if (EMBEDDED_CONTENT_ELEMENTS.has(element.name)) return true;
+        if (NON_PALPABLE_ELEMENTS.has(element.name)) return false;
+        return this.hasPalpableContent(element);
+      case SVG_NS_URI:
+        return element.name === 'svg';
+      case MATHML_NS_URI:
+        return element.name === 'math';
+      default:
+        return false;
+    }
+  }
+
   private getAttribute(element: XmlElement, name: string): string | null {
     if (!('attrs' in element)) return null;
     const attrs = element.attrs as { name: string; value: string }[];
@@ -5318,13 +5366,7 @@ export class ContentValidator {
       const objElem = elem as XmlElement;
       const data = this.getAttribute(objElem, 'data');
       if (!data) continue;
-      // Object has intrinsic fallback if it has palpable child content
-      // (non-param, non-hidden child elements)
-      const allChildren = objElem.find('html:*', XHTML_NS);
-      const hasFallbackContent = allChildren.some((child) => {
-        const c = child as XmlElement;
-        return c.name !== 'param' && this.getAttribute(c, 'hidden') === null;
-      });
+      const hasFallbackContent = this.hasPalpableContent(objElem);
       addRef(data, ReferenceType.GENERIC, elem.line, hasFallbackContent || undefined);
       if (registry) {
         this.checkMimeTypeMatch(context, path, docDir, opfDir, objElem, 'data', registry);
