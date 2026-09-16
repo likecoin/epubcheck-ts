@@ -7,6 +7,8 @@ import {
 } from '../../../src/messages/index.js';
 import type { ValidationContext } from '../../../src/types.js';
 import type { PackageDocument } from '../../../src/opf/types.js';
+import type { Reference } from '../../../src/references/types.js';
+import type { ReferenceValidator } from '../../../src/references/validator.js';
 
 function createValidationContext(): ValidationContext {
   return {
@@ -774,6 +776,48 @@ describe('ContentValidator', () => {
       validator.validate(context);
       expect(context.contentFeatures?.hasLOI).toBe(true);
       expect(context.contentFeatures?.hasLOT).toBe(true);
+    });
+  });
+
+  describe('object intrinsic fallback (palpable content)', () => {
+    const objectFallback = (objectBody: string): boolean | undefined => {
+      const context = createValidationContext();
+      context.packageDocument = createMinimalPackage();
+      addXHTMLToContext(
+        context,
+        'OEBPS/chapter1.xhtml',
+        `<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Test</title></head><body><object data="demo.xml" type="application/x-demo">${objectBody}</object></body></html>\n`,
+      );
+      const refs: Reference[] = [];
+      const refValidator = {
+        addReference: (ref: Reference) => refs.push(ref),
+      } as unknown as ReferenceValidator;
+
+      validator.validate(context, undefined, refValidator);
+      return refs.find((r) => r.url.endsWith('demo.xml'))?.hasIntrinsicFallback;
+    };
+
+    it.each([
+      ['direct text', 'Fallback'],
+      ['text in a nested element', '<div><span>Fallback</span></div>'],
+      ['CDATA text', '<![CDATA[Fallback]]>'],
+      ['embedded content', '<img src="a.png" alt=""/>'],
+      ['an svg element', '<svg xmlns="http://www.w3.org/2000/svg"/>'],
+      ['a math element', '<math xmlns="http://www.w3.org/1998/Math/MathML"/>'],
+    ])('should treat %s as fallback', (_, body) => {
+      expect(objectFallback(body)).toBe(true);
+    });
+
+    it.each([
+      ['nothing', ''],
+      ['whitespace', ' \n\t '],
+      ['a comment', '<!-- Fallback -->'],
+      ['a param', '<param name="movie" value="demo.swf"/>'],
+      ['a hidden element', '<p hidden="hidden">Fallback</p>'],
+      ['text inside script', '<script>Fallback</script>'],
+      ['a non-root svg element', '<g xmlns="http://www.w3.org/2000/svg"/>'],
+    ])('should not treat %s as fallback', (_, body) => {
+      expect(objectFallback(body)).toBeUndefined();
     });
   });
 });

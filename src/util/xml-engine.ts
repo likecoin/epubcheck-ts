@@ -48,6 +48,28 @@ export function getXmlElement(): typeof Libxml2.XmlElement {
   return engine.XmlElement;
 }
 
+/**
+ * Synchronous accessor for the `XmlText` constructor, needed for `instanceof`
+ * checks. Throws if `loadXmlEngine()` has not resolved yet.
+ */
+export function getXmlText(): typeof Libxml2.XmlText {
+  if (!engine) {
+    throw new Error('libxml2-wasm not initialized — call loadXmlEngine() first');
+  }
+  return engine.XmlText;
+}
+
+/**
+ * Synchronous accessor for the `XmlCData` constructor, needed for `instanceof`
+ * checks. Throws if `loadXmlEngine()` has not resolved yet.
+ */
+export function getXmlCData(): typeof Libxml2.XmlCData {
+  if (!engine) {
+    throw new Error('libxml2-wasm not initialized — call loadXmlEngine() first');
+  }
+  return engine.XmlCData;
+}
+
 /** A document that is not well-formed, as reported by the parser. */
 export interface XmlParseFailure {
   message: string;

@@ -5638,12 +5638,10 @@
       "onlyJava": []
     },
     "test/fixtures/warnings/type-mismatch-in-object-warning.epub": {
-      "verdict": false,
-      "setMatch": false,
-      "exact": false,
-      "onlyTs": [
-        "RSC-032"
-      ],
+      "verdict": true,
+      "setMatch": true,
+      "exact": true,
+      "onlyTs": [],
       "onlyJava": []
     },
     "test/fixtures/warnings/type-mismatch-in-picture-source-warning.epub": {
