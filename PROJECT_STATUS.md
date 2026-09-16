@@ -32,12 +32,12 @@ Baseline: **EPUBCheck 5.4.0**, measured 2026-09-17 by `npm run parity`. Every ro
 
 | Metric | Agreement | |
 |---|---|---|
-| **Valid/invalid verdict** | **95.5%** | 729/763 |
-| Message-ID set, errors + warnings only | 86.9% | 663/763 |
-| Message-ID set, all severities | 67.4% | 514/763 |
-| Exact match (IDs + counts, all severities) | 61.3% | 468/763 |
+| **Valid/invalid verdict** | **95.9%** | 732/763 |
+| Message-ID set, errors + warnings only | 87.5% | 668/763 |
+| Message-ID set, all severities | 67.9% | 518/763 |
+| Exact match (IDs + counts, all severities) | 62.0% | 473/763 |
 
-Severity assignment agrees on **99.6%** of paired messages (790/793). All three mismatches are 5.4.0 downgrading `RSC-014` and `RSC-015` from error to usage, which also flips the verdict on the `content-svg-use-href-no-fragment`, `content-xhtml-link-stylesheet-fragment-id` and `content-xhtml-link-to-svg-fragment` error fixtures.
+Severity assignment agrees on **99.6%** of paired messages (792/795). All three mismatches are 5.4.0 downgrading `RSC-014` and `RSC-015` from error to usage, which also flips the verdict on the `content-svg-use-href-no-fragment`, `content-xhtml-link-stylesheet-fragment-id` and `content-xhtml-link-to-svg-fragment` error fixtures.
 
 ### Standalone single-file modes (Java's own fixtures, n=1286)
 
@@ -56,7 +56,7 @@ Regenerate with `npm run parity:standalone`, which needs `../epubcheck` checked 
 
 ### Message locations
 
-**73.6%** of messages carry a line number (Java: 82.1%), measured across all severities. Where both engines report the same ID on the same file, **88.3%** of line numbers match exactly; the rest are attribution or convention differences, not arithmetic. Messages still lacking a line come mostly from `RSC-005` rules and from document-level checks where nothing has a position — `OPF-003` has no line in Java either.
+**73.9%** of messages carry a line number (Java: 82.1%), measured across all severities. Where both engines report the same ID on the same file, **88.3%** of line numbers match exactly; the rest are attribution or convention differences, not arithmetic. Messages still lacking a line come mostly from `RSC-005` rules and from document-level checks where nothing has a position — `OPF-003` has no line in Java either.
 
 Java encodes "no line" as `-1`, not as a missing field. Counting that as a location pins the Java figure at exactly 100%, which is how the harness's first run was caught being wrong; `scripts/parity/engine.ts` normalizes it. A location metric that cannot fall below 100% is not measuring anything.
 
@@ -98,9 +98,9 @@ The standalone corpus is every `.opf`/`.xhtml`/`.svg` under `../epubcheck/src/te
 
 | Category | Tests | Passed | Skipped |
 |----------|-------|--------|---------|
-| Unit Tests | 492 | 490 | 2 |
-| Integration Tests | 947 | 935 | 12 |
-| **Total** | **1439** | **1425** | **14** |
+| Unit Tests | 505 | 503 | 2 |
+| Integration Tests | 949 | 937 | 12 |
+| **Total** | **1454** | **1440** | **14** |
 
 Unit tests include 17 for the parity harness itself (`test/unit/parity.test.ts`) — cache keying, the ID-set vs ID-count distinction, and the location metric. The harness gates CI, so a silent bug there would not make a check wrong; it would make every check unverifiable while still printing a confident percentage.
 
@@ -116,7 +116,7 @@ test/integration/
 ├── opf.integration.test.ts           # 173 tests  (173 pass,   0 skip) - Package document + D-vocabularies
 ├── content.integration.test.ts       # 214 tests  (208 pass,   6 skip) - XHTML/CSS/SVG
 ├── nav.integration.test.ts           #  38 tests  ( 38 pass,   0 skip) - Navigation
-├── resources.integration.test.ts     # 110 tests  (109 pass,   1 skip) - Resources/fallbacks
+├── resources.integration.test.ts     # 112 tests  (111 pass,   1 skip) - Resources/fallbacks
 ├── layout.integration.test.ts        #  52 tests  ( 52 pass,   0 skip) - Layout/viewport/FXL
 ├── mediaoverlays.integration.test.ts #  50 tests  ( 50 pass,   0 skip) - Media overlays/SMIL
 ├── epub2.integration.test.ts         #  99 tests  ( 98 pass,   1 skip) - EPUB 2 (all 7 Java features)
@@ -206,7 +206,7 @@ Core EPUB 3 per-feature: 00-minimal 100%, 02-conformance 100%, 03-resources 97%,
 
 Ordered by measured impact on agreement with Java:
 
-1. **Remaining false positives** — 143 error/warning occurrences across 43 IDs that Java does not emit, led by `RSC-005` (44), `RSC-017` (10) and `RSC-006` (9). At usage severity `OPF-088` (495), `OPF-097` (78) and `OPF-003` (55) dominate. These cost more agreement than any unimplemented check.
+1. **Remaining false positives** — 131 error/warning occurrences across 42 IDs that Java does not emit, led by `RSC-005` (44) and `RSC-017` (10); nothing else exceeds five. At usage severity `OPF-088` (495), `OPF-097` (78) and `OPF-003` (55) dominate. These cost more agreement than any unimplemented check.
 2. **Remaining coverage gaps** — 103 error/warning occurrences across 22 IDs Java emits and we do not, more than half of them `RSC-005` (59), then `RSC-007` (10). Nothing else reaches five. At usage severity, the new 5.4.0 messages `OBS-001` (55) and `HTM-062` (19) lead.
 3. **Line numbers for `RSC-005`** — ~130 messages still carry no line; the OPF model now records positions, so the remaining work is per-rule attribution.
 4. **Advanced media** — deep format validation beyond magic numbers (MED-003/004, PKG-021/022, OPF-051/057). No fixture exercises this any more now that the stub images are real, so it carries no measurable parity cost — but a truncated image in a real book still goes unflagged, and `PKG-021` currently fires only for files under 4 bytes.
@@ -221,9 +221,9 @@ Resolved. `SchematronValidator` and `XMLParser`/`XMLWalker` were deleted — nei
 
 ## Message IDs
 
-**Defined**: 300 · **Actively used**: 185 (62%)
+**Defined**: 303 · **Actively used**: 187 (62%)
 
-Active by prefix: OPF (62), RSC (26), PKG (22), HTM (22), MED (15), ACC (12), CSS (12), NAV (10), NCX (4). Unused prefixes: SCP, CHK, INF.
+Active by prefix: OPF (63), RSC (27), PKG (22), HTM (22), MED (15), ACC (12), CSS (12), NAV (10), NCX (4). Unused prefixes: SCP, CHK, INF.
 
 ### Intentionally Not Emitted (20 IDs)
 
