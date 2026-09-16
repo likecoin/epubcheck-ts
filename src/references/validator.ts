@@ -463,6 +463,8 @@ export class ReferenceValidator {
       if (!isRemoteURL(resource.url)) continue;
       if (resource.inSpine) continue; // Already checked in OPF validator
       if (this.isRemoteResourceType(resource.mimeType)) continue;
+      // Java exempts Flash only here, not in the reference-side check
+      if (resource.mimeType === 'application/x-shockwave-flash') continue;
       if (referencedRemote.has(resource.url)) continue;
 
       if (hasScripts) {
