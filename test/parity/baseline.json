@@ -5586,11 +5586,9 @@
     },
     "test/fixtures/warnings/package-manifest-prop-remote-resource-object-param-warning.epub": {
       "verdict": true,
-      "setMatch": false,
+      "setMatch": true,
       "exact": false,
-      "onlyTs": [
-        "RSC-006"
-      ],
+      "onlyTs": [],
       "onlyJava": [
         "RSC-005"
       ]

@@ -391,6 +391,7 @@ describe('Integration Tests - OPF (Package Document)', () => {
       const result = await EpubCheck.validate(data);
 
       expectWarning(result, 'OPF-018');
+      expect(result.messages.map((m) => m.id)).not.toContain('RSC-006');
     });
 
     it('should validate EPUB with remote resource and inline CSS', async () => {
