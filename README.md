@@ -6,7 +6,7 @@ Validate EPUB files in Node.js and the browser. A TypeScript implementation of [
 [![npm](https://img.shields.io/npm/v/%40likecoin%2Fepubcheck-ts)](https://www.npmjs.com/package/@likecoin/epubcheck-ts)
 [![License](https://img.shields.io/npm/l/%40likecoin%2Fepubcheck-ts)](./LICENSE)
 
-> **Status**: Measured against EPUBCheck 5.4.0 across 763 spec fixtures — **95.5% agreement on whether a publication is valid**, 87% agreement on which errors and warnings are reported. See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for the full breakdown and methodology. For formal EPUB 3 conformance certification, use the official [Java EPUBCheck](https://github.com/w3c/epubcheck).
+> **Status**: Measured against EPUBCheck 5.4.0 across 763 spec fixtures — **95.9% agreement on whether a publication is valid**, 87.5% agreement on which errors and warnings are reported. See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for the full breakdown and methodology. For formal EPUB 3 conformance certification, use the official [Java EPUBCheck](https://github.com/w3c/epubcheck).
 
 ## Features
 
