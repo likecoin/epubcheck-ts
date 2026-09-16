@@ -26,37 +26,37 @@ Per-component estimates. For measured agreement with Java, see [Measured Parity]
 
 Test pass rate measures whether ported scenarios still pass; it cannot see a check that fires when Java stays silent, nor missing location data. These figures come from running both engines over identical inputs and diffing the emitted message IDs. **Java is the oracle.**
 
-Baseline: **EPUBCheck 5.3.0**, measured 2026-08-07 by `npm run parity`. Every row below is reproducible with that command; none are estimates.
+Baseline: **EPUBCheck 5.4.0**, measured 2026-09-17 by `npm run parity`. Every row below is reproducible with that command; none are estimates.
 
 ### Packaged EPUBs (`test/fixtures/`, n=763)
 
 | Metric | Agreement | |
 |---|---|---|
-| **Valid/invalid verdict** | **96.7%** | 738/763 |
-| Message-ID set, errors + warnings only | 88.5% | 675/763 |
-| Message-ID set, all severities | 74.0% | 565/763 |
-| Exact match (IDs + counts, all severities) | 67.4% | 514/763 |
+| **Valid/invalid verdict** | **95.5%** | 729/763 |
+| Message-ID set, errors + warnings only | 86.9% | 663/763 |
+| Message-ID set, all severities | 67.4% | 514/763 |
+| Exact match (IDs + counts, all severities) | 61.3% | 468/763 |
 
-Severity assignment agrees on **100%** of paired messages (791/791) — zero mismatches across the corpus.
+Severity assignment agrees on **99.6%** of paired messages (790/793). All three mismatches are 5.4.0 downgrading `RSC-014` and `RSC-015` from error to usage, which also flips the verdict on the `content-svg-use-href-no-fragment`, `content-xhtml-link-stylesheet-fragment-id` and `content-xhtml-link-to-svg-fragment` error fixtures.
 
 ### Standalone single-file modes (Java's own fixtures, n=1286)
 
 | Mode | n | Exact | Verdict |
 |---|---:|---:|---:|
-| `--mode opf` | 489 | 93.7% | 97.8% |
-| `--mode xhtml` | 745 | 95.6% | 97.9% |
+| `--mode opf` | 489 | 93.7% | 98.4% |
+| `--mode xhtml` | 745 | 95.0% | 97.9% |
 | `--mode svg` | 52 | 88.5% | 92.3% |
-| **Total** | **1286** | **94.6%** | **97.6%** |
+| **Total** | **1286** | **94.2%** | **97.8%** |
 
-Regenerate with `npm run parity:standalone`, which needs `../epubcheck` checked out as a sibling. The corpus is every `.opf`/`.xhtml`/`.svg` under `epub3/`, excluding `test-files-unused/`. Severity agrees on 100% of paired messages; 61.9% of messages carry a line (Java: 97.1%), and where both engines locate the same message, 79.0% of lines match.
+Regenerate with `npm run parity:standalone`, which needs `../epubcheck` checked out as a sibling. The corpus is every `.opf`/`.xhtml`/`.svg` under `epub3/`, excluding `test-files-unused/`. Severity agrees on 100% of paired messages; 62.2% of messages carry a line (Java: 97.2%), and where both engines locate the same message, 78.8% of lines match.
 
 ### Real-world EPUBs (n=5)
 
-5/5 verdict agreement; 4/5 byte-identical message sets. The fifth differs only in report shape (see USAGE dedup under Known Issues). Guarded by `test/integration/real-world.test.ts`.
+0/5 verdict agreement on 5.4.0 (5/5 on 5.3.0). EPUBCheck 5.4.0's updated HTML schema rejects `aria-label` on the `<nav epub:type="toc">` these Project Gutenberg books ship, reporting `RSC-005`, and adds two usage messages this port does not emit: `OBS-001` (NCX and OPF 2 `meta` are outdated) and `HTM-062` (SVG `xlink:href` is deprecated). `test/integration/real-world.test.ts` still pins the 5.3.0 behaviour.
 
 ### Message locations
 
-**73.6%** of messages carry a line number (Java: 81.6%), measured across all severities. Where both engines report the same ID on the same file, **88.4%** of line numbers match exactly; the rest are attribution or convention differences, not arithmetic. Messages still lacking a line come mostly from `RSC-005` rules and from document-level checks where nothing has a position — `OPF-003` has no line in Java either.
+**73.6%** of messages carry a line number (Java: 82.1%), measured across all severities. Where both engines report the same ID on the same file, **88.3%** of line numbers match exactly; the rest are attribution or convention differences, not arithmetic. Messages still lacking a line come mostly from `RSC-005` rules and from document-level checks where nothing has a position — `OPF-003` has no line in Java either.
 
 Java encodes "no line" as `-1`, not as a missing field. Counting that as a location pins the Java figure at exactly 100%, which is how the harness's first run was caught being wrong; `scripts/parity/engine.ts` normalizes it. A location metric that cannot fall below 100% is not measuring anything.
 
@@ -64,7 +64,7 @@ Java encodes "no line" as `-1`, not as a missing field. Counting that as a locat
 
 - **Verdict agreement** is what a user feels: do both tools call the same file valid or invalid?
 - **Message-ID agreement** is stricter: do they report the *same* problems? It ignores how many times each ID fired.
-- **Exact match** additionally requires identical counts, so it is depressed by the USAGE dedup difference below and is the least meaningful of the three. A fixture where this port reports `RSC-005` twice and Java once agrees on message-ID and disagrees on exact match — which is most of the ~21-point gap between those rows.
+- **Exact match** additionally requires identical counts, so it is depressed by the USAGE dedup difference below and is the least meaningful of the three. A fixture where this port reports `RSC-005` twice and Java once agrees on message-ID and disagrees on exact match — which is most of the ~26-point gap between those rows.
 
 ### Method
 
@@ -206,8 +206,8 @@ Core EPUB 3 per-feature: 00-minimal 100%, 02-conformance 100%, 03-resources 97%,
 
 Ordered by measured impact on agreement with Java:
 
-1. **Remaining false positives** — 141 error/warning occurrences across 40 IDs that Java does not emit, led by `RSC-005` (45), `RSC-017` (10) and `RSC-006` (9). At usage severity `OPF-088` (495), `OPF-097` (78) and `OPF-003` (55) dominate. These cost more agreement than any unimplemented check.
-2. **Remaining coverage gaps** — 90 error/warning occurrences across 20 IDs Java emits and we do not, more than half of them `RSC-005` (50), then `RSC-007` (10). Nothing else reaches five.
+1. **Remaining false positives** — 143 error/warning occurrences across 43 IDs that Java does not emit, led by `RSC-005` (44), `RSC-017` (10) and `RSC-006` (9). At usage severity `OPF-088` (495), `OPF-097` (78) and `OPF-003` (55) dominate. These cost more agreement than any unimplemented check.
+2. **Remaining coverage gaps** — 103 error/warning occurrences across 22 IDs Java emits and we do not, more than half of them `RSC-005` (59), then `RSC-007` (10). Nothing else reaches five. At usage severity, the new 5.4.0 messages `OBS-001` (55) and `HTM-062` (19) lead.
 3. **Line numbers for `RSC-005`** — ~130 messages still carry no line; the OPF model now records positions, so the remaining work is per-rule attribution.
 4. **Advanced media** — deep format validation beyond magic numbers (MED-003/004, PKG-021/022, OPF-051/057). No fixture exercises this any more now that the stub images are real, so it carries no measurable parity cost — but a truncated image in a real book still goes unflagged, and `PKG-021` currently fires only for files under 4 bytes.
 5. **Remaining accessibility** — ACC-008/013/015/016/017 (all suppressed by default; low real-world impact).

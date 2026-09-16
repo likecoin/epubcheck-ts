@@ -1,5 +1,5 @@
 {
-  "javaVersion": "EPUBCheck v5.3.0",
+  "javaVersion": "EPUBCheck v5.4.0",
   "includeUsage": false,
   "fixtures": {
     "test/fixtures/conformance/00-minimal/minimal.epub": {
@@ -497,10 +497,12 @@
       ]
     },
     "test/fixtures/invalid/content/content-svg-use-href-no-fragment-error.epub": {
-      "verdict": true,
-      "setMatch": true,
-      "exact": true,
-      "onlyTs": [],
+      "verdict": false,
+      "setMatch": false,
+      "exact": false,
+      "onlyTs": [
+        "RSC-015"
+      ],
       "onlyJava": []
     },
     "test/fixtures/invalid/content/content-xhtml-base-url-remote-relative-path-error.epub": {
@@ -534,10 +536,12 @@
       "onlyJava": []
     },
     "test/fixtures/invalid/content/content-xhtml-link-stylesheet-fragment-id-error.epub": {
-      "verdict": true,
-      "setMatch": true,
-      "exact": true,
-      "onlyTs": [],
+      "verdict": false,
+      "setMatch": false,
+      "exact": false,
+      "onlyTs": [
+        "RSC-013"
+      ],
       "onlyJava": []
     },
     "test/fixtures/invalid/content/content-xhtml-link-to-missing-doc-error.epub": {
@@ -569,10 +573,12 @@
       "onlyJava": []
     },
     "test/fixtures/invalid/content/content-xhtml-link-to-svg-fragment-error.epub": {
-      "verdict": true,
-      "setMatch": true,
-      "exact": true,
-      "onlyTs": [],
+      "verdict": false,
+      "setMatch": false,
+      "exact": false,
+      "onlyTs": [
+        "RSC-014"
+      ],
       "onlyJava": []
     },
     "test/fixtures/invalid/content/content-xhtml-mathml-altimg-not-found-error.epub": {
@@ -844,10 +850,12 @@
     },
     "test/fixtures/invalid/content/foreign-xhtml-object-no-fallback-error.epub": {
       "verdict": true,
-      "setMatch": true,
-      "exact": true,
+      "setMatch": false,
+      "exact": false,
       "onlyTs": [],
-      "onlyJava": []
+      "onlyJava": [
+        "RSC-005"
+      ]
     },
     "test/fixtures/invalid/content/foreign-xhtml-picture-img-src-error.epub": {
       "verdict": true,
@@ -1023,7 +1031,7 @@
       "exact": false,
       "onlyTs": [],
       "onlyJava": [
-        "RSC-005"
+        "RSC-005 x2"
       ]
     },
     "test/fixtures/invalid/content/obsolete-contextmenu-error.epub": {
@@ -3452,39 +3460,49 @@
       "onlyJava": []
     },
     "test/fixtures/real/pg11.epub": {
-      "verdict": true,
-      "setMatch": true,
-      "exact": true,
+      "verdict": false,
+      "setMatch": false,
+      "exact": false,
       "onlyTs": [],
-      "onlyJava": []
+      "onlyJava": [
+        "RSC-005"
+      ]
     },
     "test/fixtures/real/pg1342.epub": {
-      "verdict": true,
-      "setMatch": true,
-      "exact": true,
+      "verdict": false,
+      "setMatch": false,
+      "exact": false,
       "onlyTs": [],
-      "onlyJava": []
+      "onlyJava": [
+        "RSC-005 x2"
+      ]
     },
     "test/fixtures/real/pg1661.epub": {
-      "verdict": true,
-      "setMatch": true,
-      "exact": true,
+      "verdict": false,
+      "setMatch": false,
+      "exact": false,
       "onlyTs": [],
-      "onlyJava": []
+      "onlyJava": [
+        "RSC-005"
+      ]
     },
     "test/fixtures/real/pg2701.epub": {
-      "verdict": true,
-      "setMatch": true,
-      "exact": true,
+      "verdict": false,
+      "setMatch": false,
+      "exact": false,
       "onlyTs": [],
-      "onlyJava": []
+      "onlyJava": [
+        "RSC-005"
+      ]
     },
     "test/fixtures/real/pg84.epub": {
-      "verdict": true,
-      "setMatch": true,
-      "exact": true,
+      "verdict": false,
+      "setMatch": false,
+      "exact": false,
       "onlyTs": [],
-      "onlyJava": []
+      "onlyJava": [
+        "RSC-005"
+      ]
     },
     "test/fixtures/valid/a-href-valid.epub": {
       "verdict": true,
@@ -3748,11 +3766,13 @@
       "onlyJava": []
     },
     "test/fixtures/valid/content-xhtml-img-video-valid.epub": {
-      "verdict": true,
-      "setMatch": true,
-      "exact": true,
+      "verdict": false,
+      "setMatch": false,
+      "exact": false,
       "onlyTs": [],
-      "onlyJava": []
+      "onlyJava": [
+        "RSC-032"
+      ]
     },
     "test/fixtures/valid/content-xhtml-link-href-empty-valid.epub": {
       "verdict": true,
@@ -3945,10 +3965,12 @@
     },
     "test/fixtures/valid/epubtype-reserved-vocab-valid.epub": {
       "verdict": true,
-      "setMatch": true,
-      "exact": true,
+      "setMatch": false,
+      "exact": false,
       "onlyTs": [],
-      "onlyJava": []
+      "onlyJava": [
+        "OPF-086c x2"
+      ]
     },
     "test/fixtures/valid/epubtype-unknown-usage.epub": {
       "verdict": true,
@@ -4060,11 +4082,13 @@
       "onlyJava": []
     },
     "test/fixtures/valid/foreign-exempt-xhtml-video-in-img-valid.epub": {
-      "verdict": true,
-      "setMatch": true,
-      "exact": true,
+      "verdict": false,
+      "setMatch": false,
+      "exact": false,
       "onlyTs": [],
-      "onlyJava": []
+      "onlyJava": [
+        "RSC-032"
+      ]
     },
     "test/fixtures/valid/foreign-exempt-xhtml-video-valid.epub": {
       "verdict": true,
@@ -5576,14 +5600,15 @@
       "onlyJava": []
     },
     "test/fixtures/warnings/package-manifest-prop-remote-resource-object-param-warning.epub": {
-      "verdict": false,
+      "verdict": true,
       "setMatch": false,
       "exact": false,
       "onlyTs": [
-        "RSC-005",
         "RSC-006"
       ],
-      "onlyJava": []
+      "onlyJava": [
+        "RSC-005"
+      ]
     },
     "test/fixtures/warnings/resources-cmt-image-wrong-extension-warning.epub": {
       "verdict": true,
