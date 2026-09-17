@@ -6,12 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-## [0.7.0] - 2026-09-16
+## [0.7.0] - 2026-09-17
+
+### Added
+
+- **`RSC-006b` and `OPF-018b`, both usage.** Java reports them where it cannot decide statically and hands the question to a human: `RSC-006b` for a remote manifest item nothing references in a publication that has scripts, since the script may fetch it, and `OPF-018b` for a `remote-resources` property no markup justifies in a document that itself has scripts. Neither existed here, so the defined message count rises to 303.
+
+### Fixed
+
+- **Scripted publications may declare remote resources no markup references.** `checkRemoteResources` only knew `RSC-006`, so both `resources-remote-resource-for-script-*` valid fixtures were called invalid. It now follows `OPFChecker30`'s branch: with scripts present the item draws `RSC-006b` rather than an error. It also skips an item with *any* reference to it rather than only a font, audio or video one, because the reference-side check already reports a disallowed remote reference where it occurs; the narrower set reported three invalid fixtures twice. The two Java scenarios, never imported before, are now ported.
+- **Remote Flash manifest items no longer draw `RSC-006`.** `OPFChecker30` lists `application/x-shockwave-flash` beside audio, video and fonts as a type that may be remote. The exemption belongs to manifest items only — Java's reference-side check has none — so it stays out of the shared `isRemoteResourceType` helper.
+- **An `<object>`'s text counts as its fallback.** Intrinsic fallback was any non-`param`, non-hidden XHTML child element, so `<object data="…">Fallback</object>` had none and drew a false `RSC-032` error. The check is now a port of `OPSHandler30`'s `HAS_PALPABLE_CONTENT`: non-whitespace character data directly inside the element, or a palpable child — embedded content, a root `svg`/`math`, or an XHTML element that itself has palpable content, excluding hidden and `head`/`script`/`style`-like ones. Whitespace follows Java's `String.trim()`, which unlike JavaScript's leaves NBSP alone. The same predicate fixes three cases the old check had wrong: an object holding only `<svg>` or `<math>` now has fallback, and one holding only `<script>` no longer does.
+
+Together these move verdict agreement 95.5% → 95.9% and error/warning ID agreement 86.9% → 87.5% against EPUBCheck 5.4.0, with no fixture regressed.
 
 ### Changed
 
 - **The license is now BSD-3-Clause.** 0.7.0 is the first release under it; 0.6.5 and every release before it remain GPL-3.0-only on npm and stay that way. GPL was the wrong instrument for this package: `dist/` is meant to be bundled into applications, browser workers and CI images, so copyleft reached the consumer's own code and disqualified the library from exactly the embedded use it is fastest at. BSD-3-Clause is also what the Java [EPUBCheck](https://github.com/w3c/epubcheck) uses, which removes the asymmetry of deriving schemas and message wording from a permissive project and redistributing them under a stricter license. Requested in [#32](https://github.com/likecoin/epubcheck-ts/issues/32).
 - **Third-party notices are published with the package.** The README claimed no code was copied from EPUBCheck, which the schemas contradict: 8 of the files in `schemas/` are byte-identical to their counterparts in the Java project and the rest are converted from its `.rnc` sources, with the message catalogue and test fixtures following it too. Those schemas ship inside `dist/index.js` as gzipped base64, so every consumer of the bundle redistributes them. `THIRD_PARTY_NOTICES.md` now carries the notices that requires — EPUBCheck's BSD-3-Clause (Adobe 2007, IDPF 2008, W3C 2017), the MIT license of the Nu Html Checker modules the XHTML grammar is built from (fantasai, Sivonen, Mozilla Foundation), and the W3C Software Notice and License covering the MathML 3 and SVG 1.1 modules — and is listed in `files`, so it travels with the tarball rather than living only in the repository. The obligation predates the relicense; going permissive only widens who relies on the notice being there.
+- **Parity is measured against EPUBCheck 5.4.0.** Every cached Java answer, the baseline and every Measured Parity figure were regenerated. Headline agreement dips, and the dip is Java moving, not this port regressing — `parity:check` against the rebuilt baseline shows no change. 5.4.0 downgrades `RSC-014` and `RSC-015` from error to usage, flipping the verdict on three `*-error` fixtures; its newer HTML schema rejects `aria-label` on `nav`, so it now calls all five real-world books invalid (`test/integration/real-world.test.ts` still pins 5.3.0); and it adds usage messages `OBS-001` and `HTM-062`, which this port does not emit.
 
 ## [0.6.5] - 2026-08-20
 

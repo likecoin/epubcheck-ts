@@ -8,7 +8,7 @@
 
 > **pushMessage**(`messages`, `options`): `void`
 
-Defined in: messages/messages.ts:1357
+Defined in: messages/messages.ts:1368
 
 Create and push a validation message to the messages array.
 Automatically handles suppressed messages by not pushing them.

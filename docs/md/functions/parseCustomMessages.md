@@ -8,7 +8,7 @@
 
 > **parseCustomMessages**(`content`): `Map`\<`string`, [`MessageSeverity`](../type-aliases/MessageSeverity.md)\>
 
-Defined in: messages/messages.ts:1377
+Defined in: messages/messages.ts:1388
 
 Parse a custom messages file (TSV format compatible with Java EPUBCheck).
 

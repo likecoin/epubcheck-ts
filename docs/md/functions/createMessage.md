@@ -8,7 +8,7 @@
 
 > **createMessage**(`options`): [`ValidationMessage`](../interfaces/ValidationMessage.md) \| `null`
 
-Defined in: messages/messages.ts:1308
+Defined in: messages/messages.ts:1319
 
 Create a validation message with automatic severity lookup
 

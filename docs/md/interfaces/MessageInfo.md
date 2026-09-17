@@ -6,7 +6,7 @@
 
 # Interface: MessageInfo
 
-Defined in: messages/messages.ts:1234
+Defined in: messages/messages.ts:1245
 
 Message info structure
 
@@ -16,7 +16,7 @@ Message info structure
 
 > **description**: `string`
 
-Defined in: messages/messages.ts:1237
+Defined in: messages/messages.ts:1248
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: messages/messages.ts:1237
 
 > **id**: `string`
 
-Defined in: messages/messages.ts:1235
+Defined in: messages/messages.ts:1246
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: messages/messages.ts:1235
 
 > **severity**: [`MessageSeverity`](../type-aliases/MessageSeverity.md)
 
-Defined in: messages/messages.ts:1236
+Defined in: messages/messages.ts:1247

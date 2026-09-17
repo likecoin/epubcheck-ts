@@ -8,7 +8,7 @@
 
 > **getMessageInfo**(`id`): [`MessageInfo`](../interfaces/MessageInfo.md) \| `undefined`
 
-Defined in: messages/messages.ts:1243
+Defined in: messages/messages.ts:1254
 
 Get message info by ID
 
