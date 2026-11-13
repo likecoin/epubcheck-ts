@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 
@@ -32,6 +32,30 @@ describe('packaging: build output is consumable', () => {
       readFileSync(esmPath);
     } catch {
       throw new Error('dist/ not found — run `npm run build` before the packaging tests');
+    }
+  });
+
+  it('gives require() consumers CJS type declarations', () => {
+    // A single shared `types` entry resolves to index.d.ts, which TypeScript
+    // treats as ESM in a `"type": "module"` package, so CJS consumers get TS1479.
+    interface Condition {
+      types: string;
+      default: string;
+    }
+    interface ExportEntry {
+      import: Condition;
+      require: Condition;
+    }
+    const pkg = JSON.parse(readFileSync(`${repoRoot}/package.json`, 'utf8')) as {
+      exports: Record<string, ExportEntry>;
+    };
+    const entry = pkg.exports['.'];
+    if (!entry) throw new Error('package.json has no "." export');
+    expect(entry.require.types).toMatch(/\.d\.cts$/);
+    expect(entry.import.types).toMatch(/\.d\.ts$/);
+    for (const { types, default: main } of [entry.require, entry.import]) {
+      expect(existsSync(`${repoRoot}/${types}`), types).toBe(true);
+      expect(existsSync(`${repoRoot}/${main}`), main).toBe(true);
     }
   });
 
