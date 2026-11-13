@@ -93,7 +93,7 @@ if (values.version) {
   console.log(`EPUBCheck-TS v${VERSION}`);
   console.log('TypeScript EPUB validator for Node.js and browsers');
   console.log();
-  console.log('Agrees with EPUBCheck 5.3.0 on 95% of 758 spec fixtures (valid/invalid).');
+  console.log('Agrees with EPUBCheck 5.4.0 on 95.9% of 763 spec fixtures (valid/invalid).');
   console.log('For formal conformance certification: https://github.com/w3c/epubcheck');
   process.exit(0);
 }
@@ -395,7 +395,7 @@ async function main(): Promise<void> {
       // Show limitation notice if there were no major errors
       if (result.errorCount === 0 && result.fatalCount === 0) {
         console.log(
-          '\x1b[90mNote: agrees with EPUBCheck 5.3.0 on 95% of 758 spec fixtures.\x1b[0m',
+          '\x1b[90mNote: agrees with EPUBCheck 5.4.0 on 95.9% of 763 spec fixtures.\x1b[0m',
         );
         console.log(
           '\x1b[90mFor formal conformance certification: https://github.com/w3c/epubcheck\x1b[0m',
