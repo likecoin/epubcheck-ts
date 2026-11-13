@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-11-14
+
+### Fixed
+
+- **`require()` consumers get the CJS type declarations.** The `exports` map had one shared `types` entry pointing at `dist/index.d.ts`, which TypeScript treats as ESM in a `"type": "module"` package, so a CommonJS consumer resolving through `require` hit TS1479. `import` and `require` now each carry their own `types` — `index.d.ts` and `index.d.cts` respectively — and the packaging suite asserts both conditions resolve to files that exist.
+- **The CLI quotes the measured parity.** `--version` and the clean-run notice still said "EPUBCheck 5.3.0 on 95% of 758 spec fixtures"; they now say 5.4.0, 95.9% and 763, matching the Measured Parity figures 0.7.0 recorded.
+
 ## [0.7.0] - 2026-09-17
 
 ### Added
@@ -765,7 +772,8 @@ A crafted EPUB could stall validation before any rule ran. Five families of scan
 - No media overlays validation
 - No script detection/validation
 
-[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/likecoin/epubcheck-ts/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/likecoin/epubcheck-ts/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/likecoin/epubcheck-ts/compare/v0.6.5...v0.7.0
 [0.6.5]: https://github.com/likecoin/epubcheck-ts/compare/v0.6.4...v0.6.5
 [0.6.4]: https://github.com/likecoin/epubcheck-ts/compare/v0.6.3...v0.6.4
